@@ -39,10 +39,11 @@ The distribution currently builds under the following systems:
 Prerequisites:
 - All: <a href="https://bitbucket.org/devzendo/transputer-macro-assembler">DevZendo.org
        Transputer Macro Assembler</a> installed and on your PATH
-- OSX: clang, GNU make (e.g. via XCode Developer tools, or MacPorts)
-- Ubuntu Linux: build-essential (=> gcc, GNU Make)
-- CentOS: gcc, make
-- Windows: (future work)
+       GNU Make.
+- OSX: clang (e.g. via XCode Developer tools, or MacPorts)
+- Ubuntu Linux: build-essential (=> gcc)
+- CentOS: gcc
+- Windows: (future work, but you'll need a UNIXy toolchain)
 
 
 The install location is /opt/parachute. Changing this would entail changes to
