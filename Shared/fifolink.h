@@ -1,0 +1,38 @@
+//------------------------------------------------------------------------------
+//
+// File        : fifolink.h
+// Description : Implementation of link that uses a FIFO.
+// License     : GNU GPL - see COPYING for more details
+// Created     : 19/07/2005
+// Revision    : $Revision $
+//
+// (C) 2005 Matt J. Gumbley
+// matt@gumbley.me.uk
+// http://www.gumbley.me.uk/parachute
+//
+//------------------------------------------------------------------------------
+
+#ifndef _FIFOLINK_H
+#define _FIFOLINK_H
+
+#include <exception>
+using namespace std;
+
+#include "types.h"
+#include "link.h"
+
+class FIFOLink : public Link {
+	public:
+		FIFOLink(int linkNo, bool isServer);
+		void initialise(void) throw (exception);
+		~FIFOLink(void);
+		BYTE readByte(void) throw (exception);
+		void writeByte(BYTE b) throw (exception);
+		void resetLink(void) throw (exception);
+	private:
+		int myWriteFD, myReadFD;
+		WORD32 myWriteSequence, myReadSequence;
+};
+
+#endif // _FIFOLINK_H
+
