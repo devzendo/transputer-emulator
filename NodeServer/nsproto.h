@@ -2,7 +2,7 @@
 //
 // File        : nsproto.h
 // Description : Node Server protocol definition
-// License     : GNU GPL - see COPYING for more details
+// License     : Apache License v2.0 - see LICENSE.txt for more details
 // Created     : 31/08/2005
 // Revision    : $Revision $
 //

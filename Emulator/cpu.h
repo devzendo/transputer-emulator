@@ -2,7 +2,7 @@
 //
 // File        : cpu.h
 // Description : CPU emulator
-// License     : GNU GPL - see COPYING for more details
+// License     : Apache License v2.0 - see LICENSE.txt for more details
 // Created     : 14/07/2005
 // Revision    : $Revision $
 //

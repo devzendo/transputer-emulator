@@ -2,7 +2,7 @@
 //
 // File        : memloc.h
 // Description : Special memory locations
-// License     : GNU GPL - see COPYING for more details
+// License     : Apache License v2.0 - see LICENSE.txt for more details
 // Created     : 09/09/2005
 // Revision    : $Revision $
 //

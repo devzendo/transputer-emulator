@@ -2,7 +2,7 @@
 //
 // File        : linkfactory.cpp
 // Description : Factory for creating derived classes of Link
-// License     : GNU GPL - see COPYING for more details
+// License     : Apache License v2.0 - see LICENSE.txt for more details
 // Created     : 19/07/2005
 // Revision    : $Revision $
 //

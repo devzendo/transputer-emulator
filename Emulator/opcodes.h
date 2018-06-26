@@ -2,7 +2,7 @@
 //
 // File        : opcodes.h
 // Description : The transputer instruction set
-// License     : GNU GPL - see COPYING for more details
+// License     : Apache License v2.0 - see LICENSE.txt for more details
 // Created     : 29/06/2005
 // Revision    : $Revision $
 //

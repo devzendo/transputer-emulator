@@ -2,7 +2,7 @@
 //
 // File        : flags.h
 // Description : bit settings for flags emulator state and debug flags
-// License     : GNU GPL - see COPYING for more details
+// License     : Apache License v2.0 - see LICENSE.txt for more details
 // Created     : 12/7/05005
 // Revision    : $Revision $
 //

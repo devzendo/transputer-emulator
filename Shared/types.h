@@ -2,7 +2,7 @@
 //
 // File        : types.h
 // Description : Various simple custom data types for the emulator.
-// License     : GNU GPL - see COPYING for more details
+// License     : Apache License v2.0 - see LICENSE.txt for more details
 // Created     : 07/07/2005
 // Revision    : $Revision $
 //

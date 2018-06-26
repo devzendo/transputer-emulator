@@ -3,7 +3,7 @@
 // File        : nodeclient.cpp
 // Description : library of functions that encapsulate the node server
 //               protocol, for client code to use.
-// License     : GNU GPL - see COPYING for more details
+// License     : Apache License v2.0 - see LICENSE.txt for more details
 // Created     : 06/09/2005
 // Revision    : $Revision $
 //

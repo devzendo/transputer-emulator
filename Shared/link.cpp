@@ -2,7 +2,7 @@
 //
 // File        : link.cpp
 // Description : Abstract base class for links
-// License     : GNU GPL - see COPYING for more details
+// License     : Apache License v2.0 - see LICENSE.txt for more details
 // Created     : 18/07/2005
 // Revision    : $Revision $
 //

@@ -2,7 +2,7 @@
 //
 // File        : nodeserver.cpp
 // Description : main entry point for the node server
-// License     : GNU GPL - see COPYING for more details
+// License     : Apache License v2.0 - see LICENSE.txt for more details
 // Created     : 19/08/2005
 // Revision    : $Revision $
 //
