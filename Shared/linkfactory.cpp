@@ -31,7 +31,7 @@ LinkFactory::LinkFactory(bool isServer, bool isDebug) {
 	}
 }
 
-static void linkConfigError(char *arg, char *reason) {
+static void linkConfigError(char *arg, const char *reason) {
 	logFatalF("Command line option '%s' is not of the form -L<0..3><F|S|M> (%s)", arg, reason);
 }
 

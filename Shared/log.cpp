@@ -19,7 +19,7 @@
 using namespace std;
 #include "log.h"
 
-static char *tags[5] = {
+static const char *tags[5] = {
 	"DEBUG ", "INFO  ", "WARN  ", "ERROR ", "FATAL ",
 };
 
@@ -28,12 +28,12 @@ void setLogLevel(int l) {
 	myLogLevel = l;
 }
 
-void _logDebug(int l, char *f, char *s) {
+void _logDebug(int l, const char *f, const char *s) {
 	if (myLogLevel <= LOGLEVEL_DEBUG) {
 		cout << tags[LOGLEVEL_DEBUG] << f << ":" << l << " " << s << endl;
 	}
 }
-void _logDebugF(int l, char *f, char *fmt, ...) {
+void _logDebugF(int l, const char *f, const char *fmt, ...) {
 	char *buf;
 	va_list ap;
 	int n, size = 100;
@@ -67,7 +67,7 @@ void _logDebugF(int l, char *f, char *fmt, ...) {
 	}
 }
 
-void logFormat(int level, char *fmt, ...) {
+void logFormat(int level, const char *fmt, ...) {
 	char *buf;
 	va_list ap;
 	int n, size = 100;
@@ -101,31 +101,31 @@ void logFormat(int level, char *fmt, ...) {
 	}
 }
 
-void logInfo(char *s) {
+void logInfo(const char *s) {
 	if (myLogLevel <= LOGLEVEL_INFO) {
 		cout << tags[LOGLEVEL_INFO] << s << endl;
 	}
 }
 
-void logWarn(char *s) {
+void logWarn(const char *s) {
 	if (myLogLevel <= LOGLEVEL_WARN) {
 		cout << tags[LOGLEVEL_WARN] << s << endl;
 	}
 }
 
-void logError(char *s) {
+void logError(const char *s) {
 	if (myLogLevel <= LOGLEVEL_ERROR) {
 		cout << tags[LOGLEVEL_ERROR] << s << endl;
 	}
 }
 
-void logFatal(char *s) {
+void logFatal(const char *s) {
 	if (myLogLevel <= LOGLEVEL_FATAL) {
 		cout << tags[LOGLEVEL_FATAL] << s << endl;
 	}
 }
 
-void logBug(char *s) {
+void logBug(const char *s) {
 	cout << "*BUG* " << s << endl;
 }
 

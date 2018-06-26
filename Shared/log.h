@@ -25,15 +25,15 @@ extern void setLogLevel(int l);
 // info cpp gave info on varargs in macros
 #define logDebugF(fmt, ...) _logDebugF(__LINE__, "" __FILE__, fmt, __VA_ARGS__)
 
-extern void _logDebug(int line, char *file, char *s);
-extern void _logDebugF(int line, char *file, char *fmt, ...);
+extern void _logDebug(int line, const char *file, const char *s);
+extern void _logDebugF(int line, const char *file, const char *fmt, ...);
 
-extern void logFormat(int level, char *fmt, ...);
-extern void logInfo(char *s);
-extern void logWarn(char *s);
-extern void logError(char *s);
-extern void logFatal(char *s);
-extern void logBug(char *s);
+extern void logFormat(int level, const char *fmt, ...);
+extern void logInfo(const char *s);
+extern void logWarn(const char *s);
+extern void logError(const char *s);
+extern void logFatal(const char *s);
+extern void logBug(const char *s);
 
 #define logInfoF(fmt, ...) logFormat(LOGLEVEL_INFO, fmt, __VA_ARGS__)
 #define logWarnF(fmt, ...) logFormat(LOGLEVEL_WARN, fmt, __VA_ARGS__)
