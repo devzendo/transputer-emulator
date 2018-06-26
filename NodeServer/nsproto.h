@@ -6,9 +6,9 @@
 // Created     : 31/08/2005
 // Revision    : $Revision $
 //
-// (C) 2005 Matt J. Gumbley
-// matt@gumbley.me.uk
-// http://www.gumbley.me.uk/parachute
+// (C) 2005-2018 Matt J. Gumbley
+// matt.gumbley@devzendo.org
+// http://devzendo.github.io/parachute
 //
 //------------------------------------------------------------------------------
 // This protocol is used between users of the libnodeserver.a client library

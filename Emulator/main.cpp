@@ -6,9 +6,9 @@
 // Created     : 29/06/2005
 // Revision    : $Revision $
 //
-// (C) 2005 Matt J. Gumbley
-// matt@gumbley.me.uk
-// http://www.gumbley.me.uk/parachute
+// (C) 2005-2018 Matt J. Gumbley
+// matt.gumbley@devzendo.org
+// http://devzendo.github.io/parachute
 //
 //------------------------------------------------------------------------------
 
@@ -34,8 +34,8 @@ static char *progName;
 
 void usage() {
 	logInfoF("Parachute v%1.2f T800 Emulator " __DATE__, VERSION);
-	logInfo("  (C) 2005 Matt J. Gumbley");
-	logInfo("  http://www.gumbley.me.uk/parachute");
+	logInfo("  (C) 2005-2018 Matt J. Gumbley");
+	logInfo("  http://devzendo.github.io/parachute");
 	logInfo("Usage:");
 	logInfoF("%s: [options]", progName);
 	logInfo("Options:");
