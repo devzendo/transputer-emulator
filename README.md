@@ -22,8 +22,8 @@ Shared - utility code that is common to many parts of the system.
 
 NodeServer - the client and server portions of the node server and its protocol
 definition. The server runs on your host computer (i.e. under Windows, Linux,
-Mac OS X etc.) and the client runs under T800 emulation as part of your
-application.
+Mac OS X etc.). The client runs under T800 emulation as part of your
+application; it's an assembly language include file.
 
 Emulator - the T800 emulator.
 
@@ -45,7 +45,7 @@ Prerequisites:
 - Windows: (future work)
 
 
-The install location is /usr/local/t800. Changing this would entail changes to
+The install location is /opt/parachute. Changing this would entail changes to
 Makefiles in the above hierarchy.
 
 To build, cd to the top level directory (where this README.md is) and do:

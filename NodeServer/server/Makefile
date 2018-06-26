@@ -4,8 +4,7 @@ EMPATH = ../../Emulator
 SHARED = ../../Shared
 SHOBJS = $(SHARED)/link.o $(SHARED)/fifolink.o $(SHARED)/linkfactory.o
 
-PREFIX		= /usr/local/t800
-BINDIR		= $(PREFIX)/bin
+BINDIR = $(PARACHUTEPREFIX)/bin
 
 VERSION = `cat ../../VERSION.txt`
 CC = g++
@@ -14,6 +13,8 @@ LDFLAGS = -L$(SHARED)
 LIBS = -lparachutedev
 
 all : $(EXES)
+
+install : $(EXES)
 	sudo install -o root -g root -m755 nodeserver $(BINDIR)
 	
 .cpp.o:

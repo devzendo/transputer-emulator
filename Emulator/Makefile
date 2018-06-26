@@ -8,11 +8,9 @@ CFLAGS = -O2 -g -DDEBUG -DVERSION=${VERSION} -I$(SHARED)
 LDFLAGS = -L$(SHARED)
 LIBS = -lparachutedev
 
-PREFIX = /usr/local/t800
-BINDIR = $(PREFIX)/bin
+BINDIR = $(PARACHUTEPREFIX)/bin
 
 all : $(EXES)
-	sudo install -o root -g root -m755 t800emul $(BINDIR)
 
 .cpp.o:
 	$(CC) -c $(CFLAGS) $(CPPFLAGS) -o $@ $<
@@ -26,7 +24,7 @@ t800emul : $(OBJS)
 	$(CC) $(LDFLAGS) -o $@ $^ $(LIBS)
 
 install: t800emul
-	install -o root -g root -m755 t800emul $(BINDIR)
+	sudo install -o root -g root -m755 t800emul $(BINDIR)
 
 clean:
 	rm -f $(OBJS) $(EXES)

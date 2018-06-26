@@ -1,7 +1,7 @@
 DIRS=Shared NodeServer Emulator
 PARACHUTEPREFIX=/opt/parachute
 
-all: setup toolchain parachute
+all: setup parachute
 
 setup:
 	@sudo mkdir -p $(PARACHUTEPREFIX)
@@ -13,15 +13,15 @@ setup:
 
 parachute:
 	@echo "Making all in subdirectories..."
-	@for i in $(DIRS); do (cd $$i; make all) || exit 1; done
+	@for i in $(DIRS); do (echo "Make all in $$i"; cd $$i; make all) || exit 1; done
 
-toolchain:
-	@echo "Making all in ToolChain..."
-	@(cd ToolChain; make all) || exit 1
+install:
+	@echo "Making install in subdirectories..."
+	@for i in $(DIRS); do (echo "Make install in $$i"; cd $$i; make install) || exit 1; done
 
 clean:
 	@echo "Making clean in subdirectories..."
-	@for i in $(DIRS); do (cd $$i; make clean) || exit 1; done
+	@for i in $(DIRS); do (echo "Make clean in $$i"; cd $$i; make clean) || exit 1; done
 
 
 
