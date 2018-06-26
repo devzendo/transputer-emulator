@@ -1,14 +1,9 @@
 EXES = t800emul
 OBJS = main.o memory.o cpu.o disasm.o
-
-VERSION = `cat ../VERSION.txt`
-CC = g++
 SHARED = ../Shared
-CFLAGS = -O2 -g -DDEBUG -DVERSION=${VERSION} -I$(SHARED)
+CFLAGS = ${MYCFLAGS} -I$(SHARED)
 LDFLAGS = -L$(SHARED)
 LIBS = -lparachutedev
-
-BINDIR = $(PARACHUTEPREFIX)/bin
 
 all : $(EXES)
 

@@ -1,9 +1,6 @@
 TARGET = libparachutedev.a
 OBJS = log.o misc.o hexdump.o link.o fifolink.o linkfactory.o
-
-VERSION = `cat ../VERSION.txt`
-CC = g++
-CFLAGS = -O2 -g -DDEBUG -DVERSION=${VERSION} -I.
+CFLAGS = ${MYCFLAGS} -I.
 
 all : $(TARGET)
 

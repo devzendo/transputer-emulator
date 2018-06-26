@@ -3,12 +3,7 @@ OBJS = nodeserver.o
 EMPATH = ../../Emulator
 SHARED = ../../Shared
 SHOBJS = $(SHARED)/link.o $(SHARED)/fifolink.o $(SHARED)/linkfactory.o
-
-BINDIR = $(PARACHUTEPREFIX)/bin
-
-VERSION = `cat ../../VERSION.txt`
-CC = g++
-CFLAGS = -O2 -g -DDEBUG -DVERSION=${VERSION} -I.. -I$(SHARED)
+CFLAGS = ${MYCFLAGS} -I.. -I$(SHARED)
 LDFLAGS = -L$(SHARED)
 LIBS = -lparachutedev
 

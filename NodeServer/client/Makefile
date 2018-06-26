@@ -1,12 +1,7 @@
 SHARED = ../../Shared
-CFLAGS = -O2 -nostdlib -I.. -I$(SHARED)
-
+CFLAGS = ${MYCFLAGS} -I.. -I$(SHARED)
 OBJS = nodeclient.o
 TARGET = libnodeclient.a
-
-BINDIR = $(PARACHUTEPREFIX)/bin
-LIBDIR = $(PARACHUTEPREFIX)/lib
-INCDIR = $(PARACHUTEPREFIX)/include
 
 all:
 	echo "Nothing to build in client yet"

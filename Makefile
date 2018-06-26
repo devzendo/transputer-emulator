@@ -1,21 +1,26 @@
 DIRS=Shared NodeServer Emulator
-PARACHUTEPREFIX=/opt/parachute
 
-all: setup parachute
+export PARACHUTEPREFIX=/opt/parachute
+export BINDIR = $(PARACHUTEPREFIX)/bin
+export LIBDIR = $(PARACHUTEPREFIX)/lib
+export INCDIR = $(PARACHUTEPREFIX)/include
 
-setup:
+
+export VERSION = $(shell cat VERSION.txt)
+export CC = g++
+export MYCFLAGS = -O2 -g -DDEBUG -DVERSION=${VERSION}
+
+all:
+	@echo "Making all in subdirectories..."
+	@for i in $(DIRS); do (echo "Make all in $$i"; cd $$i; make all) || exit 1; done
+
+install:
 	@sudo mkdir -p $(PARACHUTEPREFIX)
 	@sudo mkdir -p $(PARACHUTEPREFIX)/lib
 	@sudo mkdir -p $(PARACHUTEPREFIX)/bin
 	@sudo mkdir -p $(PARACHUTEPREFIX)/include
 	@sudo mkdir -p $(PARACHUTEPREFIX)/man
 	@sudo mkdir -p $(PARACHUTEPREFIX)/info
-
-parachute:
-	@echo "Making all in subdirectories..."
-	@for i in $(DIRS); do (echo "Make all in $$i"; cd $$i; make all) || exit 1; done
-
-install:
 	@echo "Making install in subdirectories..."
 	@for i in $(DIRS); do (echo "Make install in $$i"; cd $$i; make install) || exit 1; done
 
