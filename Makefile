@@ -14,6 +14,10 @@ all:
 	@echo "Making all in subdirectories..."
 	@for i in $(DIRS); do (echo "Make all in $$i"; cd $$i; make all) || exit 1; done
 
+test:
+	@echo "Making test in subdirectories..."
+	@for i in $(DIRS); do (echo "Make test in $$i"; cd $$i; make test) || exit 1; done
+
 install:
 	@sudo mkdir -p $(PARACHUTEPREFIX)
 	@sudo mkdir -p $(PARACHUTEPREFIX)/lib

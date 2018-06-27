@@ -12,6 +12,7 @@ clean:
 	@echo "Making clean in subdirectories..."
 	@for i in $(DIRS); do (echo "NodeServer: Make clean in $$i"; cd $$i; make clean) || exit 1; done
 
-
+test:
+	@echo No tests here
 
 

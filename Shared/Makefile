@@ -1,8 +1,20 @@
 TARGET = libparachutedev.a
 OBJS = log.o misc.o hexdump.o link.o fifolink.o linkfactory.o
+TEST_TARGET = test_runner
+TEST_OBJS = test_runner.o
+
+SHARED = .
+LDFLAGS = -L$(SHARED)
+LIBS = -lparachutedev
+
+
+
+
 CFLAGS = ${MYCFLAGS} -I.
 
-all : $(TARGET)
+all: $(TARGET)
+
+test: $(TARGET) $(TEST_TARGET)
 
 .cpp.o:
 	$(CC) -c $(CFLAGS) $(CPPFLAGS) -o $@ $<
@@ -18,6 +30,10 @@ $(TARGET): $(OBJS)
 	-rm -f $(TARGET)
 	ar q $(TARGET) $(OBJS)
 
+$(TEST_TARGET): $(TEST_OBJS) $(TARGET)
+	-rm -f $(TEST_TARGET)
+	$(CC) -v $(LDFLAGS) $(TEST_OBJS) -o $(TEST_TARGET) $(LIBS)
+
 clean:
-	rm -f $(OBJS) $(TARGET)
+	rm -f $(OBJS) $(TEST_OBJS) $(TARGET) $(TEST_TARGET)
 

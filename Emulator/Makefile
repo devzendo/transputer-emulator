@@ -24,3 +24,5 @@ install: t800emul
 clean:
 	rm -f $(OBJS) $(EXES)
 
+test:
+	@echo No tests here
