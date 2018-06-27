@@ -396,13 +396,16 @@ static const char *disassembleIndirectInstName(WORD32 Oreg, WORD32 Areg) {
 char *disassembleIndirectOperation(WORD32 Oreg, WORD32 Areg) {
 	static char buf[255];
 	buf[0] = '\0';
-	if ((flags & DebugFlags_DebugLevel) >= Debug_OprCodes)
+	if ((flags & DebugFlags_DebugLevel) >= Debug_OprCodes) {
 		sprintf(buf, " (O=#%08X) ", Oreg);
-	if (Oreg == O_fpentry)
-		if ((flags & DebugFlags_DebugLevel) >= Debug_OprCodes) 
+	}
+	if (Oreg == O_fpentry) {
+		if ((flags & DebugFlags_DebugLevel) >= Debug_OprCodes) {
 			sprintf(buf, " (fpentry A=#%08X) ", Areg);
-		else
+		} else {
 			strcat(buf," ");
+        }
+    }
 	strcat(buf, disassembleIndirectInstName(Oreg, Areg));
 	return buf;
 }
