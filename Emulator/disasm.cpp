@@ -20,7 +20,7 @@
 #include "disasm.h"
 #include "opcodes.h"
 
-static char *disassembleDirectInstName(WORD32 Instruction) {
+static const char *disassembleDirectInstName(WORD32 Instruction) {
 	switch (Instruction) {
 		case D_pfix:
 			return "pfix";
@@ -65,7 +65,7 @@ char *disassembleDirectOperation(WORD32 Instruction, WORD32 Oreg) {
 	return buf;
 }
 
-static char *disassembleIndirectInstName(WORD32 Oreg, WORD32 Areg) {
+static const char *disassembleIndirectInstName(WORD32 Oreg, WORD32 Areg) {
 	switch (Oreg) {
 		case O_rev:
 			return "rev"; 
