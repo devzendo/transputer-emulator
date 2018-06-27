@@ -4,7 +4,6 @@
 // Description : bit settings for flags emulator state and debug flags
 // License     : Apache License v2.0 - see LICENSE.txt for more details
 // Created     : 12/7/05005
-// Revision    : $Revision $
 //
 // (C) 2005-2018 Matt J. Gumbley
 // matt.gumbley@devzendo.org
