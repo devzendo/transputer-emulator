@@ -1078,15 +1078,12 @@ inline void CPU::interpret(void) {
 					SET_FLAGS(EmulatorState_ErrorFlag);
 					break;
 
-				case O_xword: // extend to word
-					if ( ( 0 <= Breg ) && ( Breg < Areg ) ) {
+				case O_xword: // extend to word (cwg p142 & sec 5.8.1)
+				    // Simplified version taken from Transputer Assembly Language programming
+					if ( Breg < Areg ) {
 						Areg = Breg;
 					} else {
-						if ( ( ( - Areg ) <= Breg ) && ( Breg < 0 ) ) {
-							Areg = Breg - ( Areg << 1);
-						} else {
-							logWarn("xword: Breg out of range");
-						}
+                        Areg = Breg - ( Areg << 1);
 					}
 					InstCycles = 4;
 					Breg = Creg;
@@ -1103,11 +1100,11 @@ inline void CPU::interpret(void) {
 				case O_xdble: // extend to double
 					InstCycles++;
 					Creg = Breg;
-					Breg = (Areg < 0 ? -1 : 0);
+					Breg = (Areg < 0 ? -1 : 0); // Areg < 0 is a tautological comparison: false
 					break;
 
 				case O_csngl: // check single
-					if ( ((Areg < 0) && (Breg != -1)) || ((Areg >= 0) && (Breg != 0))) {
+					if ( ((Areg < 0) && (Breg != -1)) || ((Areg >= 0) && (Breg != 0))) { // Areg < 0 is a tautological comparison: false; Areg >= 0 is true
 						SET_FLAGS(EmulatorState_ErrorFlag);
 					}
 					InstCycles = 3;
@@ -1939,13 +1936,13 @@ void CPU::emulate() {
 	// Go...
 	//
 	InstructionStartIPtr = IPtr;
-	if (flags & DebugFlags_DebugLevel >= Debug_DisRegs) {
+	if ((flags & DebugFlags_DebugLevel) >= Debug_DisRegs) {
 		DumpRegs(LOGLEVEL_DEBUG);
 	}
-	if (flags & DebugFlags_Queues == DebugFlags_Queues) {
+	if ((flags & DebugFlags_Queues) == DebugFlags_Queues) {
 		DumpQueueRegs(LOGLEVEL_DEBUG);
 	}
-	if (flags & DebugFlags_Clocks == DebugFlags_Clocks) {
+	if ((flags & DebugFlags_Clocks) == DebugFlags_Clocks) {
 		DumpClockRegs(LOGLEVEL_DEBUG, (WORD32)0);
 	}
 	// For speed, what flags do we turn on before interpreting each instruction?
@@ -1960,13 +1957,13 @@ void CPU::emulate() {
 		interpret();
 	}
 	logDebug("---- Ending Emulation ----");
-	if (flags & DebugFlags_DebugLevel >= Debug_DisRegs) {
+	if ((flags & DebugFlags_DebugLevel) >= Debug_DisRegs) {
 		DumpRegs(LOGLEVEL_DEBUG);
 	}
-	if (flags & DebugFlags_Queues == DebugFlags_Queues) {
+	if ((flags & DebugFlags_Queues) == DebugFlags_Queues) {
 		DumpQueueRegs(LOGLEVEL_DEBUG);
 	}
-	if (flags & DebugFlags_Clocks == DebugFlags_Clocks) {
+	if ((flags & DebugFlags_Clocks) == DebugFlags_Clocks) {
 		DumpClockRegs(LOGLEVEL_DEBUG, (WORD32)0);
 	}
 }

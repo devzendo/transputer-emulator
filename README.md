@@ -32,6 +32,9 @@ Future intentions:
 * Add memory-mapped frame buffer via SDL
 * Add mouse interface for same
 
+Bugs:
+* (possibly obviated by CMake) why does 'make test' in Shared says it fail to link, yet actually does, and works?
+ 
 Directory structure
 -------------------
 The source is split into the following directories:
