@@ -1,8 +1,8 @@
 transputer-emulator
 ===================
-This repository contains the source code distribution of the Parachute parallel programming
-environment - an emulator of the Inmos T800 Transputer, and Node Server that interfaces it
-to a host OS, providing boot/debug/IO facilities.
+This is an emulator of the Inmos T800 Transputer, and Node Server that interfaces it
+to a host OS, providing boot/debug/IO facilities. It is part of the
+[Parachute Project](https://devzendo.github.io/parachute). 
 
 (C) 2005-2018 Matt J. Gumbley
 matt.gumbley@devzendo.org
@@ -13,6 +13,24 @@ Status
 ------
 In progress, June 2018. Modernising, building on modern OSX/Linux/Windows.
 
+Remaining work:
+* Fix all compiler warnings
+* Determine calling convention for node server client library
+* Node Server client library in assembler
+* Develop debug interface
+* Write debugger program
+* Node server needs to support terminal I/O facilities (no echo key reads, sensing available readable keys) for eForth
+
+* Convert to CMake for use in CLion
+* Build on Linuxes, Windows
+
+Future intentions:
+* Add remaining T800/T805 instructions
+* Emulate multiple Transputers on 1-N physical cores
+* Link topology management
+* Investigate Benes networks
+* Add memory-mapped frame buffer via SDL
+* Add mouse interface for same
 
 Directory structure
 -------------------
