@@ -224,7 +224,7 @@ int main(int argc, char *argv[]) {
 		logFatal("CPU setup failed");
 		delete linkFactory;
 		delete memory;
-		return 0;
+		exit(1);
 	}
 	cpu->emulate();
 	fflush(stdout);
