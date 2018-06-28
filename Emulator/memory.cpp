@@ -118,7 +118,6 @@ BYTE Memory::getInstruction(WORD32 addr) {
 }
 
 void Memory::setByte(WORD32 addr, BYTE value) {
-	bool ok = true;
 	if (addr >= InternalMemStart && addr <= myMemEnd) {
 		myCurrentCycles += 1;
 		if (addr > myHighestAccess) {
