@@ -120,7 +120,7 @@ bool processCommandLine(int argc, char *argv[]) {
 							break;
 						default:
 							logFatal("Incorrect level given to -l<loglevel> to set logging level.");
-							logFatal("<loglevel> is one of [diwef] for DEBUG, INFO, WARN, ERROR or FATAL.")
+							logFatal("<loglevel> is one of [diwef] for DEBUG, INFO, WARN, ERROR or FATAL.");
 							return 0;
 					}
 					setLogLevel(logLevel);
