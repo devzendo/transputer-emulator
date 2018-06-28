@@ -1976,7 +1976,7 @@ void CPU::emulate() {
 // Evaluation stack routines
 // Use like: HiWord=POP(); (HiWord=TOS, shuffle)
 inline void CPU::DROP(void) {
-	Areg=Breg; Breg=Creg;
+	Areg = Breg; Breg = Creg;
 }
 
 inline WORD32 CPU::POP(void) {
@@ -1986,5 +1986,5 @@ inline WORD32 CPU::POP(void) {
 }
 
 inline void CPU::PUSH(WORD32 x) {
-	Creg=Breg; Breg=Areg; Areg=x;
+	Creg = Breg; Breg = Areg; Areg = x;
 }
