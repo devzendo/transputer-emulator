@@ -75,6 +75,7 @@ bool processCommandLine(int argc, char *argv[]) {
 		if (strlen(argv[i]) > 1 && argv[i][0] == '-') {
 			switch (argv[i][1]) {
 				case 'h':
+				case '?':
 				    usage();
 				    return 0;
 				case 'c':
@@ -82,14 +83,14 @@ bool processCommandLine(int argc, char *argv[]) {
 					break;
 				case 'm':
 					if (strlen(argv[i]) >= 3) {
-							int n = sscanf(&argv[i][2], "%d", &newMegs);
-							if (n == 1) {
+						int n = sscanf(&argv[i][2], "%d", &newMegs);
+						if (n == 1) {
 							if (newMegs < 4 || newMegs > 64) {
 								logFatal("Initial memory size must be in range [1..64] MB");
 								return 0;
 							}
 							memSize = newMegs * Mega;
-							logInfoF("Initial memory size set to %ld bytes", memSize);
+							logInfoF("Initial memory size set to #%08X (%ld) bytes", memSize, memSize);
 						} else {
 							logFatalF("'%s' is not of the form -m<number> to "
 									"set the initial memory size", argv[i]);
@@ -118,7 +119,8 @@ bool processCommandLine(int argc, char *argv[]) {
 							logLevel = LOGLEVEL_FATAL;
 							break;
 						default:
-							logFatal("Incorrect level given to -l<loglevel> to set logging level");
+							logFatal("Incorrect level given to -l<loglevel> to set logging level.");
+							logFatal("<loglevel> is one of [diwef] for DEBUG, INFO, WARN, ERROR or FATAL.")
 							return 0;
 					}
 					setLogLevel(logLevel);
@@ -134,12 +136,12 @@ bool processCommandLine(int argc, char *argv[]) {
 						case 'o':
 							SET_FLAGS(Debug_OprCodes);
 							break;
-						case 'f': SET_FLAGS((Debug_OprCodes|
-							MemAccessDebug_ReadWriteData| // Full is too much
-							DebugFlags_LinkComms|
-							DebugFlags_Clocks|
-							DebugFlags_Queues|
-							DebugFlags_IDiag));
+						case 'f': SET_FLAGS((Debug_OprCodes |
+											MemAccessDebug_ReadWriteData | // Full is too much
+											DebugFlags_LinkComms |
+											DebugFlags_Clocks |
+											DebugFlags_Queues |
+											DebugFlags_IDiag));
 							break;
 						case 'i':
 							SET_FLAGS(DebugFlags_IDiag);
