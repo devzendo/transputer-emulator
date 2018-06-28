@@ -44,6 +44,7 @@ void FIFOLink::initialise(void) throw (exception) {
 	// The CPU client reads on the read FIFO and writes on the write FIFO.
 	// Any server reads on the write FIFO and reads on the read FIFO.
 	// READ FIFO
+	// TODO WINDOWS PORTABILITY (temp path needs determining)
 	sprintf(rfname, "/tmp/t800emul-read-%d", myLinkNo);
 	if (stat(rfname, &st) == -1) {
 		// make the fifo
@@ -61,6 +62,7 @@ void FIFOLink::initialise(void) throw (exception) {
 		throw runtime_error(msgbuf);
 	}
 	// WRITE FIFO
+	// TODO WINDOWS PORTABILITY (temp path needs determining)
 	sprintf(wfname, "/tmp/t800emul-write-%d", myLinkNo);
 	if (stat(wfname, &st) == -1) {
 		// make the fifo

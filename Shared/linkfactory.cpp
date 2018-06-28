@@ -25,7 +25,7 @@ LinkFactory::LinkFactory(bool isServer, bool isDebug) {
 	logDebug("LinkFactory CTOR");
 	bServer = isServer;
 	bDebug = isDebug;
-	for (int i=0; i<4; i++) {
+	for (int i = 0; i < 4; i++) {
 		myLinkTypes[i] = LinkType_FIFO;
 	}
 }
@@ -35,7 +35,7 @@ static void linkConfigError(char *arg, const char *reason) {
 }
 
 bool LinkFactory::processCommandLine(int argc, char *argv[]) {
-	for (int i=1; i<argc; i++) {
+	for (int i = 1; i < argc; i++) {
 		if (argv[i][0] == '-' && argv[i][1] == 'L') {
 			if (strlen(argv[i]) != 4) {
 				linkConfigError(argv[i], "not four characters long");

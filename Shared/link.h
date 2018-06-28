@@ -27,10 +27,10 @@ class Link {
 		// TODO may need buffer-centric versions of these, and
 		// these are entirely synchronous. to prevent blocking I/O
 		// suspending the whole emulator, I should make each link
-		// driven by a state machine to indtroduce some polled 
+		// driven by a state machine to introduce some polled
 		// asynchrony.
 		// For now, just to get data flowing from the Node Server,
-		// Ill use the synchronous forms.
+		// I'll use the synchronous forms.
 		virtual BYTE readByte(void) throw (exception);
 		virtual void writeByte(BYTE b) throw (exception);
 		WORD32 readWord(void) throw (exception);

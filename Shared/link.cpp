@@ -37,9 +37,11 @@ BYTE Link::readByte(void) throw (exception) {
 	logError("Link::readByte called - should always be a subclass method");
 	return 0x00;
 }
+
 void Link::writeByte(BYTE buf) throw (exception) {
 	logError("Link::writeByte called - should always be a subclass method");
 }
+
 WORD32 Link::readWord(void) throw (exception) {
 	// Input a little-endian word, LSB first MSB last
 	return (readByte()) |
@@ -47,6 +49,7 @@ WORD32 Link::readWord(void) throw (exception) {
 		  (readByte() << 16) |
 		  (readByte() << 24);
 }
+
 void Link::writeWord(WORD32 w) throw (exception) {
 	// Always output as a little-endian word, LSB first MSB last
 	writeByte(w & 0x000000ff);
@@ -61,6 +64,7 @@ void Link::resetLink(void) throw (exception) {
 int Link::getLinkNo(void) {
 	return myLinkNo;
 }
+
 void Link::setDebug(bool newDebug) {
 	bDebug = newDebug;
 }
