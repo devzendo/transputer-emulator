@@ -61,29 +61,29 @@ void usage() {
 }
 
 void showConfiguration() {
-	logInfoF("Memory size:     #%08X bytes. (%dMB)",memSize,memSize/Mega);
-       	logInfoF("Internal memory: #%08X to #%08X",InternalMemStart,InternalMemEnd);
-	logInfoF("External memory: #%08X to #%08X",ExternalMemStart,InternalMemStart + memSize);
+	logInfoF("Memory size:     #%08X bytes. (%dMB)", memSize, memSize/Mega);
+	logInfoF("Internal memory: #%08X to #%08X", InternalMemStart, InternalMemEnd);
+	logInfoF("External memory: #%08X to #%08X", ExternalMemStart, InternalMemStart + memSize);
 }
 
 bool processCommandLine(int argc, char *argv[]) {
 	bool showConf = false;
 	int newMegs = 4;
 	int logLevel = LOGLEVEL_INFO;
-	for (int i=1; i<argc; i++) {
+	for (int i = 1; i < argc; i++) {
 		//logDebugF("Processing cmd line arg %d of %d : '%s'", i, argc, argv[i]);
 		if (strlen(argv[i]) > 1 && argv[i][0] == '-') {
 			switch (argv[i][1]) {
 				case 'h':
-				       	usage();
-				       	return 0;
+				    usage();
+				    return 0;
 				case 'c':
 					showConf = true;
 					break;
-       				case 'm':
-					if (strlen(argv[i])>=3) {
-        					int n = sscanf(&argv[i][2],"%d",&newMegs);
-        					if (n == 1) {
+				case 'm':
+					if (strlen(argv[i]) >= 3) {
+							int n = sscanf(&argv[i][2], "%d", &newMegs);
+							if (n == 1) {
 							if (newMegs < 4 || newMegs > 64) {
 								logFatal("Initial memory size must be in range [1..64] MB");
 								return 0;
@@ -102,21 +102,21 @@ bool processCommandLine(int argc, char *argv[]) {
 					break;
  				case 'l':
 					switch (argv[i][2]) {
-                     				case 'd':
-					       		logLevel = LOGLEVEL_DEBUG;
-					       		break;
-                     				case 'i':
-					       		logLevel = LOGLEVEL_INFO;
-					       		break;
-                     				case 'w':
-					       		logLevel = LOGLEVEL_WARN;
-					       		break;
-                     				case 'e':
-					       		logLevel = LOGLEVEL_ERROR;
-					       		break;
-                     				case 'f':
-					       		logLevel = LOGLEVEL_FATAL;
-					       		break;
+						case 'd':
+							logLevel = LOGLEVEL_DEBUG;
+							break;
+						case 'i':
+							logLevel = LOGLEVEL_INFO;
+							break;
+						case 'w':
+							logLevel = LOGLEVEL_WARN;
+							break;
+						case 'e':
+							logLevel = LOGLEVEL_ERROR;
+							break;
+						case 'f':
+							logLevel = LOGLEVEL_FATAL;
+							break;
 						default:
 							logFatal("Incorrect level given to -l<loglevel> to set logging level");
 							return 0;
@@ -125,54 +125,52 @@ bool processCommandLine(int argc, char *argv[]) {
 					break;
  				case 'd':
 					switch (argv[i][2]) {
-                     				case 'a':
-					       		SET_FLAGS(Debug_Disasm);
-					       		break;
-                     				case 'r':
-					       		SET_FLAGS(Debug_DisRegs);
-					       		break;
-                     				case 'o':
-					       		SET_FLAGS(Debug_OprCodes);
-					       		break;
-		        			case 'f': SET_FLAGS((Debug_OprCodes|
+						case 'a':
+							SET_FLAGS(Debug_Disasm);
+							break;
+						case 'r':
+							SET_FLAGS(Debug_DisRegs);
+							break;
+						case 'o':
+							SET_FLAGS(Debug_OprCodes);
+							break;
+						case 'f': SET_FLAGS((Debug_OprCodes|
 							MemAccessDebug_ReadWriteData| // Full is too much
 							DebugFlags_LinkComms|
-                             				DebugFlags_Clocks|
+							DebugFlags_Clocks|
 							DebugFlags_Queues|
 							DebugFlags_IDiag));
 							break;
-        					case 'i':
-				       			SET_FLAGS(DebugFlags_IDiag);
-				       			break;
-        					case 'l':
-				       			SET_FLAGS(DebugFlags_LinkComms);
-				       			break;
-        					case 'q':
-				       			SET_FLAGS(DebugFlags_Queues);
-				       			break;
-        					case 'c':
-				       			SET_FLAGS(DebugFlags_Clocks);
-				       			break;
-        					case 'm':
-				       			SET_FLAGS(MemAccessDebug_ReadWriteData);
-				       			break;
-        					case 'M':
-				       			SET_FLAGS(MemAccessDebug_Full);
-				       			break;
+						case 'i':
+							SET_FLAGS(DebugFlags_IDiag);
+							break;
+						case 'l':
+							SET_FLAGS(DebugFlags_LinkComms);
+							break;
+						case 'q':
+							SET_FLAGS(DebugFlags_Queues);
+							break;
+						case 'c':
+							SET_FLAGS(DebugFlags_Clocks);
+							break;
+						case 'm':
+							SET_FLAGS(MemAccessDebug_ReadWriteData);
+							break;
+						case 'M':
+							SET_FLAGS(MemAccessDebug_Full);
+							break;
 						default:
-					      		usage();
-					      		return 0;
+							usage();
+							return 0;
 					}
 					break;
 				case 'i':
-		       			SET_FLAGS(DebugFlags_Monitor | Debug_DisRegs);
-		       			break;
+					SET_FLAGS(DebugFlags_Monitor | Debug_DisRegs);
+					break;
 				case 't':
-		       			SET_FLAGS(DebugFlags_TerminateOnMemViol);
-		       			break;
-
-                   	}
- 
+					SET_FLAGS(DebugFlags_TerminateOnMemViol);
+					break;
+			}
 		} else {
 		}
 	}
