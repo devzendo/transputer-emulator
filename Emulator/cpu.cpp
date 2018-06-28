@@ -54,36 +54,36 @@ inline WORD32 W_TEMP(WORD32 x) {
 // If the process has been descheduled, this holds the IPtr 
 // of the descheduled process.
 inline WORD32 W_IPTR(WORD32 x) {
-	return Wdesc_WPtr(x)-4;
+	return Wdesc_WPtr(x) - 4;
 }
 
 // If the process is on a scheduling list has been 
 // descheduled then rescheduled, this is the address 
 // of the next process on the list's workspace.
 inline WORD32 W_LINK(WORD32 x) {
-	return Wdesc_WPtr(x)-8;
+	return Wdesc_WPtr(x) - 8;
 }
 
 // During communication deschedule, or during an alt, 
 // this holds the address of the channel. During alt, it holds 
 // the alternation state. These two are synonymous.
 inline WORD32 W_POINTER(WORD32 x) {
-       return Wdesc_WPtr(x)-12;
+       return Wdesc_WPtr(x) - 12;
 }
 inline WORD32 W_ALTSTATE(WORD32 x) {
-       return Wdesc_WPtr(x)-12;
+       return Wdesc_WPtr(x) - 12;
 }
 
 // The address of the next process's workspace, if on a timer
 // list, or state of time selection in an alternation
 // involving timer guards.
 inline WORD32 W_TLINK(WORD32 x) {
-       return Wdesc_WPtr(x)-16;
+       return Wdesc_WPtr(x) - 16;
 }
 
 // The time that a process on a timer list is waiting for.
 inline WORD32 W_TIME(WORD32 x) {
-	return Wdesc_WPtr(x)-20;
+	return Wdesc_WPtr(x) - 20;
 }
 
 
@@ -125,7 +125,7 @@ bool CPU::initialise(Memory *memory, LinkFactory *linkFactory) {
 	int i;
 	bool allLinksOK = true;
 	myMemory = memory;
-	for (i=0; i<4; i++) {
+	for (i = 0; i < 4; i++) {
 		if ((myLinks[i] = linkFactory->createLink(i)) == NULL) {
 			logFatalF("Could not create link %d", i);
 			allLinksOK = false;
@@ -147,7 +147,7 @@ bool CPU::initialise(Memory *memory, LinkFactory *linkFactory) {
 
 CPU::~CPU() {
 	logDebug("CPU DTOR");
-	for (int i=0; i<4; i++) {
+	for (int i = 0; i < 4; i++) {
 		if (myLinks[i] != NULL) {
 			delete myLinks[i];
 			myLinks[i] = NULL;
@@ -199,7 +199,7 @@ WORD32 CPU::disassembleRange(WORD32 addr, WORD32 maxlen) {
 	int i;
 	line[0] = '\0';
 	sprintf(line, "%08X ", addr);
-	for (caddr = addr; caddr < addr+maxlen; caddr++) {
+	for (caddr = addr; caddr < addr + maxlen; caddr++) {
 		BYTE b = myMemory->getInstruction(caddr);
 		// Decode it
 		BYTE cInstruction = b & 0xf0;
@@ -227,7 +227,7 @@ WORD32 CPU::disassembleRange(WORD32 addr, WORD32 maxlen) {
 				// cInstruction is fpentry, and Areg codes for
 				// a floating point instruction. So just say 0,
 				// for Areg, and this'll cause ?fp? to be used.
-				for (i=0; i<8-clen; i++) {
+				for (i = 0; i < 8 - clen; i++) {
 					strcat(line, "   ");
 				}
 				strcat(line, disassembleIndirectOperation(cOreg, 0)); // TODO: fix potential BUFFER OVERFLOW
@@ -240,7 +240,7 @@ WORD32 CPU::disassembleRange(WORD32 addr, WORD32 maxlen) {
 				clen = 0;
 				break;
 			default: // another direct instruction
-				for (i=0; i<8-clen; i++) {
+				for (i = 0; i < 8 - clen; i++) {
 					strcat(line, "   ");
 				}
 				strcat(line, disassembleDirectOperation(cInstruction, cOreg)); // TODO: fix potential BUFFER OVERFLOW
@@ -316,7 +316,7 @@ void dumpFlags() {
 		logInfo("-- TIMER INSTRUCTION");
 }
 
-
+// Monitor. Return true to single step to next instruction; false to quit emulator or monitor (check flags).
 inline bool CPU::monitor(void) {
 	char instr[80];
 	int len;
@@ -379,7 +379,7 @@ inline bool CPU::monitor(void) {
 			}
 			//logInfoF("da addr %08X len %08X", CurrDataAddress, CurrDataLen);
 			myMemory->hexDump(CurrDataAddress, CurrDataLen);
-			CurrDataAddress+=CurrDataLen;
+			CurrDataAddress += CurrDataLen;
 		} else if (strncmp("dw", instr, 2) == 0) {
 			if (sscanf(instr, "dw %x %x", &a1, &a2) == 2) {
 				CurrDataAddress = a1;
@@ -389,7 +389,7 @@ inline bool CPU::monitor(void) {
 			}
 			//logInfoF("dw addr %08X len %08X", CurrDataAddress, CurrDataLen);
 			myMemory->hexDumpWords(CurrDataAddress, CurrDataLen);
-			CurrDataAddress+=CurrDataLen;
+			CurrDataAddress += CurrDataLen;
 		} else if (strcmp(instr, "f") == 0) {
 			dumpFlags();
 		} else if (strcmp(instr, "q") == 0) {
@@ -449,7 +449,7 @@ inline void CPU::interpret(void) {
 			break;
 
 		case D_ldlp: // load local pointer
-			PUSH(Wdesc_WPtr(Wdesc) + (Oreg<<2));
+			PUSH(Wdesc_WPtr(Wdesc) + (Oreg << 2));
 			break;
 
 		case D_pfix: // prefix
@@ -457,7 +457,7 @@ inline void CPU::interpret(void) {
 			break;
 
 		case D_ldnl: // load non local
-			Areg = myMemory->getWord(Areg + (Oreg<<2));
+			Areg = myMemory->getWord(Areg + (Oreg << 2));
 			InstCycles++;
 			break;
 
@@ -466,7 +466,7 @@ inline void CPU::interpret(void) {
 			break;
 
 		case D_ldnlp: // load non local pointer
-			Areg += Oreg<<2;
+			Areg += Oreg << 2;
 			break;
 
 		case D_nfix: // negative prefix
@@ -474,16 +474,17 @@ inline void CPU::interpret(void) {
 			break;
 
 		case D_ldl: // load local
-			PUSH(myMemory->getWord(Wdesc_WPtr(Wdesc) + (Oreg<<2)));
+			PUSH(myMemory->getWord(Wdesc_WPtr(Wdesc) + (Oreg << 2)));
 			InstCycles++;
-       			break;
+			break;
 
 		case D_adc: { // add constant checked
-			WORD32 AregSign = Areg & SignBit;
-			Areg += Oreg;
-			if ((Areg & SignBit) != AregSign) 
-				SET_FLAGS(EmulatorState_ErrorFlag);
-       			}
+				WORD32 AregSign = Areg & SignBit;
+				Areg += Oreg;
+				if ((Areg & SignBit) != AregSign) {
+					SET_FLAGS(EmulatorState_ErrorFlag);
+				}
+			}
 			break;
 
 		case D_call: // call
@@ -508,7 +509,7 @@ inline void CPU::interpret(void) {
 			break;
 
 		case D_ajw: // adjust workspace
-			Wdesc += Oreg<<2;
+			Wdesc += Oreg << 2;
 			break;
 
 		case D_eqc: // equals constant
@@ -517,12 +518,12 @@ inline void CPU::interpret(void) {
 			break;
 
 		case D_stl: // store local
-			myMemory->setWord(Wdesc_WPtr(Wdesc) + (Oreg<<2), Areg);
+			myMemory->setWord(Wdesc_WPtr(Wdesc) + (Oreg << 2), Areg);
 			DROP();
 			break;
 
 		case D_stnl: // store non local
-			myMemory->setWord(Areg + (Oreg<<2), Breg);
+			myMemory->setWord(Areg + (Oreg << 2), Breg);
 			Areg = Creg;
 			InstCycles++;
 			break;
@@ -531,38 +532,38 @@ inline void CPU::interpret(void) {
 			switch (Oreg) {
 
 				case O_rev: { // reverse
-					WORD32 t = Areg;
-					Areg = Breg;
-					Breg = t;
+						WORD32 t = Areg;
+						Areg = Breg;
+						Breg = t;
 					}
 					break;
 
 				case O_add: { // add checked
-       					WORD32 AregSign = Areg & SignBit;
-					Areg += Breg;
-					Breg = Creg;
-					if ((Areg & SignBit) != AregSign)
-						SET_FLAGS(EmulatorState_ErrorFlag);
+						WORD32 AregSign = Areg & SignBit;
+						Areg += Breg;
+						Breg = Creg;
+						if ((Areg & SignBit) != AregSign)
+							SET_FLAGS(EmulatorState_ErrorFlag);
 					}
 					break;
 
 				case O_sub: { // subtract checked
-					WORD32 AregSign = Areg & SignBit;
-					Areg = Breg - Areg;
-					Breg = Creg;
-					if ((Areg & SignBit) != AregSign)
-						SET_FLAGS(EmulatorState_ErrorFlag);
-					}
+						WORD32 AregSign = Areg & SignBit;
+						Areg = Breg - Areg;
+						Breg = Creg;
+						if ((Areg & SignBit) != AregSign)
+							SET_FLAGS(EmulatorState_ErrorFlag);
+						}
 					break;
                 
 				case O_mul: { // multiply checked
-					WORD32 AregSign = Areg & SignBit;
-					InstCycles = BitsPerWord + 6;
-					Areg *= Breg;
-					Breg = Creg;
-					if ((Areg & SignBit) != AregSign)
-						SET_FLAGS(EmulatorState_ErrorFlag);
-					}
+						WORD32 AregSign = Areg & SignBit;
+						InstCycles = BitsPerWord + 6;
+						Areg *= Breg;
+						Breg = Creg;
+						if ((Areg & SignBit) != AregSign)
+							SET_FLAGS(EmulatorState_ErrorFlag);
+						}
 					break;
 
 				case O_div: // divide 
@@ -596,7 +597,7 @@ inline void CPU::interpret(void) {
 					break;
 
 				case O_prod: // product unchecked
-					InstCycles = HighestSetBit(Areg)+4;
+					InstCycles = HighestSetBit(Areg) + 4;
 					Areg *= Breg;
 					Breg = Creg;
 					break;
@@ -653,31 +654,33 @@ inline void CPU::interpret(void) {
 					break;
 
 				case O_gt: { // greater than signed
-					SWORD32 sAreg=(SWORD32)Areg;
-					SWORD32 sBreg=(SWORD32)Breg;
-					Areg = (sBreg > sAreg);
-					Breg = Creg;
-					InstCycles++;
+						SWORD32 sAreg = (SWORD32)Areg;
+						SWORD32 sBreg = (SWORD32)Breg;
+						Areg = (sBreg > sAreg);
+						Breg = Creg;
+						InstCycles++;
 					}
 					break;
 
 				case O_lend: { // loop end
-					WORD32 Count = myMemory->getWord(Breg + 4);
-					myMemory->setWord(Breg + 4, Count - 1);
-					if (Count > 1) { // loop back
-						myMemory->setWord(Breg, myMemory->getWord(Breg) + 1);
-						IPtr -= Areg;
-						InstCycles = 10;
-					} else {
-						InstCycles = 5;
-					}
-					// TODO Should the deschedule only occur when looping back?
-					// Instruction set summary seems to imply this...
-					// If there's a deschedule pending, set the required flag, so
-					// that it actually occurs.
-					if (IS_FLAG_SET(EmulatorState_DeschedulePending)) {
-						SET_FLAGS(EmulatorState_DescheduleRequired);
-					}
+						WORD32 Count = myMemory->getWord(Breg + 4);
+						myMemory->setWord(Breg + 4, Count - 1);
+						if (Count > 1) { // loop back
+							myMemory->setWord(Breg, myMemory->getWord(Breg) + 1);
+							IPtr -= Areg;
+							InstCycles = 10;
+						} else {
+							InstCycles = 5;
+						}
+						// TODO Should the deschedule only occur when looping back?
+						// See CWG p40, "[descheduling] will occur after the next j or lend instruction executed."
+						// What does 'executed' mean? Every time, or only when loop effected?
+						// Instruction set summary seems to imply this...
+						// If there's a deschedule pending, set the required flag, so
+						// that it actually occurs.
+						if (IS_FLAG_SET(EmulatorState_DeschedulePending)) {
+							SET_FLAGS(EmulatorState_DescheduleRequired);
+						}
 					}
 					break;
 
@@ -708,7 +711,7 @@ inline void CPU::interpret(void) {
 					break;
 
 				case O_wsub: // word subscript
-					Areg += (Breg<<2);
+					Areg += (Breg << 2);
 					Breg = Creg;
 					InstCycles++;
 					break;
@@ -728,135 +731,135 @@ inline void CPU::interpret(void) {
 					break;
 
 				case O_in: { // input message
-					// Input message of length Areg bytes from channel pointed
-					// to by Breg to memory at Creg. Takes 2w+18 iff 
-					// communication proceeds, or 20 iff communication waits, and 
-					// DescheduleFlag is set. 
-					// See memory::blockCopy for details of timing.
-					InstCycles = 18 ;
-					// TODO: should we deschedule only when communication waits? 
-					// Instruction set summary seems to imply this..
-					SET_FLAGS(EmulatorState_Interrupt);
-					Link *myLink = NULL;
-					switch (Breg) {
-						// Need to be able to do a blockcopy-type operation from the
-						// Node Server for proper timing..... or fudge the memory
-						// cycle count mechanism for this special case.
-						case Link0Input:
-							myLink = myLinks[0];
-							break;
-						case Link1Input:
-							myLink = myLinks[1];
-							break;
-						case Link2Input:
-							myLink = myLinks[2];
-							break;
-						case Link3Input:
-							myLink = myLinks[3];
-							break;
-						default: // Do input from memory channel
-					   		if (myMemory->isLegalMemory(Creg) && 
-							    myMemory->isLegalMemory(Creg+Areg)) {
-								WORD32 WorkSpace = myMemory->getWord(Breg);
-								if (Wdesc_WPtr(WorkSpace) == NotProcess_p) {
-									// This in reached the rendezvous first
-									myMemory->setWord(W_POINTER(Wdesc), Creg);
-									myMemory->setWord(Breg, Wdesc);
-									InstCycles = 20;
-									SET_FLAGS(EmulatorState_DescheduleRequired);
+						// Input message of length Areg bytes from channel pointed
+						// to by Breg to memory at Creg. Takes 2w+18 iff
+						// communication proceeds, or 20 iff communication waits, and
+						// DescheduleFlag is set.
+						// See memory::blockCopy for details of timing.
+						InstCycles = 18;
+						// TODO: should we deschedule only when communication waits?
+						// Instruction set summary seems to imply this..
+						SET_FLAGS(EmulatorState_Interrupt);
+						Link *myLink = NULL;
+						switch (Breg) {
+							// Need to be able to do a blockcopy-type operation from the
+							// Node Server for proper timing..... or fudge the memory
+							// cycle count mechanism for this special case.
+							case Link0Input:
+								myLink = myLinks[0];
+								break;
+							case Link1Input:
+								myLink = myLinks[1];
+								break;
+							case Link2Input:
+								myLink = myLinks[2];
+								break;
+							case Link3Input:
+								myLink = myLinks[3];
+								break;
+							default: // Do input from memory channel
+						        if (myMemory->isLegalMemory(Creg) &&
+								    myMemory->isLegalMemory(Creg + Areg)) {
+									WORD32 WorkSpace = myMemory->getWord(Breg);
+									if (Wdesc_WPtr(WorkSpace) == NotProcess_p) {
+										// This in reached the rendezvous first
+										myMemory->setWord(W_POINTER(Wdesc), Creg);
+										myMemory->setWord(Breg, Wdesc);
+										InstCycles = 20;
+										SET_FLAGS(EmulatorState_DescheduleRequired);
+									} else {
+										// The out reached the rendezvous first
+										WORD32 ChanAddr = myMemory->getWord(W_POINTER(WorkSpace));
+										// Copy Areg bytes from ChanAddr to Creg
+										myMemory->blockCopy(Areg, ChanAddr, Creg);
+										// Reset channel to unused
+										myMemory->setWord(Breg, NotProcess_p);
+										// Request a schedule of the process at WorkSpace
+										ScheduleWdesc = WorkSpace;
+									}
 								} else {
-									// The out reached the rendezvous first
-									WORD32 ChanAddr = myMemory->getWord(W_POINTER(WorkSpace));
-									// Copy Areg bytes from ChanAddr to Creg
-									myMemory->blockCopy(Areg, ChanAddr, Creg);
-									// Reset channel to unused
-									myMemory->setWord(Breg, NotProcess_p);
-									// Request a schedule of the process at WorkSpace
-									ScheduleWdesc = WorkSpace;
+									logWarnF("in to bad memory area Creg=%08X Areg=%08X", Creg, Areg);
 								}
-							} else {
-								logWarnF("in to bad memory area Creg=%08X Areg=%08X", Creg, Areg);
-							}
-							break;
-					}
-					// Now handle input from real links
-					if (myLink != NULL) {
-						try {
-							WORD32 i;
-							for (i=0; i<Areg; i++)  {
-								myMemory->setByte(Creg+i, myLink->readByte());
-							}
-						} catch (exception &e) {
-							logErrorF("in failed to read byte from link %d: %s", myLink->getLinkNo(), e.what());
-							SET_FLAGS(EmulatorState_Terminate);
+								break;
 						}
-					}
+						// Now handle input from real links
+						if (myLink != NULL) {
+							try {
+								WORD32 i;
+								for (i = 0; i < Areg; i++)  {
+									myMemory->setByte(Creg + i, myLink->readByte());
+								}
+							} catch (exception &e) {
+								logErrorF("in failed to read byte from link %d: %s", myLink->getLinkNo(), e.what());
+								SET_FLAGS(EmulatorState_Terminate);
+							}
+						}
 					}
 					break;
 
 				case O_out: { // output message
-					// Output message of length Areg bytes to the channel
-					// pointed to by Breg from memory at Creg
-					// takes 2w+20 iff communication proceeds, or 20 iff 
-					// communication waits, and DescheduleFlag is set.
-					// See memory::blockCopy for details of timing.
-					InstCycles = 20 ;
-					// TODO: should we deschedule only when communication waits? 
-					// Instruction set summary seems to imply this..
-					SET_FLAGS(EmulatorState_Interrupt);
-					Link *myLink = NULL;
-					switch (Breg) {
-						case Link0Output:
-							myLink = myLinks[0];
-							break;
-						case Link1Output:
-							myLink = myLinks[1];
-							break;
-						case Link2Output:
-							myLink = myLinks[2];
-							break;
-						case Link3Output:
-							myLink = myLinks[3];
-							break;
-						default: // Do output to memory channel
-							if (myMemory->isLegalMemory(Creg) &&
-							    myMemory->isLegalMemory(Creg + Areg)) {
-								WORD32 WorkSpace = myMemory->getWord(Breg);
-								if (Wdesc_WPtr(WorkSpace) == NotProcess_p) {
-									// This out reached the rendezvous first
-									myMemory->setWord(W_POINTER(Wdesc), Creg);
-									myMemory->setWord(Breg, Wdesc);
-									InstCycles = 20;
-									SET_FLAGS(EmulatorState_DescheduleRequired);
+						// Output message of length Areg bytes to the channel
+						// pointed to by Breg from memory at Creg
+						// takes 2w+20 iff communication proceeds, or 20 iff
+						// communication waits, and DescheduleFlag is set.
+						// See memory::blockCopy for details of timing.
+						InstCycles = 20 ;
+						// TODO: should we deschedule only when communication waits?
+						// Instruction set summary seems to imply this..
+						SET_FLAGS(EmulatorState_Interrupt);
+						Link *myLink = NULL;
+						switch (Breg) {
+							case Link0Output:
+								myLink = myLinks[0];
+								break;
+							case Link1Output:
+								myLink = myLinks[1];
+								break;
+							case Link2Output:
+								myLink = myLinks[2];
+								break;
+							case Link3Output:
+								myLink = myLinks[3];
+								break;
+							default: // Do output to memory channel
+								if (myMemory->isLegalMemory(Creg) &&
+								    myMemory->isLegalMemory(Creg + Areg)) {
+									WORD32 WorkSpace = myMemory->getWord(Breg);
+									if (Wdesc_WPtr(WorkSpace) == NotProcess_p) {
+										// This out reached the rendezvous first
+										myMemory->setWord(W_POINTER(Wdesc), Creg);
+										myMemory->setWord(Breg, Wdesc);
+										InstCycles = 20;
+										SET_FLAGS(EmulatorState_DescheduleRequired);
+									} else {
+										WORD32 ChanAddr = myMemory->getWord(W_POINTER(WorkSpace));
+										// The in reached the rendezvous first
+										// Copy Areg bytes from Creg to ChanAddr
+										myMemory->blockCopy(Areg, Creg, ChanAddr);
+										// Reset channel to unused
+										myMemory->setWord(Breg, NotProcess_p);
+										// Request a schedule of the process at WorkSpace
+										ScheduleWdesc = WorkSpace;
+									}
 								} else {
-									WORD32 ChanAddr = myMemory->getWord(W_POINTER(WorkSpace));
-									// The in reached the rendezvous first
-									// Copy Areg bytes from Creg to ChanAddr
-									myMemory->blockCopy(Areg, Creg, ChanAddr);
-									// Reset channel to unused
-									myMemory->setWord(Breg, NotProcess_p);
-									// Request a schedule of the process at WorkSpace
-									ScheduleWdesc = WorkSpace;
+									logWarnF("out from bad memory area Creg=%08X Areg=%08X", Creg, Areg);
 								}
-							} else {
-								logWarnF("out from bad memory area Creg=%08X Areg=%08X", Creg, Areg);
-							}
-							break;
-					}
-					// Now handle output to real links
-					if (myLink != NULL) {
-						try {
-							WORD32 i;
-							// Again, need to do something about blockcopy over
-							// the IServer link.... see O_in processing.
-							for (i=0; i<Areg; i++) {
-								myLink->writeByte(myMemory->getByte(Creg+i));
-							}
-						} catch (exception &e) {
-							logErrorF("out failed to write byte to link %d: %s", myLink->getLinkNo(), e.what());
-							SET_FLAGS(EmulatorState_Terminate);
+								break;
 						}
-					}
+						// Now handle output to real links
+						if (myLink != NULL) {
+							try {
+								WORD32 i;
+								// Again, need to do something about blockcopy over
+								// the IServer link.... see O_in processing.
+								for (i = 0; i < Areg; i++) {
+									myLink->writeByte(myMemory->getByte(Creg + i));
+								}
+							} catch (exception &e) {
+								logErrorF("out failed to write byte to link %d: %s", myLink->getLinkNo(), e.what());
+								SET_FLAGS(EmulatorState_Terminate);
+							}
+						}
 					}
 					break;
 
@@ -866,127 +869,126 @@ inline void CPU::interpret(void) {
 					break;
 
 				case O_sb: // store byte
-					myMemory->setByte(Areg,(BYTE)Breg & 0xff);
+					myMemory->setByte(Areg, (BYTE)Breg & 0xff);
    					InstCycles = 4;
 					break;
 
 				case O_outbyte: { // output byte
-					InstCycles = 25;
-					Link *myLink = NULL;
-					switch (Breg) {
-						case Link0Output:
-							myLink = myLinks[0];
-							break;
-						case Link1Output :
-							myLink = myLinks[1];
-							break;
-						case Link2Output :
-							myLink = myLinks[2];
-							break;
-						case Link3Output :
-							myLink = myLinks[3];
-							break;
-						default: { // Do output to memory channel
-							WORD32 WorkSpace;
-							WorkSpace = myMemory->getWord(Breg);
-							if (Wdesc_WPtr(WorkSpace) == NotProcess_p) {
-								// The outbyte got to the rendezvous
-								// first.. Store Areg in the workspace
-								// temporary variable...
-								myMemory->setByte(W_TEMP(Wdesc), (BYTE)Areg & 0xff);
-								myMemory->setWord(W_POINTER(Wdesc), Wdesc_WPtr(Wdesc));
-								myMemory->setWord(Breg, Wdesc);
-								SET_FLAGS(EmulatorState_DescheduleRequired);
-							} else {
-								// The in got to the rendezvos first
-								myMemory->setByte(myMemory->getWord(W_POINTER(WorkSpace)), (BYTE)Areg & 0xff);
-								myMemory->setWord(Breg, NotProcess_p);
-								// Schedule the process at WorkSpace
-								ScheduleWdesc = WorkSpace;
-							} 
-							}
-							break;
-					}
-					// Now handle output to real links
-					if (myLink != NULL) {
-						try {
-							myLink->writeByte((BYTE)Areg & 0xff);
-						} catch (exception &e) {
-							logErrorF("outbyte failed to write byte to link %d: %s", myLink->getLinkNo(), e.what());
-							SET_FLAGS(EmulatorState_Terminate);
+						InstCycles = 25;
+						Link *myLink = NULL;
+						switch (Breg) {
+							case Link0Output:
+								myLink = myLinks[0];
+								break;
+							case Link1Output :
+								myLink = myLinks[1];
+								break;
+							case Link2Output :
+								myLink = myLinks[2];
+								break;
+							case Link3Output :
+								myLink = myLinks[3];
+								break;
+							default: { // Do output to memory channel
+								WORD32 WorkSpace;
+								WorkSpace = myMemory->getWord(Breg);
+								if (Wdesc_WPtr(WorkSpace) == NotProcess_p) {
+									// The outbyte got to the rendezvous
+									// first.. Store Areg in the workspace
+									// temporary variable...
+									myMemory->setByte(W_TEMP(Wdesc), (BYTE)Areg & 0xff);
+									myMemory->setWord(W_POINTER(Wdesc), Wdesc_WPtr(Wdesc));
+									myMemory->setWord(Breg, Wdesc);
+									SET_FLAGS(EmulatorState_DescheduleRequired);
+								} else {
+									// The in got to the rendezvos first
+									myMemory->setByte(myMemory->getWord(W_POINTER(WorkSpace)), (BYTE)Areg & 0xff);
+									myMemory->setWord(Breg, NotProcess_p);
+									// Schedule the process at WorkSpace
+									ScheduleWdesc = WorkSpace;
+								}
+								}
+								break;
 						}
-
-					}
+						// Now handle output to real links
+						if (myLink != NULL) {
+							try {
+								myLink->writeByte((BYTE)Areg & 0xff);
+							} catch (exception &e) {
+								logErrorF("outbyte failed to write byte to link %d: %s", myLink->getLinkNo(), e.what());
+								SET_FLAGS(EmulatorState_Terminate);
+							}
+						}
 					}
 					break;
 
 				case O_outword: { // output word
-					Link *myLink = NULL;
-					InstCycles = 25;
-					switch (Breg) {
-						case Link0Output:
-							myLink = myLinks[0];
-							break;
-						case Link1Output :
-							myLink = myLinks[1];
-							break;
-						case Link2Output :
-							myLink = myLinks[2];
-							break;
-						case Link3Output :
-							myLink = myLinks[3];
-							break;
-						default: { // Do output to memory channel */
-							WORD32 WorkSpace;
-							WorkSpace = myMemory->getWord(Breg);
-							if (Wdesc_WPtr(WorkSpace) == NotProcess_p) {
-								// The outword got to the rendezvous
-								// first.. Store Areg in the workspace
-								// temporary variable...
-								myMemory->setWord(W_TEMP(Wdesc),Areg);
-								myMemory->setWord(W_POINTER(Wdesc), Wdesc_WPtr(Wdesc));
-								myMemory->setWord(Breg, Wdesc);
-								SET_FLAGS(EmulatorState_DescheduleRequired);
-							} else {
-								// The inword got to the rendezvous first
-								myMemory->setWord(myMemory->getWord(W_POINTER(WorkSpace)), Areg);
-								myMemory->setWord(Breg, NotProcess_p);
-								// Schedule the process at WorkSpace
-								ScheduleWdesc = WorkSpace;
-							}
-							}
-							break;
-					}
-					// Now handle output to real links
-					if (myLink != NULL) {
-						try {
-							myLink->writeWord(Areg);
-						} catch (exception &e) {
-							logErrorF("outword failed to write byte to link %d: %s", myLink->getLinkNo(), e.what());
-							SET_FLAGS(EmulatorState_Terminate);
+						Link *myLink = NULL;
+						InstCycles = 25;
+						switch (Breg) {
+							case Link0Output:
+								myLink = myLinks[0];
+								break;
+							case Link1Output :
+								myLink = myLinks[1];
+								break;
+							case Link2Output :
+								myLink = myLinks[2];
+								break;
+							case Link3Output :
+								myLink = myLinks[3];
+								break;
+							default: { // Do output to memory channel */
+								WORD32 WorkSpace;
+								WorkSpace = myMemory->getWord(Breg);
+								if (Wdesc_WPtr(WorkSpace) == NotProcess_p) {
+									// The outword got to the rendezvous
+									// first.. Store Areg in the workspace
+									// temporary variable...
+									myMemory->setWord(W_TEMP(Wdesc),Areg);
+									myMemory->setWord(W_POINTER(Wdesc), Wdesc_WPtr(Wdesc));
+									myMemory->setWord(Breg, Wdesc);
+									SET_FLAGS(EmulatorState_DescheduleRequired);
+								} else {
+									// The inword got to the rendezvous first
+									myMemory->setWord(myMemory->getWord(W_POINTER(WorkSpace)), Areg);
+									myMemory->setWord(Breg, NotProcess_p);
+									// Schedule the process at WorkSpace
+									ScheduleWdesc = WorkSpace;
+								}
+								}
+								break;
 						}
-					}
+						// Now handle output to real links
+						if (myLink != NULL) {
+							try {
+								myLink->writeWord(Areg);
+							} catch (exception &e) {
+								logErrorF("outword failed to write byte to link %d: %s", myLink->getLinkNo(), e.what());
+								SET_FLAGS(EmulatorState_Terminate);
+							}
+						}
 					}
 					break;
 
 				case O_gcall: { // general call
-					WORD32 t = Areg;
-					Areg = IPtr;
-					IPtr = t;
-					InstCycles = 4;
+						WORD32 t = Areg;
+						Areg = IPtr;
+						IPtr = t;
+						InstCycles = 4;
 					}
 					break;
 
 				case O_gajw: { // general adjust workspace
-					WORD32 t = Areg;
-					if ((Areg & ByteSelectMask) != (Wdesc & ByteSelectMask)) {
-						logWarn("gajw: Attempting to change priority");
+						WORD32 t = Areg;
+						if ((Areg & ByteSelectMask) != (Wdesc & ByteSelectMask)) {
+							logWarn("gajw: Attempting to change priority");
+						}
+						Areg = Wdesc;
+						Wdesc = (t & WordMask) | (Wdesc & ByteSelectMask);
+						InstCycles++;
 					}
-					Areg = Wdesc;
-					Wdesc = (t & WordMask) | (Wdesc & ByteSelectMask);
-					InstCycles++;
-					}
-   					break;
+					break;
 
 				case O_ret: // return
 					IPtr = myMemory->getWord(Wdesc_WPtr(Wdesc));
@@ -1004,21 +1006,21 @@ inline void CPU::interpret(void) {
 					break;
 
 				case O_endp: { // end process
-					WORD32 Count;
-					InstCycles = 13;
-					Count = myMemory->getWord(Areg + 4);
-					myMemory->setWord(Areg + 4, Count - 1);
-					if (Count == 1) {
-						// Continue as process with waiting workspace Areg'
-						if ((Wdesc & ByteSelectMask) != (Areg & ByteSelectMask)) {
-							logWarn("endp: Attempting to change priority");
+						WORD32 Count;
+						InstCycles = 13;
+						Count = myMemory->getWord(Areg + 4);
+						myMemory->setWord(Areg + 4, Count - 1);
+						if (Count == 1) {
+							// Continue as process with waiting workspace Areg'
+							if ((Wdesc & ByteSelectMask) != (Areg & ByteSelectMask)) {
+								logWarn("endp: Attempting to change priority");
+							}
+							Wdesc = Wdesc_WPtr(Areg) | Wdesc_Priority(Wdesc);
+							IPtr = myMemory->getWord(Wdesc_WPtr(Wdesc));
+						} else {
+							// Start next waiting process
+							SET_FLAGS(EmulatorState_DescheduleRequired);
 						}
-						Wdesc = Wdesc_WPtr(Areg) | Wdesc_Priority(Wdesc);
-						IPtr = myMemory->getWord(Wdesc_WPtr(Wdesc));
-					} else {
-						// Start next waiting process
-						SET_FLAGS(EmulatorState_DescheduleRequired);
-					}
 					}
 					break;
 
@@ -1083,7 +1085,7 @@ inline void CPU::interpret(void) {
 					if ( Breg < Areg ) {
 						Areg = Breg;
 					} else {
-                        Areg = Breg - ( Areg << 1);
+						Areg = Breg - ( Areg << 1);
 					}
 					InstCycles = 4;
 					Breg = Creg;
@@ -1112,40 +1114,40 @@ inline void CPU::interpret(void) {
 					break;
 
 				case O_resetch: { // reset channel 
-					WORD32 OldAreg = Areg;
-					// TODO replace with link objects
-					// if Areg points to link channel then link hardware reset. Issue
-					// notification in this case?
-					Areg = myMemory->getWord(Areg);
-					myMemory->setWord(OldAreg, NotProcess_p);
+						WORD32 OldAreg = Areg;
+						// TODO replace with link objects
+						// if Areg points to link channel then link hardware reset. Issue
+						// notification in this case?
+						Areg = myMemory->getWord(Areg);
+						myMemory->setWord(OldAreg, NotProcess_p);
 					}
 					break;
 
 				case O_sthf: // store high priority front pointer
 					SET_FLAGS(EmulatorState_QueueInstruction);
-					HiHead=POP();
+					HiHead = POP();
 					break;
 
 				case O_stlf: // store low priority front pointer
 					SET_FLAGS(EmulatorState_QueueInstruction);
-					LoHead=POP();
+					LoHead = POP();
 					break;
 
 				case O_sttimer: // store timer: the clocks are always running....
 					SET_FLAGS(EmulatorState_TimerInstruction);
-					HiClock=POP();
+					HiClock = POP();
 					LoClock = HiClock;
 					CycleCountSinceReset = 0;
 					break;
 
 				case O_sthb: // store high priority back pointer
 					SET_FLAGS(EmulatorState_QueueInstruction);
-					HiTail=POP();
+					HiTail = POP();
 					break;
 
 				case O_stlb: // store low priority back pointer
 					SET_FLAGS(EmulatorState_QueueInstruction);
-					LoTail=POP();
+					LoTail = POP();
 					break;
 
 				case O_saveh: // save high priority queue registers
@@ -1181,16 +1183,16 @@ inline void CPU::interpret(void) {
 					break;
 
 				case O_tin: { // timer input
-					SWORD32 sCurrPriClock = (SWORD32) (Wdesc_HiPriority(Wdesc) ?  HiClock : LoClock);
-					SWORD32 sAreg = (SWORD32) Areg;
-					if (sAreg > sCurrPriClock) {
-						// process is waiting for some time in the future, so
-						// sleep. Store the time that the process is waiting for
-						myMemory->setWord(W_TIME(Wdesc), Areg);
-					} else {
-						// process is waiting for some time in the past - continue
-						;
-					}
+						SWORD32 sCurrPriClock = (SWORD32) (Wdesc_HiPriority(Wdesc) ?  HiClock : LoClock);
+						SWORD32 sAreg = (SWORD32) Areg;
+						if (sAreg > sCurrPriClock) {
+							// process is waiting for some time in the future, so
+							// sleep. Store the time that the process is waiting for
+							myMemory->setWord(W_TIME(Wdesc), Areg);
+						} else {
+							// process is waiting for some time in the past - continue
+							;
+						}
 					}
 					break;
 
@@ -1213,28 +1215,28 @@ inline void CPU::interpret(void) {
 					break;
 
 				case O_enbc: { // enable channel
-					WORD32 ChanAddr;
-					// If conditional in Areg == TRUE, enable channel Breg
-					if (Areg) {
-						InstCycles = 7;
-						ChanAddr = myMemory->getWord(Breg);
-						// No process waiting on channel Breg?
-						if (ChanAddr == NotProcess_p) {
-							// Initiate communication on channel Breg
-							myMemory->setWord(Breg, Wdesc);
+						WORD32 ChanAddr;
+						// If conditional in Areg == TRUE, enable channel Breg
+						if (Areg) {
+							InstCycles = 7;
+							ChanAddr = myMemory->getWord(Breg);
+							// No process waiting on channel Breg?
+							if (ChanAddr == NotProcess_p) {
+								// Initiate communication on channel Breg
+								myMemory->setWord(Breg, Wdesc);
+							}
+							// The current process is waiting on channel Breg?
+							else if (ChanAddr == Wdesc) {
+								// Already waiting on this channel so ignore
+								; // Do nothing
+	                        }
+							// Another process is waiting on channel Breg?
+							else {
+								// Set flag to show guard is ready
+								myMemory->setWord(W_ALTSTATE(Wdesc), Ready_p);
+							}
 						}
-						// The current process is waiting on channel Breg?
-						else if (ChanAddr == Wdesc) {
-							// Already waiting on this channel so ignore
-							; // Do nothing
-   						}
-						// Another process is waiting on channel Breg?
-						else {
-							// Set flag to show guard is ready
-							myMemory->setWord(W_ALTSTATE(Wdesc), Ready_p);
-						}
-					}
-					Breg = Creg;
+						Breg = Creg;
 					}
 					break;
 
@@ -1247,38 +1249,38 @@ inline void CPU::interpret(void) {
 					break;
 
 				case O_enbt: { // enable timer
-					WORD32 AltTimeSet;
-					SWORD32 sCurrPriClock;
-					SWORD32 sAltTime;
-					if (Areg) {
-						AltTimeSet = myMemory->getWord(W_TLINK(Wdesc));
-						// Time is in Breg
-						// Alt time not seen yet?
-						if (AltTimeSet == TimeNotSet_p) {
-							// Set 'time set' flag, and set alt time to time of
-							// guard
-							myMemory->setWord(W_TLINK(Wdesc), Enabling_p);
-							myMemory->setWord(W_TIME(Wdesc), Breg);
-						} else {
-							// Alt time set?
-							if (AltTimeSet == Enabling_p) {
-								sCurrPriClock = (SWORD32) (Wdesc_HiPriority(Wdesc) ?
-										HiClock : LoClock);
-								sAltTime = (SWORD32) myMemory->getWord(W_TIME(Wdesc));
-								// Alt time earlier than this guard?
-								if (sAltTime < sCurrPriClock) {
-									// Ignore this guard
-									;
-								} else {
-									// Alt time later than this guard
-									// Set alt time to time of this guard
-									myMemory->setWord(W_TIME(Wdesc), Breg);
+						WORD32 AltTimeSet;
+						SWORD32 sCurrPriClock;
+						SWORD32 sAltTime;
+						if (Areg) {
+							AltTimeSet = myMemory->getWord(W_TLINK(Wdesc));
+							// Time is in Breg
+							// Alt time not seen yet?
+							if (AltTimeSet == TimeNotSet_p) {
+								// Set 'time set' flag, and set alt time to time of
+								// guard
+								myMemory->setWord(W_TLINK(Wdesc), Enabling_p);
+								myMemory->setWord(W_TIME(Wdesc), Breg);
+							} else {
+								// Alt time set?
+								if (AltTimeSet == Enabling_p) {
+									sCurrPriClock = (SWORD32) (Wdesc_HiPriority(Wdesc) ?
+											HiClock : LoClock);
+									sAltTime = (SWORD32) myMemory->getWord(W_TIME(Wdesc));
+									// Alt time earlier than this guard?
+									if (sAltTime < sCurrPriClock) {
+										// Ignore this guard
+										;
+									} else {
+										// Alt time later than this guard
+										// Set alt time to time of this guard
+										myMemory->setWord(W_TIME(Wdesc), Breg);
+									}
 								}
 							}
 						}
-					}
-					Breg = Creg;
-					InstCycles = 8;
+						Breg = Creg;
+						InstCycles = 8;
 					}
 					break;
 
@@ -1294,28 +1296,28 @@ inline void CPU::interpret(void) {
 					break;
 
 				case O_taltwt: { // timer alt wait
-					SWORD32 sCurrPriClock;
-					SWORD32 sAltTime;
-					// Set flag to show no branch has been selected yet, put alt time into the timer queue
-					// and wait until one of the guards is ready.
-					myMemory->setWord(W_TEMP(Wdesc), Enabling_p);
-					// Are none of the guards ready?
-					if ( (myMemory->getWord(W_ALTSTATE(Wdesc)) != Ready_p) &&
-						(myMemory->getWord(W_TLINK(Wdesc)) != Enabling_p) ) {
-						// What time is it?
-						sCurrPriClock = (SWORD32) (Wdesc_HiPriority(Wdesc) ? HiClock : LoClock);
-						sAltTime = (SWORD32) myMemory->getWord(W_TIME(Wdesc));
-						// Is the time in the past?
-						if (sAltTime < sCurrPriClock) {
-							// TODO unfinished code
-							logFatal("taltwt is unfinished");
-							exit(-1);
-						} else {
-							// TODO unfinished code
-							logFatal("taltwt is unfinished");
-							exit(-1);
+						SWORD32 sCurrPriClock;
+						SWORD32 sAltTime;
+						// Set flag to show no branch has been selected yet, put alt time into the timer queue
+						// and wait until one of the guards is ready.
+						myMemory->setWord(W_TEMP(Wdesc), Enabling_p);
+						// Are none of the guards ready?
+						if ( (myMemory->getWord(W_ALTSTATE(Wdesc)) != Ready_p) &&
+							(myMemory->getWord(W_TLINK(Wdesc)) != Enabling_p) ) {
+							// What time is it?
+							sCurrPriClock = (SWORD32) (Wdesc_HiPriority(Wdesc) ? HiClock : LoClock);
+							sAltTime = (SWORD32) myMemory->getWord(W_TIME(Wdesc));
+							// Is the time in the past?
+							if (sAltTime < sCurrPriClock) {
+								// TODO unfinished code
+								logFatal("taltwt is unfinished");
+								exit(-1);
+							} else {
+								// TODO unfinished code
+								logFatal("taltwt is unfinished");
+								exit(-1);
+							}
 						}
-					}
 					}
 					break;
 
@@ -1354,20 +1356,20 @@ inline void CPU::interpret(void) {
 					break;
 
 				case O_dist: { // disable timer guard
-					SWORD32 sCurrPriClock = (SWORD32) (Wdesc_HiPriority(Wdesc) ? HiClock : LoClock);
-					SWORD32 sAltTime = (SWORD32) myMemory->getWord(W_TIME(Wdesc));
-					// Offset in Areg, Flag in Breg, Time in Creg
-					// Time later than guards time and no branch selected
-					if (Breg && (sAltTime < sCurrPriClock) && 
-						(myMemory->getWord(W_TEMP(Wdesc)) == Ready_p)) {
-						// Select this branch 
-						myMemory->setWord(W_TEMP(Wdesc), Areg);
-						Areg = TRUE;
-					} else {
-						// Time earlier than guards time or a branch already selected
-						Areg = TRUE;
-					}
-					SET_FLAGS(EmulatorState_Interrupt);
+						SWORD32 sCurrPriClock = (SWORD32) (Wdesc_HiPriority(Wdesc) ? HiClock : LoClock);
+						SWORD32 sAltTime = (SWORD32) myMemory->getWord(W_TIME(Wdesc));
+						// Offset in Areg, Flag in Breg, Time in Creg
+						// Time later than guards time and no branch selected
+						if (Breg && (sAltTime < sCurrPriClock) &&
+							(myMemory->getWord(W_TEMP(Wdesc)) == Ready_p)) {
+							// Select this branch
+							myMemory->setWord(W_TEMP(Wdesc), Areg);
+							Areg = TRUE;
+						} else {
+							// Time earlier than guards time or a branch already selected
+							Areg = TRUE;
+						}
+						SET_FLAGS(EmulatorState_Interrupt);
 					}
 					break;
 
@@ -1388,56 +1390,56 @@ inline void CPU::interpret(void) {
 					break;
 
 				case O_ladd: { // long add with carry (LS bit of Creg)
-					WORD32 AregSign = Areg & SignBit;
-					Areg += Breg;
-					if ((Areg & SignBit) != AregSign) {
-						SET_FLAGS(EmulatorState_ErrorFlag);
-					}
-					AregSign = Areg & SignBit;
-					Areg += (Creg & 1);
-					if ((Areg & SignBit) != AregSign) {
-						SET_FLAGS(EmulatorState_ErrorFlag);
-					}
-					InstCycles++;
+						WORD32 AregSign = Areg & SignBit;
+						Areg += Breg;
+						if ((Areg & SignBit) != AregSign) {
+							SET_FLAGS(EmulatorState_ErrorFlag);
+						}
+						AregSign = Areg & SignBit;
+						Areg += (Creg & 1);
+						if ((Areg & SignBit) != AregSign) {
+							SET_FLAGS(EmulatorState_ErrorFlag);
+						}
+						InstCycles++;
 					}
 					break;
 
 				case O_lsub: { // long subtract with carry (LS bit of Creg)
-					WORD32 AregSign = Areg & SignBit;
-					Areg = Breg - Areg;
-					if ((Areg & SignBit) != AregSign) {
-						SET_FLAGS(EmulatorState_ErrorFlag);
-					}
-					AregSign = Areg & SignBit;
-					Areg = Areg - (Creg & 1);
-					if ((Areg & SignBit) != AregSign) {
-						SET_FLAGS(EmulatorState_ErrorFlag);
-					}
-					InstCycles++;
+						WORD32 AregSign = Areg & SignBit;
+						Areg = Breg - Areg;
+						if ((Areg & SignBit) != AregSign) {
+							SET_FLAGS(EmulatorState_ErrorFlag);
+						}
+						AregSign = Areg & SignBit;
+						Areg = Areg - (Creg & 1);
+						if ((Areg & SignBit) != AregSign) {
+							SET_FLAGS(EmulatorState_ErrorFlag);
+						}
+						InstCycles++;
 					}
 					break;
 
 				case O_lsum: { // long sum with carry placed in Breg
-					WORD32 AregSign = Areg & SignBit;
-					Areg += (Breg + (Creg & 1));
-					Breg = ((Areg & SignBit) != AregSign) ? 1 : 0;
-					InstCycles = 3;
+						WORD32 AregSign = Areg & SignBit;
+						Areg += (Breg + (Creg & 1));
+						Breg = ((Areg & SignBit) != AregSign) ? 1 : 0;
+						InstCycles = 3;
 					}
 					break;
 
 				case O_ldiff: { // long difference with borrow placed in Breg
-					WORD32 AregSign = Areg & SignBit;
-					Areg = (Breg - Areg) - (Creg & 1);
-					Breg = ((Areg & SignBit) != AregSign) ? 1 : 0;
-					InstCycles = 3;
+						WORD32 AregSign = Areg & SignBit;
+						Areg = (Breg - Areg) - (Creg & 1);
+						Breg = ((Areg & SignBit) != AregSign) ? 1 : 0;
+						InstCycles = 3;
 					}
 					break;
 
 				case O_lmul: { // long multiply
-					WORD64 MulReg = (((WORD64)Breg) * ((WORD64)Areg)) + ((WORD64)Creg);
-					InstCycles = BitsPerWord + 1;
-					Breg = (WORD32) (MulReg & 0xffffffff);
-					Areg = (WORD32) ((MulReg >> BitsPerWord) & 0xffffffff);
+						WORD64 MulReg = (((WORD64)Breg) * ((WORD64)Areg)) + ((WORD64)Creg);
+						InstCycles = BitsPerWord + 1;
+						Breg = (WORD32) (MulReg & 0xffffffff);
+						Areg = (WORD32) ((MulReg >> BitsPerWord) & 0xffffffff);
 					}
 					break;
 
@@ -1470,7 +1472,7 @@ inline void CPU::interpret(void) {
 							logWarn("lshl: Areg = 0");
 						} else {
 							// Assertion: 0 <= Areg <= 2*BitsPerWord
-							WORD64 ShiftReg = MakeWORD64(Creg,Breg) << Areg;
+							WORD64 ShiftReg = MakeWORD64(Creg, Breg) << Areg;
 							Areg = (WORD32) (ShiftReg & 0xffffffff);
 							Breg = (WORD32) ((ShiftReg >> BitsPerWord) & 0xffffffff);
 						}
@@ -1488,7 +1490,7 @@ inline void CPU::interpret(void) {
 							logWarn("lshr: Areg = 0");
 						} else {
 							// Assertion: 0 <= Areg <= 2*BitsPerWord
-							WORD64 ShiftReg = MakeWORD64(Creg,Breg) >> Areg;
+							WORD64 ShiftReg = MakeWORD64(Creg, Breg) >> Areg;
 							Areg = (WORD32) (ShiftReg & 0xffffffff);
 							Breg = (WORD32) ((ShiftReg >> BitsPerWord) & 0xffffffff);
 						}
@@ -1496,16 +1498,16 @@ inline void CPU::interpret(void) {
 					break;
 
 				case O_bitcnt: { // bit count
-					WORD32 count,i,highestbitset;
-					for (i = count = highestbitset = 0; i < BitsPerWord; i++, Areg >>= 1) {
-						count += (Areg & 1);
-						if (Areg & 1) {
-							highestbitset = i;
+						WORD32 count, i, highestbitset;
+						for (i = count = highestbitset = 0; i < BitsPerWord; i++, Areg >>= 1) {
+							count += (Areg & 1);
+							if (Areg & 1) {
+								highestbitset = i;
+							}
 						}
-					}
-					Areg = Breg + count;
-					Breg = Creg;
-					InstCycles = highestbitset + 2;
+						Areg = Breg + count;
+						Breg = Creg;
+						InstCycles = highestbitset + 2;
 					}
 					break;
 
@@ -1515,21 +1517,21 @@ inline void CPU::interpret(void) {
 					break;
 
 				case O_bitrevnbits: { // Areg = Breg with bottom Areg bits reversed
-					WORD32 mask;
-					if (Areg >= BitsPerWord) {
-						logWarn("bitrevnbits: Areg >= 32");
-						Areg = Breg = 0;
-					} else {
-						if (Areg == 0)  {
-							logWarn("bitrevnbits: Areg = 0");
+						WORD32 mask;
+						if (Areg >= BitsPerWord) {
+							logWarn("bitrevnbits: Areg >= 32");
+							Areg = Breg = 0;
 						} else {
-							// All more significant bits are zeroed. CWG p. 68. Sec 8.2
-							mask = ((1 << Areg) - 1); // (pow(2,Areg)-1)
-							Areg = (Breg & mask) ^ mask;
-							Breg = Creg;
+							if (Areg == 0)  {
+								logWarn("bitrevnbits: Areg = 0");
+							} else {
+								// All more significant bits are zeroed. CWG p. 68. Sec 8.2
+								mask = ((1 << Areg) - 1); // (pow(2,Areg)-1)
+								Areg = (Breg & mask) ^ mask;
+								Breg = Creg;
+							}
 						}
-					}
-					InstCycles = Areg + 4;
+						InstCycles = Areg + 4;
 					}
 					break;
 
@@ -1670,17 +1672,17 @@ inline void CPU::interpret(void) {
 					break;
 
 				case X_emuquery: {
-					WORD32 response = NotProcess_p;
-					switch (Areg) {
-						case EQ_memtop:
-							response = myMemory->getMemEnd();
-							break;
-						default: // unknown EQ instruction
-							logWarnF("Unknown EQ instruction Areg=%08X", Areg);
-							SET_FLAGS(EmulatorState_BadInstruction);
-							break;
-					}
-					PUSH(response);
+						WORD32 response = NotProcess_p;
+						switch (Areg) {
+							case EQ_memtop:
+								response = myMemory->getMemEnd();
+								break;
+							default: // unknown EQ instruction
+								logWarnF("Unknown EQ instruction Areg=%08X", Areg);
+								SET_FLAGS(EmulatorState_BadInstruction);
+								break;
+						}
+						PUSH(response);
 					}
 					break;
 
@@ -1714,6 +1716,7 @@ inline void CPU::interpret(void) {
 		DumpRegs(LOGLEVEL_FATAL);
 		SET_FLAGS(EmulatorState_Terminate);
 	}
+
 	// Was a low priority process interrupted by a high priority one?
 	// Is a schedule required?
 	if (ScheduleWdesc) {
@@ -1722,18 +1725,20 @@ inline void CPU::interpret(void) {
 			// high priority, so ScheduleWdesc = WPtr
 			// TODO find this in the Transputer Handbook
 			myMemory->setWord(W_LINK(ScheduleWdesc), NotProcess_p);
-			if (HiHead == NotProcess_p)
+			if (HiHead == NotProcess_p) {
 				HiHead = ScheduleWdesc;
-			else
+			} else {
 				myMemory->setWord(W_LINK(HiTail), ScheduleWdesc);
+			}
 			HiTail = ScheduleWdesc;
 		} else {
 			// Low priority so ScheduleWdesc is not WPtr
 			myMemory->setWord(W_LINK(ScheduleWdesc), NotProcess_p);
-			if (LoHead == NotProcess_p)
+			if (LoHead == NotProcess_p) {
 				LoHead = ScheduleWdesc;
-			else
+			} else {
 				myMemory->setWord(W_LINK(LoTail), ScheduleWdesc);
+			}
 			LoTail = ScheduleWdesc;
 		}
 	}
@@ -1844,7 +1849,7 @@ void CPU::boot() {
 	// Repeatedly read first byte:
 	// 'poke': 0 => read address word, data word, store data word at address
 	// 'peek': 1 => read word, output word at that address
-	// 'boot': x where x>1
+	// 'boot': x where x>1, x is the length of boot code to read into MemStart onwards
 	BYTE ctrl = 0;
 	do {
 		try {
@@ -1892,7 +1897,7 @@ void CPU::boot() {
 							logDebugF("Primary bootstrap contains 0x%02X bytes", bootLen);
 						}
 						WORD32 addr = MemStart;
-						for (int i=0; i<ctrl; i++) {
+						for (int i = 0; i < ctrl; i++) {
 							BYTE value = bootLink->readByte();
 							// addr is going to be valid, always. There's always at least
 							// 0xff bytes of memory after MemStart.
@@ -1921,9 +1926,9 @@ void CPU::emulate() {
 	FAreg = FBreg = FCreg = (REAL64)0.0;
 	Creg = Link0Input; // The default IServer link input
 	flags = flags & (~(EmulatorState_ErrorFlag | EmulatorState_FErrorFlag |
-		       	   EmulatorState_HaltOnError | 
-			   EmulatorState_DeschedulePending | 
-			   EmulatorState_DescheduleRequired));
+						EmulatorState_HaltOnError |
+						EmulatorState_DeschedulePending |
+						EmulatorState_DescheduleRequired));
 	// Set queue pointers to magic values
 	HiHead = HiTail = LoHead = LoTail = 0xDEADF00D;
 	// Initialise monitor

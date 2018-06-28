@@ -20,11 +20,14 @@ Remaining work:
 * Develop debug interface
 * Write debugger program
 * Node server needs to support terminal I/O facilities (no echo key reads, sensing available readable keys) for eForth
+* Unfinished: resetch when given a link not a memory channel
+* Refactoring: make use of isLegalMemory within memory.cpp
 
 * Convert to CMake for use in CLion
 * Build on Linuxes, Windows
 
 Future intentions:
+* Remove potential buffer overflows in cpu.cpp
 * Add remaining T800/T805 instructions
 * Emulate multiple Transputers on 1-N physical cores
 * Link topology management
