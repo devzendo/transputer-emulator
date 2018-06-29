@@ -24,8 +24,8 @@ extern void exitServer(void);
 extern void putConsoleChar(char b);
 extern void putConsolePString(BYTE len, char *data);
 extern void putConsoleCString(char *data);
-extern bool isConsolePutAvailable(void);
-extern bool isConsoleGetAvailable(void);
+extern BYTE isConsolePutAvailable(void);
+extern BYTE isConsoleGetAvailable(void);
 extern char getConsoleChar(void);
 //
 struct timeGetUTC {

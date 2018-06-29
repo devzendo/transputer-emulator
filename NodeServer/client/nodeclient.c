@@ -119,7 +119,7 @@ void putConsoleCString(char *data) {
 	: "Areg", "Breg", "Creg", "FAreg", "FBreg", "FCreg", "Wreg[0]");
 }
 
-bool isConsolePutAvailable(void) {
+BYTE isConsolePutAvailable(void) {
 	BYTE avail=0;
 	asm __volatile
 	("outword\n\t"
@@ -134,10 +134,10 @@ bool isConsolePutAvailable(void) {
 	  "bP" (Link0Input),
 	  "aP" (1)
 	: "FAreg", "FBreg", "FCreg", "memory");
-	return (avail == 1);
+	return (avail == 1) ? 1 : 0;
 }
 
-bool isConsoleGetAvailable(void) {
+BYTE isConsoleGetAvailable(void) {
 	BYTE avail=0;
 	asm __volatile
 	("outword\n\t"
@@ -152,7 +152,7 @@ bool isConsoleGetAvailable(void) {
 	  "bP" (Link0Input),
 	  "aP" (1)
 	: "FAreg", "FBreg", "FCreg", "memory");
-	return (avail == 1);
+	return (avail == 1) ? 1 : 0;
 }
 
 char getConsoleChar(void) {

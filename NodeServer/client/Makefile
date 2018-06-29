@@ -1,7 +1,8 @@
 SHARED = ../../Shared
-CFLAGS = ${MYCFLAGS} -I.. -I$(SHARED)
+CFLAGS = -DVERSION=${VERSION} -I.. -I$(SHARED)
 OBJS = nodeclient.o
 TARGET = libnodeclient.a
+CC = t800-gcc
 
 all:
 	echo "Nothing to build in client yet"
@@ -9,17 +10,17 @@ all:
 install:
 	echo "Nothing to install in client yet"
 
-#all: $(TARGET) nodeclient.s
+all: $(TARGET) nodeclient.s
 
-#.cpp.s:
-#	$(CC) -S $(CFLAGS) -o $@ $<
+.c.s:
+	$(CC) -S $(CFLAGS) -o $@ $<
 
-#.cpp.o:
-#	$(CC) -c $(CFLAGS) -o $@ $<
+.c.o:
+	$(CC) -c $(CFLAGS) -o $@ $<
 
-#libnodeclient.a: $(OBJS)
-#	-rm -f $(TARGET)
-#	ar q $(TARGET) $(OBJS)
+libnodeclient.a: $(OBJS)
+	-rm -f $(TARGET)
+	ar q $(TARGET) $(OBJS)
 
 clean:
 	-rm -f *.[aois] *~
