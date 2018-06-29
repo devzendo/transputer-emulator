@@ -17,8 +17,7 @@
 // The node server is the interface point between code running on the
 // emulator, and the host OS. The only other aspects of the host computer that
 // emulated code has access to are the links, and the currently allocated
-// memory area. Control over these is done via the OS library, which uses
-// custom opcodes to effect these changes in the emulator.
+// memory area.
 //
 // Access to any other resource - console, chroot-jail filesystem area,
 // notification of updates to the display surface, mouse events, etc. -
@@ -174,7 +173,7 @@ const int CONSOLE_PUT_CSTR_BUF_LIMIT=16384;
 // Time protocol
 #define TIME_GET_MILLIS (NSS_TIME | 0x00)
 // This is a request/response pair to retrieve the current date/time from the
-// host OS in the form of milliseconds snce midnight, January 1, 1970.
+// host OS in the form of milliseconds since midnight, January 1, 1970.
 // Request:
 // +-------------------------------+
 // | WORD32 TIME_GET_MILLIS        |
@@ -186,7 +185,7 @@ const int CONSOLE_PUT_CSTR_BUF_LIMIT=16384;
 
 #define TIME_GET_UTC (NSS_TIME | 0x01)
 // This is a request/response pair to retrieve the current date/time from the
-// host OS in the form of a structure describing the day,month, year, etc.
+// host OS in the form of a structure describing the day, month, year, etc.
 // Request:
 // +-------------------------------+
 // | WORD32 TIME_GET_UTC           |

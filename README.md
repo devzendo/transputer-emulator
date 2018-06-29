@@ -14,9 +14,10 @@ Status
 In progress, June 2018. Modernising, building on modern OSX/Linux/Windows.
 
 Remaining work:
-* Fix all compiler warnings
-* Determine calling convention for node server client library
-* Node Server client library in assembler
+* Fix all compiler warnings (some tautologous comparisons remain)
+* Determine calling convention for node server client library & understanding of C->.S conversion, rewrite as .ASM in
+  tmasm format.
+* Node Server client library in tmasm assembler
 * Develop debug interface
 * Write debugger program
 * Node server needs to support terminal I/O facilities (no echo key reads, sensing available readable keys) for eForth
@@ -24,9 +25,10 @@ Remaining work:
 * Refactoring: make use of isLegalMemory within memory.cpp
 
 * Convert to CMake for use in CLion
-* Build on Linuxes, Windows
+* Build on Linuxes
 
 Future intentions:
+* Replace NodeServer with an iserver-protocol compatible version
 * Remove potential buffer overflows in cpu.cpp
 * Add remaining T800/T805 instructions
 * Emulate multiple Transputers on 1-N physical cores
@@ -34,6 +36,7 @@ Future intentions:
 * Investigate Benes networks
 * Add memory-mapped frame buffer via SDL
 * Add mouse interface for same
+* Build on Windows
 
 Bugs:
 * (possibly obviated by CMake) why does 'make test' in Shared says it fail to link, yet actually does, and works?

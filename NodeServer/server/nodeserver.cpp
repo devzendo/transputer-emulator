@@ -72,58 +72,57 @@ void usage() {
 
 bool processCommandLine(int argc, char *argv[]) {
 	int logLevel = LOGLEVEL_INFO;
-	for (int i=1; i<argc; i++) {
-		//logDebugF("Processing cmd line arg %d of %d : '%s'", i, argc, argv[i]);
+	for (int i = 1; i < argc; i++) {
+		// logDebugF("Processing cmd line arg %d of %d : '%s'", i, argc, argv[i]);
 		if (strlen(argv[i]) > 1 && argv[i][0] == '-') {
 			switch (argv[i][1]) {
 				case 'm':
 					monitorLink = true;
 					break;
 				case 'h':
-				       	usage();
-				       	return 0;
+					usage();
+					return 0;
  				case 'l':
 					switch (argv[i][2]) {
-                     				case 'd':
-					       		logLevel = LOGLEVEL_DEBUG;
-					       		break;
-                     				case 'i':
-					       		logLevel = LOGLEVEL_INFO;
-					       		break;
-                     				case 'w':
-					       		logLevel = LOGLEVEL_WARN;
-					       		break;
-                     				case 'e':
-					       		logLevel = LOGLEVEL_ERROR;
-					       		break;
-                     				case 'f':
-					       		logLevel = LOGLEVEL_FATAL;
-					       		break;
+						case 'd':
+							logLevel = LOGLEVEL_DEBUG;
+							break;
+						case 'i':
+							logLevel = LOGLEVEL_INFO;
+							break;
+						case 'w':
+							logLevel = LOGLEVEL_WARN;
+							break;
+						case 'e':
+							logLevel = LOGLEVEL_ERROR;
+							break;
+						case 'f':
+							logLevel = LOGLEVEL_FATAL;
+							break;
 						default:
 							logFatal("Incorrect level given to -l<loglevel> to set logging level");
 							return 0;
 					}
 					setLogLevel(logLevel);
 					break;
- 				case 'd':
+				case 'd':
 					switch (argv[i][2]) {
-		        			case 'f':
+						case 'f':
 							debugLink = true;
 							break;
-        					case 'l':
-				       			debugLink = true;
-				       			break;
-        					case 'L':
-				       			debugLink = true;
+						case 'l':
+							debugLink = true;
+							break;
+						case 'L':
+							debugLink = true;
 							debugLinkRaw = true;
-				       			break;
+							break;
 						default:
-					      		usage();
-					      		return 0;
+							usage();
+							return 0;
 					}
 					break;
-                   	}
- 
+			}
 		} else {
 			bootFile = argv[i];
 		}
@@ -155,7 +154,7 @@ void interruptHandler(int sig) {
 #endif
 
 char *printableString(BYTE *orig, BYTE len) {
-	for (int i=0; i<len; i++) {
+	for (int i = 0; i < len; i++) {
 		msgbuf[i] = isprint(orig[i]) ? orig[i] : '.';
 	}
 	return msgbuf;
@@ -187,44 +186,44 @@ void handleNodeServerProtocol(void) {
 				finished = true;
 				break;
 			case CONSOLE_PUT_CHAR: {
-				BYTE ch = myLink->readByte();
-				if (debugLink) {
-					logDebugF("CONSOLE_PUT_CHAR %02X '%c'", ch, isprint(ch) ? ch : '.');
-				}
-				fputc(ch, stderr);
+					BYTE ch = myLink->readByte();
+					if (debugLink) {
+						logDebugF("CONSOLE_PUT_CHAR %02X '%c'", ch, isprint(ch) ? ch : '.');
+					}
+					fputc(ch, stderr);
 				}
 				break;
 			case CONSOLE_PUT_PSTR: {
-				BYTE len = myLink->readByte();
-				for (int i=0; i<len; i++) {
-					msgbuf[i] = myLink->readByte();
-				}
-				if (debugLink) {
-					logDebugF("CONSOLE_PUT_PSTR len %02X", len);
-				}
-				for (int i=0; i<len; i++) {
-					fputc(msgbuf[i], stderr);
-				}
+					BYTE len = myLink->readByte();
+					for (int i = 0; i < len; i++) {
+						msgbuf[i] = myLink->readByte();
+					}
+					if (debugLink) {
+						logDebugF("CONSOLE_PUT_PSTR len %02X", len);
+					}
+					for (int i = 0; i < len; i++) {
+						fputc(msgbuf[i], stderr);
+					}
 				}
 				break;
 			case CONSOLE_PUT_CSTR: {
-				WORD32 len = 0;
-				for (WORD32 i=0; true; i++) {
-					BYTE b = myLink->readByte();
-					if (i<MSGBUF_MAX) {
-						msgbuf[i] = b;
+					WORD32 len = 0;
+					for (WORD32 i = 0; true; i++) {
+						BYTE b = myLink->readByte();
+						if (i < MSGBUF_MAX) {
+							msgbuf[i] = b;
+						}
+						if (b == 0) {
+							len = i < MSGBUF_MAX ? i : MSGBUF_MAX;
+							break;
+						}
 					}
-					if (b == 0) {
-						len = i < MSGBUF_MAX ? i : MSGBUF_MAX;
-						break;
+					if (debugLink) {
+						logDebugF("CONSOLE_PUT_CSTR len %08X", len);
 					}
-				}
-				if (debugLink) {
-					logDebugF("CONSOLE_PUT_CSTR len %08X", len);
-				}
-				for (WORD32 j=0; j<len; j++) {
-					fputc(msgbuf[j], stderr);
-				}
+					for (WORD32 j = 0; j < len; j++) {
+						fputc(msgbuf[j], stderr);
+					}
 				}
 				break;
 			case CONSOLE_PUT_AVAILABLE:
@@ -234,68 +233,68 @@ void handleNodeServerProtocol(void) {
 				myLink->writeByte(1); // TODO fix when we have a framebuffer
 				break;
 			case CONSOLE_GET_AVAILABLE: {
-				if (debugLink) {
-					logDebug("CONSOLE_GET_AVAILABLE");
-				}
-				BYTE ready = 0;
-				for (;;) {
-					FD_ZERO(&stdinfdset);
-					FD_SET(stdinfd, &stdinfdset);
-					int fds = select(stdinfd+1, &stdinfdset, NULL, NULL, &timeout);
-					if (fds == -1) {
-						if (errno == EINTR) {
-							continue; // try again
+					if (debugLink) {
+						logDebug("CONSOLE_GET_AVAILABLE");
+					}
+					BYTE ready = 0;
+					for (;;) {
+						FD_ZERO(&stdinfdset);
+						FD_SET(stdinfd, &stdinfdset);
+						int fds = select(stdinfd+1, &stdinfdset, NULL, NULL, &timeout);
+						if (fds == -1) {
+							if (errno == EINTR) {
+								continue; // try again
+							}
+							logWarnF("CONSOLE_GET_AVAILABLE select failed: %s", strerror(errno));
+							break;
 						}
-						logWarnF("CONSOLE_GET_AVAILABLE select failed: %s", strerror(errno));
+						if (fds == 0) {
+							break;
+						}
+						if (fds == 1) {
+							ready = 1;
+							break;
+						}
+						logWarnF("CONSOLE_GET_AVAILABLE select returned %d", fds);
 						break;
 					}
-					if (fds == 0) {
-						break;
-					}
-					if (fds == 1) {
-						ready = 1;
-						break;
-					}
-					logWarnF("CONSOLE_GET_AVAILABLE select returned %d", fds);
-					break;
-				}
-				myLink->writeByte(ready);
+					myLink->writeByte(ready);
 				}
 				break;
 			case CONSOLE_GET_CHAR: {
-				BYTE inChar;
-				if (debugLink) {
-					logDebug("CONSOLE_GET_CHAR");
-				}
-				read(stdinfd, &inChar, 1);
-				myLink->writeByte(inChar); // TODO fix when we have a framebuffer
+					BYTE inChar;
+					if (debugLink) {
+						logDebug("CONSOLE_GET_CHAR");
+					}
+					read(stdinfd, &inChar, 1);
+					myLink->writeByte(inChar); // TODO fix when we have a framebuffer
 				}
 				break;
 			case TIME_GET_MILLIS: {
-				if (debugLink) {
-					logDebug("TIME_GET_MILLIS");
-				}
-				struct timeval tv;
-				struct timezone tz;
-				gettimeofday(&tv, &tz);
-				myLink->writeWord((tv.tv_sec*1000) + (tv.tv_usec/1000)); // TODO check this transform
+					if (debugLink) {
+						logDebug("TIME_GET_MILLIS");
+					}
+					struct timeval tv;
+					struct timezone tz;
+					gettimeofday(&tv, &tz);
+					myLink->writeWord((tv.tv_sec*1000) + (tv.tv_usec/1000)); // TODO check this transform
 				}
 				break;
 			case TIME_GET_UTC: {
-				if (debugLink) {
-					logDebug("TIME_GET_UTC");
-				}
-				struct timeval tv;
-				struct timezone tz;
-				gettimeofday(&tv, &tz);
-				struct tm *tms = gmtime(&tv.tv_sec);
-				myLink->writeWord(tms->tm_mday);
-				myLink->writeWord(tms->tm_mon + 1);
-				myLink->writeWord(tms->tm_year + 1900);
-				myLink->writeWord(tms->tm_hour);
-				myLink->writeWord(tms->tm_min);
-				myLink->writeWord(tms->tm_sec);
-				myLink->writeWord((tv.tv_usec/1000)); // TODO check this transform
+					if (debugLink) {
+						logDebug("TIME_GET_UTC");
+					}
+					struct timeval tv;
+					struct timezone tz;
+					gettimeofday(&tv, &tz);
+					struct tm *tms = gmtime(&tv.tv_sec);
+					myLink->writeWord(tms->tm_mday);
+					myLink->writeWord(tms->tm_mon + 1);
+					myLink->writeWord(tms->tm_year + 1900);
+					myLink->writeWord(tms->tm_hour);
+					myLink->writeWord(tms->tm_min);
+					myLink->writeWord(tms->tm_sec);
+					myLink->writeWord((tv.tv_usec/1000)); // TODO check this transform
 				}
 				break;
 			default:
@@ -327,6 +326,8 @@ void monitorBootLink(void) {
 	}
 }
 
+// The boot file must start with a byte indicating its length; if the code is longer than 255 bytes, the boot file
+// must contain a chain loader, first.
 void sendBootFile(void) {
 	// open boot file
 	int fd = open(bootFile, O_RDONLY);
@@ -343,8 +344,9 @@ void sendBootFile(void) {
 			if (debugLink) {
 				logDebugF("Read %d bytes of boot code; sending down link", nread);
 			}
-			for (int i=0; i<nread; i++) {
+			for (int i = 0; i < nread; i++) {
 				try {
+					// TODO do this in blocks to improve performance
 					myLink->writeByte(buf[i]);
 				} catch (exception e) {
 					logFatalF("Could not write down link 0: %s", e.what());
@@ -365,7 +367,7 @@ int main(int argc, char *argv[]) {
 	debugLinkRaw = false;
 	monitorLink = false;
 	finished = false;
-	// initialise console keybaord handling
+	// initialise console keyboard handling
 	stdinfd = fileno(stdin); // should be 0!
 	timeout.tv_sec = 0; // cause select to return immediately
 	timeout.tv_usec = 0;
