@@ -435,9 +435,8 @@ inline void CPU::interpret(void) {
 	OldOreg = Oreg;
 	switch (Instruction) {
 		case D_j: // jump
-			if (Oreg == -1) {
+			if (Oreg == -2) {
 				logWarn("j: infinite loop - premature end?");
-				SET_FLAGS(EmulatorState_Terminate);
 			} else {
 				IPtr += Oreg;
 				InstCycles = 3;

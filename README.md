@@ -93,4 +93,9 @@ This code is released under the Apache 2.0 License: http://www.apache.org/licens
 (C) 2005-2018 Matt Gumbley, DevZendo.org
 
 
+Acknowledgements
+----------------
+Thanks to Michael Brüstle of transputer.net for assistance with details of the T800, and for finding problems with
+timer queue addresses - and for maintaining a superb archive.
+
 

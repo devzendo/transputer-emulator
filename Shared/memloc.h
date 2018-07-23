@@ -21,6 +21,7 @@
 #define MemStart 0x80000070
 
 // Special memory addresses
+// 0x80000048 - 0x8000006c are "reserved for extended functions" - Transputer Reference Manual, p 74
 #define EregIntSaveLoc 0x80000044
 #define StatusIntSaveLoc 0x80000040
 #define CregIntSaveLoc 0x8000003C
@@ -28,8 +29,8 @@
 #define AregIntSaveLoc 0x80000034
 #define IptrIntSaveLoc 0x80000030
 #define WdescIntSaveLoc 0x8000002C
-#define TPtrLoc0 0x80000028
-#define TPtrLoc1 0x80000024
+#define TPtrLoc1 0x80000028
+#define TPtrLoc0 0x80000024
 #define Event 0x80000020
 #define Link3Input 0x8000001C
 #define Link2Input 0x80000018
