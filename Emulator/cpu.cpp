@@ -429,8 +429,8 @@ inline void CPU::interpret(void) {
 	flags |= InterpFlagSet;
 	// No schedule required as of yet. This will point to a process's
 	// workspace if that process should be scheduled, after the
-	// instruction has executed.
-	ScheduleWdesc = 0;
+	// instruction has executed. 0 is a valid workspace, so initialise this to NotProcess_p (mint).
+	ScheduleWdesc = NotProcess_p;
 	// Interpret... save Oreg in case we have a bad instruction
 	OldOreg = Oreg;
 	switch (Instruction) {
@@ -1718,7 +1718,7 @@ inline void CPU::interpret(void) {
 
 	// Was a low priority process interrupted by a high priority one?
 	// Is a schedule required?
-	if (ScheduleWdesc) {
+	if (ScheduleWdesc != NotProcess_p) {
 		logDebug("Schedule required");
 		if (Wdesc_HiPriority(ScheduleWdesc)) {
 			// high priority, so ScheduleWdesc = WPtr
