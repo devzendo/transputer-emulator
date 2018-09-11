@@ -316,8 +316,8 @@ BYTE b;
 			}
 		}
 		logInfo(line);
-		offset += 16;
-		left -= 16;
+		offset += upto16;
+		left -= upto16;
 	}
 }
 
