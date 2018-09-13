@@ -1923,6 +1923,8 @@ void CPU::emulate() {
 	IPtr = MemStart;
 	Oreg = Areg = Breg = 0;
 	FAreg = FBreg = FCreg = (REAL64)0.0;
+	// NB: CWG states Areg is set to the previous value of IPtr, Breg the previous of Wdesc,
+	// Creg a pointer to the link the Transputer booted from.
 	Creg = Link0Input; // The default IServer link input
 	flags = flags & (~(EmulatorState_ErrorFlag | EmulatorState_FErrorFlag |
 						EmulatorState_HaltOnError |
@@ -1936,6 +1938,7 @@ void CPU::emulate() {
 
 	logDebug("---- Starting Bootstrap ----");
 	boot();
+	// The initial workspace is the first free word of memory. A low priority process.
 	Wdesc = WordAlign((WORD32)(IPtr + (WORD32)bootLen)) | 0x1;
 	// Go...
 	//
