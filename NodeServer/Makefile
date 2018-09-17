@@ -1,4 +1,4 @@
-DIRS=server client
+DIRS=server # client
 
 all:
 	@echo "Making all in subdirectories..."

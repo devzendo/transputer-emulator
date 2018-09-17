@@ -2,7 +2,7 @@ SHARED = ../../Shared
 CFLAGS = -DVERSION=${VERSION} -I.. -I$(SHARED)
 OBJS = nodeclient.o
 TARGET = libnodeclient.a
-CC = t800-gcc
+# CC = t800-gcc
 
 all:
 	echo "Nothing to build in client yet"
@@ -12,11 +12,11 @@ install:
 
 all: $(TARGET) nodeclient.s
 
-.c.s:
-	$(CC) -S $(CFLAGS) -o $@ $<
+# .c.s:
+	# $(CC) -S $(CFLAGS) -o $@ $<
 
-.c.o:
-	$(CC) -c $(CFLAGS) -o $@ $<
+# .c.o:
+	# $(CC) -c $(CFLAGS) -o $@ $<
 
 libnodeclient.a: $(OBJS)
 	-rm -f $(TARGET)
