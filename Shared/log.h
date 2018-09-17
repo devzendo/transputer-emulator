@@ -14,6 +14,8 @@
 #ifndef _LOG_H
 #define _LOG_H
 
+#include <cstring>
+
 const int LOGLEVEL_DEBUG = 0;
 const int LOGLEVEL_INFO = 1;
 const int LOGLEVEL_WARN = 2;
@@ -24,9 +26,14 @@ extern void setLogLevel(int l);
 extern void _logDebug(int line, const char *file, const char *s);
 extern void _logDebugF(int line, const char *file, const char *fmt, ...);
 
-#define logDebug(s) _logDebug(__LINE__, "" __FILE__, s)
+// Portable method of getting just the base filename from alexander golks' answer to
+// https://stackoverflow.com/questions/8487986/file-macro-shows-full-path
+// And works with the Make build too.
+#define JUSTFILE (strrchr(__FILE__, '/') ? strrchr(__FILE__, '/') + 1 : strrchr(__FILE__, '\\') ? strrchr(__FILE__, '\\') + 1 : __FILE__)
+
+#define logDebug(s) _logDebug(__LINE__, JUSTFILE, s)
 // info cpp gave info on varargs in macros
-#define logDebugF(fmt, ...) _logDebugF(__LINE__, "" __FILE__, fmt, __VA_ARGS__)
+#define logDebugF(fmt, ...) _logDebugF(__LINE__, JUSTFILE, fmt, __VA_ARGS__)
 
 extern void logFormat(int level, const char *fmt, ...);
 extern void logInfo(const char *s);
