@@ -20,12 +20,13 @@ const int LOGLEVEL_WARN = 2;
 const int LOGLEVEL_ERROR = 3;
 const int LOGLEVEL_FATAL = 4;
 extern void setLogLevel(int l);
-#define logDebug(s) _logDebug(__LINE__, "" __FILE__, s)
-// info cpp gave info on varargs in macros
-#define logDebugF(fmt, ...) _logDebugF(__LINE__, "" __FILE__, fmt, __VA_ARGS__)
 
 extern void _logDebug(int line, const char *file, const char *s);
 extern void _logDebugF(int line, const char *file, const char *fmt, ...);
+
+#define logDebug(s) _logDebug(__LINE__, "" __FILE__, s)
+// info cpp gave info on varargs in macros
+#define logDebugF(fmt, ...) _logDebugF(__LINE__, "" __FILE__, fmt, __VA_ARGS__)
 
 extern void logFormat(int level, const char *fmt, ...);
 extern void logInfo(const char *s);
