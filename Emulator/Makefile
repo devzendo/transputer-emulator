@@ -19,7 +19,7 @@ t800emul : $(OBJS)
 	$(CC) $(LDFLAGS) -o $@ $^ $(LIBS)
 
 install: t800emul
-	sudo install -o root -g root -m755 t800emul $(BINDIR)
+	sudo install -o root -g staff -m 755 t800emul $(BINDIR)
 
 clean:
 	rm -f $(OBJS) $(EXES)

@@ -10,7 +10,7 @@ LIBS = -lparachutedev
 all : $(EXES)
 
 install : $(EXES)
-	sudo install -o root -g root -m755 nodeserver $(BINDIR)
+	sudo install -o root -g staff -m 755 nodeserver $(BINDIR)
 	
 .cpp.o:
 	$(CC) -c $(CFLAGS) $(CPPFLAGS) -o $@ $<

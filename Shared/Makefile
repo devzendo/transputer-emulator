@@ -16,6 +16,8 @@ all: $(TARGET)
 
 test: $(TARGET) $(TEST_TARGET)
 
+install:
+
 .cpp.o:
 	$(CC) -c $(CFLAGS) $(CPPFLAGS) -o $@ $<
 
