@@ -30,7 +30,7 @@ Remaining work:
 Future intentions:
 * Replace NodeServer with an iserver-protocol compatible version
 * Remove potential buffer overflows in cpu.cpp
-* Add remaining T800/T805 instructions
+* Add remaining T800/T805 instructions, including those from Transputer Instruction Set - Appendix, Guy Harriman.
 * Emulate multiple Transputers on 1-N physical cores
 * Link topology management
 * Investigate Benes networks

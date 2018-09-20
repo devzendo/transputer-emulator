@@ -29,6 +29,7 @@ extern void _logDebugF(int line, const char *file, const char *fmt, ...);
 // Portable method of getting just the base filename from alexander golks' answer to
 // https://stackoverflow.com/questions/8487986/file-macro-shows-full-path
 // And works with the Make build too.
+// Note that this is not done at compile time.
 #define JUSTFILE (strrchr(__FILE__, '/') ? strrchr(__FILE__, '/') + 1 : strrchr(__FILE__, '\\') ? strrchr(__FILE__, '\\') + 1 : __FILE__)
 
 #define logDebug(s) _logDebug(__LINE__, JUSTFILE, s)

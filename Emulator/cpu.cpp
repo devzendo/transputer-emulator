@@ -493,7 +493,8 @@ inline void CPU::interpret(void) {
 			myMemory->setWord(Wdesc_WPtr(Wdesc) + 4, Areg);
 			myMemory->setWord(Wdesc_WPtr(Wdesc) + 8, Breg);
 			myMemory->setWord(Wdesc_WPtr(Wdesc) + 12, Creg);
-			Areg = IPtr;
+			Areg = IPtr; // cwg says NextInst
+			Breg = Creg; // Spec says 'undefined' but this is what happens. Creg becomes 'undefined'.
 			IPtr += Oreg;
 			break;
 
@@ -1832,6 +1833,7 @@ inline void CPU::interpret(void) {
 
 // See TTH, p53
 void CPU::boot() {
+	bootLen = 0;
 	Link *bootLink = NULL;
 	int linkNo = -1;
 	// Boot from the link in Creg
@@ -1939,7 +1941,9 @@ void CPU::emulate() {
 	logDebug("---- Starting Bootstrap ----");
 	boot();
 	// The initial workspace is the first free word of memory. A low priority process.
-	Wdesc = WordAlign((WORD32)(IPtr + (WORD32)bootLen)) | 0x1;
+	// If booting from ROM, this should be MemStart - but ROM boot isn't supported yet.
+	Wdesc = WordAlign((WORD32)(IPtr + (WORD32)bootLen));
+	Wdesc |= 0x1;
 	// Go...
 	//
 	InstructionStartIPtr = IPtr;
