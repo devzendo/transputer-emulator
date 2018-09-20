@@ -340,7 +340,7 @@ inline bool CPU::monitor(void) {
 			logInfo("Monitor commands:");
 			logInfo("ci       disassemble current instruction");
 			logInfo("di [addr [len]] disassemble from addr (hex) for len (hex) bytes");
-			logInfo("da [addr [len]] dump hex bytes/ASCII from addr (hex) for len (hex) bytes");
+			logInfo("db [addr [len]] dump hex bytes/ASCII from addr (hex) for len (hex) bytes");
 			logInfo("dw [addr [len]] dump hex words/ASCII from addr (hex) for len (hex) words");
 			logInfo("<return> single-step current instruction");
 			logInfo("r        display all registers (depends on register display flags)");
@@ -370,14 +370,14 @@ inline bool CPU::monitor(void) {
 				CurrDisasmAddress = a1;
 			}
 			CurrDisasmAddress += disassembleRange(CurrDisasmAddress, CurrDisasmLen);
-		} else if (strncmp("da", instr, 2) == 0) {
-			if (sscanf(instr, "da %x %x", &a1, &a2) == 2) {
+		} else if (strncmp("db", instr, 2) == 0) {
+			if (sscanf(instr, "db %x %x", &a1, &a2) == 2) {
 				CurrDataAddress = a1;
 				CurrDataLen = a2;
-			} else if (sscanf(instr, "da %x", &a1) == 1) {
+			} else if (sscanf(instr, "db %x", &a1) == 1) {
 				CurrDataAddress = a1;
 			}
-			//logInfoF("da addr %08X len %08X", CurrDataAddress, CurrDataLen);
+			//logInfoF("db addr %08X len %08X", CurrDataAddress, CurrDataLen);
 			myMemory->hexDump(CurrDataAddress, CurrDataLen);
 			CurrDataAddress += CurrDataLen;
 		} else if (strncmp("dw", instr, 2) == 0) {
