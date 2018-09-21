@@ -205,6 +205,17 @@ int main(int argc, char *argv[]) {
 	progName = argv[0];
 	memSize = DefaultMemSize;
 	flags = 0;
+
+	// Stop CLion reporting this check as unreachable (which it is, on systems that don't
+	// have 4 byte WORD32s).
+#pragma clang diagnostic push
+#pragma ide diagnostic ignored "OCDFAInspection"
+	if (sizeof(WORD32) != 4) {
+		logInfoF("size of WORD32 is %d bytes when it should be 4 bytes", sizeof(WORD32));
+		exit(1);
+	}
+#pragma clang diagnostic pop
+
 	if (!processCommandLine(argc, argv)) {
 		exit(1);
 	}
