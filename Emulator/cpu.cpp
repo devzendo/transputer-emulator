@@ -1934,22 +1934,23 @@ void CPU::emulate(const bool bootFromROM) {
 	CurrDataAddress = CurrDisasmAddress = MemStart;
 	CurrDataLen = CurrDisasmLen = 64;
 
-	logDebug("---- Starting Bootstrap ----");
 	if (bootFromROM) {
+		logDebug("---- Starting Boot from ROM ----");
 		Wdesc = MemStart;
 		IPtr = ResetCode;
 		// CWG states Areg, Breg are set to previous values of Iptr, Wdesc.. there are no previous values.. I don't
 		// support Analyse mode (yet) - which is how these might be set?
 		Creg = 0xDEADF00D; // CWG states 'undefined'.
 	} else {
+		logDebug("---- Starting Boot from Link 0 ----");
+		// NB: CWG states Areg is set to the previous value of IPtr, Breg the previous of Wdesc,
+		// Creg a pointer to the link the Transputer booted from.
+		IPtr = MemStart;
+		Creg = Link0Input; // The default IServer link input
 		bootFromLink0();
 		// The initial workspace is the first free word of memory. A low priority process.
 		// If booting from ROM, this should be MemStart - but ROM boot isn't supported yet.
 		Wdesc = WordAlign((WORD32)(IPtr + (WORD32)bootLen));
-		// NB: CWG states Areg is set to the previous value of IPtr, Breg the previous of Wdesc,
-		// Creg a pointer to the link the Transputer booted from.
-		Creg = Link0Input; // The default IServer link input
-		IPtr = MemStart;
 	}
 	Wdesc |= 0x1;
 
