@@ -20,7 +20,7 @@ class Memory {
 	public:
 		// 2-phase CTOR since there's only one global Memory
 		Memory();
-		bool initialise(long initialSize); 
+		bool initialise(long initialRAMSize, const char *romFileName);
 		~Memory();
 		int getMemEnd();
 		int getMemSize();
@@ -37,6 +37,7 @@ class Memory {
 		void hexDump(WORD32 addr, WORD32 len);
 		void hexDumpWords(WORD32 addr, WORD32 len);
 	private:
+		bool loadROMFile(const char *romFileName);
 		BYTE *myMemory;
 		int mySize;
 		int myMemEnd;
@@ -44,6 +45,13 @@ class Memory {
 		//=(InternalMemStart + MemSize);
 		void resetMemory();
 		int myCurrentCycles;
+		// ROM (if present) extends from myROMStart, until MaxINT - it is loaded at the end of memory, so that the
+		// 2-byte jump at ResetCode is present.
+		bool myROMPresent;
+		WORD32 myROMStart;
+		BYTE *myReadOnlyMemory;
+		size_t myReadOnlyMemorySize;
+
 };
 
 #endif // _MEMORY_H

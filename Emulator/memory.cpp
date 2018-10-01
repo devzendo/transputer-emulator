@@ -14,6 +14,12 @@
 #include <cstdlib>
 #include <cctype>
 #include <cstdio>
+#include <sys/stat.h>
+#include <sys/types.h>
+#include <sys/uio.h>
+#include <unistd.h>
+#include <errno.h>
+#include <fcntl.h>
 
 #include "types.h"
 #include "constants.h"
@@ -29,31 +35,90 @@ Memory::Memory() {
 
 void Memory::resetMemory() {
 	myMemory = NULL;
+	myReadOnlyMemory = NULL;
+	myReadOnlyMemorySize = 0;
 	mySize = 0;
 	myMemEnd = InternalMemStart;
 	myHighestAccess = InternalMemStart;
 	myCurrentCycles = 0;
 }
 
-bool Memory::initialise(long initialSize) {
-	myMemory = (BYTE *)calloc(initialSize, 1);
+bool Memory::initialise(long initialRAMSize, const char *romFile) {
+	myMemory = (BYTE *)calloc(initialRAMSize, 1);
 	if (myMemory == NULL) {
 		logFatal("Failed to allocate memory");
 		return false;
 	}
-	/*for (int i=0; i<initialSize; i++) {
+	/*for (int i=0; i<initialRAMSize; i++) {
 		myMemory[i] = 0xAA;
 	}*/
-	myMemEnd = InternalMemStart + initialSize;
-	mySize = initialSize;
+	myMemEnd = InternalMemStart + initialRAMSize;
+	mySize = initialRAMSize;
+
+	if (romFile) {
+		myROMPresent = true;
+		if (!loadROMFile(romFile)) {
+			return false;
+		}
+	} else {
+		myROMPresent = false;
+		myReadOnlyMemory = NULL;
+		myReadOnlyMemorySize = 0;
+	}
+	return true;
+}
+
+// See CWG, p74
+bool Memory::loadROMFile(const char *fileName) {
+	struct stat st;
+	if (stat(fileName, &st) == -1) {
+		logFatalF("Could not obtain details of ROM file %s: %s", fileName, strerror(errno));
+		return false;
+	}
+
+	const off_t romSize = st.st_size;
+	const WORD32 romSize32 = (WORD32) romSize;
+	myReadOnlyMemorySize = romSize32;
+	myReadOnlyMemory = (BYTE *)calloc(myReadOnlyMemorySize, 1);
+	if (myReadOnlyMemory == NULL) {
+		logFatal("Failed to allocate Read-Only memory");
+		return false;
+	}
+
+	myROMStart = MaxINT - romSize32 + 1;
+	logDebugF("ROM (size %d bytes) will be loaded from %08X to %08X", romSize32, myROMStart, MaxINT);
+	if (!isLegalMemory(myROMStart)) {
+		logFatalF("Boot from ROM cannot load at bad address %08X", myROMStart);
+		return false;
+	}
+
+	const int readFD = open(fileName, O_RDONLY);
+	if (readFD == -1) {
+		logFatalF("Could not open ROM file %s: %s", fileName, strerror(errno));
+		return false;
+	}
+
+	const ssize_t readBytes = read(readFD, myReadOnlyMemory, myReadOnlyMemorySize);
+	if (readBytes != myReadOnlyMemorySize) {
+		logFatalF("Tried to load %08X bytes from ROM file %s, but only read %08X", readBytes, fileName, romSize32);
+		return false;
+	}
+
+	close(readFD);
 	return true;
 }
 
 Memory::~Memory() {
-	logDebugF("Memory DTOR - this is 0x%lx, Memory is 0x%lx", this, myMemory);
+	logDebugF("Memory DTOR - this is 0x%lx, Memory is 0x%lx, ROM is 0x%lx", this, myMemory, myReadOnlyMemory);
 	if (myMemory != NULL) {
 		logDebug("Memory is not NULL - freeing");
 		free(myMemory);
+	}
+	if (myReadOnlyMemory != NULL) {
+		logDebug("Read-Only Memory is not NULL - freeing");
+		free(myReadOnlyMemory);
+	}
+	if (myMemory != NULL || myReadOnlyMemory != NULL) {
 		resetMemory();
 	}
 }
@@ -82,6 +147,13 @@ BYTE Memory::getByte(WORD32 addr) {
 		if ((flags & DebugFlags_MemAccessDebugLevel) != MemAccessDebug_No) {
 			logDebugF("R 1 [%08X]=%02X (%c)", addr, b, isprint(b) ? b : '?');
 		}
+	} else if (myROMPresent && addr >= myROMStart && addr <= MaxINT) {
+		myCurrentCycles += 1;
+		// not tracking highest ROM access here
+		b = myReadOnlyMemory[addr - myROMStart];
+		if ((flags & DebugFlags_MemAccessDebugLevel) != MemAccessDebug_No) {
+			logDebugF("R 1 [%08X]=%02X (%c)", addr, b, isprint(b) ? b : '?');
+		}
 	} else {
 		if (IS_FLAG_SET(DebugFlags_TerminateOnMemViol)) {
 			logFatalF("Memory violation reading byte from %08X", addr);
@@ -102,6 +174,13 @@ BYTE Memory::getInstruction(WORD32 addr) {
 			myHighestAccess = addr;
 		}
 		b = myMemory[addr - InternalMemStart];
+		if ((flags & DebugFlags_MemAccessDebugLevel) == MemAccessDebug_Full) {
+			logDebugF("I 1 [%08X]=%02X", addr, b);
+		}
+	} else if (myROMPresent && addr >= myROMStart && addr <= MaxINT) {
+		myCurrentCycles += 1;
+		// not tracking highest ROM access here
+		b = myReadOnlyMemory[addr - myROMStart];
 		if ((flags & DebugFlags_MemAccessDebugLevel) == MemAccessDebug_Full) {
 			logDebugF("I 1 [%08X]=%02X", addr, b);
 		}
@@ -127,6 +206,13 @@ void Memory::setByte(WORD32 addr, BYTE value) {
 		if ((flags & DebugFlags_MemAccessDebugLevel) != MemAccessDebug_No) {
 			logDebugF("W 1 [%08X]=%02X", addr, value);
 		}
+	} else if (myROMPresent && addr >= myROMStart && addr <= MaxINT) {
+		if (IS_FLAG_SET(DebugFlags_TerminateOnMemViol)) {
+			logFatalF("Memory violation writing byte to ROM %08X", addr);
+			SET_FLAGS(EmulatorState_Terminate);
+		} else {
+			logErrorF("Memory violation writing byte to ROM %08X", addr);
+		}
 	} else {
 		if (IS_FLAG_SET(DebugFlags_TerminateOnMemViol)) {
 			logFatalF("Memory violation writing byte to %08X", addr);
@@ -146,6 +232,17 @@ WORD32 Memory::getWord(WORD32 addr) {
 			myHighestAccess = addr;
 		}
 		b = myMemory + (addr - InternalMemStart);
+		// Irrespective of the emulator hosts's endianness, words are
+		// always stored in memory in little-endian form, as on a real
+		// Transputer. LSB first MSB last
+		w = (b[3] << 24) | (b[2] << 16) | (b[1] << 8) | b[0];
+		if ((flags & DebugFlags_MemAccessDebugLevel) != MemAccessDebug_No) {
+			logDebugF("R 4 [%08X]=%08X", addr, w);
+		}
+	} else if (myROMPresent && addr >= myROMStart && addr <= MaxINT) {
+		myCurrentCycles += 1;
+		// not tracking highest ROM read
+		b = myReadOnlyMemory + (addr - myROMStart);
 		// Irrespective of the emulator hosts's endianness, words are
 		// always stored in memory in little-endian form, as on a real
 		// Transputer. LSB first MSB last
@@ -182,6 +279,13 @@ void Memory::setWord(WORD32 addr, WORD32 value) {
 		b[3] = (value & 0xff000000) >> 24;
 		if ((flags & DebugFlags_MemAccessDebugLevel) != MemAccessDebug_No) {
 			logDebugF("W 4 [%08X]=%08X", addr, value);
+		}
+	} else if (myROMPresent && addr >= myROMStart && addr <= MaxINT) {
+		if (IS_FLAG_SET(DebugFlags_TerminateOnMemViol)) {
+			logFatalF("Memory violation writing word to ROM %08X", addr);
+			SET_FLAGS(EmulatorState_Terminate);
+		} else {
+			logErrorF("Memory violation writing word to ROM %08X", addr);
 		}
 	} else {
 		if (IS_FLAG_SET(DebugFlags_TerminateOnMemViol)) {
@@ -251,6 +355,12 @@ void Memory::blockCopy(WORD32 len, WORD32 srcAddr, WORD32 destAddr) {
 			if ((flags & DebugFlags_MemAccessDebugLevel) != MemAccessDebug_No) {
 				logDebugF("R 1 [%08X]=%02X", sA, b);
 			}
+		} else if (myROMPresent && sA >= myROMStart && sA <= MaxINT) {
+			// not tracking highest ROM access
+			b = myReadOnlyMemory[sA - myROMStart];
+			if ((flags & DebugFlags_MemAccessDebugLevel) != MemAccessDebug_No) {
+				logDebugF("R 1 [%08X]=%02X", sA, b);
+			}
 		} else {
 			if (IS_FLAG_SET(DebugFlags_TerminateOnMemViol)) {
 				logFatalF("Memory violation reading block from %08X", sA);
@@ -269,6 +379,14 @@ void Memory::blockCopy(WORD32 len, WORD32 srcAddr, WORD32 destAddr) {
 			if ((flags & DebugFlags_MemAccessDebugLevel) != MemAccessDebug_No) {
 				logDebugF("W 1 [%08X]=%02X", dA, b);
 			}
+		} else if (myROMPresent && dA >= myROMStart && dA <= MaxINT) {
+			if (IS_FLAG_SET(DebugFlags_TerminateOnMemViol)) {
+				logFatalF("Memory violation writing block at ROM %08X", dA);
+				SET_FLAGS(EmulatorState_Terminate);
+			} else {
+				logErrorF("Memory violation writing block at ROM %08X", dA);
+			}
+			return;
 		} else {
 			if (IS_FLAG_SET(DebugFlags_TerminateOnMemViol)) {
 				logFatalF("Memory violation writing block at %08X", dA);
@@ -282,7 +400,8 @@ void Memory::blockCopy(WORD32 len, WORD32 srcAddr, WORD32 destAddr) {
 }
 
 bool Memory::isLegalMemory(WORD32 addr) {
-	return (addr >= InternalMemStart && addr <= myMemEnd);
+	return (addr >= InternalMemStart && addr <= myMemEnd) ||
+			(myROMPresent && addr >= myROMStart && addr <= MaxINT);
 }
 
 static char hexdigs[]="0123456789abcdef";
@@ -304,8 +423,16 @@ BYTE b;
 		line[8] = ' ';
 		upto16 = (left > 16) ? 16 : left;
 		for (x = 0; x < upto16; x++) {
-			if (isLegalMemory(offset + x)) {
-				b=myMemory[offset + x - InternalMemStart];
+			WORD32 byteAddr = offset + x;
+			if (isLegalMemory(byteAddr)) {
+
+				// Repeating some of getByte's internals here without the memory access diagnostics
+				if (byteAddr >= InternalMemStart && byteAddr <= myMemEnd) {
+					b = myMemory[byteAddr - InternalMemStart];
+				} else if (myROMPresent && byteAddr >= myROMStart && byteAddr <= MaxINT) {
+					b = myReadOnlyMemory[byteAddr - myROMStart];
+				}
+
 				line[11 + (3 * x)] = hexdigs[(b & 0xf0) >> 4];
 				line[12 + (3 * x)] = hexdigs[b & 0x0f];
 				line[61 + x] = isprint((char)b) ? ((char)b) : '.';
@@ -343,17 +470,32 @@ WORD32 w;
 		line[8] = ' ';
 		upto4 = (left > 4) ? 4 : left;
 		for (x = 0; x < upto4; x++) {
-			if (isLegalMemory(offset + (x << 2))) {
-				b = myMemory + ((x << 2) + offset - InternalMemStart);
-				w = (b[3] << 24) | (b[2] << 16) | (b[1] << 8) | b[0];
+			WORD32 wordAddr = offset + (x << 2);
+			if (isLegalMemory(wordAddr)) {
+
+				// Repeating some of getWord's internals here without the memory access diagnostics.
+				// Irrespective of the emulator hosts's endianness, words are
+				// always stored in memory in little-endian form, as on a real
+				// Transputer. LSB first MSB last.
+				if (wordAddr >= InternalMemStart && wordAddr <= myMemEnd) {
+					b = myMemory + (wordAddr - InternalMemStart);
+				} else if (myROMPresent && wordAddr >= myROMStart && wordAddr <= MaxINT) {
+					b = myReadOnlyMemory + (wordAddr - myROMStart);
+				} // must be one of those branches, since isLegalMemory is true.
+
+				BYTE b0 = b[0];
+				BYTE b1 = b[1];
+				BYTE b2 = b[2];
+				BYTE b3 = b[3];
+				w = (b3 << 24) | (b2 << 16) | (b1 << 8) | b0;
 				sprintf(line + 11 + (9 * x), "%08X", w);
-				line[49 + (x * 5)] = isprint((char)b[0]) ? ((char)b[0]) : '.';
-				line[50 + (x * 5)] = isprint((char)b[1]) ? ((char)b[1]) : '.';
-				line[51 + (x * 5)] = isprint((char)b[2]) ? ((char)b[2]) : '.';
-				line[52 + (x * 5)] = isprint((char)b[3]) ? ((char)b[3]) : '.';
+				line[49 + (x * 5)] = isprint((char)b0) ? ((char)b0) : '.';
+				line[50 + (x * 5)] = isprint((char)b1) ? ((char)b1) : '.';
+				line[51 + (x * 5)] = isprint((char)b2) ? ((char)b2) : '.';
+				line[52 + (x * 5)] = isprint((char)b3) ? ((char)b3) : '.';
 			} else {
 				sprintf(line + 11 + (9 * x), "--------");
-				sprintf(line + 11 + (3 * x), "---- ");
+				sprintf(line + 49 + (5 * x), "---- ");
 			}
 			line[19 + (9 * x)] = ' ';
 		}

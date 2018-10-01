@@ -56,7 +56,10 @@ void usage() {
 	logInfo(" (C) 2005-2018 Matt J. Gumbley");
 	logInfo("  http://devzendo.github.io/parachute");
 	logInfo("Usage:");
-	logInfoF("%s: [options] bootfile", progName);
+	logInfoF("%s: [options] [bootfile]", progName);
+	logInfo("If bootfile is specified, send this over Link 0 using the Boot From Link facility.");
+	logInfo("If bootfile is not specified, start protocol handling over Link 0 immediately. This is used when");
+	logInfo("booting the Emulator from ROM.");
 	logInfo("Options:");
 	logInfo("  -df   Full debug");
 	logInfo("  -dl   Enables link communications (high level) debug");
@@ -126,11 +129,6 @@ bool processCommandLine(int argc, char *argv[]) {
 		} else {
 			bootFile = argv[i];
 		}
-	}
-	if (bootFile == NULL) {
-		logFatal("No boot file specified");
-		usage();
-		return 0;
 	}
 	//logDebug("End of cmd line processing");
 	return 1;
@@ -328,6 +326,7 @@ void monitorBootLink(void) {
 
 // The boot file must start with a byte indicating its length; if the code is longer than 255 bytes, the boot file
 // must contain a chain loader, first.
+// Precondition: bootFile != NULL
 void sendBootFile(void) {
 	// open boot file
 	int fd = open(bootFile, O_RDONLY);
@@ -390,14 +389,15 @@ int main(int argc, char *argv[]) {
 		resetStdIn();
 		exit(1);
 	}
+
 	LinkFactory *linkFactory = new LinkFactory(true, debugLinkRaw);
 	if (!linkFactory->processCommandLine(argc, argv)) {
 		resetStdIn();
 		exit(1);
 	}
 #ifdef UNIX
-	signal(SIGSEGV,segViolHandler);
-	signal(SIGINT,interruptHandler);
+	signal(SIGSEGV, segViolHandler);
+	signal(SIGINT, interruptHandler);
 #endif
 	if ((myLink = linkFactory->createLink(0)) == NULL) {
 		logFatal("Could not create link 0");
@@ -411,9 +411,13 @@ int main(int argc, char *argv[]) {
 		resetStdIn();
 		exit(1);
 	}
+
 	// start node server operations
-	sendBootFile();
-	logDebug("End of boot file send");
+	if (bootFile != NULL) {
+		sendBootFile();
+		logDebug("End of boot file send");
+	}
+
 	if (monitorLink) {
 		monitorBootLink();
 	} else {
@@ -421,6 +425,7 @@ int main(int argc, char *argv[]) {
 			handleNodeServerProtocol();
 		}
 	}
+
 	try {
 		myLink->resetLink();
 	} catch (exception &e) {

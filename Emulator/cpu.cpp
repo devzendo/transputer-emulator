@@ -1832,7 +1832,7 @@ inline void CPU::interpret(void) {
 
 
 // See TTH, p53
-void CPU::boot() {
+void CPU::bootFromLink0() {
 	bootLen = 0;
 	Link *bootLink = NULL;
 	int linkNo = -1;
@@ -1917,17 +1917,13 @@ void CPU::boot() {
 	} while (ctrl <= 1);
 }
 
-void CPU::emulate() {
+void CPU::emulate(const bool bootFromROM) {
 	// Initialise timing subsystem
 	CycleCount = CycleCountSinceReset = 
 		HiClock = LoClock = LoClockLastQuantumExpiry = 0L;
 	// Initialise T800 registers. See TTS, p30, CWG p74
-	IPtr = MemStart;
 	Oreg = Areg = Breg = 0;
 	FAreg = FBreg = FCreg = (REAL64)0.0;
-	// NB: CWG states Areg is set to the previous value of IPtr, Breg the previous of Wdesc,
-	// Creg a pointer to the link the Transputer booted from.
-	Creg = Link0Input; // The default IServer link input
 	flags = flags & (~(EmulatorState_ErrorFlag | EmulatorState_FErrorFlag |
 						EmulatorState_HaltOnError |
 						EmulatorState_DeschedulePending |
@@ -1939,11 +1935,24 @@ void CPU::emulate() {
 	CurrDataLen = CurrDisasmLen = 64;
 
 	logDebug("---- Starting Bootstrap ----");
-	boot();
-	// The initial workspace is the first free word of memory. A low priority process.
-	// If booting from ROM, this should be MemStart - but ROM boot isn't supported yet.
-	Wdesc = WordAlign((WORD32)(IPtr + (WORD32)bootLen));
+	if (bootFromROM) {
+		Wdesc = MemStart;
+		IPtr = ResetCode;
+		// CWG states Areg, Breg are set to previous values of Iptr, Wdesc.. there are no previous values.. I don't
+		// support Analyse mode (yet) - which is how these might be set?
+		Creg = 0xDEADF00D; // CWG states 'undefined'.
+	} else {
+		bootFromLink0();
+		// The initial workspace is the first free word of memory. A low priority process.
+		// If booting from ROM, this should be MemStart - but ROM boot isn't supported yet.
+		Wdesc = WordAlign((WORD32)(IPtr + (WORD32)bootLen));
+		// NB: CWG states Areg is set to the previous value of IPtr, Breg the previous of Wdesc,
+		// Creg a pointer to the link the Transputer booted from.
+		Creg = Link0Input; // The default IServer link input
+		IPtr = MemStart;
+	}
 	Wdesc |= 0x1;
+
 	// Go...
 	//
 	InstructionStartIPtr = IPtr;

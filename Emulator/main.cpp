@@ -27,8 +27,10 @@ using namespace std;
 #include "linkfactory.h"
 
 // global variables
-long memSize;
+long ramSize;
+long romSize;
 WORD32 flags;
+static char *romFile;
 static char *progName;
 
 void usage() {
@@ -36,7 +38,9 @@ void usage() {
 	logInfo("  (C) 2005-2018 Matt J. Gumbley");
 	logInfo("  http://devzendo.github.io/parachute");
 	logInfo("Usage:");
-	logInfoF("%s: [options]", progName);
+	logInfoF("%s: [options] [romfile]", progName);
+	logInfo("If romfile is given it is loaded at the end of memory, and the Emulator uses Boot From ROM. If it is not");
+	logInfo("given, the Emulator uses Boot From Link, waiting for the boot protocol on Link 0.");
 	logInfo("Options:");
 	logInfo("  -c    Displays configuration summary");
 	logInfo("  -da   Enables disassembly during emulation");
@@ -61,9 +65,10 @@ void usage() {
 }
 
 void showConfiguration() {
-	logInfoF("Memory size:     #%08X bytes. (%dMB)", memSize, memSize/Mega);
+	logInfoF("Memory size:     #%08X bytes. (%dMB)", ramSize, ramSize/Mega);
 	logInfoF("Internal memory: #%08X to #%08X", InternalMemStart, InternalMemEnd);
-	logInfoF("External memory: #%08X to #%08X", ExternalMemStart, InternalMemStart + memSize);
+	logInfoF("External memory: #%08X to #%08X", ExternalMemStart, InternalMemStart + ramSize);
+	// TODO we're not showing the ROM memory range here.
 }
 
 bool processCommandLine(int argc, char *argv[]) {
@@ -89,8 +94,8 @@ bool processCommandLine(int argc, char *argv[]) {
 								logFatal("Initial memory size must be in range [1..64] MB");
 								return 0;
 							}
-							memSize = newMegs * Mega;
-							logInfoF("Initial memory size set to #%08X (%ld) bytes", memSize, memSize);
+							ramSize = newMegs * Mega;
+							logInfoF("Initial memory size set to #%08X (%ld) bytes", ramSize, ramSize);
 						} else {
 							logFatalF("'%s' is not of the form -m<number> to "
 									"set the initial memory size", argv[i]);
@@ -174,7 +179,8 @@ bool processCommandLine(int argc, char *argv[]) {
 					break;
 			}
 		} else {
-		}
+            romFile = argv[i];
+        }
 	}
 	if (showConf) {
 		showConfiguration();
@@ -203,7 +209,9 @@ int main(int argc, char *argv[]) {
 	Memory *memory;
 	CPU *cpu;
 	progName = argv[0];
-	memSize = DefaultMemSize;
+	romFile = NULL;
+	ramSize = DefaultMemSize;
+	romSize = 0;
 	flags = 0;
 
 	// Stop CLion reporting this check as unreachable (which it is, on systems that don't
@@ -228,7 +236,7 @@ int main(int argc, char *argv[]) {
 	signal(SIGINT,interruptHandler);
 #endif
 	memory = new Memory();
-	if (!memory->initialise(memSize)) {
+	if (!memory->initialise(ramSize, romFile)) {
 		delete linkFactory;
 		exit(1);
 	}
@@ -239,7 +247,7 @@ int main(int argc, char *argv[]) {
 		delete memory;
 		exit(1);
 	}
-	cpu->emulate();
+	cpu->emulate(romFile);
 	fflush(stdout);
 	delete linkFactory;
 	delete memory;

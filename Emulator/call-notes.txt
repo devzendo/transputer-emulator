@@ -1,0 +1,54 @@
+		case D_call: // call
+			InstCycles = 7;
+			// a = 0, b = 0, c = 80000010
+			// iptr  = 80000071
+			// wdesc = 80000079
+
+
+			Wdesc -= 16;
+			// wdesc = 80000069
+			myMemory->setWord(Wdesc_WPtr(Wdesc), IPtr);     // 80000068 = 80000071 - clobber code
+			myMemory->setWord(Wdesc_WPtr(Wdesc) + 4, Areg); // 8000006c = 0
+			myMemory->setWord(Wdesc_WPtr(Wdesc) + 8, Breg); // 80000070 = 0
+			myMemory->setWord(Wdesc_WPtr(Wdesc) + 12, Creg);// 80000074 = 80000010
+			Areg = IPtr; // cwg says NextInst
+			Breg = Creg; // Spec says 'undefined' but this is what happens. Creg becomes 'undefined'.
+			IPtr += Oreg; // oreg = 2 => iptr = 80000073 (the ret)
+            // 80000073: j 00000000 (wrong, overwritten by call)
+
+
+
+
+
+			/* From Julian Highfield's emulator:
+			   writeword (index (WPtr, -1), CReg);
+               writeword (index (WPtr, -2), BReg);
+               writeword (index (WPtr, -3), AReg);
+               writeword (index (WPtr, -4), IPtr);
+               WPtr = index ( WPtr, -4);
+               AReg = IPtr;
+               IPtr = IPtr + OReg;
+			// JH version:
+            // wdesc = 80000079 still
+            myMemory->setWord(Wdesc_WPtr(Wdesc) - 16, IPtr); // 80000068 = 80000071
+            myMemory->setWord(Wdesc_WPtr(Wdesc) - 12, Areg); // 8000006c = 0
+            myMemory->setWord(Wdesc_WPtr(Wdesc) - 8, Breg);  // 80000070 = 0
+            myMemory->setWord(Wdesc_WPtr(Wdesc) - 4, Creg);  // 80000074 = 80000010
+            Wdesc -= 16;
+            // wdesc = 80000069
+            Areg = IPtr; // cwg says NextInst
+            Breg = Creg; // Spec says 'undefined' but this is what happens. Creg becomes 'undefined'.
+            IPtr += Oreg; // oreg = 2 => iptr = 80000073 (the ret)
+            // 80000073: j 00000000 (wrong, overwritten by call)
+
+            */
+            /*
+             * transterpreter
+             * Store registers in a new stack frame *
+            write_word_and_type(ectx, wordptr_minus(WPTR, 4 - 0), (WORD)IPTR, STYPE_RET);
+            write_word_and_type(ectx, wordptr_minus(WPTR, 4 - 1), AREG, AREGt);
+            write_word_and_type(ectx, wordptr_minus(WPTR, 4 - 2), BREG, BREGt);
+            write_word_and_type(ectx, wordptr_minus(WPTR, 4 - 3), CREG, CREGt);
+            * Actually allocate the stack frame *
+            WPTR = wordptr_minus(WPTR, 4);
+             * this is the same as the JH variant

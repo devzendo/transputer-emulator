@@ -15,6 +15,7 @@ In progress, June 2018. Modernising, building on modern OSX/Linux/Windows.
 
 Remaining work:
 * Fix all compiler warnings (some tautologous comparisons remain)
+* Upgrade to C++11 or more recent
 * Determine calling convention for node server client library & understanding of C->.S conversion, rewrite as .ASM in
   tmasm format.
 * Node Server client library in tmasm assembler
@@ -23,9 +24,6 @@ Remaining work:
 * Node server needs to support terminal I/O facilities (no echo key reads, sensing available readable keys) for eForth
 * Unfinished: resetch when given a link not a memory channel
 * Refactoring: make use of isLegalMemory within memory.cpp
-
-* Convert to CMake for use in CLion
-* Build on Linuxes
 
 Future intentions:
 * Replace NodeServer with an iserver-protocol compatible version
@@ -36,11 +34,23 @@ Future intentions:
 * Investigate Benes networks
 * Add memory-mapped frame buffer via SDL
 * Add mouse interface for same
+* Build on Linuxes
 * Build on Windows
 
 Bugs:
 * (possibly obviated by CMake) why does 'make test' in Shared says it fail to link, yet actually does, and works?
- 
+
+
+Release Notes
+-------------
+0.01 (ongoing work for the first release)
+* Builds using CMake/CLion on OSX.
+* Added Boot-from-ROM, fixed Wdesc bug after boot from link.
+* Fixes: xword, call, j & scheduling (with assistance from Michael Brüstle), locations of TPtrLoc1, TPtrLoc0.
+* Monitor: db (renamed from da), dw improvements.
+* Adopted the Apache License v2.
+
+
 Directory structure
 -------------------
 The source is split into the following directories:
