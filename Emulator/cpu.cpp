@@ -42,6 +42,7 @@ inline WORD32 Wdesc_HiPriority(WORD32 Wdesc) {
 inline WORD32 Wdesc_WPtr(WORD32 Wdesc) {
 	return Wdesc & WordMask;
 }
+
 // TODO: Use a structure/union for this?
 //
 // Temporary register used by outbyte, outword, postnormsn. 
@@ -342,6 +343,7 @@ inline bool CPU::monitor(void) {
 			logInfo("di [addr [len]] disassemble from addr (hex) for len (hex) bytes");
 			logInfo("db [addr [len]] dump hex bytes/ASCII from addr (hex) for len (hex) bytes");
 			logInfo("dw [addr [len]] dump hex words/ASCII from addr (hex) for len (hex) words");
+            logInfo("w [len]  dump hex words/ASCII from Wptr for len (hex) words; default len = curr Workspace size");
 			logInfo("<return> single-step current instruction");
 			logInfo("r        display all registers (depends on register display flags)");
 			logInfo("rq       display queue registers");
@@ -384,12 +386,20 @@ inline bool CPU::monitor(void) {
 			if (sscanf(instr, "dw %x %x", &a1, &a2) == 2) {
 				CurrDataAddress = a1;
 				CurrDataLen = a2;
-			} else if (sscanf(instr, "d2 %x", &a1) == 1) {
+			} else if (sscanf(instr, "dw %x", &a1) == 1) {
 				CurrDataAddress = a1;
 			}
 			//logInfoF("dw addr %08X len %08X", CurrDataAddress, CurrDataLen);
 			myMemory->hexDumpWords(CurrDataAddress, CurrDataLen);
 			CurrDataAddress += CurrDataLen;
+        } else if (strncmp("w", instr, 1) == 0) {
+            CurrDataAddress = Wdesc_WPtr(Wdesc);
+            if (sscanf(instr, "w %x", &a1) == 1) {
+                CurrDataLen = a1 << 2;
+            } else {
+                CurrDataLen = LastAjwInBytes;
+            }
+            myMemory->hexDumpWords(CurrDataAddress, CurrDataLen);
 		} else if (strcmp(instr, "f") == 0) {
 			dumpFlags();
 		} else if (strcmp(instr, "q") == 0) {
@@ -509,7 +519,8 @@ inline void CPU::interpret(void) {
 			break;
 
 		case D_ajw: // adjust workspace
-			Wdesc += Oreg << 2;
+            LastAjwInBytes = Oreg << 2; // convenience store of current workspace size (in bytes) for the monitor w command
+			Wdesc += LastAjwInBytes;
 			break;
 
 		case D_eqc: // equals constant
@@ -1756,6 +1767,7 @@ inline void CPU::interpret(void) {
 		if ((Wdesc_HiPriority(Wdesc) && (HiHead==NotProcess_p)) ||
 			((!Wdesc_HiPriority(Wdesc)) && (Wdesc_WPtr(LoHead)==NotProcess_p))) {
 			// Do nothing - Nothing needed to be descheduled.
+            logDebug("Nothing to deschedule");
 		} else {
 			// Store the IPtr in the workspace
 			myMemory->setWord(W_IPTR(Wdesc), IPtr);
@@ -1765,7 +1777,7 @@ inline void CPU::interpret(void) {
 				Wdesc = HiHead;
 				IPtr = myMemory->getWord(W_IPTR(Wdesc));
 				HiHead = myMemory->getWord(W_LINK(Wdesc));
-	         	} else {
+            } else {
 				// Low priority => Wdesc != Wptr
 				Wdesc = LoHead;
 				IPtr = myMemory->getWord(W_IPTR(Wdesc));
@@ -1933,6 +1945,7 @@ void CPU::emulate(const bool bootFromROM) {
 	// Initialise monitor
 	CurrDataAddress = CurrDisasmAddress = MemStart;
 	CurrDataLen = CurrDisasmLen = 64;
+	LastAjwInBytes = 16; // useful, perhaps, until next ajw
 
 	if (bootFromROM) {
 		logDebug("---- Starting Boot from ROM ----");

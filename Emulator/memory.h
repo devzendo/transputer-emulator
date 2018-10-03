@@ -35,7 +35,7 @@ class Memory {
 		bool isLegalMemory(WORD32 addr);
 		// Used by the monitor
 		void hexDump(WORD32 addr, WORD32 len);
-		void hexDumpWords(WORD32 addr, WORD32 len);
+		void hexDumpWords(WORD32 addr, WORD32 lenInBytes);
 	private:
 		bool loadROMFile(const char *romFileName);
 		BYTE *myMemory;

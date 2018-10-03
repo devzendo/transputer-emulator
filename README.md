@@ -27,15 +27,16 @@ Remaining work:
 
 Future intentions:
 * Replace NodeServer with an iserver-protocol compatible version
-* Remove potential buffer overflows in cpu.cpp
+* Remove potential buffer overflows in cpu.cpp (what were these?)
+* Terminate emulation on stopp of last/only process?
 * Add remaining T800/T805 instructions, including those from Transputer Instruction Set - Appendix, Guy Harriman.
+* Build on Linuxes
+* Build on Windows
 * Emulate multiple Transputers on 1-N physical cores
 * Link topology management
 * Investigate Benes networks
 * Add memory-mapped frame buffer via SDL
 * Add mouse interface for same
-* Build on Linuxes
-* Build on Windows
 
 Bugs:
 * (possibly obviated by CMake) why does 'make test' in Shared says it fail to link, yet actually does, and works?
@@ -47,7 +48,7 @@ Release Notes
 * Builds using CMake/CLion on OSX.
 * Added Boot-from-ROM, fixed Wdesc bug after boot from link.
 * Fixes: xword, call, j & scheduling (with assistance from Michael Brüstle), locations of TPtrLoc1, TPtrLoc0.
-* Monitor: db (renamed from da), dw improvements.
+* Monitor: db (renamed from da), dw improvements, added w (workspace display).
 * Adopted the Apache License v2.
 
 

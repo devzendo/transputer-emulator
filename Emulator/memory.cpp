@@ -410,8 +410,8 @@ void Memory::hexDump(WORD32 addr, WORD32 len) {
 char line[80];
 WORD32 i;
 WORD32 offset=addr;
-WORD32 left=len;
-WORD32 upto16, x;
+SWORD32 left=len;
+SWORD32 upto16, x;
 BYTE b;
 	while (left > 0) {
 		for (i = 0; i < 78; i++) {
@@ -448,19 +448,20 @@ BYTE b;
 	}
 }
 
-void Memory::hexDumpWords(WORD32 addr, WORD32 len) {
+// Precondition: lenInBytes is a multiple of the word size, 4 bytes
+void Memory::hexDumpWords(WORD32 addr, WORD32 lenInBytes) {
 char line[80];
 WORD32 i;
 WORD32 offset=addr;
-WORD32 left=len;
-WORD32 upto4, x;
+SWORD32 leftBytes=lenInBytes;
+SWORD32 upto4Words, x;
 BYTE *b;
 WORD32 w;
 /*        1         2         3         4         5         6         7
 01234567890123456789012345678901234567890123456789012345678901234567890123456789
 00000000 | 01234567 01234567 01234567 01234567 | .... .... .... ....
  */
-	while (left > 0) {
+	while (leftBytes > 0) {
 		for (i = 0; i < 78; i++) {
 			line[i] = ' ';
 		}
@@ -468,8 +469,8 @@ WORD32 w;
 		line[68] = '\0';
 		sprintf(line, "%08X", offset);
 		line[8] = ' ';
-		upto4 = (left > 4) ? 4 : left;
-		for (x = 0; x < upto4; x++) {
+		upto4Words = (leftBytes > 16) ? 4 : (leftBytes >> 2);
+		for (x = 0; x < upto4Words; x++) {
 			WORD32 wordAddr = offset + (x << 2);
 			if (isLegalMemory(wordAddr)) {
 
@@ -478,9 +479,9 @@ WORD32 w;
 				// always stored in memory in little-endian form, as on a real
 				// Transputer. LSB first MSB last.
 				if (wordAddr >= InternalMemStart && wordAddr <= myMemEnd) {
-					b = myMemory + (wordAddr - InternalMemStart);
+ 					b = myMemory + (wordAddr - InternalMemStart);
 				} else if (myROMPresent && wordAddr >= myROMStart && wordAddr <= MaxINT) {
-					b = myReadOnlyMemory + (wordAddr - myROMStart);
+ 					b = myReadOnlyMemory + (wordAddr - myROMStart);
 				} // must be one of those branches, since isLegalMemory is true.
 
 				BYTE b0 = b[0];
@@ -501,7 +502,7 @@ WORD32 w;
 		}
 		logInfo(line);
 		offset += 16;
-		left -= 16;
+		leftBytes -= 16;
 	}
 }
 

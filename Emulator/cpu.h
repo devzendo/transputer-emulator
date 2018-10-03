@@ -61,6 +61,7 @@ class CPU {
 		WORD32 CurrDataLen;
 		WORD32 CurrDisasmAddress;
 		WORD32 CurrDisasmLen;
+		WORD32 LastAjwInBytes;
 
 		// Internal methods:
 		inline void DROP(void);
