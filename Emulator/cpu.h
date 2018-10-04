@@ -14,6 +14,8 @@
 #ifndef _CPU_H
 #define _CPU_H
 
+#include <set>
+
 #include "types.h"
 #include "memory.h"
 #include "link.h"
@@ -23,7 +25,9 @@ class CPU {
 	public:
 		// 2-phase CTOR since there's only one global CPU
 		CPU();
-		bool initialise(Memory *memory, LinkFactory *linkFactory); 
+		bool initialise(Memory *memory, LinkFactory *linkFactory);
+		void addBreakpoint(WORD32 breakpointAddress);
+        void removeBreakpoint(WORD32 breakpointAddress);
 		void emulate(const bool bootFromROM);
 		~CPU();
 	private:
@@ -62,6 +66,7 @@ class CPU {
 		WORD32 CurrDisasmAddress;
 		WORD32 CurrDisasmLen;
 		WORD32 LastAjwInBytes;
+		set<WORD32> BreakpointAddresses;
 
 		// Internal methods:
 		inline void DROP(void);
@@ -78,6 +83,7 @@ class CPU {
 		WORD32 disassembleRange(WORD32 addr, WORD32 maxlen);
 		inline void interpret(void);
 		inline bool monitor(void);
+		void showBreakpointAddresses();
 
 };
 

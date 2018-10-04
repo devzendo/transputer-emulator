@@ -11,7 +11,7 @@ http://devzendo.github.io/parachute
 
 Status
 ------
-In progress, June 2018. Modernising, building on modern OSX/Linux/Windows.
+In progress, October 2018. Modernising, building on modern OSX/Linux/Windows.
 
 Remaining work:
 * Fix all compiler warnings (some tautologous comparisons remain)
@@ -48,7 +48,8 @@ Release Notes
 * Builds using CMake/CLion on OSX.
 * Added Boot-from-ROM, fixed Wdesc bug after boot from link.
 * Fixes: xword, call, j & scheduling (with assistance from Michael Brüstle), locations of TPtrLoc1, TPtrLoc0.
-* Monitor: db (renamed from da), dw improvements, added w (workspace display).
+* Monitor: db (renamed from da), dw improvements, added w (workspace display), added b/b+b-/b? (breakpoints),
+  added s (show all state).
 * Adopted the Apache License v2.
 
 

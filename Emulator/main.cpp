@@ -15,7 +15,10 @@
 #include <cstdio>
 #include <cstring>
 #include <cstdlib>
+#include <set>
+
 using namespace std;
+
 #include "constants.h"
 #include "types.h"
 #include "flags.h"
@@ -32,6 +35,7 @@ long romSize;
 WORD32 flags;
 static char *romFile;
 static char *progName;
+set<WORD32> breakpointAddresses;
 
 void usage() {
 	logInfoF("Parachute v%1.2f T800 Emulator " __DATE__, VERSION);
@@ -62,6 +66,7 @@ void usage() {
 	logInfo("  -m<X> Sets initial memory size to X MB");
 	logInfo("  -i    Enters interactive monitor immediately");
 	logInfo("  -t    Terminate emulation upon memory violation");
+	logInfo("  -b<H> Add H (a hex address) as a breakpoint (can be repeated)");
 }
 
 void showConfiguration() {
@@ -177,6 +182,16 @@ bool processCommandLine(int argc, char *argv[]) {
 				case 't':
 					SET_FLAGS(DebugFlags_TerminateOnMemViol);
 					break;
+				case 'b': {
+						WORD32 breakpointAddress = 0;
+						if (sscanf(&argv[i][2], "%x", &breakpointAddress) == 1) {
+							breakpointAddresses.insert(breakpointAddress);
+						} else {
+							logFatal("-b must be directly followed by a hex address e.g. -b8007F123");
+							return 0;
+						}
+					}
+					break;
 			}
 		} else {
             romFile = argv[i];
@@ -247,6 +262,12 @@ int main(int argc, char *argv[]) {
 		delete memory;
 		exit(1);
 	}
+
+	for (set<WORD32>::const_iterator iter = breakpointAddresses.begin();
+		 iter != breakpointAddresses.end(); iter++) {
+		cpu->addBreakpoint(*iter);
+	}
+
 	cpu->emulate(romFile);
 	fflush(stdout);
 	delete linkFactory;

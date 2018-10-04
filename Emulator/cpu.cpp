@@ -146,6 +146,19 @@ bool CPU::initialise(Memory *memory, LinkFactory *linkFactory) {
 	return true;
 }
 
+void CPU::addBreakpoint(const WORD32 breakpointAddress) {
+    logInfoF("Breakpoint added: %08X", breakpointAddress);
+    BreakpointAddresses.insert(breakpointAddress);
+}
+
+void CPU::removeBreakpoint(const WORD32 breakpointAddress) {
+    if (BreakpointAddresses.erase(breakpointAddress) == 0) {
+        logInfoF("Breakpoint not present: %08X", breakpointAddress);
+    } else {
+        logInfoF("Breakpoint removed: %08X", breakpointAddress);
+    }
+}
+
 CPU::~CPU() {
 	logDebug("CPU DTOR");
 	for (int i = 0; i < 4; i++) {
@@ -317,6 +330,17 @@ void dumpFlags() {
 		logInfo("-- TIMER INSTRUCTION");
 }
 
+void CPU::showBreakpointAddresses() {
+    if (BreakpointAddresses.empty()) {
+        logInfo("No breakpoints are set");
+    } else {
+        for (set<WORD32>::const_iterator iter = BreakpointAddresses.begin();
+             iter != BreakpointAddresses.end(); iter++) {
+            logInfoF("Breakpoint %08X", *iter);
+        }
+    }
+}
+
 // Monitor. Return true to single step to next instruction; false to quit emulator or monitor (check flags).
 inline bool CPU::monitor(void) {
 	char instr[80];
@@ -339,18 +363,24 @@ inline bool CPU::monitor(void) {
 		if (strcmp(instr, "h") == 0 || strcmp(instr, "?") == 0) {
 			//       12345678901234567890123456789012345678901234567890123456789012345678901234567890
 			logInfo("Monitor commands:");
-			logInfo("ci       disassemble current instruction");
-			logInfo("di [addr [len]] disassemble from addr (hex) for len (hex) bytes");
-			logInfo("db [addr [len]] dump hex bytes/ASCII from addr (hex) for len (hex) bytes");
-			logInfo("dw [addr [len]] dump hex words/ASCII from addr (hex) for len (hex) words");
-            logInfo("w [len]  dump hex words/ASCII from Wptr for len (hex) words; default len = curr Workspace size");
-			logInfo("<return> single-step current instruction");
-			logInfo("r        display all registers (depends on register display flags)");
-			logInfo("rq       display queue registers");
-			logInfo("rc       display clock registers");
-			logInfo("f        display flags");
-			logInfo("q        quit emulator");
-			logInfo("g        quit monitor, continue interpretation");
+			logInfo("ci                   disassemble current instruction");
+			logInfo("di [addr [len]]      disassemble from addr (hex) for len (hex) bytes");
+			logInfo("db [addr [len]]      dump hex bytes/ASCII from addr (hex) for len (hex) bytes");
+			logInfo("dw [addr [len]]      dump hex words/ASCII from addr (hex) for len (hex) words");
+            logInfo("w [len]              dump hex words/ASCII from Wptr for len (hex) words;");
+            logInfo("                     default len = current Workspace size");
+            logInfo("b addr  or  b+ addr  add addr (hex) as a breakpoint");
+            logInfo("b- addr              remove addr (hex) as a breakpoint");
+            logInfo("b?  or  b <no args>  display all breakpoint addresses");
+			logInfo("<return>             single-step current instruction");
+			logInfo("r                    display all registers (depends on register display flags)");
+			logInfo("rq                   display queue registers");
+			logInfo("rc                   display clock registers");
+			logInfo("f                    display flags");
+			logInfo("s                    display all state: registers, flags, current disassembly");
+			logInfo("q                    quit emulator");
+			logInfo("g                    'go': quit monitor, continue interpretation");
+			logInfo("                     (until any breakpoints reached)");
 		}
 		if (strcmp(instr, "r") == 0) {
 			DumpRegs(LOGLEVEL_INFO);
@@ -400,6 +430,28 @@ inline bool CPU::monitor(void) {
                 CurrDataLen = LastAjwInBytes;
             }
             myMemory->hexDumpWords(CurrDataAddress, CurrDataLen);
+        } else if (strncmp("b?", instr, 2) == 0) {
+		    showBreakpointAddresses();
+		} else if (strncmp("b+", instr, 2) == 0) {
+			if (sscanf(instr, "b+ %x", &a1) == 1) {
+				addBreakpoint(a1);
+			}
+		} else if (strncmp("b-", instr, 2) == 0) {
+			if (sscanf(instr, "b- %x", &a1) == 1) {
+				removeBreakpoint(a1);
+			}
+        } else if (strncmp("b", instr, 1) == 0) {
+			if (sscanf(instr, "b %x", &a1) == 1) {
+				addBreakpoint(a1);
+			} else {
+				showBreakpointAddresses();
+			}
+		} else if (strcmp(instr, "s") == 0) {
+			DumpRegs(LOGLEVEL_DEBUG);
+			DumpQueueRegs(LOGLEVEL_DEBUG);
+			DumpClockRegs(LOGLEVEL_DEBUG, InstCycles+MemCycles);
+			dumpFlags();
+			disassembleCurrInstruction(LOGLEVEL_INFO);
 		} else if (strcmp(instr, "f") == 0) {
 			dumpFlags();
 		} else if (strcmp(instr, "q") == 0) {
@@ -416,6 +468,7 @@ inline bool CPU::monitor(void) {
 
 
 inline void CPU::interpret(void) {
+	bool hitBreakpoint = BreakpointAddresses.count(IPtr) == 1;
 	// Fetch the current instruction
 	CurrInstruction = myMemory->getInstruction(IPtr++);
 	// Decode it
@@ -426,7 +479,11 @@ inline void CPU::interpret(void) {
 	if (IS_FLAG_SET(DebugFlags_DebugLevel | DebugFlags_Monitor)) {
 		disassembleCurrInstruction(LOGLEVEL_DEBUG);
 	}
-	if (IS_FLAG_SET(DebugFlags_Monitor)) {
+	if (hitBreakpoint) {
+		logInfo("*** BREAKPOINT");
+		SET_FLAGS(DebugFlags_Monitor); // Enable monitor mode, until you exit it with 'g' (or 'q').
+	}
+	if (hitBreakpoint || IS_FLAG_SET(DebugFlags_Monitor)) {
 		if (!monitor()) {
 			return; // it's terminated if it returns false
 		}
