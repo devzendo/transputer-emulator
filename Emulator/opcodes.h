@@ -16,6 +16,8 @@
 
 #include "emuquery.h"
 
+// Ordering here is mostly from the Compiler Writer's Guide, Appendix D.
+
 // Direct and prefixing instructions
 const int D_j = 0x00;
 const int D_ldlp = 0x10;
@@ -116,12 +118,18 @@ const int O_savel = 0x3d;
 const int O_clrhalterr = 0x57;
 const int O_sethalterr = 0x58;
 const int O_testhalterr = 0x59;
+
+// Extra instruction on 32-bit Transputers
 const int O_fmul = 0x72;
+
+// Extra instructions on IMS T414
 const int O_unpacksn = 0x63;
 const int O_roundsn = 0x6d;
 const int O_postnormsn = 0x6c;
 const int O_ldinf = 0x71;
 const int O_cflerr = 0x73;
+
+// Additional instructions on T800
 const int O_dup = 0x5a;
 const int O_move2dinit = 0x5b;
 const int O_move2dall = 0x5c;
@@ -133,6 +141,7 @@ const int O_bitcnt = 0x76;
 const int O_bitrevword = 0x77;
 const int O_bitrevnbits = 0x78;
 const int O_wsubdb = 0x81;
+
 // Some floating point instructions are defined by
 // loading Areg and using fpentry. See FP_ codes...
 // See page 50 of Compiler Writer's guide. 
@@ -191,6 +200,16 @@ const int FP_fpumulby2 = 0x12;
 const int FP_fpurn = 0x22;
 const int FP_fpuseterr = 0x23;
 const int FP_fpuclrerr = 0x9c;
+
+// T801 instructions, from Transputer Instruction Set - Appendix, Guy Harriman.
+const int O_start = 0x1ff;
+const int O_testhardchan = 0x2d;
+const int O_testldd = 0x25;
+const int O_teststd = 0x28;
+const int O_testlde = 0x24;
+const int O_testste = 0x27;
+const int O_testlds = 0x23;
+const int O_teststs = 0x26;
 
 // Nonstandard emulator functions
 const int X_togglemonitor = 0xc0;

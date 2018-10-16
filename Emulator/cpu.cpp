@@ -1032,7 +1032,7 @@ inline void CPU::interpret(void) {
 							try {
 								myLink->writeWord(Areg);
 							} catch (exception &e) {
-								logErrorF("outword failed to write byte to link %d: %s", myLink->getLinkNo(), e.what());
+								logErrorF("outword failed to write word to link %d: %s", myLink->getLinkNo(), e.what());
 								SET_FLAGS(EmulatorState_Terminate);
 							}
 						}
@@ -1676,7 +1676,7 @@ inline void CPU::interpret(void) {
 						case FP_fpuclrerr: // clear floating error
 							CLEAR_FLAGS(EmulatorState_FErrorFlag);
 							// RoundMode := ToNearest
-       							break;
+                            break;
 
 						// The unimplemented floating-point instructions
 						case FP_fpusqrtfirst: //
@@ -1708,7 +1708,19 @@ inline void CPU::interpret(void) {
 					} // End of O_fpentry switch
 					break;
 
-				// Nonstandard emulator functions
+				// T801 instructions
+                case O_start:
+                case O_testhardchan:
+                case O_testldd:
+                case O_teststd:
+                case O_testlde:
+                case O_testste:
+                case O_testlds:
+                case O_teststs:
+                    logWarnF("Unimplemented T801 opr instruction Oreg=%08X", Oreg);
+                    break;
+
+                // Nonstandard emulator functions
 				case X_togglemonitor:
 					if (IS_FLAG_SET(DebugFlags_Monitor)) {
 						logInfo("Exitting monitor");
