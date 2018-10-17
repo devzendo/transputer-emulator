@@ -84,6 +84,7 @@ class CPU {
 		inline void interpret(void);
 		inline bool monitor(void);
 		void showBreakpointAddresses();
+		bool swapContextForBreakpointInstruction(void);
 
 };
 

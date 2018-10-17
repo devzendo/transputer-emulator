@@ -201,7 +201,7 @@ const int FP_fpurn = 0x22;
 const int FP_fpuseterr = 0x23;
 const int FP_fpuclrerr = 0x9c;
 
-// T801 instructions, from Transputer Instruction Set - Appendix, Guy Harriman.
+// T801 instructions, from "Transputer Instruction Set - Appendix", Guy Harriman.
 const int O_start = 0x1ff;
 const int O_testhardchan = 0x2d;
 const int O_testldd = 0x25;
@@ -210,6 +210,20 @@ const int O_testlde = 0x24;
 const int O_testste = 0x27;
 const int O_testlds = 0x23;
 const int O_teststs = 0x26;
+
+// T801/T805 instructions from "Support for debugging/breakpointing in transputers" (INMOS
+// Technical Note 61)
+const int O_break = 0xb1;
+const int O_clrj0break = 0xb2;
+const int O_setj0break = 0xb3;
+const int O_testj0break = 0xb4;
+const int O_timerdisableh = 0x7a;
+const int O_timerdisablel = 0x7b;
+const int O_timerenableh = 0x7c;
+const int O_timerenablel = 0x7d;
+const int O_ldmemstartval = 0x7e;
+const int O_pop = 0x79;
+const int O_lddevid = 0x17c;
 
 // Nonstandard emulator functions
 const int X_togglemonitor = 0xc0;

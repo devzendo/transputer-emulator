@@ -65,6 +65,7 @@ void usage() {
 	logInfo("        (only FIFO implemented yet)");
 	logInfo("  -m<X> Sets initial memory size to X MB");
 	logInfo("  -i    Enters interactive monitor immediately");
+	logInfo("  -j    Enables break on j0");
 	logInfo("  -t    Terminate emulation upon memory violation");
 	logInfo("  -b<H> Add H (a hex address) as a breakpoint (can be repeated)");
 }
@@ -179,6 +180,9 @@ bool processCommandLine(int argc, char *argv[]) {
 				case 'i':
 					SET_FLAGS(DebugFlags_Monitor | Debug_DisRegs);
 					break;
+                case 'j':
+                    SET_FLAGS(EmulatorState_J0Break);
+                    break;
 				case 't':
 					SET_FLAGS(DebugFlags_TerminateOnMemViol);
 					break;

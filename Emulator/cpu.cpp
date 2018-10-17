@@ -316,6 +316,8 @@ void dumpFlags() {
 		logInfo("-- HALT ON ERROR");
 	if (IS_FLAG_SET(EmulatorState_FErrorFlag))
 		logInfo("-- FLOATING POINT ERROR");
+	if (IS_FLAG_SET(EmulatorState_J0Break))
+		logInfo("-- JUMP 0 BREAK");
 	if (IS_FLAG_SET(EmulatorState_DeschedulePending))
 		logInfo("-- DESCHEDULE PENDING");
 	if (IS_FLAG_SET(EmulatorState_DescheduleRequired))
@@ -466,9 +468,22 @@ inline bool CPU::monitor(void) {
 	}
 }
 
+bool CPU::swapContextForBreakpointInstruction(void) {
+	bool hiPriority = Wdesc_HiPriority(Wdesc);
+	WORD32 BreakpointContext = hiPriority ? MemStart : MemStart + 2;
+	WORD32 currWdesc = Wdesc;
+	WORD32 currIPtr = IPtr;
+	Wdesc = myMemory->getWord(BreakpointContext);
+	IPtr = myMemory->getWord(BreakpointContext + 4);
+	myMemory->setWord(BreakpointContext, currWdesc);
+	myMemory->setWord(BreakpointContext + 4, currIPtr);
+	SET_FLAGS(EmulatorState_BreakpointInstruction);
+	return hiPriority;
+}
 
 inline void CPU::interpret(void) {
-	bool hitBreakpoint = BreakpointAddresses.count(IPtr) == 1;
+	bool hitBreakpoint = IS_FLAG_SET(EmulatorState_BreakpointInstruction) ||
+						 BreakpointAddresses.count(IPtr) == 1;
 	// Fetch the current instruction
 	CurrInstruction = myMemory->getInstruction(IPtr++);
 	// Decode it
@@ -482,6 +497,7 @@ inline void CPU::interpret(void) {
 	if (hitBreakpoint) {
 		logInfo("*** BREAKPOINT");
 		SET_FLAGS(DebugFlags_Monitor); // Enable monitor mode, until you exit it with 'g' (or 'q').
+		CLEAR_FLAGS(EmulatorState_BreakpointInstruction); // Will be set on the next breakpoint instruction.
 	}
 	if (hitBreakpoint || IS_FLAG_SET(DebugFlags_Monitor)) {
 		if (!monitor()) {
@@ -502,8 +518,17 @@ inline void CPU::interpret(void) {
 	OldOreg = Oreg;
 	switch (Instruction) {
 		case D_j: // jump
+            if (Oreg == 0) {
+            	if (IS_FLAG_SET(EmulatorState_J0Break)) {
+            		logInfo("*** Breakpoint (j 0) ***");
+            		bool hiPriority = swapContextForBreakpointInstruction();
+            		InstCycles = hiPriority ? 11 : 13;
+            	} else {
+            		logWarn("j: 0, but j 0 break not set");
+            	}
+            }
 			if (Oreg == -2) {
-				logWarn("j: infinite loop - premature end?");
+                logWarn("j: infinite loop - premature end?");
 			} else {
 				IPtr += Oreg;
 				InstCycles = 3;
@@ -1452,6 +1477,8 @@ inline void CPU::interpret(void) {
 					break;
 
 				case O_fptesterr: // test floating error false and clear
+					// TODO? use the TN61 interpretation, returning true, as the FPU is
+					// not really present in the emulator at the moment?
 					PUSH(IS_FLAG_CLEAR(EmulatorState_FErrorFlag));
 					InstCycles++;
 					// RoundMode := ToNearest
@@ -1719,6 +1746,43 @@ inline void CPU::interpret(void) {
                 case O_teststs:
                     logWarnF("Unimplemented T801 opr instruction Oreg=%08X", Oreg);
                     break;
+
+				// T805 instructions
+				case O_break: // Break (swap process context)
+					logInfo("*** Breakpoint (break) ***");
+					InstCycles = swapContextForBreakpointInstruction() ? 9 : 11;
+					break;
+
+				case O_clrj0break: // Clear J0 break flag
+					CLEAR_FLAGS(EmulatorState_J0Break);
+					break;
+
+				case O_setj0break: // Set J0 break flag
+					SET_FLAGS(EmulatorState_J0Break);
+					break;
+
+				case O_testj0break: // Test J0 break flag
+					PUSH(IS_FLAG_SET(EmulatorState_J0Break));
+					InstCycles++;
+					break;
+
+				case O_timerdisableh:
+				case O_timerdisablel:
+				case O_timerenableh:
+				case O_timerenablel:
+					break;
+
+				case O_ldmemstartval: // Load value of MemStart address
+					PUSH(MemStart);
+					break;
+
+				case O_pop: // Pop processor stack
+					Creg = POP();
+					break;
+
+				case O_lddevid: // Load device identity
+					PUSH(19); // T805 uses values 10-19. I'm a late series T805.
+					break;
 
                 // Nonstandard emulator functions
 				case X_togglemonitor:

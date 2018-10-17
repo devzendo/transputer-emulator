@@ -1,8 +1,9 @@
 transputer-emulator
 ===================
-This is an emulator of the Inmos T805 Transputer, and Node Server that interfaces it
-to a host OS, providing boot/debug/IO facilities. It is part of the
-[Parachute Project](https://devzendo.github.io/parachute). 
+This is an emulator of the 32-bit Inmos T414/T800/T801/T805 Transputer family, and a Node Server that interfaces it
+to a host OS, providing boot/debug/IO facilities.
+
+It is part of the [Parachute Project](https://devzendo.github.io/parachute).
 
 (C) 2005-2018 Matt J. Gumbley
 matt.gumbley@devzendo.org
@@ -13,21 +14,17 @@ Status
 ------
 In progress, October 2018. Modernising, building on modern OSX/Linux/Windows.
 
-Remaining work:
+Remaining Work
+--------------
+
+Node Server
+===========
 * Node Server client library in tmasm assembler
 * Node server needs to support terminal I/O facilities (no echo key reads, sensing available readable keys) for eForth
-
-Future intentions:
 * Replace NodeServer with an iserver/afserver-protocol compatible version
-* Add remaining T800/T801/T805 instructions, including those from Transputer Instruction Set - Appendix, Guy Harriman.
-  esp pop - why not in T800?!
-* Unfinished: resetch when given a link not a memory channel
-* Remove potential buffer overflows in cpu.cpp (what were these?)
-* Refactoring: make use of isLegalMemory within memory.cpp
-* Build on Linuxes
-* Build on Windows
-* Fix all compiler warnings (some tautologous comparisons remain)
-* Upgrade to C++11 or more recent
+
+Functionality
+=============
 * Emulate multiple Transputers on 1-N physical cores
 * Link topology management
 * Investigate Benes networks
@@ -36,13 +33,29 @@ Future intentions:
 * Add memory-mapped frame buffer via SDL
 * Add mouse interface for same
 
-Bugs:
+Correctness
+===========
+* Remove potential buffer overflows in cpu.cpp (what were these?)
+* Refactoring: make use of isLegalMemory within memory.cpp
+* Unfinished: resetch when given a link not a memory channel
+
+Build/Releases
+==============
+* Build on Linuxes
+* Build on Windows
+* Fix all compiler warnings (some tautologous comparisons remain)
+* Upgrade to C++11 or more recent
+
+Bugs
+====
 * (possibly obviated by CMake) why does 'make test' in Shared says it fail to link, yet actually does, and works?
 
 Completeness
 ------------
-Although the emulator recognises all T805 instructions, not all are currently implemented.
+Although the emulator recognises all T414/T800/T801/T805 instructions, not all are currently implemented.
 The greatest omission is floating point - this is an integer T805 at the moment!
+
+The proposed T810 instructions are not implemented.
 
 Those that are not emit a diagnostic when encountered.
 
@@ -67,6 +80,9 @@ savel, sb, seterr, sethalterr, shl, shr, startp, sthb, sthf, stlb, stlf,
 stoperr, stopp, sttimer, sub, sum, talt, testerr, testhalterr, tin, wcnt, wsub,
 wsubdb, xdble, xor, xword.
 
+T805:
+break, clrj0break, lddevid, ldmemstartval, pop, setj0break, testj0break.
+
 Nonstandard emulator:
 emuquery, marker, terminate, toggledisasm, togglemonitor
 
@@ -76,25 +92,38 @@ fpchkerr, fptesterr, resetch, taltwt.
 
 Unimplemented Instructions
 ==========================
-cflerr, crcbyte, crcword, f puexpdec32, fmul, fpadd, fpb32tor64, fpchki32,
-fpdiv, fpdup, fpeq, fpgt, fpi32tor32, fpi32tor64, fpint, fpldnladddb,
-fpldnladdsn, fpldnldb, fpldnldbi, fpldnlmuldb, fpldnlmulsn, fpldnlsn,
-fpldnlsni, fpldzerodb, fpldzerosn, fpmul, fpnan, fpnotfinite, fpordered,
-fpremfirst, fpremstep, fprev, fprtoi32, fpstnldb, fpstnli32, fpstnlsn, fpsub,
-fpuabs, fpuchki64, fpudivby2, fpuexpinc32, fpumulby2, fpunoround, fpur32tor64,
-fpur64tor32, fpurm, fpurn, fpurp, fpurz, fpusqrtfirst, fpusqrtlast,
-fpusqrtstep, ldinf, move2dall, move2dinit, move2dnonzero, move2dzero, norm,
-postnormsn, roundsn, testpranal, unpacksn.
+fpuexpdec32, fpadd, fpb32tor64, fpchki32, fpdiv, fpdup, fpeq, fpgt,
+fpi32tor32, fpi32tor64, fpint, fpldnladddb, fpldnladdsn, fpldnldb, fpldnldbi,
+fpldnlmuldb, fpldnlmulsn, fpldnlsn, fpldnlsni, fpldzerodb, fpldzerosn, fpmul,
+fpnan, fpnotfinite, fpordered, fpremfirst, fpremstep, fprev, fprtoi32, fpstnldb,
+fpstnli32, fpstnlsn, fpsub, fpuabs, fpuchki64, fpudivby2, fpuexpinc32, fpumulby2,
+fpunoround, fpur32tor64, fpur64tor32, fpurm, fpurn, fpurp, fpurz, fpusqrtfirst,
+fpusqrtlast, fpusqrtstep, norm, testpranal.
+
+32-bit Transputers: fmul.
+
+T414: cflerr, ldinf, postnormsn, roundsn, unpacksn.
+
+T800: crcbyte, crcword, move2dall, move2dinit, move2dnonzero, move2dzero.
 
 T801:
 start, testhardchan, testldd, testlde, testlds, teststd, testste, teststs.
 
+T805:
+timerenableh, timerenablel, timerdisableh, timerdisablel.
 
+T810: checkaddr, delay, dislinkinth, dislinkintl, distimesl, enlinkinth, enlinkintl,
+entimesl, fpmacc, fpxprod, ldhw, macc, pause, sthw, xprod
 
 Release Notes
 -------------
 0.01 (ongoing work for the first release)
-* Started adding the T801 instructions, from "Transputer Instruction Set - Appendix, Guy Harriman", and ""
+* Started adding the T801 instructions, from "Transputer Instruction Set - Appendix, Guy Harriman".
+* Started adding the T801/T805 instructions from "Support for debugging/breakpointing in transputers" (INMOS
+  Technical Note 61).
+  Added the -j flag to enable 'j 0' breakpoints.
+* Described current implementation/missing status in the above section.
+* The T810 instructions from "The IMS T810 - A Preliminary Survey" are not implemented.
 * Builds using CMake/CLion on OSX.
 * Added Boot-from-ROM, fixed Wdesc bug after boot from link.
 * Fixes: xword, call, j & scheduling (with assistance from Michael Brüstle), locations of TPtrLoc1, TPtrLoc0.
@@ -168,3 +197,28 @@ Thanks to Michael Brüstle of transputer.net for assistance with details of the 
 timer queue addresses - and for maintaining a superb archive.
 
 
+Bibliography
+------------
+[CWG] "Transputer Instruction Set - A Compiler Writer's Guide"
+ http://www.transputer.net/iset/pdf/tis-acwg.pdf
+
+"Transputer Instruction Set - A Compiler Writer's Guide - Errata"
+ http://www.transputer.net/iset/errata/tis-acwg-errata.txt
+
+"Transputer Instruction Set - Appendix, Guy Harriman"
+ http://www.transputer.net/iset/appendix/appendix.pdf
+
+"Support for debugging/breakpointing in transputers" (INMOS Technical Note 61)
+  http://www.transputer.net/tn/61/tn61.pdf
+
+[TTH] "The Transputer Handbook", Ian Graham, Gavin King
+ Not available online.
+
+"IMS T805 32-bit floating point transputer"
+ http://www.transputer.net/ibooks/dsheets/t805.pdf
+
+"Transputer Versions - Mike's Technical Note 2, Michael Brüstle"
+ http://www.transputer.net/tn/m02/tdiff.pdf
+
+"The IMS T810 - A Preliminary Survey, Guy Harriman"
+  http://www.transputer.net/fbooks/t810pre/t810pre.pdf

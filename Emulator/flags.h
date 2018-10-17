@@ -109,9 +109,9 @@ extern WORD32 flags;
   
    24 (0x1000000)      Emulator: Timer manipulation instruction encountered
 
-   25 (0x2000000)      Reserved
+   25 (0x2000000)      Emulator: Breakpoint instruction (j 0, break) encountered
   
-   26 (0x4000000)      Reserved
+   26 (0x4000000)      T800 Break on j 0 flag
   
    27 (0x8000000)      Reserved
   
@@ -133,6 +133,8 @@ extern WORD32 flags;
 #define EmulatorState_BadInstruction 0x400000
 #define EmulatorState_QueueInstruction 0x800000
 #define EmulatorState_TimerInstruction 0x1000000
+#define EmulatorState_BreakpointInstruction 0x2000000
+#define EmulatorState_J0Break 0x4000000
 
 #define EmulatorState_Terminate 0x80000000
 
