@@ -1,0 +1,31 @@
+
+                          libxputer.a v0.05
+ 
+libxputer.a is a simple attempt to wrap all transputer architecture
+features into C functions.  It is not intended to be compatible with
+any other library.  Consider it as an example for gcc-t800.
+
+
+INSTALLATION
+
+gcc-2.7.2-t800 pl=>8 is required.  It can be found in
+ftp://ftp.botik.ru/pub/local/gcc-t800/.
+
+	make
+	make install
+
+"make install" puts libxputer.a in /usr/t800/lib and xputer.h in
+/usr/t800/include.  If you want the files installed in another
+location change the value of variable PREFIX in Makefile.
+
+
+TODO
+
+ - better interface for process handling (like pthreads or cthreads)
+ - make alt() to change timeout parameter (like select() in Linux)
+ - semaphore handling is done rather stupid, there is no real emulation
+   of T450/T9000 wait and signal instructions
+ - write documentation
+
+
+961022, Roman Pozlevich <roma@botik.ru>
