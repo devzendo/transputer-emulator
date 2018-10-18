@@ -139,7 +139,12 @@ entimesl, fpmacc, fpxprod, ldhw, macc, pause, sthw, xprod
 Using the Emulator
 ------------------
 Read the manual in Documentation/Manual (Requires OpenOffice/LibreOffice).
-
+Basically, given a binary boot file, then in two sessions:
+1) nodeserver -ld -df bootfile.bin     # The -ld -df is 'debug mode'.
+2) temulate -df -ld -t                 # Ditto. -t terminates on memory violation.
+The emulator waits for its boot file, down link 0. It then runs it. The nodeserver sends the boot file, then switches
+to handle its host I/O protocol down link 0.
+Run nodeserver or temulate with -? or -h to get their command line summaries.
 
 Directory structure
 -------------------
@@ -149,10 +154,10 @@ Shared - utility code that is common to many parts of the system.
 
 NodeServer - the client and server portions of the node server and its protocol
 definition. The server runs on your host computer (i.e. under Windows, Linux,
-Mac OS X etc.). The client runs under T800 emulation as part of your
+Mac OS X etc.). The client runs under Transputer emulation as part of your
 application; it's an assembly language include file.
 
-Emulator - the T800 emulator.
+Emulator - the T414/T800/T801/T805 emulator.
 
 
 Building and Installing
