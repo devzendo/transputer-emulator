@@ -82,6 +82,7 @@ bool processCommandLine(int argc, char *argv[]) {
 				case 'm':
 					monitorLink = true;
 					break;
+				case '?':
 				case 'h':
 					usage();
 					return 0;
