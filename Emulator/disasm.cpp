@@ -373,6 +373,49 @@ static const char *disassembleIndirectInstName(WORD32 Oreg, WORD32 Areg) {
 					return "?fp?";
 			}
 			break;
+		// T801 instructions
+		case O_start:
+			return "start";
+		case O_testhardchan:
+			return "testhardchan";
+		case O_testldd:
+			return "testldd";
+		case O_teststd:
+			return "teststd";
+		case O_testlde:
+			return "testlde";
+		case O_testste:
+			return "testste";
+		case O_testlds:
+			return "testlds";
+		case O_teststs:
+			return "teststs";
+
+		// T801/T805 instructions
+		case O_break:
+			return "break";
+		case O_clrj0break:
+			return "clrj0break";
+		case O_setj0break:
+			return "setj0break";
+		case O_testj0break:
+			return "testj0break";
+		case O_timerdisableh:
+			return "timerdisableh";
+		case O_timerdisablel:
+			return "timerdisablel";
+		case O_timerenableh:
+			return "timerenableh";
+		case O_timerenablel:
+			return "timerenablel";
+		case O_ldmemstartval:
+			return "ldmemstartval";
+		case O_pop:
+			return "pop";
+		case O_lddevid:
+			return "lddevid";
+
+		// Nonstandard emulator
 		case X_togglemonitor:
 			return "togglemonitor";
 		case X_toggledisasm:
@@ -383,6 +426,7 @@ static const char *disassembleIndirectInstName(WORD32 Oreg, WORD32 Areg) {
 			return "marker";
 		case X_emuquery:
 			return "emuquery";
+
 		default:
 			return "?indirect?";
 	}

@@ -32,7 +32,7 @@ Release Notes
 
 Remaining Work
 --------------
-* T801/T805 instructions in disassembler
+....
 
 Node Server
 ===========
