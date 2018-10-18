@@ -1,4 +1,4 @@
-EXES = t800emul
+EXES = temulate
 OBJS = main.o memory.o cpu.o disasm.o
 SHARED = ../Shared
 CFLAGS = ${MYCFLAGS} -I$(SHARED)
@@ -15,11 +15,11 @@ memory.o: memory.cpp $(SHARED)/types.h $(SHARED)/constants.h memory.h $(SHARED)/
 cpu.o: cpu.cpp $(SHARED)/types.h cpu.h $(SHARED)/link.h $(SHARED)/linkfactory.h memory.h $(SHARED)/memloc.h $(SHARED)/log.h $(SHARED)/constants.h flags.h opcodes.h disasm.h
 disasm.o: disasm.cpp $(SHARED)/types.h $(SHARED)/constants.h $(SHARED)/log.h flags.h opcodes.h
 
-t800emul : $(OBJS)
+temulate : $(OBJS)
 	$(CC) $(LDFLAGS) -o $@ $^ $(LIBS)
 
-install: t800emul
-	sudo install -o root -g staff -m 755 t800emul $(BINDIR)
+install: temulate
+	sudo install -o root -g staff -m 755 temulate $(BINDIR)
 
 clean:
 	rm -f $(OBJS) $(EXES)

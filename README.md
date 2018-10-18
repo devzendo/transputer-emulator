@@ -17,6 +17,7 @@ In progress, October 2018. Modernising, building on modern OSX/Linux/Windows.
 Release Notes
 -------------
 0.01 (ongoing work for the first release)
+* Renamed emulator binary from t800emul to temulate.
 * Started adding the T801 instructions, from "Transputer Instruction Set - Appendix, Guy Harriman".
 * Started adding the T801/T805 instructions from "Support for debugging/breakpointing in transputers" (INMOS
   Technical Note 61).
