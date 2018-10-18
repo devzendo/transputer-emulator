@@ -1,0 +1,300 @@
+DevZendo.org Macro Assembler 0.0.1-SNAPSHOT                                                                      08/10/2018 08:25:49
+Transputer Hello World                                                                                                    Page 1 - 5
+                      TITLE Transputer Hello World
+                      
+                      PAGE 60,132
+                      
+                      ; Second version without macros.
+                      
+                      .T800
+ = 0070               MemStart    EQU 0x80000070
+ = 0024               TptrLoc0    EQU 0x80000024
+ = 0028               TptrLoc1    EQU 0x80000028
+                      
+ = 0000               start_time  EQU 0
+                      
+ = 006F               ORG         MemStart - 1
+ 8000006F F6          DB          STOP - START
+ = 0070               ORG         MemStart
+                      
+ 80000070             START:
+ 80000070 24 F2       mint                        ; load A with NotProcess.p = mint = 0x80000000
+ 80000072 21 F8       sthf                        ; initialize high priority queue front pointer
+ 80000074 24 F2       mint                        ; load A with NotProcess.p
+ 80000076 21 FC       stlf                        ; initialize low priority process queue pointer
+                      ; This must be done before starting any processes or attempting any message passing.
+                      ; Because of the way queues are implemented there is no need to initialise the back
+                      ; pointers.
+                      ; CWG p75
+                      
+ 80000078 24 F2       mint                        ; load A with NotProcess.p
+ 8000007A 67 20 20 20 ldc     TPtrLoc0            ; load high priority timer queue pointer offset
+ 8000007E 20 20 22 44
+ 80000082 E0          stnl    0                   ; initialize high priority timer queue
+ 80000083 24 F2       mint                        ; load A with NotProcess.p
+ 80000085 67 20 20 20 ldc     TPtrLoc1            ; load low priority timer queue pointer offset
+ 80000089 20 20 22 48
+ 8000008D E0          stnl    0                   ; initialize high priority timer queue
+                      ; This must be done before any attempt to wait on the timer. Also before using the
+                      ; clock at any priority level, the timer must be started...
+                      
+ 8000008E 40          ldc     start_time          ; load time to initialize clocks at (usually zero)
+ 8000008F 25 F4       sttimer                     ; start the clocks
+                      
+ 80000091 22 F9       testerr                     ; clears the Error flag and HaltOnError flag
+ 80000093 25 F7       clrhalterr                  ; or use sethalterr here depending what you want
+                      
+ 80000095 29 FC       fptesterr                   ; Reset floating point error flag and set rounding mode to Round-to-Nearest
+                      
+ 80000097 24 F2       mint                        ; load A with NotProcess.p
+ 80000099 67 20 20 20 ldc     0x80000020          ; load address of Event channel
+ 8000009D 20 20 22 40
+ 800000A1 E0          stnl    0                   ; store NotProcess.p to Event channel
+ 800000A2 24 F2       mint                        ; load A with NotProcess.p
+ 800000A4 67 20 20 20 ldc     0x8000001C          ; load address of Link 3 input channel
+ 800000A8 20 20 21 4C
+ 800000AC E0          stnl    0                   ; store NotProcess.p to Link 3 input channel
+ 800000AD 24 F2       mint                        ; load A with NotProcess.p
+ 800000AF 67 20 20 20 ldc     0x80000018          ; load address of Link 2 input channel
+ 800000B3 20 20 21 48
+ 800000B7 E0          stnl    0                   ; store NotProcess.p to Link 2 input channel
+DevZendo.org Macro Assembler 0.0.1-SNAPSHOT                                                                      08/10/2018 08:25:49
+Transputer Hello World                                                                                                    Page 2 - 5
+ 800000B8 24 F2       mint                        ; load A with NotProcess.p
+ 800000BA 67 20 20 20 ldc     0x80000014          ; load address of Link 1 input channel
+ 800000BE 20 20 21 44
+ 800000C2 E0          stnl    0                   ; store NotProcess.p to Link 1 input channel
+ 800000C3 24 F2       mint                        ; load A with NotProcess.p
+ 800000C5 67 20 20 20 ldc     0x80000010          ; load address of Link 0 input channel
+ 800000C9 20 20 21 40
+ 800000CD E0          stnl    0                   ; store NotProcess.p to Link 0 input channel
+ 800000CE 24 F2       mint                        ; load A with NotProcess.p
+ 800000D0 67 20 20 20 ldc     0x8000000C          ; load address of Link 3 output channel
+ 800000D4 20 20 20 4C
+ 800000D8 E0          stnl    0                   ; store NotProcess.p to Link 3 output channel
+ 800000D9 24 F2       mint                        ; load A with NotProcess.p
+ 800000DB 67 20 20 20 ldc     0x80000008          ; load address of Link 2 output channel
+ 800000DF 20 20 20 48
+ 800000E3 E0          stnl    0                   ; store NotProcess.p to Link 2 output channel
+ 800000E4 24 F2       mint                        ; load A with NotProcess.p
+ 800000E6 67 20 20 20 ldc     0x80000004          ; load address of Link 1 output channel
+ 800000EA 20 20 20 44
+ 800000EE E0          stnl    0                   ; store NotProcess.p to Link 1 output channel
+ 800000EF 24 F2       mint                        ; load A with NotProcess.p
+ 800000F1 67 20 20 20 ldc     0x80000000          ; load address of Link 0 output channel
+ 800000F5 20 20 20 40
+ 800000F9 E0          stnl    0                   ; store NotProcess.p to Link 0 output channel
+                      
+                      
+                      
+ 800000FA 0D          j   MAIN - ST1
+ 800000FB             ST1:
+                      
+ 800000FB             HWSTR:
+ 800000FB 68 65 6C 6C DB  "hello world", 0x0a, 0x00 ; length 13
+ 800000FF 6F 20 77 6F
+ 80000103 72 6C 64 0A
+ 80000107 00
+                      
+ 80000108             MAIN:
+ 80000108 61 4F       ldc HWSTR - LF5
+ 8000010A 21 FB       ldpi
+ 8000010C             LF5:
+                      ; call _putConsoleCString
+                      ; a=800000FB (HWSTR), b=00000001 (irrelevant)
+ 8000010C 92          call _putConsoleCString - LF6
+                      ; W 4 [80000158]=8000010D
+                      ; W 4 [8000015C]=800000FB (HWSTR)
+                      ; W 4 [80000160]=00000001
+                      ; W 4 [80000164]=80000000
+ 8000010D             LF6:
+                      
+ 8000010D             FIN:
+ 8000010D 21 F5       stopp
+                      
+ 8000010F             _putConsoleCString:
+ 8000010F 60 B7       ajw -9
+                      ; W 8000017D (8000017C is wptr)
+                      ; 0 ??
+                      ; @80000180 1 ? loaded into a
+                      ; @80000184 2 length of string
+DevZendo.org Macro Assembler 0.0.1-SNAPSHOT                                                                      08/10/2018 08:25:49
+Transputer Hello World                                                                                                    Page 3 - 5
+                      ; @80000188 3 zero
+                      ; @8000018C 4 addr of w[1] (80000180)
+                      ; 5 mint?
+                      ; 6 258
+                      ; 7
+                      ; 8
+                      ; 9 ??
+                      ; ----
+                      ; 10
+ 80000111 40          ldc 0
+ 80000112 D3          stl 3 ; *80000188 = 0
+ 80000113 11          ldlp 1 ; a=&w[1], b=retaddr, c=0
+ 80000114 D4          stl 4 ; *8000018C = &w[1] (80000180); a=retaddr, b=mint, c=mint
+ 80000115 73          ldl 3 ; a=0, b=retaddr, c=mint
+ 80000116 74          ldl 4 ; a=&w[1], b=0, c=retaddr
+ 80000117 23 FB       sb    ; *(&w[1]) = 0
+ 80000119 7A          ldl 10 ; ?? (should be putConsoleCString arg, HWSTR, previous stack frame *800001A4 (= 0). a=0, b=80000180 (&w
+ 8000011A 21 9B       call _strlen - PCCS1
+                      ; W 4 [8000016C]=8000011B
+                      ; W 4 [80000170]=00000000
+                      ; W 4 [80000174]=80000180
+                      ; W 4 [80000178]=00000000
+ 8000011C             PCCS1:
+ 8000011C D2          stl 2 ; length of string
+ 8000011D 24 F2       mint
+ 8000011F D5          stl 5
+ 80000120 21 20 42    ldc 258
+ 80000123 D6          stl 6
+ 80000124 75          ldl 5
+ 80000125 76          ldl 6
+ 80000126 FF          outword
+                      
+ 80000127 24 F2       mint
+ 80000129 D7          stl 7
+ 8000012A 7A          ldl 10
+ 8000012B 77          ldl 7
+ 8000012C 72          ldl 2
+ 8000012D FB          out
+                      
+ 8000012E 24 F2       mint
+ 80000130 D8          stl 8
+ 80000131 78          ldl 8
+ 80000132 71          ldl 1
+ 80000133 FE          outbyte
+ 80000134 B9          ajw 9
+ 80000135 22 F0       ret
+                      
+ 80000137             _strlen:
+                      ; A #8000011B B #00000000 C #00000000 W #8000016D
+ 80000137 60 BA       ajw -6
+ 80000139 40          ldc 0
+ 8000013A D1          stl 1
+ 8000013B 71          ldl 1
+ 8000013C D0          stl 0
+ 8000013D             LS1:
+ 8000013D 77          ldl 7
+ 8000013E D2          stl 2
+ 8000013F 72          ldl 2
+DevZendo.org Macro Assembler 0.0.1-SNAPSHOT                                                                      08/10/2018 08:25:49
+Transputer Hello World                                                                                                    Page 4 - 5
+ 80000140 F1          lb
+ 80000141 D3          stl 3
+ 80000142 73          ldl 3
+ 80000143 C0          eqc 0
+ 80000144 A1          cj LS3 - LS3x
+ 80000145             LS3x:
+ 80000145 0C          j LS2 - LS3
+ 80000146             LS3:
+ 80000146 70          ldl 0
+ 80000147 81          adc 1
+ 80000148 D4          stl 4
+ 80000149 74          ldl 4
+ 8000014A D0          stl 0
+ 8000014B 77          ldl 7
+ 8000014C 81          adc 1
+ 8000014D D5          stl 5
+ 8000014E 75          ldl 5
+ 8000014F D7          stl 7
+ 80000150 61 0B       j LS1 - LS2
+ 80000152             LS2:
+ 80000152 70          ldl 0
+ 80000153 B6          ajw 6
+ 80000154 22 F0       ret
+                      
+ 80000156 55 AA 55 AA db  0x55, 0xaa, 0x55, 0xaa, 0x55, 0xaa, 0x55, 0xaa
+ 8000015A 55 AA 55 AA
+ 8000015E 55 AA 55 AA db  0x55, 0xaa, 0x55, 0xaa, 0x55, 0xaa, 0x55, 0xaa
+ 80000162 55 AA 55 AA
+                      
+ 80000166             STOP:
+                      END
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+DevZendo.org Macro Assembler 0.0.1-SNAPSHOT                                                                      08/10/2018 08:25:49
+Transputer Hello World                                                                                                    Page 5 - 5
+Symbol Table - by Name
+FIN                  8000010D
+HWSTR                800000FB
+LF5                  8000010C
+LF6                  8000010D
+LS1                  8000013D
+LS2                  80000152
+LS3                  80000146
+LS3X                 80000145
+MAIN                 80000108
+MEMSTART             80000070
+PCCS1                8000011C
+ST1                  800000FB
+START                80000070
+START_TIME           00000000
+STOP                 80000166
+TPTRLOC0             80000024
+TPTRLOC1             80000028
+_PUTCONSOLECSTRING   8000010F
+_STRLEN              80000137
+
+Symbol Table - by Address
+TPTRLOC0             80000024
+TPTRLOC1             80000028
+MEMSTART             80000070
+START                80000070
+ST1                  800000FB
+HWSTR                800000FB
+MAIN                 80000108
+LF5                  8000010C
+LF6                  8000010D
+FIN                  8000010D
+_PUTCONSOLECSTRING   8000010F
+PCCS1                8000011C
+_STRLEN              80000137
+LS1                  8000013D
+LS3X                 80000145
+LS3                  80000146
+LS2                  80000152
+STOP                 80000166
+START_TIME           00000000
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

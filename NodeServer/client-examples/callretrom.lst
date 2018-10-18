@@ -1,0 +1,120 @@
+DevZendo.org Macro Assembler 0.0.1-SNAPSHOT                                                                      08/09/2018 08:41:16
+Transputer Call and Return as a ROM                                                                                       Page 1 - 2
+                      TITLE Transputer Call and Return as a ROM
+                      
+                      PAGE 60,132
+                      
+                      .T800
+ = 0070               MemStart    EQU 0x80000070
+ = 7FFFFFFE           ResetCode   EQU 0x7FFFFFFE
+                      
+ = 7FFFFFDE           ORG         ResetCode - 0x20
+                      
+ 7FFFFFDE             START:
+                      
+ 7FFFFFDE 92          call        FUNC - L1
+ 7FFFFFDF             L1:
+                      
+ 7FFFFFDF             STOP:
+ 7FFFFFDF 21 F5       stopp
+                      
+ 7FFFFFE1             FUNC:
+ 7FFFFFE1 22 F0       ret
+                      
+ 7FFFFFE3 55 AA 55 AA db  0x55, 0xaa, 0x55, 0xaa, 0x55, 0xaa, 0x55, 0xaa
+ 7FFFFFE7 55 AA 55 AA
+                      
+ = 7FFFFFF6           ORG     ResetCode - 8
+ 7FFFFFF6             BIGJUMP:
+ 7FFFFFF6 61 06       j       START - BJ2
+ 7FFFFFF8             BJ2:
+                      
+ = 7FFFFFFE           ORG     ResetCode
+ 7FFFFFFE 60 06       j       BIGJUMP - FIN
+ 80000000             FIN:
+                      END
+                      
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+DevZendo.org Macro Assembler 0.0.1-SNAPSHOT                                                                      08/09/2018 08:41:16
+Transputer Call and Return as a ROM                                                                                       Page 2 - 2
+Symbol Table - by Name
+BIGJUMP              7FFFFFF6
+BJ2                  7FFFFFF8
+FIN                  80000000
+FUNC                 7FFFFFE1
+L1                   7FFFFFDF
+MEMSTART             80000070
+RESETCODE            7FFFFFFE
+START                7FFFFFDE
+STOP                 7FFFFFDF
+
+Symbol Table - by Address
+FIN                  80000000
+MEMSTART             80000070
+START                7FFFFFDE
+STOP                 7FFFFFDF
+L1                   7FFFFFDF
+FUNC                 7FFFFFE1
+BIGJUMP              7FFFFFF6
+BJ2                  7FFFFFF8
+RESETCODE            7FFFFFFE
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

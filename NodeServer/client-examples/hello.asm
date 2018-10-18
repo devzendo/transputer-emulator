@@ -1,3 +1,6 @@
+; An attempt using macros and code built from the old nodeclient.c, with ttools/gcc-t800.
+; Can be ignored, I'm writing it by hand now - see hello2.asm.
+
 j	macro	val		; jump (can deschedule)
 	db	000h or (val and 00fh)
 	endm
