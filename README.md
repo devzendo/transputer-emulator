@@ -58,6 +58,7 @@ Correctness
 
 Build/Releases
 ==============
+* Complete conversion of build scripts to cmake, remove GNU make files
 * Build on Linuxes
 * Build on Windows
 * Fix all compiler warnings (some tautologous comparisons remain)
@@ -167,19 +168,26 @@ Prerequisites:
 - All: <a href="https://bitbucket.org/devzendo/transputer-macro-assembler">DevZendo.org
        Transputer Macro Assembler</a> installed and on your PATH
        GNU Make.
-- OSX: clang (e.g. via XCode Developer tools, or MacPorts)
-- Ubuntu Linux: build-essential (=> gcc)
-- CentOS: gcc
-- Windows: (future work, but you'll need a UNIXy toolchain)
+- OSX: clang (e.g. via XCode Developer tools, or MacPorts), cmake 3.10
+- Ubuntu Linux: build-essential (=> gcc) [DOES NOT BUILD HERE YET]
+- CentOS: gcc [DOES NOT BUILD HERE YET]
+- Windows: [DOES NOT BUILD HERE YET] (future work, but you'll need a UNIXy toolchain)
 
 
 The install location is /opt/parachute. Changing this would entail changes to
 Makefiles in the above hierarchy.
 
 To build, cd to the top level directory (where this README.md is) and do:
-make
+cmake --build cmake-build-debug --target all -- -j 4
 
-During the build, you will be prompted for a password. This is since the files
+To clean:
+cmake --build cmake-build-debug --target clean -- -j 4
+
+To install: (this needs reworking to use cmake - the Makefiles are to be replaced with cmake)
+
+make install
+
+During the install, you will be prompted for a password. This is since the files
 are installed as root, and the build requires a sudo password.
 
 This build will build the entire system: T800 emulator and node
