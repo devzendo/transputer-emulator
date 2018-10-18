@@ -14,8 +14,25 @@ Status
 ------
 In progress, October 2018. Modernising, building on modern OSX/Linux/Windows.
 
+Release Notes
+-------------
+0.01 (ongoing work for the first release)
+* Started adding the T801 instructions, from "Transputer Instruction Set - Appendix, Guy Harriman".
+* Started adding the T801/T805 instructions from "Support for debugging/breakpointing in transputers" (INMOS
+  Technical Note 61).
+  Added the -j flag to enable 'j 0' breakpoints.
+* Described current implementation/missing status in the above section.
+* The T810 instructions from "The IMS T810 - A Preliminary Survey" are not implemented.
+* Builds using CMake/CLion on OSX.
+* Added Boot-from-ROM, fixed Wdesc bug after boot from link.
+* Fixes: xword, call, j & scheduling (with assistance from Michael Brüstle), locations of TPtrLoc1, TPtrLoc0.
+* Monitor: db (renamed from da), dw improvements, added w (workspace display), added b/b+b-/b? (breakpoints),
+  added s (show all state).
+* Adopted the Apache License v2.
+
 Remaining Work
 --------------
+* T801/T805 instructions in disassembler
 
 Node Server
 ===========
@@ -49,6 +66,7 @@ Build/Releases
 Bugs
 ====
 * (possibly obviated by CMake) why does 'make test' in Shared says it fail to link, yet actually does, and works?
+
 
 Completeness
 ------------
@@ -114,22 +132,6 @@ timerenableh, timerenablel, timerdisableh, timerdisablel.
 
 T810: checkaddr, delay, dislinkinth, dislinkintl, distimesl, enlinkinth, enlinkintl,
 entimesl, fpmacc, fpxprod, ldhw, macc, pause, sthw, xprod
-
-Release Notes
--------------
-0.01 (ongoing work for the first release)
-* Started adding the T801 instructions, from "Transputer Instruction Set - Appendix, Guy Harriman".
-* Started adding the T801/T805 instructions from "Support for debugging/breakpointing in transputers" (INMOS
-  Technical Note 61).
-  Added the -j flag to enable 'j 0' breakpoints.
-* Described current implementation/missing status in the above section.
-* The T810 instructions from "The IMS T810 - A Preliminary Survey" are not implemented.
-* Builds using CMake/CLion on OSX.
-* Added Boot-from-ROM, fixed Wdesc bug after boot from link.
-* Fixes: xword, call, j & scheduling (with assistance from Michael Brüstle), locations of TPtrLoc1, TPtrLoc0.
-* Monitor: db (renamed from da), dw improvements, added w (workspace display), added b/b+b-/b? (breakpoints),
-  added s (show all state).
-* Adopted the Apache License v2.
 
 
 Using the Emulator
