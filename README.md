@@ -12,7 +12,7 @@ http://devzendo.github.io/parachute
 
 Status
 ------
-In progress, October 2018. Modernising, building on modern OSX/Linux/Windows.
+In progress, November 2018. Modernising, building on modern OSX/Linux/Windows.
 
 Release Notes
 -------------
