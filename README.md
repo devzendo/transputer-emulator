@@ -38,9 +38,9 @@ Remaining Work
 
 Node Server
 ===========
+* Replace NodeServer with an iserver/afserver-protocol compatible version
 * Node Server client library in tmasm assembler
 * Node server needs to support terminal I/O facilities (no echo key reads, sensing available readable keys) for eForth
-* Replace NodeServer with an iserver/afserver-protocol compatible version
 
 Functionality
 =============
