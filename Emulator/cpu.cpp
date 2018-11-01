@@ -1806,7 +1806,7 @@ inline void CPU::interpret(void) {
 					}
 					break;
 				case X_terminate:
-					logInfo("Terminating emulator upon terminate instruction");
+					logDebug("Terminating emulator upon terminate instruction");
 					SET_FLAGS(EmulatorState_Terminate);
 					break;
 

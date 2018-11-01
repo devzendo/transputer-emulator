@@ -11,78 +11,11 @@ PAGE 60,132
 
 	start_time  EQU 0
 
-;#define LDPI(LABEL)     ldc LABEL-9f; ldpi; 9: ;
-LDPIL   MACRO   label
-		ldc     label-LDPIL1
-		ldpi
-LDPIL1:
-		ENDM
-
-;#define LDS(LABEL)      LDPI(LABEL); ldnl 0;
-LDS     MACRO   label
-		LDPIL   label
-		ldnl    0
-		ENDM
-
-;#define STS(LABEL)      LDPI(LABEL); stnl 0;
-STS     MACRO   label
-		LDPIL   label
-		stnl    0
-		ENDM
-
-;#define LDSB(LABEL)     LDPI(LABEL); lb;
-LDSB    MACRO   label
-		LDPIL   label
-		lb
-		ENDM
-
-;#define STSB(LABEL)     LDPI(LABEL); sb;
-STSB    MACRO   label
-		LDPIL   label
-		sb
-		ENDM
-
-;#define LEND(CTRL,LABEL) ldlp CTRL; ldc 9f-LABEL; lend; 9: ;
-LENDL   MACRO   ctrl label
-		ldlp    ctrl
-		ldc     LENDL1-label
-		lend
-LENDL1:
-		ENDM
-
-;#define NEQC(CONST)     eqc CONST; eqc 0;
-NEQC    MACRO   const
-		eqc     const
-		eqc     0
-		ENDM
-
-;#define LE              gt; eqc 0;
-LE      MACRO
-		gt
-		eqc     0
-		ENDM
-
-;#define GE              rev; LE;
-GE      MACRO
-		rev
-		LE
-		ENDM
-
-;#define LT              rev; gt;
-LT      MACRO
-		rev
-		gt
-		ENDM
-
-;#define BR              eqc 0; cj   /* traditional "branch if true" */
-BR      MACRO
-		eqc     0
-		cj
-		ENDM
-
 	ORG         MemStart - 1
 	DB          STOP - START
 	ORG         MemStart
+
+; Standard Transputer startup code.
 
 START:
 	mint                        ; load A with NotProcess.p = mint = 0x80000000
@@ -141,33 +74,35 @@ START:
 
 
 
-	j   MAIN - ST1
-ST1:
+	j       MAIN - _ST1
+_ST1:
 
 	NSS_CONSOLE     EQU 0x0100
-	CONSOLE_PUT_PSTR    EQU (NSS_CONSOLE | 0x01)
+	CONSOLE_PUT_PSTR    EQU NSS_CONSOLE OR 0x01
 	LINK0_OUTPUT    EQU 0x80000000
 	LINK0_INPUT     EQU 0x80000010
 
 
 HWSTR:
-	DB  "hello world", 0x0a, 0x00 ; length 13
+	DB      "hello world", 0x0a, 0x00 ; length 13
 
 MAIN:
-	ldc HWSTR - LF5
+    ajw     0x100    ; allow for 64 stack frames
+
+	ldc     HWSTR - _M1
 	ldpi
-LF5:
+_M1:
 	; call putConsolePString
 	; a=800000FB (HWSTR), b=00000001 (irrelevant)
-	call putConsolePString - LF6
+	call    putConsolePString - _M2
+_M2:
 	; W 4 [80000158]=8000010D
     ; W 4 [8000015C]=800000FB (HWSTR)
     ; W 4 [80000160]=00000001
     ; W 4 [80000164]=80000000
-LF6:
 
 FIN:
-	stopp
+	terminate
 
 ; Stack effect notation used here:
 ; fun(a=A, b=B, c=C): (a=A', b=B', c=C')
@@ -185,65 +120,98 @@ putConsolePString:
 	PPS_STRINGADDR  EQU 0
 	PPS_STRINGLEN   EQU 1
 
-	ajw     PPS_WLEN
+    ; before call, w=80000169
+    ; now this routine has been called, here, w=80000159
+	ajw     -PPS_WLEN
+    ; now w=80000151
+
+    ; the call generates the following return stack
+    ; DEBUG memory.cpp:281 W 4 [80000158]=8000010D (return address)
+    ; DEBUG memory.cpp:281 W 4 [8000015C]=800000FB (old a, the string address)
+    ; DEBUG memory.cpp:281 W 4 [80000160]=00000001 (old b)
+    ; DEBUG memory.cpp:281 W 4 [80000164]=80000000 (old c)
+    ; get the old areg (string address) off the return stack
+    ldl     0x03
+    ; 5 gets w+5word => 80000150+14 => 80000164 (old c)
+    ; 4 gets w+4word => 80000150+10 => 80000160 (old b)
+    ; 3 gets w+3word => 80000150+C = 8000015C (which is old a, the string address, which we want)
+    ; 2 gets w+2word => 80000150+8 = 80000158 (the return address)
 
 ; idea for later, store CONSOLE_PUT_PSTR then the length next to each other in the workspace, then out them as a 5-byte
 ; message (LSB of the length will be next to the CONSOLE_PUT_PSTR), then the string text, so we have two outputs,
 ; rather than the three we have at the moment....?
 
 	; Store the string pointer for later
+    dup
+    ; (a=string address, b=string address, c=B)
 	stl     PPS_STRINGADDR
-	; (a=B, b=C, c=C)
-	ldl     PPS_STRINGADDR
-	; (a=string address, b=B, c=C)
+	; (a=string address, b=B, c=B)
 
-	call strlen - _PPS1
+	call    strlen - _PPS1
 _PPS1:
 	; (a=length, b=useless, c=useless)
+	dup
+	; (a=length, b=length, c=useless)
 	stl     PPS_STRINGLEN
-	; (a,b,c=useless)
+	; (a=length, b,c=useless)
 
 	; Empty string?
-	ldl     PPS_STRINGLEN
-	; (a=length, b=useless, c=useless)
-	cj      _PPS_END
+	cj      _PPS_END - _PPS2
+_PPS2:
 
 	; (a,b,c=useless)
 
+    ; Output CONSOLE_PUT_PSTR word
 	ldc     LINK0_OUTPUT
 	; (a=LINK0_OUTPUT, b,c=useless)
 	ldc     CONSOLE_PUT_PSTR
 	; (a=CONSOLE_PUT_PSTR, b=LINK0_OUTPUT, c=useless)
 	outword     ; CONSOLE_PUT_PSTR WORD32 -->
 	; (a=CONSOLE_PUT_PSTR, b=LINK0_OUTPUT, c=useless)
-	rev
-	; (a=LINK0_OUTPUT, b=CONSOLE_PUT_PSTR, c=useless)
+
+	; Output length byte
+	pop
+	; (a=LINK0_OUTPUT, b=useless, c=CONSOLE_PUT_PSTR)
 	ldl     PPS_STRINGLEN
-	; (a=string length, b=LINK0_OUTPUT, c=CONSOLE_PUT_PSTR)
+	; (a=string length, b=LINK0_OUTPUT, c=useless)
 	outbyte     ; string length BYTE -->
-	; (a=string length, b=LINK0_OUTPUT, c=CONSOLE_PUT_PSTR)
-	; WOZERE - need to set c in a reasonable manner... perhaps with some ROT
-; a=len, b=channel, c=addr
+	; (a=string length, b=LINK0_OUTPUT, c=useless)
+
+    ; WANT:
+    ; (a=string length; b=LINK0_OUTPUT, c=string address)
+
+    ldl     PPS_STRINGADDR
+    ; (a=string address; b=string length; c=LINK0_OUTPUT)
+    pop
+    ; (a=string length; b=LINK0_OUTPUT; c=string_address)
+    out
+    ; (a=string length; b=LINK0_OUTPUT; c=string_address)
 
 _PPS_END:
 	; Empty string => (a=length, b=useless, c=useless)
-	ajw     -PPS_WLEN
+	ajw     PPS_WLEN
 	ret
 
 
 
 strlen: ; look, no workspace!! all registers!
+
+    ; get the old areg (string address) off the return stack
+    ; this routine is workspace free, so no ajw....
+    ldl     0x01
+
 	; strlen(a=string address, b=B, c=C): (a=length, b=useless, c=useless)
-	ldc 0
+	ldc     0
 	; (a=length (0), b=string address, c=B)
-_sr_loop:
+_sl_loop:
 	rev
 	; (a=string address, b=length, c=B or length [undefined])
 	dup
 	; (a=string address, b=string address, c=length)
 	lb
 	; (a=char, b=string address, c=length)
-	cj      _sr_end
+	cj      _sl_end - _SL1
+_SL1:
 
 	; (a=string address, b=length, c=length [undefined])
 	; not end of string
@@ -253,20 +221,16 @@ _sr_loop:
 	; (a=length, b=string address+1, c=length [undefined])
 	adc     1
 	; (a=length+1, b=string address+1, c=length [undefined])
-	j       _sr_loop
-
-_sr_end
+	j       _sl_loop - _SL2
+_SL2:
+_sl_end:
 	; (a=char, b=string address, c=length)
-	or    ; side-effect, don't care about address|char, but want length. 2 x pop would be nice but that's T801/T805
-	; (a=address|char, b=length, c=length [undefined])
-	rev
-	; (a=length, b=address|char, c=length [undefined])
+	pop
+	; (a=string address, b=length, c=char)
+	pop
+	; (a=length, b=char, c=string address)
 	ret
 
-
-filler:
-	db  0x55, 0xaa, 0x55, 0xaa, 0x55, 0xaa, 0x55, 0xaa
-	db  0x55, 0xaa, 0x55, 0xaa, 0x55, 0xaa, 0x55, 0xaa
 
 STOP:
 	END

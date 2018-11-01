@@ -17,6 +17,7 @@ In progress, October 2018. Modernising, building on modern OSX/Linux/Windows.
 Release Notes
 -------------
 0.01 (ongoing work for the first release)
+* Successfully runs hello2.asm !
 * Renamed emulator binary from t800emul to temulate.
 * Started adding the T801 instructions, from "Transputer Instruction Set - Appendix, Guy Harriman".
 * Started adding the T801/T805 instructions from "Support for debugging/breakpointing in transputers" (INMOS
@@ -43,6 +44,7 @@ Node Server
 
 Functionality
 =============
+* j and cj - resolve the operand into an address that would be jumped to, display it
 * Emulate multiple Transputers on 1-N physical cores
 * Link topology management
 * Investigate Benes networks
@@ -68,6 +70,12 @@ Build/Releases
 Bugs
 ====
 * (possibly obviated by CMake) why does 'make test' in Shared says it fail to link, yet actually does, and works?
+
+Example Code
+============
+* Once the assembler understands offset addressing, remove all the manual building of offset operands:
+  j 'label - _XX1'
+  _XX1:
 
 
 Completeness
