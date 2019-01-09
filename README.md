@@ -5,14 +5,14 @@ to a host OS, providing boot/debug/IO facilities.
 
 It is part of the [Parachute Project](https://devzendo.github.io/parachute).
 
-(C) 2005-2018 Matt J. Gumbley
+(C) 2005-2019 Matt J. Gumbley
 matt.gumbley@devzendo.org
 @mattgumbley @devzendo
 http://devzendo.github.io/parachute
 
 Status
 ------
-In progress, November 2018. Modernising, building on modern OSX/Linux/Windows.
+In progress, January 2019. Modernising, building on modern OSX/Linux/Windows.
 
 Release Notes
 -------------
@@ -31,6 +31,12 @@ Release Notes
 * Monitor: db (renamed from da), dw improvements, added w (workspace display), added b/b+b-/b? (breakpoints),
   added s (show all state).
 * Adopted the Apache License v2.
+* Since the assembler understands offset addressing, the manual building of offset operands has been changed from:
+  j 'label - _XX1'
+  _XX1:
+  to:
+  j label
+  
 
 Remaining Work
 --------------
@@ -73,10 +79,11 @@ Bugs
 
 Example Code
 ============
-* Once the assembler understands offset addressing, remove all the manual building of offset operands:
-  j 'label - _XX1'
-  _XX1:
+* Rework example code with iserver protocol library.
 
+Documentation
+=============
+* Write some!
 
 Completeness
 ------------
