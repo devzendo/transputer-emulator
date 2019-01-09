@@ -74,8 +74,7 @@ START:
 
 
 
-	j       MAIN - _ST1
-_ST1:
+	j       MAIN
 
 	NSS_CONSOLE     EQU 0x0100
 	CONSOLE_PUT_PSTR    EQU NSS_CONSOLE OR 0x01
@@ -94,8 +93,8 @@ MAIN:
 _M1:
 	; call putConsolePString
 	; a=800000FB (HWSTR), b=00000001 (irrelevant)
-	call    putConsolePString - _M2
-_M2:
+	call    putConsolePString
+
 	; W 4 [80000158]=8000010D
     ; W 4 [8000015C]=800000FB (HWSTR)
     ; W 4 [80000160]=00000001
@@ -147,8 +146,8 @@ putConsolePString:
 	stl     PPS_STRINGADDR
 	; (a=string address, b=B, c=B)
 
-	call    strlen - _PPS1
-_PPS1:
+	call    strlen
+
 	; (a=length, b=useless, c=useless)
 	dup
 	; (a=length, b=length, c=useless)
@@ -156,8 +155,7 @@ _PPS1:
 	; (a=length, b,c=useless)
 
 	; Empty string?
-	cj      _PPS_END - _PPS2
-_PPS2:
+	cj      _PPS_END
 
 	; (a,b,c=useless)
 
@@ -210,8 +208,7 @@ _sl_loop:
 	; (a=string address, b=string address, c=length)
 	lb
 	; (a=char, b=string address, c=length)
-	cj      _sl_end - _SL1
-_SL1:
+	cj      _sl_end
 
 	; (a=string address, b=length, c=length [undefined])
 	; not end of string
@@ -221,8 +218,8 @@ _SL1:
 	; (a=length, b=string address+1, c=length [undefined])
 	adc     1
 	; (a=length+1, b=string address+1, c=length [undefined])
-	j       _sl_loop - _SL2
-_SL2:
+	j       _sl_loop
+
 _sl_end:
 	; (a=char, b=string address, c=length)
 	pop
