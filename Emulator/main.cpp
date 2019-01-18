@@ -28,6 +28,7 @@ using namespace std;
 #include "log.h"
 #include "link.h"
 #include "linkfactory.h"
+#include "version.h"
 
 // global variables
 long ramSize;
@@ -38,7 +39,7 @@ static char *progName;
 set<WORD32> breakpointAddresses;
 
 void usage() {
-	logInfoF("Parachute v%1.2f T800 Emulator " __DATE__, VERSION);
+	logInfoF("Parachute v%s T800 Emulator " __DATE__, projectVersion);
 	logInfo("  (C) 2005-2018 Matt J. Gumbley");
 	logInfo("  http://devzendo.github.io/parachute");
 	logInfo("Usage:");

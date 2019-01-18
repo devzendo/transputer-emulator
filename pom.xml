@@ -1,0 +1,136 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <groupId>org.devzendo</groupId>
+    <artifactId>transputer-emulator</artifactId>
+    <version>0.0.1-SNAPSHOT</version>
+    <packaging>pom</packaging>
+    <name>Transputer Emulator</name>
+    <description>This is an emulator of the 32-bit Inmos T414/T800/T801/T805 Transputer family, and a Node Server that
+        interfaces it to a host OS, providing boot/debug/IO facilities.
+        (Apache License v2) 2005-2019 Matt Gumbley, DevZendo.org
+    </description>
+    <url>https://devzendo.github.io/parachute</url>
+
+    <organization>
+        <name>DevZendo.org</name>
+        <url>http://devzendo.org/</url>
+    </organization>
+
+    <licenses>
+        <license>
+            <name>The Apache Software License, Version 2.0</name>
+            <url>http://www.apache.org/licenses/LICENSE-2.0.txt</url>
+            <distribution>repo</distribution>
+        </license>
+    </licenses>
+    <scm>
+        <url>https://bitbucket.org/devzendo/transputer-emulator/</url>
+        <connection>scm:hg:https://bitbucket.org/devzendo/transputer-emulator/</connection>
+        <developerConnection>scm:hg:https://bitbucket.org/devzendo/transputer-emulator/</developerConnection>
+    </scm>
+    <developers>
+        <developer>
+            <id>matt.gumbley</id>
+            <name>Matt Gumbley</name>
+            <email>matt.gumbley@devzendo.org</email>
+        </developer>
+    </developers>
+
+    <!-- TODO generate the version include file from ${project.version} -->
+    <!-- MAYBE replace exec with the cmake-maven-plugin from https://github.com/cmake-maven-project/cmake-maven-project -->
+    <properties>
+        <cmake.binary.dir>cmake-build-debug</cmake.binary.dir>
+        <download.cmake>false</download.cmake>
+        <!-- TODO CROSSPLATFORM this needs setting appropriately for other platforms -->
+        <!-- The CMake maven plugin understands cmake.root.dir -->
+        <cmake.root.dir>/opt/local</cmake.root.dir>
+        <!-- TODO CROSSPLATFORM this is not suitable for Windows! -->
+        <!-- These are two of my properties I pass in to the CMake plugin, they're not known by the plugin innately -->
+        <!-- One of the generators defined at https://cmake.org/cmake/help/v3.7/manual/cmake-generators.7.html -->
+        <cmake.generator>Unix Makefiles</cmake.generator>
+        <!-- The classifier of the current platform. One of [windows-x86_32, windows-x86_64, linux-x86_32, linux-x86_64, linux-arm_32, mac-x86_64]. -->
+        <cmake.classifier>mac-x86_64</cmake.classifier>
+    </properties>
+
+    <build>
+        <resources>
+            <resource>
+                <directory>src/main/resources</directory>
+                <filtering>true</filtering>
+            </resource>
+        </resources>
+
+        <plugins>
+
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-clean-plugin</artifactId>
+                <version>3.1.0</version>
+                <configuration>
+                    <filesets>
+                        <fileset>
+                            <directory>${cmake.binary.dir}</directory>
+                            <followSymlinks>false</followSymlinks>
+                        </fileset>
+                    </filesets>
+                </configuration>
+            </plugin>
+
+            <!-- Generate the target/classes/version.cpp file that CMakeLists.txt picks up -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-resources-plugin</artifactId>
+                <version>3.0.1</version>
+                <executions>
+                    <execution>
+                        <id>default-resources</id>
+                        <phase>generate-resources</phase>
+                        <goals>
+                            <goal>resources</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+
+            <plugin>
+                <groupId>com.googlecode.cmake-maven-project</groupId>
+                <artifactId>cmake-maven-plugin</artifactId>
+                <version>3.7.2-b1</version>
+                <executions>
+                    <!-- Generate the CMake cache/binary build dir -->
+                    <execution>
+                        <id>cmake-generate</id>
+                        <phase>process-resources</phase>
+                        <goals>
+                            <goal>generate</goal>
+                        </goals>
+                        <configuration>
+                            <sourcePath>${project.basedir}</sourcePath>
+                            <targetPath>${project.basedir}/${cmake.binary.dir}</targetPath>
+                            <generator>${cmake.generator}</generator>
+                            <classifier>${cmake.classifier}</classifier>
+                        </configuration>
+                    </execution>
+
+                    <execution>
+                        <id>cmake-compile</id>
+                        <goals>
+                            <goal>compile</goal>
+                        </goals>
+                        <configuration>
+                            <target>all</target>
+                            <!-- "targetPath" from the "generate" goal: -->
+                            <projectDirectory>${project.basedir}/${cmake.binary.dir}</projectDirectory>
+                            <classifier>${cmake.classifier}</classifier>
+                        </configuration>
+                    </execution>
+
+                </executions>
+            </plugin>
+        </plugins>
+    </build>
+</project>

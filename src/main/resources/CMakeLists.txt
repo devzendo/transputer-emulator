@@ -1,0 +1,1 @@
+add_library(parachuteversion STATIC version.cpp)

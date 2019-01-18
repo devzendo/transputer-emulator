@@ -30,6 +30,7 @@ using namespace std;
 #include "linkfactory.h"
 #include "hexdump.h"
 #include "nsproto.h"
+#include "version.h"
 
 // global variables
 static char *progName;
@@ -52,8 +53,8 @@ void resetStdIn() {
 }
 
 void usage() {
-	logInfoF("Parachute v%1.2f Node Server - Protocol v%d " __DATE__, VERSION, NS_PROTOCOL_VERSION);
-	logInfo(" (C) 2005-2018 Matt J. Gumbley");
+	logInfoF("Parachute v%s Node Server - Protocol v%d " __DATE__, projectVersion, NS_PROTOCOL_VERSION);
+	logInfo(" (C) 2005-2019 Matt J. Gumbley");
 	logInfo("  http://devzendo.github.io/parachute");
 	logInfo("Usage:");
 	logInfoF("%s: [options] [bootfile]", progName);

@@ -186,9 +186,12 @@ Later I intend to provide buils for:
 * Windows 10
 
 Prerequisites:
-- All: <a href="https://bitbucket.org/devzendo/transputer-macro-assembler">DevZendo.org
-       Transputer Macro Assembler</a> installed and on your PATH
-       GNU Make.
+- All:
+  - <a href="https://bitbucket.org/devzendo/transputer-macro-assembler">DevZendo.org Transputer Macro Assembler</a>
+    installed and on your PATH.
+  - GNU Make.
+  - Apache Maven. (You can build without it, it's just doing some preprocessing, running cmake in various stages, and
+    is used for packaging.)
 - OSX: clang (e.g. via XCode Developer tools, or MacPorts), cmake 3.10
 - Ubuntu Linux: build-essential (=> gcc) [DOES NOT BUILD HERE YET]
 - CentOS: gcc [DOES NOT BUILD HERE YET]
@@ -199,10 +202,17 @@ The install location is /opt/parachute. Changing this would entail changes to
 Makefiles in the above hierarchy.
 
 To build, cd to the top level directory (where this README.md is) and do:
+mvn compile
+
+This creates the shared library code that contains the project version, in
+the target/classes directory, then does: 
+cd cmake-build-debug; cmake .. (ie regenerate the cmake cache)
 cmake --build cmake-build-debug --target all -- -j 4
 
 To clean:
-cmake --build cmake-build-debug --target clean -- -j 4
+mvn clean
+This effectively does:
+rm -rf cmake-build-debug
 
 To install: (this needs reworking to use cmake - the Makefiles are to be replaced with cmake)
 
