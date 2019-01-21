@@ -10,9 +10,11 @@ matt.gumbley@devzendo.org
 @mattgumbley @devzendo
 http://devzendo.github.io/parachute
 
+
 Status
 ------
 In progress, January 2019. Modernising, building on modern OSX/Linux/Windows.
+
 
 Release Notes
 -------------
@@ -69,15 +71,13 @@ Correctness
 
 Build/Releases
 ==============
-* Complete conversion of build scripts to cmake, remove GNU make files
 * Build on Linuxes
 * Build on Windows
-* Fix all compiler warnings (some tautologous comparisons remain)
 * Upgrade to C++11 or more recent
 
 Bugs
 ====
-* (possibly obviated by CMake) why does 'make test' in Shared says it fail to link, yet actually does, and works?
+* None known.
 
 Example Code
 ============
@@ -86,6 +86,7 @@ Example Code
 Documentation
 =============
 * Write some!
+
 
 Completeness
 ------------
@@ -155,16 +156,49 @@ entimesl, fpmacc, fpxprod, ldhw, macc, pause, sthw, xprod
 
 Using the Emulator
 ------------------
-Read the manual in Documentation/Manual (Requires OpenOffice/LibreOffice).
-Basically, given a binary boot file, then in two sessions:
+Full documentation to follow.. but in the meantime...
+
+Basically, given a binary boot file, then in two terminal sessions:
 1) nodeserver -ld -df bootfile.bin     # The -ld -df is 'debug mode'.
 2) temulate -df -ld -t                 # Ditto. -t terminates on memory violation.
-The emulator waits for its boot file, down link 0. It then runs it. The nodeserver sends the boot file, then switches
-to handle its host I/O protocol down link 0.
+
+The emulator waits for its boot file, down link 0. It then runs it.
+The nodeserver sends the boot file, then switches to handle its host I/O protocol down link 0.
+
 Run nodeserver or temulate with -? or -h to get their command line summaries.
 
-Directory structure
--------------------
+To run the 'hello world' client program:
+
+In one terminal window...
+
+$ cd NodeServer/client-examples/hello2
+$ tmasm  -b hello2.bin -l hello2.lst hello2.asm
+Pass 1: Creating model from 233 macro-expanded line(s)
+End of Pass 1: Checking for unresolved forward references
+Pass 2: Updating model with 0 pass 2 section(s)
+End of Pass 2
+Writing binary file hello2.bin
+Start address 0x8000006F
+End address 0x80000147
+Writing listing file hello2.lst
+
+$ nodeserver hello2.bin
+(does not return)
+
+In second terminal window...
+$ temulate
+$
+
+The first terminal window should now show:
+$ nodeserver hello2.bin
+hello world
+(still does not return)
+Ctrl-C <<- you'll have to interrupt it.
+$
+
+
+Source directory structure
+--------------------------
 The source is split into the following directories:
 
 Shared - utility code that is common to many parts of the system.
@@ -189,33 +223,42 @@ Later I intend to provide buils for:
 
 Prerequisites:
 - All:
-  - <a href="https://bitbucket.org/devzendo/transputer-macro-assembler">DevZendo.org Transputer Macro Assembler</a>
+  - CMake. I use 3.10.3.
+  - GNU Make. I use 4.2.1.
+  - Apache Maven. I use 3.3.9. (You can build without it, it's just doing some preprocessing, running cmake in various
+    stages, and is used for packaging.)
+  - If you want to build the client-examples programs, you'll need
+    <a href="https://bitbucket.org/devzendo/transputer-macro-assembler">DevZendo.org Transputer Macro Assembler</a>
     installed and on your PATH.
-  - GNU Make.
-  - Apache Maven. (You can build without it, it's just doing some preprocessing, running cmake in various stages, and
-    is used for packaging.)
 - OSX: clang (e.g. via XCode Developer tools, or MacPorts), cmake 3.10
 - Ubuntu Linux: build-essential (=> gcc) [DOES NOT BUILD HERE YET]
 - CentOS: gcc [DOES NOT BUILD HERE YET]
 - Windows: [DOES NOT BUILD HERE YET] (future work, but you'll need a UNIXy toolchain)
 
+The install location is /opt/parachute.
 
-The install location is /opt/parachute. Changing this would entail changes to
-Makefiles in the above hierarchy.
-
+Building
+========
 To build, cd to the top level directory (where this README.md is) and do:
-mvn compile
+mvn clean compile
 
 This creates the shared library code that contains the project version, in
 the target/classes directory, then does: 
 cd cmake-build-debug; cmake .. (ie regenerate the cmake cache)
 cmake --build cmake-build-debug --target all -- -j 4
 
+This build will build the entire system: T800 emulator and node
+server, client libraries, etc.
+
+Cleaning the Build Tree
+=======================
 To clean:
 mvn clean
 This effectively does:
 rm -rf cmake-build-debug
 
+Installing the Built Code
+=========================
 To install: (this needs reworking to use cmake - the Makefiles are to be replaced with cmake)
 
 make install
@@ -223,15 +266,11 @@ make install
 During the install, you will be prompted for a password. This is since the files
 are installed as root, and the build requires a sudo password.
 
-This build will build the entire system: T800 emulator and node
-server, client libraries, etc.
-
-
 
 License
 -------
 This code is released under the Apache 2.0 License: http://www.apache.org/licenses/LICENSE-2.0.html.
-(C) 2005-2018 Matt Gumbley, DevZendo.org
+(C) 2005-2019 Matt Gumbley, DevZendo.org
 
 
 Acknowledgements
