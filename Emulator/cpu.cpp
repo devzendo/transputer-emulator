@@ -1195,11 +1195,17 @@ inline void CPU::interpret(void) {
 				case O_xdble: // extend to double
 					InstCycles++;
 					Creg = Breg;
-					Breg = (Areg < 0 ? -1 : 0); // Areg < 0 is a tautological comparison: false
+					// TAUTOLOGICAL Breg = (Areg < 0 ? -1 : 0); // Areg < 0 is a tautological comparison: false
+					// So cast Areg to long to correct the comparison.
+					// Areg is WORD32, an unsigned int
+					Breg = ((long)Areg < 0 ? -1 : 0);
 					break;
 
 				case O_csngl: // check single
-					if ( ((Areg < 0) && (Breg != -1)) || ((Areg >= 0) && (Breg != 0))) { // Areg < 0 is a tautological comparison: false; Areg >= 0 is true
+					// TAUTOLOGICAL Areg < 0 is a tautological comparison: false; Areg >= 0 is true
+					// So cast Areg to long to correct the comparison.
+					// Areg is WORD32, an unsigned int
+					if ( (((long)Areg < 0) && (Breg != -1)) || (((long)Areg >= 0) && (Breg != 0))) {
 						SET_FLAGS(EmulatorState_ErrorFlag);
 					}
 					InstCycles = 3;

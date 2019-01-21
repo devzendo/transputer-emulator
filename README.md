@@ -29,6 +29,7 @@ Release Notes
 * Builds using CMake/CLion on OSX.
 * Added Boot-from-ROM, fixed Wdesc bug after boot from link.
 * Fixes: xword, call, j & scheduling (with assistance from Michael Brüstle), locations of TPtrLoc1, TPtrLoc0.
+  csngle and xdble: correct detection of sign of Areg
 * Monitor: db (renamed from da), dw improvements, added w (workspace display), added b/b+b-/b? (breakpoints),
   added s (show all state).
 * Adopted the Apache License v2.
