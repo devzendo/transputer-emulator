@@ -17,6 +17,7 @@ In progress, January 2019. Modernising, building on modern OSX/Linux/Windows.
 Release Notes
 -------------
 0.01 (ongoing work for the first release)
+* Versioning and build now controlled by Maven and CMake.
 * Successfully runs hello2.asm !
 * Renamed emulator binary from t800emul to temulate.
 * Started adding the T801 instructions, from "Transputer Instruction Set - Appendix, Guy Harriman".
