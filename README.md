@@ -230,7 +230,8 @@ Prerequisites:
   - If you want to build the client-examples programs, you'll need
     <a href="https://bitbucket.org/devzendo/transputer-macro-assembler">DevZendo.org Transputer Macro Assembler</a>
     installed and on your PATH.
-- OSX: clang (e.g. via XCode Developer tools, or MacPorts), cmake 3.10
+- OSX: clang (e.g. via XCode Developer tools, or MacPorts). I use Apple LLVM version 8.0.0 (clang-800.0.42.1) on
+  Mac OSX 'El Capitan' 10.11.6
 - Ubuntu Linux: build-essential (=> gcc) [DOES NOT BUILD HERE YET]
 - CentOS: gcc [DOES NOT BUILD HERE YET]
 - Windows: [DOES NOT BUILD HERE YET] (future work, but you'll need a UNIXy toolchain)
@@ -250,7 +251,7 @@ cd cmake-build-debug; cmake .. (ie regenerate the cmake cache)
 cmake --build cmake-build-debug --target all -- -j 4
 
 This build will build the entire system: T800 emulator and node
-server, client libraries, etc.
+server, client libraries, etc. This doesn't install it on your system - see below.
 
 Cleaning the Build Tree
 =======================
@@ -261,7 +262,7 @@ rm -rf cmake-build-debug
 
 Installing the Built Code
 =========================
-To install into the typical install location, you'll need to have permission to create it and
+To install into the default install location, you'll need to have permission to create it and
 write files there. 
 e.g. on OSX/Linux: 
 $ sudo mkdir /opt/parachute
@@ -274,6 +275,8 @@ In File Explorer, create C:\parachute and set it writable by your user account, 
 
 Then to copy the built software there:
 mvn prepare-package 
+
+This installation location is defined in the operating-system-specific profile sections of the pom.xml.
 
 
 License

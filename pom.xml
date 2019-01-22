@@ -40,24 +40,83 @@
         </developer>
     </developers>
 
-    <!-- TODO generate the version include file from ${project.version} -->
-    <!-- MAYBE replace exec with the cmake-maven-plugin from https://github.com/cmake-maven-project/cmake-maven-project -->
     <properties>
         <cmake.binary.dir>cmake-build-debug</cmake.binary.dir>
         <download.cmake>false</download.cmake>
-        <!-- TODO CROSSPLATFORM this needs setting appropriately for other platforms -->
-        <!-- The CMake maven plugin understands cmake.root.dir -->
-        <cmake.root.dir>/opt/local</cmake.root.dir>
-        <!-- TODO CROSSPLATFORM this is not suitable for Windows! -->
-        <!-- These are two of my properties I pass in to the CMake plugin, they're not known by the plugin innately -->
-        <!-- One of the generators defined at https://cmake.org/cmake/help/v3.7/manual/cmake-generators.7.html -->
-        <cmake.generator>Unix Makefiles</cmake.generator>
-        <!-- The classifier of the current platform. One of [windows-x86_32, windows-x86_64, linux-x86_32, linux-x86_64, linux-arm_32, mac-x86_64]. -->
-        <cmake.classifier>mac-x86_64</cmake.classifier>
-        <!-- TODO CROSSPLATFORM -->
-        <install.dir>/opt/parachute</install.dir>
-        <binary.suffix></binary.suffix>
     </properties>
+
+    <!-- use mvn enforcer:display-info to find platform name/family values -->
+    <profiles>
+        <profile>
+            <id>linux</id>
+            <activation>
+                <os>
+                    <name>unix</name>
+                </os>
+            </activation>
+            <properties>
+                <!-- The CMake maven plugin understands cmake.root.dir -->
+                <cmake.root.dir>/opt/local</cmake.root.dir>
+
+                <!-- One of the generators defined at https://cmake.org/cmake/help/v3.7/manual/cmake-generators.7.html -->
+                <cmake.generator>Unix Makefiles</cmake.generator>
+                <!-- The classifier of the current platform. One of [windows-x86_32, windows-x86_64, linux-x86_32, linux-x86_64, linux-arm_32, mac-x86_64]. -->
+                <cmake.classifier>linux-x86_64</cmake.classifier>
+
+                <install.dir>/opt/parachute</install.dir>
+                <binary.suffix></binary.suffix>
+            </properties>
+            <build>
+            </build>
+        </profile>
+        <profile>
+            <id>macosx</id>
+            <activation>
+                <os>
+                    <name>mac os x</name>
+                </os>
+            </activation>
+            <properties>
+                <!-- The CMake maven plugin understands cmake.root.dir -->
+                <cmake.root.dir>/opt/local</cmake.root.dir>
+
+                <!-- These are two of my properties I pass in to the CMake plugin, they're not known by the plugin innately -->
+                <!-- One of the generators defined at https://cmake.org/cmake/help/v3.7/manual/cmake-generators.7.html -->
+                <cmake.generator>Unix Makefiles</cmake.generator>
+                <!-- The classifier of the current platform. One of [windows-x86_32, windows-x86_64, linux-x86_32, linux-x86_64, linux-arm_32, mac-x86_64]. -->
+                <cmake.classifier>mac-x86_64</cmake.classifier>
+
+                <install.dir>/opt/parachute</install.dir>
+                <binary.suffix></binary.suffix>
+            </properties>
+            <build>
+            </build>
+        </profile>
+        <profile>
+            <id>windows</id>
+            <activation>
+                <os>
+                    <name>windows</name>
+                </os>
+            </activation>
+            <properties>
+                <!-- The CMake maven plugin understands cmake.root.dir -->
+                <cmake.root.dir>C:/cmake</cmake.root.dir>
+
+                <!-- These are two of my properties I pass in to the CMake plugin, they're not known by the plugin innately -->
+                <!-- One of the generators defined at https://cmake.org/cmake/help/v3.7/manual/cmake-generators.7.html -->
+                <cmake.generator>NMake Makefiles</cmake.generator>
+                <!-- The classifier of the current platform. One of [windows-x86_32, windows-x86_64, linux-x86_32, linux-x86_64, linux-arm_32, mac-x86_64]. -->
+                <cmake.classifier>windows-x86_64</cmake.classifier>
+
+                <install.dir>C:/parachute</install.dir>
+                <binary.suffix>.exe</binary.suffix>
+            </properties>
+            <build>
+            </build>
+        </profile>
+
+    </profiles>
 
     <build>
         <resources>
