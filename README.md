@@ -216,7 +216,7 @@ Building and Installing
 The distribution currently builds under the following systems:
 * Mac OSX 'El Capitan' 10.11
 
-Later I intend to provide buils for:
+Later I intend to provide builds for:
 * Ubuntu Linux 16.04.4 LTS Intel x86-64
 * CentOS Linux 7.4 Intel x86-64
 * Windows 10
@@ -235,7 +235,9 @@ Prerequisites:
 - CentOS: gcc [DOES NOT BUILD HERE YET]
 - Windows: [DOES NOT BUILD HERE YET] (future work, but you'll need a UNIXy toolchain)
 
-The install location is /opt/parachute.
+The typical install location is:
+- OSX/Linux: /opt/parachute
+- Windows: C:\parachute
 
 Building
 ========
@@ -259,12 +261,19 @@ rm -rf cmake-build-debug
 
 Installing the Built Code
 =========================
-To install: (this needs reworking to use cmake - the Makefiles are to be replaced with cmake)
+To install into the typical install location, you'll need to have permission to create it and
+write files there. 
+e.g. on OSX/Linux: 
+$ sudo mkdir /opt/parachute
+Password: <enter your password, assuming you have sudo rights>
+$ sudo chown myuser:myuser /opt/parachute # e.g. Linux
+$ sudo chown myuser:staff /opt/parachute  # e.g. OSX
 
-make install
+e.g. on Windows:
+In File Explorer, create C:\parachute and set it writable by your user account, however you do this.
 
-During the install, you will be prompted for a password. This is since the files
-are installed as root, and the build requires a sudo password.
+Then to copy the built software there:
+mvn prepare-package 
 
 
 License
