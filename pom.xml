@@ -96,12 +96,12 @@
             <id>windows</id>
             <activation>
                 <os>
-                    <name>windows</name>
+                    <family>windows</family>
                 </os>
             </activation>
             <properties>
                 <!-- The CMake maven plugin understands cmake.root.dir -->
-                <cmake.root.dir>C:/cmake</cmake.root.dir>
+		<cmake.root.dir>C:/Program Files/CMake</cmake.root.dir>
 
                 <!-- These are two of my properties I pass in to the CMake plugin, they're not known by the plugin innately -->
                 <!-- One of the generators defined at https://cmake.org/cmake/help/v3.7/manual/cmake-generators.7.html -->
