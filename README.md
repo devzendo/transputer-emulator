@@ -15,6 +15,7 @@ Status
 ------
 In progress, January 2019. Modernising, building on modern OSX/Linux/Windows.
 
+* Building using Maven/CMake/Microsoft Visual Studio Community on Windows 7 64-bit.
 
 Release Notes
 -------------
@@ -28,7 +29,7 @@ Release Notes
   Added the -j flag to enable 'j 0' breakpoints.
 * Described current implementation/missing status in the above section.
 * The T810 instructions from "The IMS T810 - A Preliminary Survey" are not implemented.
-* Builds using CMake/CLion on OSX.
+* Builds using Maven/CMake/CLion on OSX.
 * Added Boot-from-ROM, fixed Wdesc bug after boot from link.
 * Fixes: xword, call, j & scheduling (with assistance from Michael Brüstle), locations of TPtrLoc1, TPtrLoc0.
   csngl and xdble: correct detection of sign of Areg
@@ -72,7 +73,7 @@ Correctness
 Build/Releases
 ==============
 * Build on Linuxes
-* Build on Windows
+* Test build on Windows 10
 * Upgrade to C++11 or more recent
 
 Bugs
@@ -214,27 +215,33 @@ Emulator - the T414/T800/T801/T805 emulator.
 Building and Installing
 -----------------------
 The distribution currently builds under the following systems:
-* Mac OSX 'El Capitan' 10.11
+* Mac OSX 'El Capitan' 10.11 (untested on more recent versions)
+* Windows 7 (untested on more recent versions especially 10)
 
 Later I intend to provide builds for:
 * Ubuntu Linux 16.04.4 LTS Intel x86-64
 * CentOS Linux 7.4 Intel x86-64
-* Windows 10
 
 Prerequisites:
-- All:
+- All Operating Systems:
   - CMake. I use 3.10.3.
-  - GNU Make. I use 4.2.1.
-  - Apache Maven. I use 3.3.9. (You can build without it, it's just doing some preprocessing, running cmake in various
-    stages, and is used for packaging.)
+  - Apache Maven. I use 3.6.0. (You can build without it, it's just doing some preprocessing, running cmake in various
+    stages, and is used for packaging and overall build control.)
   - If you want to build the client-examples programs, you'll need
     <a href="https://bitbucket.org/devzendo/transputer-macro-assembler">DevZendo.org Transputer Macro Assembler</a>
     installed and on your PATH.
-- OSX: clang (e.g. via XCode Developer tools, or MacPorts). I use Apple LLVM version 8.0.0 (clang-800.0.42.1) on
-  Mac OSX 'El Capitan' 10.11.6
+  - Mercurial. I use SourceTree on OSX and Windows, or TortoiseHg on Windows, and hg on Linux.
+- OSX:
+  - GNU Make. I use 4.2.1.
+  - clang (e.g. via XCode Developer tools, or MacPorts). I use Apple LLVM version 8.0.0 (clang-800.0.42.1) on
+    Mac OSX 'El Capitan' 10.11.6
+- Windows: [DOES NOT BUILD HERE YET] (future work, but you'll need a UNIXy toolchain)
+  - Microsoft Visual Studio Community 2017. I use 15.9.
+  - CMake is installed in C:\Program Files\CMake
+  - Maven is installed in C:\Program Files\apache-maven-3.6.0
+  - (these locations are noted in the pom.xml).
 - Ubuntu Linux: build-essential (=> gcc) [DOES NOT BUILD HERE YET]
 - CentOS: gcc [DOES NOT BUILD HERE YET]
-- Windows: [DOES NOT BUILD HERE YET] (future work, but you'll need a UNIXy toolchain)
 
 The typical install location is:
 - OSX/Linux: /opt/parachute
