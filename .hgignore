@@ -3,6 +3,9 @@ syntax: glob
 *.iml
 .idea
 .idea/
+**/*.*~
+**/*.swp
+cmake-build-debug
 syntax: regexp
 ^target$
 
