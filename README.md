@@ -13,9 +13,9 @@ http://devzendo.github.io/parachute
 
 Status
 ------
-In progress, January 2019. Modernising, building on modern OSX/Linux/Windows.
+In progress, March 2019. Modernising, building on modern OSX/Linux/Windows.
 
-* Building using Maven/CMake/Microsoft Visual Studio Community on Windows 7 64-bit.
+* Building using Maven/CMake/Microsoft Visual Studio Command line tools on Windows 10 64-bit.
 
 Release Notes
 -------------
@@ -73,7 +73,6 @@ Correctness
 Build/Releases
 ==============
 * Build on Linuxes
-* Test build on Windows 10
 * Upgrade to C++11 or more recent
 
 Bugs
