@@ -17,7 +17,13 @@
 #include <exception>
 using namespace std;
 
+#include "platform.h"
 #include "types.h"
+
+#ifdef PLATFORM_WINDOWS
+// For MSVC, shut up about throw (exception)
+#pragma warning( disable : 4290 )
+#endif
 
 class Link {
 	public:

@@ -1,1 +1,1 @@
-add_library(parachutedev STATIC log.cpp misc.cpp hexdump.cpp link.cpp fifolink.cpp linkfactory.cpp)
+add_library(parachutedev STATIC log.cpp misc.cpp hexdump.cpp link.cpp fifolink.cpp linkfactory.cpp platform.h)
