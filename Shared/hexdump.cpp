@@ -21,7 +21,8 @@ static char hexdigs[]="0123456789abcdef";
 
 void hexdump(BYTE *buf, WORD32 len)
 {
-char line[80];
+const int lineLen = 80;
+char line[lineLen];
 WORD32 i;
 WORD32 offset=0;
 WORD32 left=len;
@@ -33,7 +34,7 @@ BYTE b;
 		}
 		line[9] = line[59] = '|';
 		line[77] = '\0';
-		sprintf(line, "%08X", offset);
+		snprintf(line, lineLen, "%08X", offset);
 		line[8] = ' ';
 		upto16 = (left > 16) ? 16 : left;
 		for (x = 0; x < upto16; x++) {
