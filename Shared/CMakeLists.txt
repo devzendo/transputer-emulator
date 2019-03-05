@@ -1,1 +1,7 @@
-add_library(parachutedev STATIC log.cpp misc.cpp hexdump.cpp link.cpp fifolink.cpp namedpipelink.cpp linkfactory.cpp platform.h)
+if(WIN32)
+    set(platform_sources namedpipelink.cpp)
+endif(WIN32)
+if(UNIX)
+    set(platform_sources fifolink.cpp)
+endif(UNIX)
+add_library(parachutedev STATIC log.cpp misc.cpp hexdump.cpp link.cpp "${platform_sources}" linkfactory.cpp platform.h)

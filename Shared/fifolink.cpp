@@ -19,10 +19,7 @@ using namespace std;
 
 #include "platform.h"
 
-#if defined(PLATFORM_OSX) || defined(PLATFORM_LINUX)
 #include <unistd.h>
-#endif
-
 #include <fcntl.h>
 #include <errno.h>
 #include <string.h>
