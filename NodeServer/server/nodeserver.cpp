@@ -25,7 +25,6 @@
 #include <sys/time.h>
 #include <fcntl.h>
 #include <unistd.h>
-#include <termios.h>
 using namespace std;
 #include "log.h"
 #include "link.h"
@@ -50,15 +49,6 @@ static Link *myLink;
 static LinkFactory *linkFactory;
 const int MSGBUF_MAX = CONSOLE_PUT_CSTR_BUF_LIMIT;
 static char msgbuf[MSGBUF_MAX];
-// For console keyboard handling
-static int stdinfd;
-static struct timeval timeout;
-static fd_set stdinfdset;
-struct termios term, origterm;
-
-void resetStdIn() {
-	tcsetattr(stdinfd, TCSANOW, &origterm);
-}
 
 void usage() {
 	logInfoF("Parachute v%s Node Server - Protocol v%d " __DATE__, projectVersion, NS_PROTOCOL_VERSION);
@@ -231,37 +221,15 @@ void handleNodeServerProtocol(void) {
 					if (debugLink) {
 						logDebug("CONSOLE_GET_AVAILABLE");
 					}
-					BYTE ready = 0;
-					for (;;) {
-						FD_ZERO(&stdinfdset);
-						FD_SET(stdinfd, &stdinfdset);
-						int fds = select(stdinfd+1, &stdinfdset, NULL, NULL, &timeout);
-						if (fds == -1) {
-							if (errno == EINTR) {
-								continue; // try again
-							}
-							logWarnF("CONSOLE_GET_AVAILABLE select failed: %s", strerror(errno));
-							break;
-						}
-						if (fds == 0) {
-							break;
-						}
-						if (fds == 1) {
-							ready = 1;
-							break;
-						}
-						logWarnF("CONSOLE_GET_AVAILABLE select returned %d", fds);
-						break;
-					}
-					myLink->writeByte(ready);
+					bool ready = myConsole->isCharAvailable();
+					myLink->writeByte(ready ? 1 : 0);
 				}
 				break;
 			case CONSOLE_GET_CHAR: {
-					BYTE inChar;
 					if (debugLink) {
 						logDebug("CONSOLE_GET_CHAR");
 					}
-					read(stdinfd, &inChar, 1);
+					BYTE inChar = myConsole->getChar();
 					myLink->writeByte(inChar); // TODO fix when we have a framebuffer
 				}
 				break;
@@ -369,7 +337,6 @@ void cleanup() {
     if (linkFactory != NULL) {
         delete linkFactory;
     }
-    resetStdIn();
     fflush(stdout);
 }
 
@@ -406,25 +373,6 @@ int main(int argc, char *argv[]) {
 	monitorLink = false;
 	finished = false;
 
-	// initialise console keyboard handling
-	stdinfd = fileno(stdin); // should be 0!
-	timeout.tv_sec = 0; // cause select to return immediately
-	timeout.tv_usec = 0;
-	// TODO initialise cooked input so it returns without waiting for EOL
-	// initialise links
-	if (tcgetattr(stdinfd, &term) == -1) {
-		logFatalF("Could not get stdin terminal attributes: %s",
-				strerror(errno));
-		exit(1);
-	}
-	tcgetattr(stdinfd, &origterm);
-	term.c_lflag = term.c_lflag & (~ICANON);
-	if (tcsetattr(stdinfd, TCSANOW, &term) == -1) {
-		logFatalF("Could not set stdin terminal attributes: %s",
-				strerror(errno));
-		cleanup();
-		exit(1);
-	}
 	if (!processCommandLine(argc, argv)) {
 		cleanup();
 		exit(1);

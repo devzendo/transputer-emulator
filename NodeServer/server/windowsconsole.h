@@ -25,6 +25,9 @@ public:
     WindowsConsole();
     void initialise(void) throw (exception);
     ~WindowsConsole(void);
+
+    bool isCharAvailable();
+    BYTE getChar();
 private:
 };
 

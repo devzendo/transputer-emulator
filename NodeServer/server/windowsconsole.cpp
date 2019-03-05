@@ -33,3 +33,10 @@ WindowsConsole::~WindowsConsole() {
     logDebug("Destroying Windows Console");
 }
 
+bool WindowsConsole::isCharAvailable() {
+    return false;
+}
+
+BYTE WindowsConsole::getChar() {
+    return 0;
+}

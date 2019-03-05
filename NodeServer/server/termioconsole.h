@@ -16,6 +16,9 @@
 
 #include <exception>
 using namespace std;
+#include <cerrno>
+#include <termios.h>
+#include <unistd.h>
 
 #include "types.h"
 #include "console.h"
@@ -25,7 +28,15 @@ public:
     TermioConsole();
     void initialise(void) throw (exception);
     ~TermioConsole(void);
+
+    bool isCharAvailable();
+    BYTE getChar();
 private:
+    // For console keyboard handling
+    int stdinfd;
+    struct timeval timeout;
+    fd_set stdinfdset;
+    termios term, origterm;
 };
 
 #endif // _TERMIOCONSOLE_H

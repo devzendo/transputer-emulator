@@ -32,3 +32,11 @@ Console::~Console(void) {
 void Console::setDebug(bool newDebug) {
     bDebug = newDebug;
 }
+
+bool Console::isCharAvailable() {
+    return true;
+}
+
+BYTE Console::getChar() {
+    return 0;
+}

@@ -31,6 +31,8 @@ public:
     virtual void initialise(void) throw (exception);
     virtual ~Console(void);
     void setDebug(bool newDebug);
+    virtual bool isCharAvailable();
+    virtual BYTE getChar();
 protected:
     bool bDebug;
 };
