@@ -148,23 +148,6 @@ bool processCommandLine(int argc, char *argv[]) {
 	return 1;
 }
 
-#ifdef UNIX
-void segViolHandler(int sig) {
-	logFatal("Segmentation violation. Terminating");
-	fflush(stdout);
-	resetStdIn();
-	exit(-1);
-}
-
-void interruptHandler(int sig) {
-	signal(SIGINT,interruptHandler);
-	logWarn("Node Server interrupted.. indicating shutdown is necessary");
-	fflush(stdout);
-	finished = true;
-}
-
-#endif
-
 char *printableString(BYTE *orig, BYTE len) {
 	for (int i = 0; i < len; i++) {
 		msgbuf[i] = isprint(orig[i]) ? orig[i] : '.';
@@ -390,6 +373,30 @@ void cleanup() {
     fflush(stdout);
 }
 
+#if defined(PLATFORM_OSX) || defined(PLATFORM_LINUX)
+void segViolHandler(int sig) {
+	logFatal("Segmentation violation. Terminating");
+	cleanup();
+	exit(-1);
+}
+
+void interruptHandler(int sig) {
+	signal(SIGINT, interruptHandler);
+	logWarn("Node Server interrupted. Terminating...");
+
+	finished = true; // blocking read on link won't be interrupted...
+
+	try {
+		myLink->resetLink();
+	} catch (exception &e) {
+		logErrorF("Could not reset link 0: %s", e.what());
+	}
+
+	cleanup();
+	exit(0);
+}
+#endif
+
 int main(int argc, char *argv[]) {
 	progName = argv[0];
 	bootFile = NULL;
@@ -439,7 +446,8 @@ int main(int argc, char *argv[]) {
 		exit(1);
 	}
 
-#ifdef UNIX
+#if defined(PLATFORM_OSX) || defined(PLATFORM_LINUX)
+	logDebug("Setting up signal handlers");
 	signal(SIGSEGV, segViolHandler);
 	signal(SIGINT, interruptHandler);
 #endif

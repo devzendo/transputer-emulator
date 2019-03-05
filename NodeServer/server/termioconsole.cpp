@@ -27,6 +27,7 @@ TermioConsole::TermioConsole() : Console() {
 }
 
 void TermioConsole::initialise(void) throw (exception) {
+    logDebug("Initialising termio console");
 }
 
 TermioConsole::~TermioConsole() {
