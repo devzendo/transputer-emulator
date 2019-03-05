@@ -14,10 +14,12 @@
 #include <cstdlib>
 #include <cctype>
 #include <cstring>
+#include "platform.h"
 #include "types.h"
 #include "constants.h"
 #include "link.h"
 #include "fifolink.h"
+#include "namedpipelink.h"
 #include "linkfactory.h"
 #include "log.h"
 
@@ -69,7 +71,11 @@ Link *LinkFactory::createLink(int linkNo) {
 	Link *newLink = NULL;
 	switch (myLinkTypes[linkNo]) {
 		case LinkType_FIFO:
+#if defined(PLATFORM_OSX) || defined(PLATFORM_LINUX)
 			newLink = new FIFOLink(linkNo, bServer);
+#elif defined(PLATFORM_WINDOWS)
+			newLink = new NamedPipeLink(linkNo, bServer);
+#endif
 			break;
 		case LinkType_Socket:
 			logFatal("Socket links not yet implemented");

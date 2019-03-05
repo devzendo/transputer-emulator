@@ -1,9 +1,9 @@
 //------------------------------------------------------------------------------
 //
-// File        : fifolink.cpp
-// Description : Implementation of link that uses a FIFO.
+// File        : namedpipelink.cpp
+// Description : Implementation of link that uses a Windows named pipe.
 // License     : Apache License v2.0 - see LICENSE.txt for more details
-// Created     : 19/07/2005
+// Created     : 05/03/2019
 //
 // (C) 2005-2019 Matt J. Gumbley
 // matt.gumbley@devzendo.org
@@ -19,10 +19,6 @@ using namespace std;
 
 #include "platform.h"
 
-#if defined(PLATFORM_OSX) || defined(PLATFORM_LINUX)
-#include <unistd.h>
-#endif
-
 #include <fcntl.h>
 #include <errno.h>
 #include <string.h>
@@ -31,17 +27,18 @@ using namespace std;
 #include "types.h"
 #include "constants.h"
 #include "link.h"
-#include "fifolink.h"
+#include "namedpipelink.h"
 #include "log.h"
 
-FIFOLink::FIFOLink(int linkNo, bool isServer) : Link(linkNo, isServer) {
-	logDebugF("Constructing FIFO link %d for %s", myLinkNo, isServer ? "server" : "cpu client");
-	myWriteFD = -1;
-	myReadFD = -1;
-	myWriteSequence = myReadSequence = 0;
+NamedPipeLink::NamedPipeLink(int linkNo, bool isServer) : Link(linkNo, isServer) {
+	logDebugF("Constructing named pipe link %d for %s", myLinkNo, isServer ? "server" : "cpu client");
+    //	myWriteFD = -1;
+    //	myReadFD = -1;
+    //	myWriteSequence = myReadSequence = 0;
 }
 
-void FIFOLink::initialise(void) throw (exception) {
+void NamedPipeLink::initialise(void) throw (exception) {
+    /*
 	static char msgbuf[255];
 	char rfname[80];
 	char wfname[80];
@@ -116,10 +113,12 @@ void FIFOLink::initialise(void) throw (exception) {
 			throw runtime_error(msgbuf);
 		}
 	}
+     */
 }
 
-FIFOLink::~FIFOLink() {
-	logDebugF("Destroying FIFO link %d", myLinkNo);
+NamedPipeLink::~NamedPipeLink() {
+	logDebugF("Destroying named pipe link %d", myLinkNo);
+	/*
 	if (myReadFD != -1) {
 		close(myReadFD);
 		myReadFD = -1;
@@ -128,9 +127,11 @@ FIFOLink::~FIFOLink() {
 		close(myWriteFD);
 		myWriteFD = -1;
 	}
+	 */
 }
 
-BYTE FIFOLink::readByte() throw (exception) {
+BYTE NamedPipeLink::readByte() throw (exception) {
+    /*
 	static char msgbuf[255];
 	BYTE buf;
 	if (read(myReadFD, &buf, 1) == 1) {
@@ -142,9 +143,12 @@ BYTE FIFOLink::readByte() throw (exception) {
 	sprintf(msgbuf, "Could not read a byte from FIFO FD#%d: %s", myReadFD, strerror(errno));
 	logWarn(msgbuf);
 	throw runtime_error(msgbuf);
+     */
+    throw runtime_error("unimplemented NamedPipeLink::readByte");
 }
 
-void FIFOLink::writeByte(BYTE buf) throw (exception) {
+void NamedPipeLink::writeByte(BYTE buf) throw (exception) {
+    /*
 	static char msgbuf[255];
 	BYTE bufstore = buf;
 	if (bDebug) {
@@ -155,9 +159,11 @@ void FIFOLink::writeByte(BYTE buf) throw (exception) {
 	}
 	sprintf(msgbuf, "Could not write a byte to FIFO FD#%d: %s", myWriteFD, strerror(errno));
 	throw runtime_error(msgbuf);
+     */
+    throw runtime_error("unimplemented NamedPipeLink::writeByte");
 }
 
-void FIFOLink::resetLink(void) throw (exception) {
+void NamedPipeLink::resetLink(void) throw (exception) {
 	// TODO
 }
 
