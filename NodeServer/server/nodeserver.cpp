@@ -11,6 +11,8 @@
 //
 //------------------------------------------------------------------------------
 
+#include "platform.h"
+
 #include <iostream>
 #include <cstdio>
 #include <cstring>
