@@ -30,6 +30,8 @@ using namespace std;
 #include "log.h"
 #include "link.h"
 #include "linkfactory.h"
+#include "console.h"
+#include "consolefactory.h"
 #include "hexdump.h"
 #include "nsproto.h"
 #include "version.h"
@@ -37,10 +39,12 @@ using namespace std;
 // global variables
 static char *progName;
 static char *bootFile;
+static bool debugConsole;
 static bool debugLink;
 static bool debugLinkRaw;
 static bool monitorLink;
 static bool finished;
+static Console *myConsole;
 static Link *myLink;
 const int MSGBUF_MAX = CONSOLE_PUT_CSTR_BUF_LIMIT;
 static char msgbuf[MSGBUF_MAX];
@@ -65,6 +69,7 @@ void usage() {
 	logInfo("booting the Emulator from ROM.");
 	logInfo("Options:");
 	logInfo("  -df   Full debug");
+    logInfo("  -dc   Enables console debug");
 	logInfo("  -dl   Enables link communications (high level) debug");
 	logInfo("  -dL   Enables link communications (high & low level) debug");
 	logInfo("  -m    Monitors boot link instead of handling protocol");
@@ -114,6 +119,9 @@ bool processCommandLine(int argc, char *argv[]) {
 					break;
 				case 'd':
 					switch (argv[i][2]) {
+                        case 'c':
+                            debugConsole = true;
+                            break;
 						case 'f':
 							debugLink = true;
 							break;
@@ -366,10 +374,12 @@ void sendBootFile(void) {
 int main(int argc, char *argv[]) {
 	progName = argv[0];
 	bootFile = NULL;
+	debugConsole = false;
 	debugLink = false;
 	debugLinkRaw = false;
 	monitorLink = false;
 	finished = false;
+
 	// initialise console keyboard handling
 	stdinfd = fileno(stdin); // should be 0!
 	timeout.tv_sec = 0; // cause select to return immediately
@@ -394,15 +404,20 @@ int main(int argc, char *argv[]) {
 		exit(1);
 	}
 
-	LinkFactory *linkFactory = new LinkFactory(true, debugLinkRaw);
+    ConsoleFactory *consoleFactory = new ConsoleFactory(debugConsole);
+	myConsole = consoleFactory->createConsole();
+
+    LinkFactory *linkFactory = new LinkFactory(true, debugLinkRaw);
 	if (!linkFactory->processCommandLine(argc, argv)) {
 		resetStdIn();
 		exit(1);
 	}
+
 #ifdef UNIX
 	signal(SIGSEGV, segViolHandler);
 	signal(SIGINT, interruptHandler);
 #endif
+
 	if ((myLink = linkFactory->createLink(0)) == NULL) {
 		logFatal("Could not create link 0");
 		resetStdIn();
@@ -437,6 +452,8 @@ int main(int argc, char *argv[]) {
 	}
 	resetStdIn();
 	fflush(stdout);
+
+	delete myConsole;
 	delete myLink;
 	delete linkFactory;
 	return 0;
