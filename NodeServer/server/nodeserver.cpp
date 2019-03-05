@@ -45,7 +45,9 @@ static bool debugLinkRaw;
 static bool monitorLink;
 static bool finished;
 static Console *myConsole;
+static ConsoleFactory *consoleFactory;
 static Link *myLink;
+static LinkFactory *linkFactory;
 const int MSGBUF_MAX = CONSOLE_PUT_CSTR_BUF_LIMIT;
 static char msgbuf[MSGBUF_MAX];
 // For console keyboard handling
@@ -371,6 +373,23 @@ void sendBootFile(void) {
 	close(fd);
 }
 
+void cleanup() {
+    if (myConsole != NULL) {
+        delete myConsole;
+    }
+    if (myLink != NULL) {
+        delete myLink;
+    }
+    if (consoleFactory != NULL) {
+        delete consoleFactory;
+    }
+    if (linkFactory != NULL) {
+        delete linkFactory;
+    }
+    resetStdIn();
+    fflush(stdout);
+}
+
 int main(int argc, char *argv[]) {
 	progName = argv[0];
 	bootFile = NULL;
@@ -394,22 +413,29 @@ int main(int argc, char *argv[]) {
 	tcgetattr(stdinfd, &origterm);
 	term.c_lflag = term.c_lflag & (~ICANON);
 	if (tcsetattr(stdinfd, TCSANOW, &term) == -1) {
-		resetStdIn();
 		logFatalF("Could not set stdin terminal attributes: %s",
 				strerror(errno));
+		cleanup();
 		exit(1);
 	}
 	if (!processCommandLine(argc, argv)) {
-		resetStdIn();
+		cleanup();
 		exit(1);
 	}
 
-    ConsoleFactory *consoleFactory = new ConsoleFactory(debugConsole);
+    consoleFactory = new ConsoleFactory(debugConsole);
 	myConsole = consoleFactory->createConsole();
+    try {
+        myConsole->initialise();
+    } catch (exception &e) {
+        logFatalF("Could not initialise console: %s", e.what());
+        cleanup();
+        exit(1);
+    }
 
-    LinkFactory *linkFactory = new LinkFactory(true, debugLinkRaw);
+    linkFactory = new LinkFactory(true, debugLinkRaw);
 	if (!linkFactory->processCommandLine(argc, argv)) {
-		resetStdIn();
+		cleanup();
 		exit(1);
 	}
 
@@ -420,14 +446,14 @@ int main(int argc, char *argv[]) {
 
 	if ((myLink = linkFactory->createLink(0)) == NULL) {
 		logFatal("Could not create link 0");
-		resetStdIn();
+		cleanup();
 		exit(1);
 	}
 	try {
 		myLink->initialise();
 	} catch (exception &e) {
 		logFatalF("Could not initialise link 0: %s", e.what());
-		resetStdIn();
+		cleanup();
 		exit(1);
 	}
 
@@ -450,12 +476,8 @@ int main(int argc, char *argv[]) {
 	} catch (exception &e) {
 		logErrorF("Could not reset link 0: %s", e.what());
 	}
-	resetStdIn();
-	fflush(stdout);
 
-	delete myConsole;
-	delete myLink;
-	delete linkFactory;
+	cleanup();
 	return 0;
 }
 
