@@ -16,7 +16,10 @@
 
 // See http://nadeausoftware.com/articles/2012/01/c_c_tip_how_use_compiler_predefined_macros_detect_operating_system
 // for detail on how to accurately detect which platform we're on. This header encapsulates all that, and gives
-// PLATFORM_XXXXX definitions that are used throughout.
+// PLATFORM_XXXXX definitions that are used throughout. If new platforms/variants are needed, they can be added here.
+
+// Also useful: https://stackoverflow.com/questions/2989810/which-cross-platform-preprocessor-defines-win32-or-win32-or-win32
+
 
 // Windows
 
