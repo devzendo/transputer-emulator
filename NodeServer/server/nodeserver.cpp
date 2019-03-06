@@ -23,10 +23,18 @@
 #include <fcntl.h>
 #if defined(PLATFORM_OSX) || defined(PLATFORM_LINUX)
 #include <unistd.h>
+#define platform_open open
+#define platform_close close
+#define platform_read read
+#define platform_write write
 #endif
 #if defined(PLATFORM_WINDOWS)
 // Thank you https://stackoverflow.com/questions/49001326/convert-the-linux-open-read-write-close-functions-to-work-on-windows
 #include <io.h>
+#define platform_open _open
+#define platform_close _close
+#define platform_read _read
+#define platform_write _write
 #endif
 using namespace std;
 #include "log.h"
@@ -294,7 +302,7 @@ void monitorBootLink(void) {
 // Precondition: bootFile != NULL
 void sendBootFile(void) {
 	// open boot file
-	int fd = open(bootFile, O_RDONLY);
+	int fd = platform_open(bootFile, O_RDONLY);
 	if (fd == -1) {
 		logFatalF("Could not open boot file '%s': %s", bootFile, strerror(errno));
 		finished = true;
@@ -303,7 +311,7 @@ void sendBootFile(void) {
 	BYTE buf[128];
 	int nread;
 	do {
-		nread = read(fd, &buf, 128);
+		nread = platform_read(fd, &buf, 128);
 		if (nread > 0) {
 			if (debugLink) {
 				logDebugF("Read %d bytes of boot code; sending down link", nread);
@@ -314,14 +322,14 @@ void sendBootFile(void) {
 					myLink->writeByte(buf[i]);
 				} catch (exception e) {
 					logFatalF("Could not write down link 0: %s", e.what());
-					close(fd);
+					platform_close(fd);
 					finished = true;
 					return;
 				}
 			}
 		}
 	} while (nread > 0);
-	close(fd);
+	platform_close(fd);
 }
 
 void cleanup() {
