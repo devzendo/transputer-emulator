@@ -5,10 +5,10 @@ link_libraries(parachutedev)
 link_libraries(parachuteversion)
 
 if(WIN32)
-    set(platform_sources windowsconsole.cpp windowsconsole.h)
+    set(platform_sources windowsplatform.cpp windowsplatform.h)
 endif(WIN32)
 if(UNIX)
-    set(platform_sources termioconsole.cpp termioconsole.h)
+    set(platform_sources posixplatform.cpp posixplatform.h)
 endif(UNIX)
 
-add_executable(nodeserver nodeserver.cpp console.cpp console.h consolefactory.h consolefactory.cpp "${platform_sources}")
+add_executable(nodeserver nodeserver.cpp platform.cpp platform.h platformfactory.h platformfactory.cpp "${platform_sources}")

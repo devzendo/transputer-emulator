@@ -1,7 +1,7 @@
 //------------------------------------------------------------------------------
 //
-// File        : consolefactory.h
-// Description : Factory for creating derived classes of Console
+// File        : platformfactory.h
+// Description : Factory for creating derived classes of Platform
 // License     : Apache License v2.0 - see LICENSE.txt for more details
 // Created     : 05/03/2019
 //
@@ -11,16 +11,16 @@
 //
 //------------------------------------------------------------------------------
 
-#ifndef _CONSOLEFACTORY_H
-#define _CONSOLEFACTORY_H
+#ifndef _PLATFORMFACTORY_H
+#define _PLATFORMFACTORY_H
 
-class ConsoleFactory {
+class PlatformFactory {
 public:
-    ConsoleFactory(bool isDebug);
-    Console *createConsole();
+    PlatformFactory(bool isDebug);
+    Platform *createPlatform();
 private:
     bool bDebug;
 };
 
-#endif // _CONSOLEFACTORY_H
+#endif // _PLATFORMFACTORY_H
 

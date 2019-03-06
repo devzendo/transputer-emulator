@@ -1,7 +1,7 @@
 //------------------------------------------------------------------------------
 //
-// File        : termioconsole.h
-// Description : Definition of termio Console.
+// File        : posixplatform.h
+// Description : Definition of POSIX Console/Timer.
 // License     : Apache License v2.0 - see LICENSE.txt for more details
 // Created     : 05/03/2019
 //
@@ -11,8 +11,8 @@
 //
 //------------------------------------------------------------------------------
 
-#ifndef _TERMIOCONSOLE_H
-#define _TERMIOCONSOLE_H
+#ifndef _POSIXPLATFORM_H
+#define _POSIXPLATFORM_H
 
 #include <exception>
 using namespace std;
@@ -21,13 +21,13 @@ using namespace std;
 #include <unistd.h>
 
 #include "types.h"
-#include "console.h"
+#include "platform.h"
 
-class TermioConsole : public Console {
+class POSIXPlatform : public Platform {
 public:
-    TermioConsole();
+    POSIXPlatform();
     void initialise(void) throw (exception);
-    ~TermioConsole(void);
+    ~POSIXPlatform(void);
 
     bool isCharAvailable();
     BYTE getChar();
@@ -39,5 +39,5 @@ private:
     termios term, origterm;
 };
 
-#endif // _TERMIOCONSOLE_H
+#endif // _POSIXPLATFORM_H
 

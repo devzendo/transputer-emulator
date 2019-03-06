@@ -1,7 +1,7 @@
 //------------------------------------------------------------------------------
 //
-// File        : console.cpp
-// Description : Abstract base class for consoles
+// File        : windowsplatform.h
+// Description : Definition of Windows Console/Timer.
 // License     : Apache License v2.0 - see LICENSE.txt for more details
 // Created     : 05/03/2019
 //
@@ -11,32 +11,25 @@
 //
 //------------------------------------------------------------------------------
 
+#ifndef _WINDOWSPLATFORM_H
+#define _WINDOWSPLATFORM_H
+
 #include <exception>
 using namespace std;
 
 #include "types.h"
-#include "constants.h"
-#include "console.h"
-#include "log.h"
+#include "platform.h"
 
-Console::Console() {
-    bDebug = false;
-}
+class WindowsPlatform : public Platform {
+public:
+    WindowsPlatform);
+    void initialise(void) throw (exception);
+    ~WindowsPlatform(void);
 
-void Console::initialise(void) throw (exception) {
-}
+    bool isCharAvailable();
+    BYTE getChar();
+private:
+};
 
-Console::~Console(void) {
-}
+#endif // _WINDOWSPLATFORM_H
 
-void Console::setDebug(bool newDebug) {
-    bDebug = newDebug;
-}
-
-bool Console::isCharAvailable() {
-    return true;
-}
-
-BYTE Console::getChar() {
-    return 0;
-}

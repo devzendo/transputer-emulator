@@ -1,7 +1,7 @@
 //------------------------------------------------------------------------------
 //
-// File        : termioconsole.cpp
-// Description : The termio (OSX/Linux) Console
+// File        : posixplatform.cpp
+// Description : The POSIX (OSX/Linux) Console/Timer
 // License     : Apache License v2.0 - see LICENSE.txt for more details
 // Created     : 05/03/2019
 //
@@ -11,23 +11,21 @@
 //
 //------------------------------------------------------------------------------
 
-#include "platform.h"
-
 #include <exception>
 #include <stdexcept>
 #include <termios.h>
 using namespace std;
 #include "types.h"
 #include "constants.h"
-#include "console.h"
-#include "termioconsole.h"
+#include "platform.h"
+#include "posixplatform.h"
 #include "log.h"
 
-TermioConsole::TermioConsole() : Console() {
-    logDebug("Constructing termio console");
+POSIXPlatform::POSIXPlatform() : Platform() {
+    logDebug("Constructing POSIX platform");
 }
 
-void TermioConsole::initialise(void) throw (exception) {
+void POSIXPlatform::initialise(void) throw (exception) {
     static char msgbuf[255];
 
     logDebug("Initialising termio console");
@@ -54,12 +52,12 @@ void TermioConsole::initialise(void) throw (exception) {
 
 }
 
-TermioConsole::~TermioConsole() {
-    logDebug("Destroying termio Console");
+POSIXPlatform::~POSIXPlatform() {
+    logDebug("Destroying POSIX platform");
     tcsetattr(stdinfd, TCSANOW, &origterm);
 }
 
-bool TermioConsole::isCharAvailable() {
+bool POSIXPlatform::isCharAvailable() {
     BYTE ready = 0;
     for (;;) {
         FD_ZERO(&stdinfdset);
@@ -85,7 +83,7 @@ bool TermioConsole::isCharAvailable() {
     return ready;
 }
 
-BYTE TermioConsole::getChar() {
+BYTE POSIXPlatform::getChar() {
     BYTE inChar;
     read(stdinfd, &inChar, 1);
     return inChar;

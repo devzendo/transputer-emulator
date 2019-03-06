@@ -14,7 +14,7 @@
 #include <cstdlib>
 #include <cctype>
 #include <cstring>
-#include "platform.h"
+#include "platformdetection.h"
 #include "types.h"
 #include "constants.h"
 #include "link.h"

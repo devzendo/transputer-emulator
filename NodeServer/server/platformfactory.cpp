@@ -1,7 +1,7 @@
 //------------------------------------------------------------------------------
 //
-// File        : consolefactory.cpp
-// Description : Factory for creating derived classes of Console
+// File        : platformfactory.cpp
+// Description : Factory for creating derived classes of Platform
 // License     : Apache License v2.0 - see LICENSE.txt for more details
 // Created     : 05/03/2019
 //
@@ -14,33 +14,33 @@
 #include <cstdlib>
 #include <cctype>
 #include <cstring>
-#include "platform.h"
+#include "platformdetection.h"
 #include "types.h"
 #include "constants.h"
-#include "console.h"
 #if defined(PLATFORM_OSX) || defined(PLATFORM_LINUX)
-#include "termioconsole.h"
+#include "posixplatform.h"
 #endif
 #if defined(PLATFORM_WINDOWS)
-#include "windowsconsole.h"
+#include "windowsplatform.h"
 #endif
-#include "consolefactory.h"
+#include "platform.h"
+#include "platformfactory.h"
 #include "log.h"
 
-ConsoleFactory::ConsoleFactory(bool isDebug) {
-    logDebug("ConsoleFactory CTOR");
+PlatformFactory::PlatformFactory(bool isDebug) {
+    logDebug("PlatformFactory CTOR");
     bDebug = isDebug;
 }
 
 
-Console *ConsoleFactory::createConsole() {
-    Console *newConsole = NULL;
+Platform *PlatformFactory::createPlatform() {
+    Platform *newPlatform = NULL;
 #if defined(PLATFORM_OSX) || defined(PLATFORM_LINUX)
-    newConsole = new TermioConsole();
+    newPlatform = new POSIXPlatform();
 #elif defined(PLATFORM_WINDOWS)
-    newConsole = new WindowsConsole();
+    newPlatform = new WindowsPlatform();
 #endif
-    return newConsole;
+    return newPlatform;
 }
 
 

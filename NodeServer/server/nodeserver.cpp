@@ -29,8 +29,8 @@ using namespace std;
 #include "log.h"
 #include "link.h"
 #include "linkfactory.h"
-#include "console.h"
-#include "consolefactory.h"
+#include "platform.h"
+#include "platformfactory.h"
 #include "hexdump.h"
 #include "nsproto.h"
 #include "version.h"
@@ -38,13 +38,13 @@ using namespace std;
 // global variables
 static char *progName;
 static char *bootFile;
-static bool debugConsole;
+static bool debugPlatform;
 static bool debugLink;
 static bool debugLinkRaw;
 static bool monitorLink;
 static bool finished;
-static Console *myConsole;
-static ConsoleFactory *consoleFactory;
+static Platform *myPlatform;
+static PlatformFactory *platformFactory;
 static Link *myLink;
 static LinkFactory *linkFactory;
 const int MSGBUF_MAX = CONSOLE_PUT_CSTR_BUF_LIMIT;
@@ -61,7 +61,7 @@ void usage() {
 	logInfo("booting the Emulator from ROM.");
 	logInfo("Options:");
 	logInfo("  -df   Full debug");
-    logInfo("  -dc   Enables console debug");
+    logInfo("  -dp   Enables platform debug");
 	logInfo("  -dl   Enables link communications (high level) debug");
 	logInfo("  -dL   Enables link communications (high & low level) debug");
 	logInfo("  -m    Monitors boot link instead of handling protocol");
@@ -111,9 +111,6 @@ bool processCommandLine(int argc, char *argv[]) {
 					break;
 				case 'd':
 					switch (argv[i][2]) {
-                        case 'c':
-                            debugConsole = true;
-                            break;
 						case 'f':
 							debugLink = true;
 							break;
@@ -123,6 +120,9 @@ bool processCommandLine(int argc, char *argv[]) {
 						case 'L':
 							debugLink = true;
 							debugLinkRaw = true;
+							break;
+						case 'p':
+							debugPlatform = true;
 							break;
 						default:
 							usage();
@@ -221,7 +221,7 @@ void handleNodeServerProtocol(void) {
 					if (debugLink) {
 						logDebug("CONSOLE_GET_AVAILABLE");
 					}
-					bool ready = myConsole->isCharAvailable();
+					bool ready = myPlatform->isCharAvailable();
 					myLink->writeByte(ready ? 1 : 0);
 				}
 				break;
@@ -229,7 +229,7 @@ void handleNodeServerProtocol(void) {
 					if (debugLink) {
 						logDebug("CONSOLE_GET_CHAR");
 					}
-					BYTE inChar = myConsole->getChar();
+					BYTE inChar = myPlatform->getChar();
 					myLink->writeByte(inChar); // TODO fix when we have a framebuffer
 				}
 				break;
@@ -325,14 +325,14 @@ void sendBootFile(void) {
 }
 
 void cleanup() {
-    if (myConsole != NULL) {
-        delete myConsole;
+    if (myPlatform != NULL) {
+        delete myPlatform;
     }
     if (myLink != NULL) {
         delete myLink;
     }
-    if (consoleFactory != NULL) {
-        delete consoleFactory;
+    if (platformFactory != NULL) {
+        delete platformFactory;
     }
     if (linkFactory != NULL) {
         delete linkFactory;
@@ -367,7 +367,7 @@ void interruptHandler(int sig) {
 int main(int argc, char *argv[]) {
 	progName = argv[0];
 	bootFile = NULL;
-	debugConsole = false;
+	debugPlatform = false;
 	debugLink = false;
 	debugLinkRaw = false;
 	monitorLink = false;
@@ -378,12 +378,12 @@ int main(int argc, char *argv[]) {
 		exit(1);
 	}
 
-    consoleFactory = new ConsoleFactory(debugConsole);
-	myConsole = consoleFactory->createConsole();
+    platformFactory = new PlatformFactory(debugPlatform);
+	myPlatform = platformFactory->createPlatform();
     try {
-        myConsole->initialise();
+        myPlatform->initialise();
     } catch (exception &e) {
-        logFatalF("Could not initialise console: %s", e.what());
+        logFatalF("Could not initialise platform: %s", e.what());
         cleanup();
         exit(1);
     }

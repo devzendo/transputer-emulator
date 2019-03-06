@@ -17,7 +17,7 @@ using namespace std;
 #include <sys/types.h>
 #include <sys/stat.h>
 
-#include "platform.h"
+#include "platformdetection.h"
 
 #include <fcntl.h>
 #include <errno.h>

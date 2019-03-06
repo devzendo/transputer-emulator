@@ -17,7 +17,7 @@
 #include <exception>
 using namespace std;
 
-#include "platform.h"
+#include "platformdetection.h"
 #include "types.h"
 
 #ifdef PLATFORM_WINDOWS

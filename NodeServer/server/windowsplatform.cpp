@@ -1,7 +1,7 @@
 //------------------------------------------------------------------------------
 //
-// File        : windowsconsole.cpp
-// Description : The Windows Console
+// File        : windowsplatform.cpp
+// Description : The Windows Console/Timer
 // License     : Apache License v2.0 - see LICENSE.txt for more details
 // Created     : 05/03/2019
 //
@@ -11,32 +11,30 @@
 //
 //------------------------------------------------------------------------------
 
-#include "platform.h"
-
 #include <exception>
 #include <stdexcept>
 using namespace std;
 #include "types.h"
 #include "constants.h"
-#include "console.h"
-#include "windowsconsole.h"
+#include "platform.h"
+#include "windowsplatform.h"
 #include "log.h"
 
-WindowsConsole::WindowsConsole() : Console() {
-    logDebug("Constructing Windows console");
+WindowsPlatform::WindowsPlatform() : Platform() {
+    logDebug("Constructing Windows platform");
 }
 
-void WindowsConsole::initialise(void) throw (exception) {
+void WindowsPlatform::initialise(void) throw (exception) {
 }
 
-WindowsConsole::~WindowsConsole() {
-    logDebug("Destroying Windows Console");
+WindowsPlatform::~WindowsPlatform() {
+    logDebug("Destroying Windows platform");
 }
 
-bool WindowsConsole::isCharAvailable() {
+bool WindowsPlatform::isCharAvailable() {
     return false;
 }
 
-BYTE WindowsConsole::getChar() {
+BYTE WindowsPlatform::getChar() {
     return 0;
 }
