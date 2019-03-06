@@ -20,7 +20,6 @@
 #include <cctype>
 #include <ctime>
 #include <cerrno>
-#include <sys/time.h>
 #include <fcntl.h>
 #include <unistd.h>
 using namespace std;
