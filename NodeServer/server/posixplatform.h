@@ -32,6 +32,8 @@ public:
 
     bool isCharAvailable();
     BYTE getChar();
+    void putChar(BYTE const ch);
+
     WORD32 getTimeMillis();
 private:
     // For console keyboard handling

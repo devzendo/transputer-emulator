@@ -42,6 +42,10 @@ BYTE Platform::getChar() {
     return 0;
 }
 
+void Platform::putChar(BYTE const ch) {
+};
+
+
 WORD32 Platform::getTimeMillis() {
     return 0;
 }

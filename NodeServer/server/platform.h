@@ -31,8 +31,11 @@ public:
     virtual void initialise(void) throw (exception);
     virtual ~Platform(void);
     void setDebug(bool newDebug);
+
     virtual bool isCharAvailable();
     virtual BYTE getChar();
+    virtual void putChar(BYTE const ch);
+
     virtual WORD32 getTimeMillis();
 protected:
     bool bDebug;

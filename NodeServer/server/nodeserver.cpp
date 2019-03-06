@@ -173,7 +173,7 @@ void handleNodeServerProtocol(void) {
 					if (debugLink) {
 						logDebugF("CONSOLE_PUT_CHAR %02X '%c'", ch, isprint(ch) ? ch : '.');
 					}
-					fputc(ch, stderr);
+                    myPlatform->putChar(ch);
 				}
 				break;
 			case CONSOLE_PUT_PSTR: {
@@ -185,7 +185,8 @@ void handleNodeServerProtocol(void) {
 						logDebugF("CONSOLE_PUT_PSTR len %02X", len);
 					}
 					for (int i = 0; i < len; i++) {
-						fputc(msgbuf[i], stderr);
+					    // TODO optimise this with a putString
+						myPlatform->putChar(msgbuf[i]);
 					}
 				}
 				break;
@@ -205,7 +206,8 @@ void handleNodeServerProtocol(void) {
 						logDebugF("CONSOLE_PUT_CSTR len %08X", len);
 					}
 					for (WORD32 j = 0; j < len; j++) {
-						fputc(msgbuf[j], stderr);
+                        // TODO optimise this with a putString
+                        myPlatform->putChar(msgbuf[j]);
 					}
 				}
 				break;

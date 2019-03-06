@@ -39,6 +39,12 @@ BYTE WindowsPlatform::getChar() {
     return 0;
 }
 
+void WindowsPlatform::putChar(BYTE const ch) {
+    // TODO is there a setvbuf for windows??
+    putc(ch);
+}
+
+
 WORD32 WindowsPlatform::getTimeMillis() {
     return 0;
 }

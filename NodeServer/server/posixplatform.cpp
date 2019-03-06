@@ -89,6 +89,12 @@ BYTE POSIXPlatform::getChar() {
     return inChar;
 }
 
+void POSIXPlatform::putChar(BYTE const ch) {
+    // TODO might be better to setvbuf on stdout, and undo this on terminate. Write there?
+    fputc(ch, stderr);
+}
+
+
 WORD32 POSIXPlatform::getTimeMillis() {
     struct timeval tv;
     struct timezone tz;
