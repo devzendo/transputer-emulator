@@ -21,7 +21,13 @@
 #include <ctime>
 #include <cerrno>
 #include <fcntl.h>
+#if defined(PLATFORM_OSX) || defined(PLATFORM_LINUX)
 #include <unistd.h>
+#endif
+#if defined(PLATFORM_WINDOWS)
+// Thank you https://stackoverflow.com/questions/49001326/convert-the-linux-open-read-write-close-functions-to-work-on-windows
+#include <io.h>
+#endif
 using namespace std;
 #include "log.h"
 #include "link.h"
