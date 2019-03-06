@@ -35,6 +35,8 @@ public:
     void putChar(BYTE const ch);
 
     WORD32 getTimeMillis();
+    UTCTime getUTCTime();
+
 private:
     // For console keyboard handling
     int stdinfd;

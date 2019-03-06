@@ -31,6 +31,8 @@ public:
     void putChar(BYTE const ch);
 
     WORD32 getTimeMillis();
+    UTCTime getUTCTime();
+
 private:
 };
 

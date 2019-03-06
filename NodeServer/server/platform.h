@@ -25,6 +25,22 @@ using namespace std;
 #pragma warning( disable : 4290 )
 #endif
 
+class UTCTime {
+public:
+    UTCTime(int const dayOfMonth, int const monthOfYear, int const year,
+            int const hour, int const minute, int const second, int const millisecond):
+            myDayOfMonth(dayOfMonth), myMonthOfYear(monthOfYear), myYear(year),
+            myHour(hour), myMinute(minute), mySecond(second), myMillisecond(millisecond) {}
+
+    int const myDayOfMonth;  // day of month, (1 .. 31)
+    int const myMonthOfYear; // month of year, (1 .. 12)
+    int const myYear;        // year, (1900 .. )
+    int const myHour;        // hour, (0 .. 23)
+    int const myMinute;      // minute, (0 .. 59)
+    int const mySecond;      // second, (0 .. 59)
+    int const myMillisecond; // millisecond, (0 .. 999)
+};
+
 class Platform {
 public:
     Platform();
@@ -37,6 +53,7 @@ public:
     virtual void putChar(BYTE const ch);
 
     virtual WORD32 getTimeMillis();
+    virtual UTCTime getUTCTime();
 protected:
     bool bDebug;
 };

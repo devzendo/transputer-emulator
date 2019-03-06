@@ -48,3 +48,7 @@ void WindowsPlatform::putChar(BYTE const ch) {
 WORD32 WindowsPlatform::getTimeMillis() {
     return 0;
 }
+
+UTCTime WindowsPlatform::getUTCTime() {
+    return UTCTime(0, 0, 0, 0, 0, 0, 0);
+}

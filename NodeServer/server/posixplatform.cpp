@@ -28,7 +28,7 @@ POSIXPlatform::POSIXPlatform() : Platform() {
 void POSIXPlatform::initialise(void) throw (exception) {
     static char msgbuf[255];
 
-    logDebug("Initialising termio console");
+    logDebug("Initialising POSIX platform");
     // initialise console keyboard handling
     stdinfd = fileno(stdin); // should be 0!
     timeout.tv_sec = 0; // cause select to return immediately
@@ -100,4 +100,12 @@ WORD32 POSIXPlatform::getTimeMillis() {
     struct timezone tz;
     gettimeofday(&tv, &tz);
     return (tv.tv_sec*1000) + (tv.tv_usec/1000); // TODO check this transform
+}
+
+UTCTime POSIXPlatform::getUTCTime() {
+    struct timeval tv;
+    struct timezone tz;
+    gettimeofday(&tv, &tz);
+    struct tm *tms = gmtime(&tv.tv_sec);
+    return UTCTime(tms->tm_mday, tms->tm_mon + 1, tms->tm_year + 1900, tms->tm_hour, tms->tm_min, tms->tm_sec, (tv.tv_usec/1000));
 }

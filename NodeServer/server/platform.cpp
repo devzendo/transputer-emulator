@@ -49,3 +49,7 @@ void Platform::putChar(BYTE const ch) {
 WORD32 Platform::getTimeMillis() {
     return 0;
 }
+
+UTCTime Platform::getUTCTime() {
+    return UTCTime(0, 0, 0, 0, 0, 0, 0);
+}

@@ -245,17 +245,14 @@ void handleNodeServerProtocol(void) {
 					if (debugLink) {
 						logDebug("TIME_GET_UTC");
 					}
-					struct timeval tv;
-					struct timezone tz;
-					gettimeofday(&tv, &tz);
-					struct tm *tms = gmtime(&tv.tv_sec);
-					myLink->writeWord(tms->tm_mday);
-					myLink->writeWord(tms->tm_mon + 1);
-					myLink->writeWord(tms->tm_year + 1900);
-					myLink->writeWord(tms->tm_hour);
-					myLink->writeWord(tms->tm_min);
-					myLink->writeWord(tms->tm_sec);
-					myLink->writeWord((tv.tv_usec/1000)); // TODO check this transform
+					UTCTime time = myPlatform->getUTCTime();
+					myLink->writeWord(time.myDayOfMonth);
+					myLink->writeWord(time.myMonthOfYear);
+					myLink->writeWord(time.myYear);
+					myLink->writeWord(time.myHour);
+					myLink->writeWord(time.myMinute);
+					myLink->writeWord(time.mySecond);
+					myLink->writeWord(time.myMillisecond);
 				}
 				break;
 			default:
