@@ -13,6 +13,8 @@
 
 #include <exception>
 #include <stdexcept>
+// Thank you https://stackoverflow.com/questions/49001326/convert-the-linux-open-read-write-close-functions-to-work-on-windows
+#include <io.h>
 using namespace std;
 #include "types.h"
 #include "constants.h"
@@ -51,4 +53,22 @@ WORD32 WindowsPlatform::getTimeMillis() {
 
 UTCTime WindowsPlatform::getUTCTime() {
     return UTCTime(0, 0, 0, 0, 0, 0, 0);
+}
+
+
+
+int WindowsPlatform::open(const char *path, const int flags) {
+    return 0;
+};
+
+int WindowsPlatform::close(const int fd) {
+    return 0;
+};
+
+int WindowsPlatform::read(const int fd, void *buf, const int size) {
+    return 0;
+};
+
+int WindowsPlatform::write(const int fd, void *buf, const int size) {
+    return 0;
 }
