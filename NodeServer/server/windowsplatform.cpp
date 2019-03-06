@@ -43,7 +43,8 @@ BYTE WindowsPlatform::getChar() {
 
 void WindowsPlatform::putChar(BYTE const ch) {
     // TODO is there a setvbuf for windows??
-    putc(ch);
+    // TODO might be better to setvbuf on stdout, and undo this on terminate. Write there?
+    fputc(ch, stderr);
 }
 
 
