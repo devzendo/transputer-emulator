@@ -286,10 +286,13 @@ void monitorBootLink(void) {
 // must contain a chain loader, first.
 // Precondition: bootFile != NULL
 void sendBootFile(void) {
-	// open boot file
+    static char msgbuf[255];
+
+    // open boot file
 	int fd = myPlatform->open(bootFile, O_RDONLY);
 	if (fd == -1) {
-		logFatalF("Could not open boot file '%s': %s", bootFile, strerror(errno));
+        strerror_r(errno, msgbuf, 255);
+		logFatalF("Could not open boot file '%s': %s", bootFile, msgbuf);
 		finished = true;
 		return;
 	}
