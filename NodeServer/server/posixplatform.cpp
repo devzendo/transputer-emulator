@@ -88,3 +88,10 @@ BYTE POSIXPlatform::getChar() {
     read(stdinfd, &inChar, 1);
     return inChar;
 }
+
+WORD32 POSIXPlatform::getTimeMillis() {
+    struct timeval tv;
+    struct timezone tz;
+    gettimeofday(&tv, &tz);
+    return (tv.tv_sec*1000) + (tv.tv_usec/1000); // TODO check this transform
+}

@@ -41,3 +41,7 @@ bool Platform::isCharAvailable() {
 BYTE Platform::getChar() {
     return 0;
 }
+
+WORD32 Platform::getTimeMillis() {
+    return 0;
+}

@@ -28,6 +28,7 @@ public:
 
     bool isCharAvailable();
     BYTE getChar();
+    WORD32 getTimeMillis();
 private:
 };
 

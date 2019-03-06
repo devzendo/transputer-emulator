@@ -19,6 +19,7 @@ using namespace std;
 #include <cerrno>
 #include <termios.h>
 #include <unistd.h>
+#include <sys/time.h>
 
 #include "types.h"
 #include "platform.h"
@@ -31,6 +32,7 @@ public:
 
     bool isCharAvailable();
     BYTE getChar();
+    WORD32 getTimeMillis();
 private:
     // For console keyboard handling
     int stdinfd;

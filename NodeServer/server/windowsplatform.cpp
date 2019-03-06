@@ -38,3 +38,7 @@ bool WindowsPlatform::isCharAvailable() {
 BYTE WindowsPlatform::getChar() {
     return 0;
 }
+
+WORD32 WindowsPlatform::getTimeMillis() {
+    return 0;
+}

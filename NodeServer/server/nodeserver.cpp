@@ -20,8 +20,6 @@
 #include <cctype>
 #include <ctime>
 #include <cerrno>
-#include <sys/types.h>
-#include <sys/stat.h>
 #include <sys/time.h>
 #include <fcntl.h>
 #include <unistd.h>
@@ -237,10 +235,8 @@ void handleNodeServerProtocol(void) {
 					if (debugLink) {
 						logDebug("TIME_GET_MILLIS");
 					}
-					struct timeval tv;
-					struct timezone tz;
-					gettimeofday(&tv, &tz);
-					myLink->writeWord((tv.tv_sec*1000) + (tv.tv_usec/1000)); // TODO check this transform
+					WORD32 millis = myPlatform->getTimeMillis();
+					myLink->writeWord(millis);
 				}
 				break;
 			case TIME_GET_UTC: {

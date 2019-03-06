@@ -33,6 +33,7 @@ public:
     void setDebug(bool newDebug);
     virtual bool isCharAvailable();
     virtual BYTE getChar();
+    virtual WORD32 getTimeMillis();
 protected:
     bool bDebug;
 };
