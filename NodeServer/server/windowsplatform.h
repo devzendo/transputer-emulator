@@ -22,7 +22,7 @@ using namespace std;
 
 class WindowsPlatform : public Platform {
 public:
-    WindowsPlatform);
+    WindowsPlatform();
     void initialise(void) throw (exception);
     ~WindowsPlatform(void);
 
