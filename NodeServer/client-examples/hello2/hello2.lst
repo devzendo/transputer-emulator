@@ -1,5 +1,5 @@
-DevZendo.org Macro Assembler 0.0.1-SNAPSHOT                                                                      08/11/2018 08:37:12
-Transputer Hello World                                                                                                    Page 1 - 7
+DevZendo.org Macro Assembler 0.0.1-SNAPSHOT                                                                      08/01/2019 08:29:36
+Transputer Hello World                                                                                                    Page 1 - 6
                       TITLE Transputer Hello World
                       
                       PAGE 60,132
@@ -7,15 +7,15 @@ Transputer Hello World                                                          
                       ; Second version without macros.
                       
                       .TRANSPUTER
- = 0070               MemStart    EQU 0x80000070
- = 0024               TptrLoc0    EQU 0x80000024
- = 0028               TptrLoc1    EQU 0x80000028
+ = 80000070           MemStart    EQU 0x80000070
+ = 80000024           TptrLoc0    EQU 0x80000024
+ = 80000028           TptrLoc1    EQU 0x80000028
                       
  = 0000               start_time  EQU 0
                       
- = 006F               ORG         MemStart - 1
+ = 8000006F           ORG         MemStart - 1
  8000006F D8          DB          STOP - START
- = 0070               ORG         MemStart
+ = 80000070           ORG         MemStart
                       
                       ; Standard Transputer startup code.
                       
@@ -58,8 +58,8 @@ Transputer Hello World                                                          
  800000AC E0          stnl    0                   ; store NotProcess.p to Link 3 input channel
  800000AD 24 F2       mint                        ; load A with NotProcess.p
  800000AF 67 20 20 20 ldc     0x80000018          ; load address of Link 2 input channel
-DevZendo.org Macro Assembler 0.0.1-SNAPSHOT                                                                      08/11/2018 08:37:12
-Transputer Hello World                                                                                                    Page 2 - 7
+DevZendo.org Macro Assembler 0.0.1-SNAPSHOT                                                                      08/01/2019 08:29:36
+Transputer Hello World                                                                                                    Page 2 - 6
  800000B3 20 20 21 48
  800000B7 E0          stnl    0                   ; store NotProcess.p to Link 2 input channel
  800000B8 24 F2       mint                        ; load A with NotProcess.p
@@ -89,13 +89,12 @@ Transputer Hello World                                                          
                       
                       
                       
- 800000FA 0D          j       MAIN - _ST1
- 800000FB             _ST1:
+ 800000FA 0D          j       MAIN
                       
  = 0100               NSS_CONSOLE     EQU 0x0100
  = 0101               CONSOLE_PUT_PSTR    EQU NSS_CONSOLE OR 0x01
- = 0000               LINK0_OUTPUT    EQU 0x80000000
- = 0010               LINK0_INPUT     EQU 0x80000010
+ = 80000000           LINK0_OUTPUT    EQU 0x80000000
+ = 80000010           LINK0_INPUT     EQU 0x80000010
                       
                       
  800000FB             HWSTR:
@@ -112,15 +111,15 @@ Transputer Hello World                                                          
  8000010F             _M1:
                       ; call putConsolePString
                       ; a=800000FB (HWSTR), b=00000001 (irrelevant)
- 8000010F 92          call    putConsolePString - _M2
- 80000110             _M2:
+ 8000010F 92          call    putConsolePString
+                      
                       ; W 4 [80000158]=8000010D
                       ; W 4 [8000015C]=800000FB (HWSTR)
                       ; W 4 [80000160]=00000001
                       ; W 4 [80000164]=80000000
-DevZendo.org Macro Assembler 0.0.1-SNAPSHOT                                                                      08/11/2018 08:37:12
-Transputer Hello World                                                                                                    Page 3 - 7
                       
+DevZendo.org Macro Assembler 0.0.1-SNAPSHOT                                                                      08/01/2019 08:29:36
+Transputer Hello World                                                                                                    Page 3 - 6
  80000110             FIN:
  80000110 2C F2       terminate
                       
@@ -167,8 +166,8 @@ Transputer Hello World                                                          
  80000117 D0          stl     PPS_STRINGADDR
                       ; (a=string address, b=B, c=B)
                       
- 80000118 21 9C       call    strlen - _PPS1
- 8000011A             _PPS1:
+ 80000118 21 9C       call    strlen
+                      
                       ; (a=length, b=useless, c=useless)
  8000011A 25 FA       dup
                       ; (a=length, b=length, c=useless)
@@ -176,12 +175,11 @@ Transputer Hello World                                                          
                       ; (a=length, b,c=useless)
                       
                       ; Empty string?
- 8000011D 21 A4       cj      _PPS_END - _PPS2
- 8000011F             _PPS2:
-DevZendo.org Macro Assembler 0.0.1-SNAPSHOT                                                                      08/11/2018 08:37:12
-Transputer Hello World                                                                                                    Page 4 - 7
+ 8000011D 21 A5       cj      _PPS_END
                       
                       ; (a,b,c=useless)
+DevZendo.org Macro Assembler 0.0.1-SNAPSHOT                                                                      08/01/2019 08:29:36
+Transputer Hello World                                                                                                    Page 4 - 6
                       
                       ; Output CONSOLE_PUT_PSTR word
  8000011F 67 20 20 20 ldc     LINK0_OUTPUT
@@ -233,21 +231,20 @@ Transputer Hello World                                                          
                       ; (a=string address, b=string address, c=length)
  8000013B F1          lb
                       ; (a=char, b=string address, c=length)
- 8000013C A5          cj      _sl_end - _SL1
- 8000013D             _SL1:
+ 8000013C A5          cj      _sl_end
                       
                       ; (a=string address, b=length, c=length [undefined])
                       ; not end of string
-DevZendo.org Macro Assembler 0.0.1-SNAPSHOT                                                                      08/11/2018 08:37:12
-Transputer Hello World                                                                                                    Page 5 - 7
  8000013D 81          adc     1
                       ; (a=string address+1, b=length, c=length [undefined])
  8000013E F0          rev
+DevZendo.org Macro Assembler 0.0.1-SNAPSHOT                                                                      08/01/2019 08:29:36
+Transputer Hello World                                                                                                    Page 5 - 6
                       ; (a=length, b=string address+1, c=length [undefined])
  8000013F 81          adc     1
                       ; (a=length+1, b=string address+1, c=length [undefined])
- 80000140 60 06       j       _sl_loop - _SL2
- 80000142             _SL2:
+ 80000140 60 06       j       _sl_loop
+                      
  80000142             _sl_end:
                       ; (a=char, b=string address, c=length)
  80000142 27 F9       pop
@@ -298,8 +295,11 @@ Transputer Hello World                                                          
 
 
 
-DevZendo.org Macro Assembler 0.0.1-SNAPSHOT                                                                      08/11/2018 08:37:12
-Transputer Hello World                                                                                                    Page 6 - 7
+
+
+
+DevZendo.org Macro Assembler 0.0.1-SNAPSHOT                                                                      08/01/2019 08:29:36
+Transputer Hello World                                                                                                    Page 6 - 6
 Symbol Table - by Name
 CONSOLE_PUT_PSTR     00000101
 FIN                  80000110
@@ -320,15 +320,9 @@ STRLEN               80000136
 TPTRLOC0             80000024
 TPTRLOC1             80000028
 _M1                  8000010F
-_M2                  80000110
-_PPS1                8000011A
-_PPS2                8000011F
 _PPS_END             80000133
-_SL1                 8000013D
-_SL2                 80000142
 _SL_END              80000142
 _SL_LOOP             80000138
-_ST1                 800000FB
 
 Symbol Table - by Address
 LINK0_OUTPUT         80000000
@@ -337,20 +331,14 @@ TPTRLOC0             80000024
 TPTRLOC1             80000028
 MEMSTART             80000070
 START                80000070
-_ST1                 800000FB
 HWSTR                800000FB
 MAIN                 80000108
 _M1                  8000010F
-_M2                  80000110
 FIN                  80000110
 PUTCONSOLEPSTRING    80000112
-_PPS1                8000011A
-_PPS2                8000011F
 _PPS_END             80000133
 STRLEN               80000136
 _SL_LOOP             80000138
-_SL1                 8000013D
-_SL2                 80000142
 _SL_END              80000142
 STOP                 80000148
 PPS_STRINGADDR       00000000
@@ -358,55 +346,7 @@ START_TIME           00000000
 PPS_STRINGLEN        00000001
 PPS_WLEN             00000002
 NSS_CONSOLE          00000100
-DevZendo.org Macro Assembler 0.0.1-SNAPSHOT                                                                      08/11/2018 08:37:12
-Transputer Hello World                                                                                                    Page 7 - 7
 CONSOLE_PUT_PSTR     00000101
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 
