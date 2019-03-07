@@ -286,12 +286,15 @@ void monitorBootLink(void) {
 // must contain a chain loader, first.
 // Precondition: bootFile != NULL
 void sendBootFile(void) {
-    static char msgbuf[255];
-
     // open boot file
 	int fd = myPlatform->open(bootFile, O_RDONLY);
 	if (fd == -1) {
+        char msgbuf[255];
+#if defined(PLATFORM_OSX) || defined(PLATFORM_LINUX)
         strerror_r(errno, msgbuf, 255);
+#elif defined(PLATFORM_WINDOWS)
+        strerror_s(msgbuf, 255, errno);
+#endif
 		logFatalF("Could not open boot file '%s': %s", bootFile, msgbuf);
 		finished = true;
 		return;
