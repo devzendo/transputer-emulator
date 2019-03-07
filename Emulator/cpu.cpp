@@ -2148,7 +2148,7 @@ inline void CPU::DROP(void) {
 }
 
 inline WORD32 CPU::POP(void) {
-	register WORD32 r = Areg;
+	WORD32 r = Areg;
 	DROP();
 	return r;
 }

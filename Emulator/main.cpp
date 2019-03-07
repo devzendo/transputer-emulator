@@ -19,6 +19,7 @@
 
 using namespace std;
 
+#include "platformdetection.h"
 #include "constants.h"
 #include "types.h"
 #include "flags.h"
