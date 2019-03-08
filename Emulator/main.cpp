@@ -194,7 +194,11 @@ bool processCommandLine(int argc, char *argv[]) {
 					break;
 				case 'b': {
 						WORD32 breakpointAddress = 0;
+#if defined(PLATFORM_WINDOWS)
+						if (sscanf_s(&argv[i][2], "%x", &breakpointAddress) == 1) {
+#elif defined(PLATFORM_OSX) || defined(PLATFORM_LINUX)
 						if (sscanf(&argv[i][2], "%x", &breakpointAddress) == 1) {
+#endif
 							breakpointAddresses.insert(breakpointAddress);
 						} else {
 							logFatal("-b must be directly followed by a hex address e.g. -b8007F123");
