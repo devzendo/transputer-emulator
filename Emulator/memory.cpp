@@ -15,8 +15,19 @@
 #include <cctype>
 #include <cstdio>
 #include <sys/stat.h>
+
+#include "platformdetection.h"
+
+// Thank you https://stackoverflow.com/questions/49001326/convert-the-linux-open-read-write-close-functions-to-work-on-windows
+#if defined(PLATFORM_OSX) || defined(PLATFORM_LINUX)
 #include <sys/types.h>
+#include <sys/uio.h>
 #include <unistd.h>
+#endif
+#if defined(PLATFORM_WINDOWS)
+#include <io.h>
+#endif
+
 #include <errno.h>
 #include <fcntl.h>
 
