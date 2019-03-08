@@ -96,7 +96,11 @@ bool processCommandLine(int argc, char *argv[]) {
 					break;
 				case 'm':
 					if (strlen(argv[i]) >= 3) {
-						int n = sscanf(&argv[i][2], "%d", &newMegs);
+#if defined(PLATFORM_WINDOWS)
+						int n = sscanf_s(&argv[i][2], "%d", &newMegs);
+#elif defined(PLATFORM_OSX) || defined(PLATFORM_LINUX)
+                        int n = sscanf(&argv[i][2], "%d", &newMegs);
+#endif
 						if (n == 1) {
 							if (newMegs < 4 || newMegs > 64) {
 								logFatal("Initial memory size must be in range [1..64] MB");
