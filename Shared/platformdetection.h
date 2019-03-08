@@ -65,5 +65,20 @@
 #endif
 
 
+// Portability for C runtime functions that have different names on different platforms
+
+#if defined(PLATFORM_OSX) || defined(PLATFORM_LINUX)
+#define platform_open open
+#define platform_read read
+#define platform_write write
+#define platform_close close
+#endif
+#if defined(PLATFORM_WINDOWS)
+#define platform_open _open
+#define platform_read _read
+#define platform_write _write
+#define platform_close _close
+#endif
+
 #endif // _PLATFORMDETECTION_H
 

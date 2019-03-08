@@ -108,7 +108,7 @@ bool Memory::loadROMFile(const char *fileName) {
 		return false;
 	}
 
-	const int readFD = open(fileName, O_RDONLY);
+	const int readFD = platform_open(fileName, O_RDONLY);
 	if (readFD == -1) {
 #if defined(PLATFORM_OSX) || defined(PLATFORM_LINUX)
 		strerror_r(errno, msgbuf, 255);
@@ -119,13 +119,13 @@ bool Memory::loadROMFile(const char *fileName) {
 		return false;
 	}
 
-	const int readBytes = read(readFD, myReadOnlyMemory, myReadOnlyMemorySize);
+	const int readBytes = platform_read(readFD, myReadOnlyMemory, myReadOnlyMemorySize);
 	if (readBytes != myReadOnlyMemorySize) {
 		logFatalF("Tried to load %08X bytes from ROM file %s, but only read %08X", readBytes, fileName, romSize32);
 		return false;
 	}
 
-	close(readFD);
+	platform_close(readFD);
 	return true;
 }
 

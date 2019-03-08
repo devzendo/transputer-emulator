@@ -28,10 +28,6 @@ using namespace std;
 #include <sys/types.h>
 #include <sys/uio.h>
 #include <unistd.h>
-#define _open open
-#define _read read
-#define _write write
-#define _close close
 #endif
 #if defined(PLATFORM_WINDOWS)
 #include <io.h>
@@ -302,7 +298,7 @@ void monitorBootLink(void) {
 // Precondition: bootFile != NULL
 void sendBootFile(void) {
     // open boot file
-	int fd = _open(bootFile, O_RDONLY);
+	int fd = platform_open(bootFile, O_RDONLY);
 	if (fd == -1) {
         char msgbuf[255];
 #if defined(PLATFORM_OSX) || defined(PLATFORM_LINUX)
@@ -317,7 +313,7 @@ void sendBootFile(void) {
 	BYTE buf[128];
 	int nread;
 	do {
-		nread = _read(fd, &buf, 128);
+		nread = platform_read(fd, &buf, 128);
 		if (nread > 0) {
 			if (debugLink) {
 				logDebugF("Read %d bytes of boot code; sending down link", nread);
@@ -328,14 +324,14 @@ void sendBootFile(void) {
 					myLink->writeByte(buf[i]);
 				} catch (exception e) {
 					logFatalF("Could not write down link 0: %s", e.what());
-					_close(fd);
+					platform_close(fd);
 					finished = true;
 					return;
 				}
 			}
 		}
 	} while (nread > 0);
-	_close(fd);
+	platform_close(fd);
 }
 
 void cleanup() {
