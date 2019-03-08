@@ -108,7 +108,7 @@ bool Memory::loadROMFile(const char *fileName) {
 		return false;
 	}
 
-	const ssize_t readBytes = read(readFD, myReadOnlyMemory, myReadOnlyMemorySize);
+	const int readBytes = read(readFD, myReadOnlyMemory, myReadOnlyMemorySize);
 	if (readBytes != myReadOnlyMemorySize) {
 		logFatalF("Tried to load %08X bytes from ROM file %s, but only read %08X", readBytes, fileName, romSize32);
 		return false;
