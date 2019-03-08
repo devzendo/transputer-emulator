@@ -81,8 +81,14 @@ bool Memory::initialise(long initialRAMSize, const char *romFile) {
 // See CWG, p74
 bool Memory::loadROMFile(const char *fileName) {
 	struct stat st;
+	char msgbuf[255];
 	if (stat(fileName, &st) == -1) {
-		logFatalF("Could not obtain details of ROM file %s: %s", fileName, strerror(errno));
+#if defined(PLATFORM_OSX) || defined(PLATFORM_LINUX)
+		strerror_r(errno, msgbuf, 255);
+#elif defined(PLATFORM_WINDOWS)
+		strerror_s(msgbuf, 255, errno);
+#endif
+		logFatalF("Could not obtain details of ROM file %s: %s", fileName, msgbuf);
 		return false;
 	}
 
@@ -104,7 +110,12 @@ bool Memory::loadROMFile(const char *fileName) {
 
 	const int readFD = open(fileName, O_RDONLY);
 	if (readFD == -1) {
-		logFatalF("Could not open ROM file %s: %s", fileName, strerror(errno));
+#if defined(PLATFORM_OSX) || defined(PLATFORM_LINUX)
+		strerror_r(errno, msgbuf, 255);
+#elif defined(PLATFORM_WINDOWS)
+		strerror_s(msgbuf, 255, errno);
+#endif
+		logFatalF("Could not open ROM file %s: %s", fileName, msgbuf);
 		return false;
 	}
 
