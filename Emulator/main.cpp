@@ -243,15 +243,20 @@ int main(int argc, char *argv[]) {
 	romSize = 0;
 	flags = 0;
 
+#if defined(PLATFORM_OSX) // I only use CLion on OSX
 	// Stop CLion reporting this check as unreachable (which it is, on systems that don't
 	// have 4 byte WORD32s).
 #pragma clang diagnostic push
 #pragma ide diagnostic ignored "OCDFAInspection"
+#endif
 	if (sizeof(WORD32) != 4) {
 		logInfoF("size of WORD32 is %d bytes when it should be 4 bytes", sizeof(WORD32));
 		exit(1);
 	}
+
+#if defined(PLATFORM_OSX) // I only use CLion on OSX
 #pragma clang diagnostic pop
+#endif
 
 	if (!processCommandLine(argc, argv)) {
 		exit(1);
