@@ -111,20 +111,3 @@ UTCTime POSIXPlatform::getUTCTime() {
     struct tm *tms = gmtime(&tv.tv_sec);
     return UTCTime(tms->tm_mday, tms->tm_mon + 1, tms->tm_year + 1900, tms->tm_hour, tms->tm_min, tms->tm_sec, (tv.tv_usec/1000));
 }
-
-
-int POSIXPlatform::open(const char *path, const int flags) {
-    return ::open(path, flags);
-};
-
-int POSIXPlatform::close(const int fd) {
-    return ::close(fd);
-};
-
-int POSIXPlatform::read(const int fd, void *buf, const int size) {
-    return ::read(fd, buf, size);
-};
-
-int POSIXPlatform::write(const int fd, void *buf, const int size) {
-    return ::write(fd, buf, size);
-}

@@ -54,11 +54,6 @@ public:
 
     virtual WORD32 getTimeMillis();
     virtual UTCTime getUTCTime();
-
-    virtual int open(const char *path, const int flags);
-    virtual int close(const int fd);
-    virtual int read(const int fd, void *buf, const int size);
-    virtual int write(const int fd, void *buf, const int size);
 protected:
     bool bDebug;
 };

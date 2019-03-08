@@ -11,8 +11,6 @@
 //
 //------------------------------------------------------------------------------
 
-#include "platform.h"
-
 #include <iostream>
 #include <cstdio>
 #include <cstring>
@@ -22,6 +20,19 @@
 #include <cerrno>
 #include <fcntl.h>
 using namespace std;
+
+#include "platformdetection.h"
+
+// Thank you https://stackoverflow.com/questions/49001326/convert-the-linux-open-read-write-close-functions-to-work-on-windows
+#if defined(PLATFORM_OSX) || defined(PLATFORM_LINUX)
+#include <sys/types.h>
+#include <sys/uio.h>
+#include <unistd.h>
+#endif
+#if defined(PLATFORM_WINDOWS)
+#include <io.h>
+#endif
+
 #include "log.h"
 #include "link.h"
 #include "linkfactory.h"
@@ -287,7 +298,7 @@ void monitorBootLink(void) {
 // Precondition: bootFile != NULL
 void sendBootFile(void) {
     // open boot file
-	int fd = myPlatform->open(bootFile, O_RDONLY);
+	int fd = open(bootFile, O_RDONLY);
 	if (fd == -1) {
         char msgbuf[255];
 #if defined(PLATFORM_OSX) || defined(PLATFORM_LINUX)
@@ -302,7 +313,7 @@ void sendBootFile(void) {
 	BYTE buf[128];
 	int nread;
 	do {
-		nread = myPlatform->read(fd, &buf, 128);
+		nread = read(fd, &buf, 128);
 		if (nread > 0) {
 			if (debugLink) {
 				logDebugF("Read %d bytes of boot code; sending down link", nread);
@@ -313,14 +324,14 @@ void sendBootFile(void) {
 					myLink->writeByte(buf[i]);
 				} catch (exception e) {
 					logFatalF("Could not write down link 0: %s", e.what());
-					myPlatform->close(fd);
+					close(fd);
 					finished = true;
 					return;
 				}
 			}
 		}
 	} while (nread > 0);
-	myPlatform->close(fd);
+	close(fd);
 }
 
 void cleanup() {

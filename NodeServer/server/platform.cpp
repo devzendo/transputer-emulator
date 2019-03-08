@@ -53,19 +53,3 @@ WORD32 Platform::getTimeMillis() {
 UTCTime Platform::getUTCTime() {
     return UTCTime(0, 0, 0, 0, 0, 0, 0);
 }
-
-int Platform::open(const char *path, const int flags) {
-    return 0;
-};
-
-int Platform::close(const int fd) {
-    return 0;
-};
-
-int Platform::read(const int fd, void *buf, const int size) {
-    return 0;
-};
-
-int Platform::write(const int fd, void *buf, const int size) {
-    return 0;
-}

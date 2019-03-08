@@ -32,12 +32,6 @@ public:
 
     WORD32 getTimeMillis();
     UTCTime getUTCTime();
-
-    int open(const char *path, const int flags);
-    int close(const int fd);
-    int read(const int fd, void *buf, const int size);
-    int write(const int fd, void *buf, const int size);
-
 private:
 };
 
