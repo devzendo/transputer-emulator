@@ -13,23 +13,13 @@
 
 #include <cstdlib>
 #include <cctype>
-#include <cstdio>
+#include <fstream>
+#include <iostream>
 #include <sys/stat.h>
+#include <errno.h>
+using namespace std;
 
 #include "platformdetection.h"
-
-// Thank you https://stackoverflow.com/questions/49001326/convert-the-linux-open-read-write-close-functions-to-work-on-windows
-#if defined(PLATFORM_OSX) || defined(PLATFORM_LINUX)
-#include <sys/types.h>
-#include <sys/uio.h>
-#include <unistd.h>
-#endif
-#if defined(PLATFORM_WINDOWS)
-#include <io.h>
-#endif
-
-#include <errno.h>
-#include <fcntl.h>
 
 #include "types.h"
 #include "constants.h"
@@ -108,24 +98,26 @@ bool Memory::loadROMFile(const char *fileName) {
 		return false;
 	}
 
-	const int readFD = platform_open(fileName, O_RDONLY);
-	if (readFD == -1) {
-#if defined(PLATFORM_OSX) || defined(PLATFORM_LINUX)
-		strerror_r(errno, msgbuf, 255);
-#elif defined(PLATFORM_WINDOWS)
-		strerror_s(msgbuf, 255, errno);
-#endif
-		logFatalF("Could not open ROM file %s: %s", fileName, msgbuf);
+	ifstream romFile;
+	// Set exceptions to be thrown on failure
+	romFile.exceptions(std::ifstream::failbit | std::ifstream::badbit);
+
+	try {
+		romFile.open(fileName, ifstream::in | ifstream::binary);
+
+		romFile.read(reinterpret_cast<char *>(myReadOnlyMemory), myReadOnlyMemorySize);
+		if (romFile.gcount() != myReadOnlyMemorySize) {
+			logFatalF("Tried to load %08X bytes from ROM file %s, but only read %08X", romSize32, fileName, romFile.gcount());
+			romFile.close();
+			return false;
+		}
+
+	} catch (std::system_error& e) {
+		logFatalF("Could not open ROM file %s: %s", fileName, e.code().message().c_str());
 		return false;
 	}
 
-	const int readBytes = platform_read(readFD, myReadOnlyMemory, myReadOnlyMemorySize);
-	if (readBytes != myReadOnlyMemorySize) {
-		logFatalF("Tried to load %08X bytes from ROM file %s, but only read %08X", readBytes, fileName, romSize32);
-		return false;
-	}
-
-	platform_close(readFD);
+	romFile.close();
 	return true;
 }
 
