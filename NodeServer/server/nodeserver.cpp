@@ -11,27 +11,14 @@
 //
 //------------------------------------------------------------------------------
 
+#include <fstream>
 #include <iostream>
-#include <cstdio>
 #include <cstring>
-#include <cstdlib>
 #include <cctype>
 #include <ctime>
-#include <cerrno>
-#include <fcntl.h>
 using namespace std;
 
 #include "platformdetection.h"
-
-// Thank you https://stackoverflow.com/questions/49001326/convert-the-linux-open-read-write-close-functions-to-work-on-windows
-#if defined(PLATFORM_OSX) || defined(PLATFORM_LINUX)
-#include <sys/types.h>
-#include <sys/uio.h>
-#include <unistd.h>
-#endif
-#if defined(PLATFORM_WINDOWS)
-#include <io.h>
-#endif
 
 #include "log.h"
 #include "link.h"
@@ -297,41 +284,40 @@ void monitorBootLink(void) {
 // must contain a chain loader, first.
 // Precondition: bootFile != NULL
 void sendBootFile(void) {
-    // open boot file
-	int fd = platform_open(bootFile, O_RDONLY);
-	if (fd == -1) {
-        char msgbuf[255];
-#if defined(PLATFORM_OSX) || defined(PLATFORM_LINUX)
-        strerror_r(errno, msgbuf, 255);
-#elif defined(PLATFORM_WINDOWS)
-        strerror_s(msgbuf, 255, errno);
-#endif
-		logFatalF("Could not open boot file '%s': %s", bootFile, msgbuf);
-		finished = true;
-		return;
-	}
-	BYTE buf[128];
-	int nread;
-	do {
-		nread = platform_read(fd, &buf, 128);
-		if (nread > 0) {
-			if (debugLink) {
-				logDebugF("Read %d bytes of boot code; sending down link", nread);
-			}
-			for (int i = 0; i < nread; i++) {
-				try {
-					// TODO do this in blocks to improve performance
-					myLink->writeByte(buf[i]);
-				} catch (exception e) {
-					logFatalF("Could not write down link 0: %s", e.what());
-					platform_close(fd);
-					finished = true;
-					return;
-				}
-			}
-		}
-	} while (nread > 0);
-	platform_close(fd);
+    // Open boot file and set exceptions to be thrown on failure
+    ifstream bootStream;
+    bootStream.exceptions(std::ifstream::failbit | std::ifstream::badbit);
+
+    try {
+        BYTE buf[128];
+        int nread = 0;
+        bootStream.open(bootFile, ifstream::in | ifstream::binary);
+        do {
+            bootStream.exceptions(std::ifstream::goodbit);
+            bootStream.read(reinterpret_cast<char *>(buf), 128);
+            nread = bootStream.gcount();
+            if (nread > 0) {
+                if (debugLink) {
+                    logDebugF("Read %d bytes of boot code; sending down link", nread);
+                }
+                for (int i = 0; i < nread; i++) {
+                    try {
+                        // TODO do this in blocks to improve performance
+                        myLink->writeByte(buf[i]);
+                    } catch (exception e) {
+                        logFatalF("Could not write down link 0: %s", e.what());
+                        bootStream.close();
+                        finished = true;
+                        return;
+                    }
+                }
+            }
+        } while (nread > 0);
+    } catch (std::system_error& e) {
+        logFatalF("Could not open boot file %s: %s", bootFile, e.code().message().c_str());
+        finished = true;
+        return;
+    }
 }
 
 void cleanup() {
