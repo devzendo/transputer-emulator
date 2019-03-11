@@ -290,7 +290,7 @@ void sendBootFile(void) {
 
     try {
         BYTE buf[128];
-        int nread = 0;
+        streamsize nread = 0;
         bootStream.open(bootFile, ifstream::in | ifstream::binary);
         do {
             bootStream.exceptions(std::ifstream::goodbit);
