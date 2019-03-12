@@ -432,7 +432,11 @@ BYTE b;
 		}
 		line[9] = line[59]='|';
 		line[77] = '\0';
+#if defined(PLATFORM_WINDOWS)
+		sprintf_s(line, sizeof(line), "%08X", offset);
+#elif defined(PLATFORM_OSX) || defined(PLATFORM_LINUX)
 		sprintf(line, "%08X", offset);
+#endif
 		line[8] = ' ';
 		upto16 = (left > 16) ? 16 : left;
 		for (x = 0; x < upto16; x++) {
@@ -480,7 +484,11 @@ WORD32 w;
 		}
 		line[9] = line[47] = '|';
 		line[68] = '\0';
+#if defined(PLATFORM_WINDOWS)
+		sprintf_s(line, sizeof(line), "%08X", offset);
+#elif defined(PLATFORM_OSX) || defined(PLATFORM_LINUX)
 		sprintf(line, "%08X", offset);
+#endif
 		line[8] = ' ';
 		upto4Words = (leftBytes > 16) ? 4 : (leftBytes >> 2);
 		for (x = 0; x < upto4Words; x++) {
@@ -502,14 +510,23 @@ WORD32 w;
 				BYTE b2 = b[2];
 				BYTE b3 = b[3];
 				w = (b3 << 24) | (b2 << 16) | (b1 << 8) | b0;
+#if defined(PLATFORM_WINDOWS)
+				sprintf_s(line + 11 + (9 * x), 8, "%08X", w);
+#elif defined(PLATFORM_OSX) || defined(PLATFORM_LINUX)
 				sprintf(line + 11 + (9 * x), "%08X", w);
+#endif
 				line[49 + (x * 5)] = isprint((char)b0) ? ((char)b0) : '.';
 				line[50 + (x * 5)] = isprint((char)b1) ? ((char)b1) : '.';
 				line[51 + (x * 5)] = isprint((char)b2) ? ((char)b2) : '.';
 				line[52 + (x * 5)] = isprint((char)b3) ? ((char)b3) : '.';
 			} else {
+#if defined(PLATFORM_WINDOWS)
+				sprintf_s(line + 11 + (9 * x), 8, "--------");
+				sprintf_s(line + 49 + (5 * x), 5, "---- ");
+#elif defined(PLATFORM_OSX) || defined(PLATFORM_LINUX)
 				sprintf(line + 11 + (9 * x), "--------");
 				sprintf(line + 49 + (5 * x), "---- ");
+#endif
 			}
 			line[19 + (9 * x)] = ' ';
 		}
