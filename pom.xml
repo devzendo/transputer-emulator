@@ -51,7 +51,7 @@
             <id>linux</id>
             <activation>
                 <os>
-                    <name>unix</name>
+                    <name>linux</name>
                 </os>
             </activation>
             <properties>
