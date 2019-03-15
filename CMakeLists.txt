@@ -6,8 +6,16 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
 # VERSION is filtered into target/classes/version.cpp by using the maven resources plugin.
-#set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++1y -Wall -O2 -g -DDEBUG -DVERSION=\"${VERSION}\"")
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O2 -g -DDEBUG -DVERSION=\"${VERSION}\"")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DDEBUG -DVERSION=\"${VERSION}\"")
+if(WIN32)
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /O2 /Zi")
+endif(WIN32)
+
+if(UNIX)
+  #set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++1y -Wall -O2 -g")
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O3 -g")
+endif(UNIX)
+
 project(transputer-emulator)
 
 ########################################################################################################################
@@ -40,6 +48,8 @@ endif()
 
 # Now simply link your own targets against gtest, gmock,
 # etc. as appropriate
+
+include(CTest)
 
 ########################################################################################################################
 # Build the transputer emulator and related code...
