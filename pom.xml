@@ -56,7 +56,7 @@
             </activation>
             <properties>
                 <!-- The CMake maven plugin understands cmake.root.dir -->
-                <cmake.root.dir>/opt/local</cmake.root.dir>
+                <cmake.root.dir>/opt/cmake</cmake.root.dir>
 
                 <!-- One of the generators defined at https://cmake.org/cmake/help/v3.7/manual/cmake-generators.7.html -->
                 <cmake.generator>Unix Makefiles</cmake.generator>
