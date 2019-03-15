@@ -6,7 +6,6 @@ if(UNIX)
 endif(UNIX)
 add_library(parachutedev STATIC log.h log.cpp misc.h misc.cpp hexdump.h hexdump.cpp link.h link.cpp "${platform_sources}" linkfactory.h linkfactory.cpp constants.h emuquery.h memloc.h platformdetection.h types.h)
 
-include(CTest)
 add_executable(testshared testshared.cpp)
 target_link_libraries(testshared gtest gmock_main)
 add_test(NAME testshared COMMAND testshared)

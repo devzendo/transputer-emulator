@@ -50,6 +50,7 @@ endif()
 # etc. as appropriate
 
 include(CTest)
+enable_testing()
 
 ########################################################################################################################
 # Build the transputer emulator and related code...
