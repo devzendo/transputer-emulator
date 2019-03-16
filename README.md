@@ -249,7 +249,7 @@ Prerequisites:
 - CentOS 7:
   - Clang/LLVM 7:
     yum install centos-release-scl-rh
-    yum --enablerepo=centos-sclo-rh-testing install devtoolset-7
+    yum --enablerepo=centos-sclo-rh-testing install devtoolset-7 devtoolset-7-llvm
 
 The typical install location is:
 - OSX/Linux: /opt/parachute
