@@ -15,7 +15,10 @@ Status
 ------
 In progress, March 2019. Modernising, building on modern OSX/Linux/Windows.
 
-* Building using Maven/CMake/Microsoft Visual Studio Command line tools on Windows 10 64-bit.
+* Building using Maven/CMake/Microsoft Visual Studio Command line tools on Windows 10 64-bit, and porting POSIX calls
+  to Win32 API.
+* Building using Maven/CMake/Clang on CentOS 7.
+* Converting older C code (that's not very portable) to C++11(+) (that hopefully is).
 
 Release Notes
 -------------
@@ -223,24 +226,29 @@ Later I intend to provide builds for:
 
 Prerequisites:
 - All Operating Systems:
-  - CMake. I use 3.10.3.
+  - Mercurial. I use SourceTree on OSX and Windows, or TortoiseHg on Windows, and hg on Linux.
+  - Git (for CMake to download GoogleTest). Command line tool needs to be on the PATH.
+  - Python (2.x or 3.x is fine) (required by the GoogleTest build)
   - Apache Maven. I use 3.6.0. (You can build without it, it's just doing some preprocessing, running cmake in various
     stages, and is used for packaging and overall build control.)
+  - CMake. I use 3.10.3.
   - If you want to build the client-examples programs, you'll need
     <a href="https://bitbucket.org/devzendo/transputer-macro-assembler">DevZendo.org Transputer Macro Assembler</a>
     installed and on your PATH.
-  - Mercurial. I use SourceTree on OSX and Windows, or TortoiseHg on Windows, and hg on Linux.
 - OSX:
   - GNU Make. I use 4.2.1.
   - clang (e.g. via XCode Developer tools, or MacPorts). I use Apple LLVM version 8.0.0 (clang-800.0.42.1) on
     Mac OSX 'El Capitan' 10.11.6
-- Windows: [DOES NOT BUILD HERE YET] (future work, but you'll need a UNIXy toolchain)
-  - Microsoft Visual Studio Community 2017. I use 15.9.
+- Windows:
+  - Microsoft Visual Studio Build Tools 2017, v 15.9.xxx
   - CMake is installed in C:\Program Files\CMake
   - Maven is installed in C:\Program Files\apache-maven-3.6.0
   - (these locations are noted in the pom.xml).
 - Ubuntu Linux: build-essential (=> gcc) [DOES NOT BUILD HERE YET]
-- CentOS: gcc [DOES NOT BUILD HERE YET]
+- CentOS 7:
+  - Clang/LLVM 7:
+    yum install centos-release-scl-rh
+    yum --enablerepo=centos-sclo-rh-testing install devtoolset-7
 
 The typical install location is:
 - OSX/Linux: /opt/parachute
