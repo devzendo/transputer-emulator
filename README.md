@@ -229,6 +229,7 @@ Prerequisites:
   - Mercurial. I use SourceTree on OSX and Windows, or TortoiseHg on Windows, and hg on Linux.
   - Git (for CMake to download GoogleTest). Command line tool needs to be on the PATH.
   - Python (2.x or 3.x is fine) (required by the GoogleTest build)
+  - Java 8 JDK (for Maven).
   - Apache Maven. I use 3.6.0. (You can build without it, it's just doing some preprocessing, running cmake in various
     stages, and is used for packaging and overall build control.)
   - CMake. I use 3.10.3.
