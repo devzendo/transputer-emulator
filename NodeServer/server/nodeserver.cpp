@@ -19,6 +19,9 @@
 using namespace std;
 
 #include "platformdetection.h"
+#if defined(PLATFORM_OSX) || defined(PLATFORM_LINUX)
+#include <csignal>
+#endif
 
 #include "log.h"
 #include "link.h"
