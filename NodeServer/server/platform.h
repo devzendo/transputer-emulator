@@ -44,16 +44,16 @@ public:
 class Platform {
 public:
     Platform();
-    virtual void initialise(void) throw (exception);
+    virtual void initialise(void) throw (exception) = 0;
     virtual ~Platform(void);
     void setDebug(bool newDebug);
 
-    virtual bool isCharAvailable();
-    virtual BYTE getChar();
-    virtual void putChar(BYTE const ch);
+    virtual bool isCharAvailable() = 0;
+    virtual BYTE getChar() = 0;
+    virtual void putChar(BYTE const ch) = 0;
 
-    virtual WORD32 getTimeMillis();
-    virtual UTCTime getUTCTime();
+    virtual WORD32 getTimeMillis() = 0;
+    virtual UTCTime getUTCTime() = 0;
 protected:
     bool bDebug;
 };

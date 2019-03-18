@@ -24,32 +24,9 @@ Platform::Platform() {
     bDebug = false;
 }
 
-void Platform::initialise(void) throw (exception) {
-}
-
 Platform::~Platform(void) {
 }
 
 void Platform::setDebug(bool newDebug) {
     bDebug = newDebug;
-}
-
-bool Platform::isCharAvailable() {
-    return true;
-}
-
-BYTE Platform::getChar() {
-    return 0;
-}
-
-void Platform::putChar(BYTE const ch) {
-};
-
-
-WORD32 Platform::getTimeMillis() {
-    return 0;
-}
-
-UTCTime Platform::getUTCTime() {
-    return UTCTime(0, 0, 0, 0, 0, 0, 0);
 }
