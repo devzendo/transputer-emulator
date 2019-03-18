@@ -26,20 +26,8 @@ Link::Link(int linkNo, bool isServer) {
 	logDebugF("Constructing %s link %d", bServer ? "server" : "CPU client", myLinkNo);
 }
 
-void Link::initialise(void) throw (exception) {
-}
-
 Link::~Link(void) {
 	logDebugF("Destroying link %d", myLinkNo);
-}
-
-BYTE Link::readByte(void) throw (exception) {
-	logError("Link::readByte called - should always be a subclass method");
-	return 0x00;
-}
-
-void Link::writeByte(BYTE buf) throw (exception) {
-	logError("Link::writeByte called - should always be a subclass method");
 }
 
 WORD32 Link::readWord(void) throw (exception) {
@@ -56,9 +44,6 @@ void Link::writeWord(WORD32 w) throw (exception) {
 	writeByte((w & 0x0000ff00) >> 8);
 	writeByte((w & 0x00ff0000) >> 16);
 	writeByte((w & 0xff000000) >> 24);
-}
-
-void Link::resetLink(void) throw (exception) {
 }
 
 int Link::getLinkNo(void) {

@@ -28,7 +28,7 @@ using namespace std;
 class Link {
 	public:
 		Link(int linkNo, bool isServer);
-		virtual void initialise(void) throw (exception);
+		virtual void initialise(void) throw (exception) = 0;
 		virtual ~Link(void);
 		// TODO may need buffer-centric versions of these, and
 		// these are entirely synchronous. to prevent blocking I/O
@@ -37,11 +37,11 @@ class Link {
 		// asynchrony.
 		// For now, just to get data flowing from the Node Server,
 		// I'll use the synchronous forms.
-		virtual BYTE readByte(void) throw (exception);
-		virtual void writeByte(BYTE b) throw (exception);
+		virtual BYTE readByte(void) throw (exception) = 0;
+		virtual void writeByte(BYTE b) throw (exception) = 0;
 		WORD32 readWord(void) throw (exception);
 		void writeWord(WORD32 w) throw (exception);
-		virtual void resetLink(void) throw (exception);
+		virtual void resetLink(void) throw (exception) = 0;
 		int getLinkNo(void);
 		void setDebug(bool newDebug);
 	protected:
