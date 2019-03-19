@@ -19,14 +19,14 @@ const int LinkType_Socket = 1;
 const int LinkType_SharedMemory = 2;
 
 class LinkFactory {
-	public:
-		LinkFactory(bool isServer, bool isDebug);
-		bool processCommandLine(int argc, char *argv[]);
-		Link *createLink(int linkNo);
-	private:
-		int myLinkTypes[4];
-		bool bServer;
-		bool bDebug;
+public:
+	LinkFactory(bool isServer, bool isDebug);
+	bool processCommandLine(int argc, char *argv[]);
+	Link *createLink(int linkNo);
+private:
+	int myLinkTypes[4];
+	bool bServer;
+	bool bDebug;
 };
 
 #endif // _LINKFACTORY_H
