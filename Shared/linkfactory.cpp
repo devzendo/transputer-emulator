@@ -18,8 +18,13 @@
 #include "types.h"
 #include "constants.h"
 #include "link.h"
+
+#if defined(PLATFORM_OSX) || defined(PLATFORM_LINUX)
 #include "fifolink.h"
+#elif defined(PLATFORM_WINDOWS)
 #include "namedpipelink.h"
+#endif
+
 #include "linkfactory.h"
 #include "log.h"
 
