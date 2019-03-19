@@ -1,7 +1,7 @@
 //------------------------------------------------------------------------------
 //
-// File        : test.cpp
-// Description : Tests for shared code
+// File        : testtypes.cpp
+// Description : Tests for type definition sizes
 // License     : Apache License v2.0 - see LICENSE.txt for more details
 // Created     : 27/06/2018
 //
