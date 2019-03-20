@@ -31,6 +31,9 @@ public:
 private:
 	int myWriteFD, myReadFD;
 	WORD32 myWriteSequence, myReadSequence;
+    char myReadFifoName[80];
+    char myWriteFifoName[80];
+
 };
 
 #endif // _FIFOLINK_H

@@ -40,44 +40,42 @@ FIFOLink::FIFOLink(int linkNo, bool isServer) : Link(linkNo, isServer) {
 
 void FIFOLink::initialise(void) throw (exception) {
 	static char msgbuf[255];
-	char rfname[80];
-	char wfname[80];
 	struct stat st;
 	// Filenames are relative to the CPU client.
 	// The CPU client reads on the read FIFO and writes on the write FIFO.
 	// Any server reads on the write FIFO and reads on the read FIFO.
 	// READ FIFO
-	sprintf(rfname, "/tmp/t800emul-read-%d", myLinkNo);
-	if (stat(rfname, &st) == -1) {
+	sprintf(myReadFifoName, "/tmp/t800emul-read-%d", myLinkNo);
+	if (stat(myReadFifoName, &st) == -1) {
 		// make the fifo
-		if (mkfifo(rfname, 0600) == -1) {
-			sprintf(msgbuf, "Could not create read FIFO %s: %s", rfname, strerror(errno));
+		if (mkfifo(myReadFifoName, 0600) == -1) {
+			sprintf(msgbuf, "Could not create read FIFO %s: %s", myReadFifoName, strerror(errno));
 			throw runtime_error(msgbuf);
 		}
-		if (stat(rfname, &st) == -1) {
-			sprintf(msgbuf, "Could not obtain details of read FIFO %s: %s", rfname, strerror(errno));
+		if (stat(myReadFifoName, &st) == -1) {
+			sprintf(msgbuf, "Could not obtain details of read FIFO %s: %s", myReadFifoName, strerror(errno));
 			throw runtime_error(msgbuf);
 		}
 	}
 	if (!S_ISFIFO(st.st_mode)) {
-		sprintf(msgbuf, "Read FIFO file %s is not a FIFO", rfname);
+		sprintf(msgbuf, "Read FIFO file %s is not a FIFO", myReadFifoName);
 		throw runtime_error(msgbuf);
 	}
 	// WRITE FIFO
-	sprintf(wfname, "/tmp/t800emul-write-%d", myLinkNo);
-	if (stat(wfname, &st) == -1) {
+	sprintf(myWriteFifoName, "/tmp/t800emul-write-%d", myLinkNo);
+	if (stat(myWriteFifoName, &st) == -1) {
 		// make the fifo
-		if (mkfifo(wfname, 0600) == -1) {
-			sprintf(msgbuf, "Could not create write FIFO %s: %s", wfname, strerror(errno));
+		if (mkfifo(myWriteFifoName, 0600) == -1) {
+			sprintf(msgbuf, "Could not create write FIFO %s: %s", myWriteFifoName, strerror(errno));
 			throw runtime_error(msgbuf);
 		}
-		if (stat(wfname, &st) == -1) {
-			sprintf(msgbuf, "Could not obtain details of write FIFO %s: %s", wfname, strerror(errno));
+		if (stat(myWriteFifoName, &st) == -1) {
+			sprintf(msgbuf, "Could not obtain details of write FIFO %s: %s", myWriteFifoName, strerror(errno));
 			throw runtime_error(msgbuf);
 		}
 	}
 	if (!S_ISFIFO(st.st_mode)) {
-		sprintf(msgbuf, "Write FIFO file %s is not a FIFO", wfname);
+		sprintf(msgbuf, "Write FIFO file %s is not a FIFO", myWriteFifoName);
 		throw runtime_error(msgbuf);
 	}
 	// Now open the FIFOs, using the FDs that will be used appropriately
@@ -85,29 +83,29 @@ void FIFOLink::initialise(void) throw (exception) {
 	// Note that Linux guarantees that pipes opened with O_RDWR will not
 	// block on open. Posix leaves this undefined. See fifo(4).
 	if (bServer) {
-		logDebugF("Opening %s write-only", rfname);
-		myWriteFD = open(rfname, O_RDWR);
+		logDebugF("Opening %s write-only", myReadFifoName);
+		myWriteFD = open(myReadFifoName, O_RDWR);
 		if (myWriteFD == -1) {
-			sprintf(msgbuf, "Could not open write FIFO %s: %s", wfname, strerror(errno));
+			sprintf(msgbuf, "Could not open write FIFO %s: %s", myReadFifoName, strerror(errno));
 			throw runtime_error(msgbuf);
 		}
-		logDebugF("Opening %s read-only", wfname);
-		myReadFD = open(wfname, O_RDWR);
+		logDebugF("Opening %s read-only", myWriteFifoName);
+		myReadFD = open(myWriteFifoName, O_RDWR);
 		if (myReadFD == -1) {
-			sprintf(msgbuf, "Could not open read FIFO %s: %s", rfname, strerror(errno));
+			sprintf(msgbuf, "Could not open read FIFO %s: %s", myWriteFifoName, strerror(errno));
 			throw runtime_error(msgbuf);
 		}
 	} else {
-		logDebugF("Opening %s read-only", rfname);
-		myReadFD = open(rfname, O_RDWR);
+		logDebugF("Opening %s read-only", myReadFifoName);
+		myReadFD = open(myReadFifoName, O_RDWR);
 		if (myReadFD == -1) {
-			sprintf(msgbuf, "Could not open read FIFO %s: %s", rfname, strerror(errno));
+			sprintf(msgbuf, "Could not open read FIFO %s: %s", myReadFifoName, strerror(errno));
 			throw runtime_error(msgbuf);
 		}
-		logDebugF("Opening %s write-only", wfname);
-		myWriteFD = open(wfname, O_RDWR);
+		logDebugF("Opening %s write-only", myWriteFifoName);
+		myWriteFD = open(myWriteFifoName, O_RDWR);
 		if (myWriteFD == -1) {
-			sprintf(msgbuf, "Could not open write FIFO %s: %s", wfname, strerror(errno));
+			sprintf(msgbuf, "Could not open write FIFO %s: %s", myWriteFifoName, strerror(errno));
 			throw runtime_error(msgbuf);
 		}
 	}
