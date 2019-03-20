@@ -234,6 +234,9 @@
                         <configuration>
                             <!-- "buildDirectory" is "targetPath" from the "generate" goal -->
                             <buildDirectory>${project.basedir}/${cmake.binary.dir}</buildDirectory>
+                            <options>
+                                <option>--verbose</option>
+                            </options>
                             <!-- Optional way to not fail the build on test failures -->
                             <!-- <testFailureIgnore>true</testFailureIgnore> -->
                             <!-- Optional way to skip just the ctest tests -->
