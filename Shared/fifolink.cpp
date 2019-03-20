@@ -121,6 +121,15 @@ FIFOLink::~FIFOLink() {
 		close(myWriteFD);
 		myWriteFD = -1;
 	}
+	// It's not fatal if we can't remove the FIFOs, as the first side (emulator/server) that gets here will do it.
+    logDebugF("Removing %s", myReadFifoName);
+	if (unlink(myReadFifoName) == -1) {
+        logDebugF("Could not remove %s: %s", myReadFifoName, strerror(errno));
+    }
+    logDebugF("Removing %s", myWriteFifoName);
+    if (unlink(myWriteFifoName) == -1) {
+        logDebugF("Could not remove %s: %s", myWriteFifoName, strerror(errno));
+    }
 }
 
 BYTE FIFOLink::readByte() throw (exception) {
