@@ -9,3 +9,7 @@ add_library(parachutedev STATIC log.h log.cpp misc.h misc.cpp hexdump.h hexdump.
 add_executable(testtypes testtypes.cpp)
 target_link_libraries(testtypes gtest gmock_main)
 add_test(NAME testtypes COMMAND testtypes)
+
+add_executable(testlink testlink.cpp)
+target_link_libraries(testlink parachutedev gtest gmock_main)
+add_test(NAME testlink COMMAND testlink)
