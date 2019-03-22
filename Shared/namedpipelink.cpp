@@ -13,6 +13,7 @@
 
 #include <exception>
 #include <stdexcept>
+#include <windows.h>
 #include <winbase.h>
 #include <fileapi.h>
 using namespace std;
