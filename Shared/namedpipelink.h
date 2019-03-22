@@ -15,6 +15,7 @@
 #define _NAMEDPIPELINK_H
 
 #include <exception>
+#include <winbase.h>
 using namespace std;
 
 #include "types.h"
@@ -29,8 +30,13 @@ public:
     void writeByte(BYTE b) throw (exception);
     void resetLink(void) throw (exception);
 private:
-//    int myWriteFD, myReadFD;
-//    WORD32 myWriteSequence, myReadSequence;
+    void connect(void) throw (exception);
+    bool myConnected = false;
+    HANDLE myWriteHandle, myReadHandle;
+    WORD32 myWriteSequence, myReadSequence;
+    const int NAME_LEN = 256;
+    char myReadPipeName[NAME_LEN];
+    char myWritePipeName[NAME_LEN];
 };
 
 #endif // _NAMEDPIPELINK_H

@@ -43,7 +43,7 @@ void FIFOLink::initialise(void) throw (exception) {
 	struct stat st;
 	// Filenames are relative to the CPU client.
 	// The CPU client reads on the read FIFO and writes on the write FIFO.
-	// Any server reads on the write FIFO and reads on the read FIFO.
+	// The server reads on the write FIFO and writes on the read FIFO.
 	// READ FIFO
 	sprintf(myReadFifoName, "/tmp/t800emul-read-%d", myLinkNo);
 	if (stat(myReadFifoName, &st) == -1) {
