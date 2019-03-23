@@ -17,8 +17,26 @@ In progress, March 2019. Modernising, building on modern OSX/Linux/Windows.
 
 * Building using Maven/CMake/Microsoft Visual Studio Command line tools on Windows 10 64-bit, and porting POSIX calls
   to Win32 API.
-* Building using Maven/CMake/Clang on CentOS 7.
+* Building using Maven/CMake/Clang on CentOS 7 and Raspbian Stretch.
 * Converting older C code (that's not very portable) to C++11(+) (that hopefully is).
+
+Roadmap
+-------
+First release:
+* Ported to Mac OSX (El Capitan +), Linux (Ubuntu, CentOS 7, Raspbian Stretch), Windows 10.
+* A Cross Platform system that can run "Hello World" (via my NodeServer implementation).
+
+Second release:
+* Convert the NodeServer to be iServer compatible. Similarly, "Hello World".
+
+Third release:
+* Capable of running eForth.
+
+Fourth release: 
+* Complete Integer functionality.
+
+Fifth release:
+* Complete Floating Point functionality.
 
 Release Notes
 -------------
@@ -219,21 +237,23 @@ Building and Installing
 The distribution currently builds under the following systems:
 * Mac OSX 'El Capitan' 10.11 (untested on more recent versions)
 * Windows 7 (untested on more recent versions especially 10)
+* CentOS Linux 7.4 Intel x86-64
+
+* Raspbian Stretch (ongoing)
 
 Later I intend to provide builds for:
 * Ubuntu Linux 16.04.4 LTS Intel x86-64
-* CentOS Linux 7.4 Intel x86-64
 
 Prerequisites:
 - All Operating Systems:
-  - Mercurial. I use SourceTree on OSX and Windows, or TortoiseHg on Windows, and hg on Linux.
+  - Mercurial (to download the source). I use SourceTree on OSX and Windows, TortoiseHg on Windows, and hg on Linux.
   - Git (for CMake to download GoogleTest). Command line tool needs to be on the PATH.
   - Python (2.x or 3.x is fine) (required by the GoogleTest build)
   - Java 8 JDK (for Maven).
   - Apache Maven. I use 3.6.0. (You can build without it, it's just doing some preprocessing, running cmake in various
     stages, and is used for packaging and overall build control.)
   - CMake. I use 3.10.3.
-  - If you want to build the client-examples programs, you'll need
+  - If you want to build the client-examples programs, you'll need the
     <a href="https://bitbucket.org/devzendo/transputer-macro-assembler">DevZendo.org Transputer Macro Assembler</a>
     installed and on your PATH.
 - OSX:
@@ -250,6 +270,8 @@ Prerequisites:
   - Clang/LLVM 7:
     yum install centos-release-scl-rh
     yum --enablerepo=centos-sclo-rh-testing install devtoolset-7 devtoolset-7-llvm
+- Raspbian Strecth:
+  - Clang or gcc (latest versions - TODO note the versions here)
 
 The typical install location is:
 - OSX/Linux: /opt/parachute
