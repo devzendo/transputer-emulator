@@ -16,6 +16,7 @@
 #include <cstring>
 #include <cctype>
 #include <ctime>
+#include <system_error>
 using namespace std;
 
 #include "platformdetection.h"
