@@ -206,6 +206,8 @@ BYTE NamedPipeLink::readByte() throw (exception) {
 }
 
 void NamedPipeLink::writeByte(BYTE buf) throw (exception) {
+    static char msgbuf[255];
+
     BYTE bufstore = buf;
     DWORD cbBytesRead = 0, cbReplyBytes = 0, cbWritten = 0;
     BOOL fSuccess = FALSE;
