@@ -31,6 +31,8 @@ using namespace std;
 #include "namedpipelink.h"
 #include "log.h"
 
+const int BUFSIZE = 512;
+
 NamedPipeLink::NamedPipeLink(int linkNo, bool isServer) : Link(linkNo, isServer) {
 	logDebugF("Constructing named pipe link %d for %s", myLinkNo, isServer ? "server" : "cpu client");
     myWriteHandle = INVALID_HANDLE_VALUE;
@@ -47,7 +49,7 @@ void NamedPipeLink::initialise(void) throw (exception) {
 	// The CPU client reads on the read FIFO and writes on the write FIFO.
     // The server reads on the write FIFO and writes on the read FIFO.
 	// READ NAMED PIPE
-    sprintf_s(myReadPipeName, NAME_LEN, "\\\\.\\pipe\\t800emul-read-%d"", myLinkNo);
+    sprintf_s(myReadPipeName, NAME_LEN, "\\\\.\\pipe\\t800emul-read-%d", myLinkNo);
     logDebugF("Read named pipe called %s", myReadPipeName);
 
     if (bServer) {
@@ -85,7 +87,7 @@ void NamedPipeLink::initialise(void) throw (exception) {
 
 
     // WRITE NAMED PIPE
-    sprintf_s(myWritePipeName, NAME_LEN, "\\\\.\\pipe\\t800emul-write-%d"", myLinkNo);
+    sprintf_s(myWritePipeName, NAME_LEN, "\\\\.\\pipe\\t800emul-write-%d", myLinkNo);
     logDebugF("Write named pipe called %s", myWritePipeName);
 
     if (bServer) {
