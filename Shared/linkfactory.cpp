@@ -22,6 +22,7 @@
 #if defined(PLATFORM_OSX) || defined(PLATFORM_LINUX)
 #include "fifolink.h"
 #elif defined(PLATFORM_WINDOWS)
+#include <windows.h>
 #include "namedpipelink.h"
 #endif
 
