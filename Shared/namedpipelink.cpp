@@ -82,7 +82,7 @@ void NamedPipeLink::initialise(void) throw (exception) {
         sprintf_s(msgbuf, "Could not create/open read named pipe: Error %d", GetLastError());
         throw runtime_error(msgbuf);
     }
-    logDebugF("Read named pipe created; handle 0x%08x", hPipe);
+    logDebugF("Read named pipe created; handle 0x%08x", myReadHandle);
 
 
 
@@ -120,7 +120,7 @@ void NamedPipeLink::initialise(void) throw (exception) {
         sprintf_s(msgbuf, "Could not create/open write named pipe: Error %d", GetLastError());
         throw runtime_error(msgbuf);
     }
-    logDebugF("Write named pipe created; handle 0x%08x", hPipe);
+    logDebugF("Write named pipe created; handle 0x%08x", myWriteHandle);
 }
 
 NamedPipeLink::~NamedPipeLink() {
