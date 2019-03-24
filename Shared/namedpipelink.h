@@ -21,6 +21,8 @@ using namespace std;
 #include "types.h"
 #include "link.h"
 
+const int NAME_LEN = 256;
+
 class NamedPipeLink : public Link {
 public:
     NamedPipeLink(int linkNo, bool isServer);
@@ -34,7 +36,6 @@ private:
     bool myConnected = false;
     HANDLE myWriteHandle, myReadHandle;
     WORD32 myWriteSequence, myReadSequence;
-    const int NAME_LEN = 256;
     char myReadPipeName[NAME_LEN];
     char myWritePipeName[NAME_LEN];
 };
