@@ -1315,7 +1315,7 @@ inline void CPU::interpret(void) {
 
 				case O_enbc: { // enable channel
 						WORD32 ChanAddr;
-						// If conditional in Areg == TRUE, enable channel Breg
+						// If conditional in Areg == BOOL_TRUE, enable channel Breg
 						if (Areg) {
 							InstCycles = 7;
 							ChanAddr = myMemory->getWord(Breg);
@@ -1430,10 +1430,10 @@ inline void CPU::interpret(void) {
 					if (Breg && (myMemory->getWord(W_TEMP(Wdesc)) == Ready_p)) {
 						// select this branch
 						myMemory->setWord(W_TEMP(Wdesc), Areg);
-						Areg = TRUE;
+						Areg = BOOL_TRUE;
 					}
 					else {
-						Areg = FALSE;
+						Areg = BOOL_FALSE;
 					}
 					Breg = Creg;
 					InstCycles = 4;
@@ -1446,10 +1446,10 @@ inline void CPU::interpret(void) {
 						(myMemory->getWord(W_TEMP(Wdesc)) == Ready_p)) {
 						// select this branch
 						myMemory->setWord(W_TEMP(Wdesc), Areg);
-						Areg = TRUE;
+						Areg = BOOL_TRUE;
 					} else {
 						// Channel Creg not ready or a branch already selected
-   						Areg = FALSE;
+   						Areg = BOOL_FALSE;
 					}
 					InstCycles = 8;
 					break;
@@ -1463,10 +1463,10 @@ inline void CPU::interpret(void) {
 							(myMemory->getWord(W_TEMP(Wdesc)) == Ready_p)) {
 							// Select this branch
 							myMemory->setWord(W_TEMP(Wdesc), Areg);
-							Areg = TRUE;
+							Areg = BOOL_TRUE;
 						} else {
 							// Time earlier than guards time or a branch already selected
-							Areg = TRUE;
+							Areg = BOOL_TRUE;
 						}
 						SET_FLAGS(EmulatorState_Interrupt);
 					}

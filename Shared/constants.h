@@ -15,14 +15,15 @@
 #define _CONSTANTS_H
 
 #include "types.h"
+#include "platformdetection.h"
 
 #ifndef min
 #define min(a,b) ((a) < (b) ? (a) : (b))
 #endif
 
 // For storing bool values in WORD32s
-const int TRUE = 1;
-const int FALSE = 0;
+const int BOOL_TRUE = 1;
+const int BOOL_FALSE = 0;
 
 const int Kilo=1024;
 const int Mega=(Kilo * Kilo);
