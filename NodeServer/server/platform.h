@@ -43,7 +43,7 @@ public:
 class Platform {
 public:
     Platform();
-    virtual void initialise(void) throw (exception) = 0;
+    virtual void initialise(void) throw (std::exception) = 0;
     virtual ~Platform(void);
     void setDebug(bool newDebug);
 

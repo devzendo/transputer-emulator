@@ -22,7 +22,7 @@
 class WindowsPlatform : public Platform {
 public:
     WindowsPlatform();
-    void initialise(void) throw (exception);
+    void initialise(void) throw (std::exception);
     ~WindowsPlatform(void);
 
     bool isConsoleCharAvailable();

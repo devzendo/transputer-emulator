@@ -15,7 +15,7 @@
 #define _POSIXPLATFORM_H
 
 #include <exception>
-using namespace std;
+
 #include <cerrno>
 #include <termios.h>
 #include <unistd.h>
@@ -27,7 +27,7 @@ using namespace std;
 class POSIXPlatform : public Platform {
 public:
     POSIXPlatform();
-    void initialise(void) throw (exception);
+    void initialise(void) throw (std::exception);
     ~POSIXPlatform(void);
 
     bool isConsoleCharAvailable();

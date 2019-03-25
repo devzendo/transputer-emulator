@@ -12,7 +12,6 @@
 //------------------------------------------------------------------------------
 
 #include <exception>
-using namespace std;
 
 #include "types.h"
 #include "constants.h"

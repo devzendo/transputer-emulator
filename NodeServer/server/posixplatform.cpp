@@ -16,7 +16,7 @@
 #include <termios.h>
 #include <unistd.h>
 #include <fcntl.h>
-using namespace std;
+
 #include "types.h"
 #include "constants.h"
 #include "platform.h"
@@ -27,7 +27,7 @@ POSIXPlatform::POSIXPlatform() : Platform() {
     logDebug("Constructing POSIX platform");
 }
 
-void POSIXPlatform::initialise(void) throw (exception) {
+void POSIXPlatform::initialise(void) throw (std::exception) {
     static char msgbuf[255];
 
     logDebug("Initialising POSIX platform");
@@ -41,7 +41,7 @@ void POSIXPlatform::initialise(void) throw (exception) {
         sprintf(msgbuf, "Could not get stdin terminal attributes: %s",
                   strerror(errno));
         logFatal(msgbuf);
-        throw runtime_error(msgbuf);
+        throw std::runtime_error(msgbuf);
     }
     tcgetattr(stdinfd, &origterm);
     term.c_lflag = term.c_lflag & (~ICANON);
@@ -49,7 +49,7 @@ void POSIXPlatform::initialise(void) throw (exception) {
         sprintf(msgbuf, "Could not set stdin terminal attributes: %s",
                   strerror(errno));
         logFatal(msgbuf);
-        throw runtime_error(msgbuf);
+        throw std::runtime_error(msgbuf);
     }
 
 }

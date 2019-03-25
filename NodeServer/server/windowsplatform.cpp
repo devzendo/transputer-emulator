@@ -25,7 +25,7 @@ WindowsPlatform::WindowsPlatform() : Platform() {
     logDebug("Constructing Windows platform");
 }
 
-void WindowsPlatform::initialise(void) throw (exception) {
+void WindowsPlatform::initialise(void) throw (std::exception) {
 }
 
 WindowsPlatform::~WindowsPlatform() {
