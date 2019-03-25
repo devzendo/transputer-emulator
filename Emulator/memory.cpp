@@ -16,6 +16,7 @@
 #include <fstream>
 #include <iostream>
 #include <stdexcept>
+#include <system_error>
 #include <sys/stat.h>
 #include <errno.h>
 using namespace std;
@@ -113,7 +114,7 @@ bool Memory::loadROMFile(const char *fileName) {
 			return false;
 		}
 
-	} catch (std::runtime_error& e) {
+	} catch (std::system_error& e) {
 		logFatalF("Could not open ROM file %s: %s", fileName, e.code().message().c_str());
 		return false;
 	}

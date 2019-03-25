@@ -16,6 +16,7 @@
 #include <cstring>
 #include <cctype>
 #include <ctime>
+#include <system_error>
 using namespace std;
 
 #include "platformdetection.h"
@@ -316,7 +317,7 @@ void sendBootFile(void) {
                 }
             }
         } while (nread > 0);
-    } catch (std::runtime_error& e) {
+    } catch (std::system_error& e) {
         logFatalF("Could not open boot file %s: %s", bootFile, e.code().message().c_str());
         finished = true;
         return;
