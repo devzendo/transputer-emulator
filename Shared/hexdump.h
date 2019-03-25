@@ -15,7 +15,7 @@
 #define _HEXDUMP_H
 
 #include "types.h"
-extern void hexdump(BYTE *buf, WORD32 len);
+extern void hexdump(BYTE8 *buf, WORD32 len);
 
 #endif // _HEXDUMP_H
 

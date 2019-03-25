@@ -37,5 +37,5 @@ TEST(TypeSizes, WordSixtyFour)
 
 TEST(TypeSizes, Byte)
 {
-    EXPECT_EQ(sizeof(BYTE), 1);
+    EXPECT_EQ(sizeof(BYTE8), 1);
 }

@@ -135,7 +135,7 @@ bool processCommandLine(int argc, char *argv[]) {
 	return 1;
 }
 
-char *printableString(BYTE *orig, BYTE len) {
+char *printableString(BYTE8 *orig, BYTE8 len) {
 	for (int i = 0; i < len; i++) {
 		msgbuf[i] = isprint(orig[i]) ? orig[i] : '.';
 	}
@@ -168,7 +168,7 @@ void handleNodeServerProtocol(void) {
 				finished = true;
 				break;
 			case CONSOLE_PUT_CHAR: {
-					BYTE ch = myLink->readByte();
+					BYTE8 ch = myLink->readByte();
 					if (debugLink) {
 						logDebugF("CONSOLE_PUT_CHAR %02X '%c'", ch, isprint(ch) ? ch : '.');
 					}
@@ -176,7 +176,7 @@ void handleNodeServerProtocol(void) {
 				}
 				break;
 			case CONSOLE_PUT_PSTR: {
-					BYTE len = myLink->readByte();
+					BYTE8 len = myLink->readByte();
 					for (int i = 0; i < len; i++) {
 						msgbuf[i] = myLink->readByte();
 					}
@@ -192,7 +192,7 @@ void handleNodeServerProtocol(void) {
 			case CONSOLE_PUT_CSTR: {
 					WORD32 len = 0;
 					for (WORD32 i = 0; true; i++) {
-						BYTE b = myLink->readByte();
+						BYTE8 b = myLink->readByte();
 						if (i < MSGBUF_MAX) {
 							msgbuf[i] = b;
 						}
@@ -228,7 +228,7 @@ void handleNodeServerProtocol(void) {
 					if (debugLink) {
 						logDebug("CONSOLE_GET_CHAR");
 					}
-					BYTE inChar = myPlatform->getChar();
+					BYTE8 inChar = myPlatform->getChar();
 					myLink->writeByte(inChar); // TODO fix when we have a framebuffer
 				}
 				break;
@@ -273,7 +273,7 @@ void handleNodeServerProtocol(void) {
 void monitorBootLink(void) {
 	for(;;) {
 		try {
-			BYTE b = myLink->readByte();
+			BYTE8 b = myLink->readByte();
 			//fprintf(stderr, "%c", (b != '\n') && (b != '\r') && isprint(b) ? b : '.');
 			logDebugF("%02X %c", b, (isprint(b) ? b : '.'));
 		} catch (exception e) {
@@ -292,7 +292,7 @@ void sendBootFile(void) {
     bootStream.exceptions(std::ifstream::failbit | std::ifstream::badbit);
 
     try {
-        BYTE buf[128];
+        BYTE8 buf[128];
         streamsize nread = 0;
         bootStream.open(bootFile, ifstream::in | ifstream::binary);
         do {

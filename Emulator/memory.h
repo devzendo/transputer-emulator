@@ -25,9 +25,9 @@ class Memory {
 		int getMemEnd();
 		int getMemSize();
 		int getHighestAccess();
-		BYTE getByte(WORD32 addr);
-		BYTE getInstruction(WORD32 addr);
-		void setByte(WORD32 addr, BYTE value);
+		BYTE8 getByte(WORD32 addr);
+		BYTE8 getInstruction(WORD32 addr);
+		void setByte(WORD32 addr, BYTE8 value);
 		WORD32 getWord(WORD32 addr);
 		void setWord(WORD32 addr, WORD32 value);
 		int getCurrentCyclesAndReset();
@@ -38,7 +38,7 @@ class Memory {
 		void hexDumpWords(WORD32 addr, WORD32 lenInBytes);
 	private:
 		bool loadROMFile(const char *romFileName);
-		BYTE *myMemory;
+		BYTE8 *myMemory;
 		int mySize;
 		int myMemEnd;
 		int myHighestAccess;
@@ -49,7 +49,7 @@ class Memory {
 		// 2-byte jump at ResetCode is present.
 		bool myROMPresent;
 		WORD32 myROMStart;
-		BYTE *myReadOnlyMemory;
+		BYTE8 *myReadOnlyMemory;
 		size_t myReadOnlyMemorySize;
 
 };

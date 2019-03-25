@@ -18,7 +18,7 @@
 #define WORD32 unsigned int
 #define SWORD32 signed int
 #define WORD64 unsigned long long
-#define BYTE unsigned char
+#define BYTE8 unsigned char
 #define REAL64 double
 
 #endif // _TYPES_H

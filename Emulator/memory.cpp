@@ -45,7 +45,7 @@ void Memory::resetMemory() {
 }
 
 bool Memory::initialise(long initialRAMSize, const char *romFile) {
-	myMemory = (BYTE *)calloc(initialRAMSize, 1);
+	myMemory = (BYTE8 *)calloc(initialRAMSize, 1);
 	if (myMemory == NULL) {
 		logFatal("Failed to allocate memory");
 		return false;
@@ -86,7 +86,7 @@ bool Memory::loadROMFile(const char *fileName) {
 	const off_t romSize = st.st_size;
 	const WORD32 romSize32 = (WORD32) romSize;
 	myReadOnlyMemorySize = romSize32;
-	myReadOnlyMemory = (BYTE *)calloc(myReadOnlyMemorySize, 1);
+	myReadOnlyMemory = (BYTE8 *)calloc(myReadOnlyMemorySize, 1);
 	if (myReadOnlyMemory == NULL) {
 		logFatal("Failed to allocate Read-Only memory");
 		return false;
@@ -150,8 +150,8 @@ int Memory::getHighestAccess() {
 
 // TODO fix external memory access taking longer than internal access - this
 // isn't a precise emulation of memory speed.
-BYTE Memory::getByte(WORD32 addr) {
-	BYTE b;
+BYTE8 Memory::getByte(WORD32 addr) {
+	BYTE8 b;
 	if (addr >= InternalMemStart && addr <= myMemEnd) {
 		myCurrentCycles += 1;
 		if (addr > myHighestAccess) {
@@ -180,8 +180,8 @@ BYTE Memory::getByte(WORD32 addr) {
 	return b;
 }
 
-BYTE Memory::getInstruction(WORD32 addr) {
-	BYTE b;
+BYTE8 Memory::getInstruction(WORD32 addr) {
+	BYTE8 b;
 	if (addr >= InternalMemStart && addr <= myMemEnd) {
 		myCurrentCycles += 1;
 		if (addr > myHighestAccess) {
@@ -210,7 +210,7 @@ BYTE Memory::getInstruction(WORD32 addr) {
 	return b;
 }
 
-void Memory::setByte(WORD32 addr, BYTE value) {
+void Memory::setByte(WORD32 addr, BYTE8 value) {
 	if (addr >= InternalMemStart && addr <= myMemEnd) {
 		myCurrentCycles += 1;
 		if (addr > myHighestAccess) {
@@ -238,7 +238,7 @@ void Memory::setByte(WORD32 addr, BYTE value) {
 }
 
 WORD32 Memory::getWord(WORD32 addr) {
-	BYTE *b;
+	BYTE8 *b;
 	WORD32 w;
 	if (addr >= InternalMemStart && addr <= myMemEnd) {
 		myCurrentCycles += 1;
@@ -277,7 +277,7 @@ WORD32 Memory::getWord(WORD32 addr) {
 }
 
 void Memory::setWord(WORD32 addr, WORD32 value) {
-	BYTE *b;
+	BYTE8 *b;
 	if (addr >= InternalMemStart && addr <= myMemEnd) {
 		myCurrentCycles += 1;
 		if (addr > myHighestAccess) {
@@ -358,7 +358,7 @@ void Memory::blockCopy(WORD32 len, WORD32 srcAddr, WORD32 destAddr) {
 	// Do copy in bytes
 	// TODO optimise for best native performance later
 	WORD32 sA, dA;
-	BYTE b;
+	BYTE8 b;
 	for (i = 0, sA = srcAddr, dA = destAddr; i < len; i++, sA++, dA++) {
 		// Read from source...
 		if (sA >= InternalMemStart && sA <= myMemEnd) {
@@ -426,7 +426,7 @@ WORD32 i;
 WORD32 offset=addr;
 SWORD32 left=len;
 SWORD32 upto16, x;
-BYTE b;
+BYTE8 b;
 	while (left > 0) {
 		for (i = 0; i < 78; i++) {
 			line[i] = ' ';
@@ -473,7 +473,7 @@ WORD32 i;
 WORD32 offset=addr;
 SWORD32 leftBytes=lenInBytes;
 SWORD32 upto4Words, x;
-BYTE *b;
+BYTE8 *b;
 WORD32 w;
 /*        1         2         3         4         5         6         7
 01234567890123456789012345678901234567890123456789012345678901234567890123456789
@@ -506,10 +506,10 @@ WORD32 w;
  					b = myReadOnlyMemory + (wordAddr - myROMStart);
 				} // must be one of those branches, since isLegalMemory is true.
 
-				BYTE b0 = b[0];
-				BYTE b1 = b[1];
-				BYTE b2 = b[2];
-				BYTE b3 = b[3];
+				BYTE8 b0 = b[0];
+				BYTE8 b1 = b[1];
+				BYTE8 b2 = b[2];
+				BYTE8 b3 = b[3];
 				w = (b3 << 24) | (b2 << 16) | (b1 << 8) | b0;
 #if defined(PLATFORM_WINDOWS)
 				sprintf_s(line + 11 + (9 * x), 8, "%08X", w);

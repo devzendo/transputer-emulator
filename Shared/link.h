@@ -37,8 +37,8 @@ public:
 	// asynchrony.
 	// For now, just to get data flowing from the Node Server,
 	// I'll use the synchronous forms.
-	virtual BYTE readByte(void) throw (exception) = 0;
-	virtual void writeByte(BYTE b) throw (exception) = 0;
+	virtual BYTE8 readByte(void) throw (exception) = 0;
+	virtual void writeByte(BYTE8 b) throw (exception) = 0;
 	WORD32 readWord(void) throw (exception);
 	void writeWord(WORD32 w) throw (exception);
 	virtual void resetLink(void) throw (exception) = 0;

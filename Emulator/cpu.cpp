@@ -214,9 +214,9 @@ WORD32 CPU::disassembleRange(WORD32 addr, WORD32 maxlen) {
 	line[0] = '\0';
 	sprintf(line, "%08X ", addr);
 	for (caddr = addr; caddr < addr + maxlen; caddr++) {
-		BYTE b = myMemory->getInstruction(caddr);
+		BYTE8 b = myMemory->getInstruction(caddr);
 		// Decode it
-		BYTE cInstruction = b & 0xf0;
+		BYTE8 cInstruction = b & 0xf0;
 		cOreg |= (b & 0x0f);
 		sprintf(misc, "%02X ", b);
 		strcat(line, misc); // TODO: fix potential BUFFER OVERFLOW
@@ -962,7 +962,7 @@ inline void CPU::interpret(void) {
 					break;
 
 				case O_sb: // store byte
-					myMemory->setByte(Areg, (BYTE)Breg & 0xff);
+					myMemory->setByte(Areg, (BYTE8)Breg & 0xff);
    					InstCycles = 4;
 					break;
 
@@ -989,13 +989,13 @@ inline void CPU::interpret(void) {
 									// The outbyte got to the rendezvous
 									// first.. Store Areg in the workspace
 									// temporary variable...
-									myMemory->setByte(W_TEMP(Wdesc), (BYTE)Areg & 0xff);
+									myMemory->setByte(W_TEMP(Wdesc), (BYTE8)Areg & 0xff);
 									myMemory->setWord(W_POINTER(Wdesc), Wdesc_WPtr(Wdesc));
 									myMemory->setWord(Breg, Wdesc);
 									SET_FLAGS(EmulatorState_DescheduleRequired);
 								} else {
 									// The in got to the rendezvos first
-									myMemory->setByte(myMemory->getWord(W_POINTER(WorkSpace)), (BYTE)Areg & 0xff);
+									myMemory->setByte(myMemory->getWord(W_POINTER(WorkSpace)), (BYTE8)Areg & 0xff);
 									myMemory->setWord(Breg, NotProcess_p);
 									// Schedule the process at WorkSpace
 									ScheduleWdesc = WorkSpace;
@@ -1006,7 +1006,7 @@ inline void CPU::interpret(void) {
 						// Now handle output to real links
 						if (myLink != NULL) {
 							try {
-								myLink->writeByte((BYTE)Areg & 0xff);
+								myLink->writeByte((BYTE8)Areg & 0xff);
 							} catch (exception &e) {
 								logErrorF("outbyte failed to write byte to link %d: %s", myLink->getLinkNo(), e.what());
 								SET_FLAGS(EmulatorState_Terminate);
@@ -2002,7 +2002,7 @@ void CPU::bootFromLink0() {
 	// 'poke': 0 => read address word, data word, store data word at address
 	// 'peek': 1 => read word, output word at that address
 	// 'boot': x where x>1, x is the length of boot code to read into MemStart onwards
-	BYTE ctrl = 0;
+	BYTE8 ctrl = 0;
 	do {
 		try {
 			ctrl = bootLink->readByte();
@@ -2050,7 +2050,7 @@ void CPU::bootFromLink0() {
 						}
 						WORD32 addr = MemStart;
 						for (int i = 0; i < ctrl; i++) {
-							BYTE value = bootLink->readByte();
+							BYTE8 value = bootLink->readByte();
 							// addr is going to be valid, always. There's always at least
 							// 0xff bytes of memory after MemStart.
 							myMemory->setByte(addr++, value);

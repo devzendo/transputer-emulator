@@ -132,9 +132,9 @@ FIFOLink::~FIFOLink() {
     }
 }
 
-BYTE FIFOLink::readByte() throw (exception) {
+BYTE8 FIFOLink::readByte() throw (exception) {
 	static char msgbuf[255];
-	BYTE buf;
+	BYTE8 buf;
 	if (read(myReadFD, &buf, 1) == 1) {
 		if (bDebug) {
 			logDebugF("Link %d R #%08X %02X (%c)", myLinkNo, myReadSequence++, buf, isprint(buf) ? buf : '.');
@@ -146,9 +146,9 @@ BYTE FIFOLink::readByte() throw (exception) {
 	throw runtime_error(msgbuf);
 }
 
-void FIFOLink::writeByte(BYTE buf) throw (exception) {
+void FIFOLink::writeByte(BYTE8 buf) throw (exception) {
 	static char msgbuf[255];
-	BYTE bufstore = buf;
+	BYTE8 bufstore = buf;
 	if (bDebug) {
 		logDebugF("Link %d W #%08X %02X (%c)", myLinkNo, myWriteSequence++, buf, isprint(buf) ? buf : '.');
 	}

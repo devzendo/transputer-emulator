@@ -55,11 +55,11 @@ class CPU {
 		WORD32 LoClockLastQuantumExpiry; // When the last expiry occurred
 		WORD32 QuantumRemaining; // How long this low-priority process has left
 		// Interpretation decode
-		BYTE CurrInstruction; // Currently fetched byte during instruction decode
+		BYTE8 CurrInstruction; // Currently fetched byte during instruction decode
 		WORD32 Instruction,InstCycles,MemCycles; // Opcode storage, cycle counters
 		WORD32 InstructionStartIPtr; // Start of instruction, for disassembly
 		// Bootstrap storage
-		BYTE bootLen;
+		BYTE8 bootLen;
 		// Monitor usage
 		WORD32 CurrDataAddress;
 		WORD32 CurrDataLen;

@@ -19,7 +19,7 @@
 
 static char hexdigs[]="0123456789abcdef";
 
-void hexdump(BYTE *buf, WORD32 len)
+void hexdump(BYTE8 *buf, WORD32 len)
 {
 const int lineLen = 80;
 char line[lineLen];
@@ -27,7 +27,7 @@ WORD32 i;
 WORD32 offset=0;
 WORD32 left=len;
 WORD32 upto16, x;
-BYTE b;
+BYTE8 b;
 	while (left > 0) {
 		for (i = 0; i < 78; i++) {
 			line[i] = ' ';

@@ -49,8 +49,8 @@ public:
     void setDebug(bool newDebug);
 
     virtual bool isCharAvailable() = 0;
-    virtual BYTE getChar() = 0;
-    virtual void putChar(BYTE const ch) = 0;
+    virtual BYTE8 getChar() = 0;
+    virtual void putChar(BYTE8 const ch) = 0;
 
     virtual WORD32 getTimeMillis() = 0;
     virtual UTCTime getUTCTime() = 0;

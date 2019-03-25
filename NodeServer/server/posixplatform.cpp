@@ -60,7 +60,7 @@ POSIXPlatform::~POSIXPlatform() {
 }
 
 bool POSIXPlatform::isCharAvailable() {
-    BYTE ready = 0;
+    BYTE8 ready = 0;
     for (;;) {
         FD_ZERO(&stdinfdset);
         FD_SET(stdinfd, &stdinfdset);
@@ -85,13 +85,13 @@ bool POSIXPlatform::isCharAvailable() {
     return ready;
 }
 
-BYTE POSIXPlatform::getChar() {
-    BYTE inChar;
+BYTE8 POSIXPlatform::getChar() {
+    BYTE8 inChar;
     read(stdinfd, &inChar, 1);
     return inChar;
 }
 
-void POSIXPlatform::putChar(BYTE const ch) {
+void POSIXPlatform::putChar(BYTE8 const ch) {
     // TODO might be better to setvbuf on stdout, and undo this on terminate. Write there?
     fputc(ch, stderr);
 }

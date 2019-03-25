@@ -25,8 +25,8 @@ public:
 	FIFOLink(int linkNo, bool isServer);
 	void initialise(void) throw (exception);
 	~FIFOLink(void);
-	BYTE readByte(void) throw (exception);
-	void writeByte(BYTE b) throw (exception);
+	BYTE8 readByte(void) throw (exception);
+	void writeByte(BYTE8 b) throw (exception);
 	void resetLink(void) throw (exception);
 private:
 	int myWriteFD, myReadFD;
