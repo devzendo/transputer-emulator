@@ -82,7 +82,7 @@ void NamedPipeLink::initialise(void) throw (exception) {
         sprintf_s(msgbuf, "Could not create/open read named pipe: Error %d", GetLastError());
         throw runtime_error(msgbuf);
     }
-    logDebugF("Read named pipe created; handle 0x%08x", myReadHandle);
+    logDebug("Read named pipe created");
 
 
 
@@ -120,7 +120,7 @@ void NamedPipeLink::initialise(void) throw (exception) {
         sprintf_s(msgbuf, "Could not create/open write named pipe: Error %d", GetLastError());
         throw runtime_error(msgbuf);
     }
-    logDebugF("Write named pipe created; handle 0x%08x", myWriteHandle);
+    logDebug("Write named pipe created");
 }
 
 NamedPipeLink::~NamedPipeLink() {
@@ -190,11 +190,11 @@ BYTE NamedPipeLink::readByte() throw (exception) {
     {
         if (GetLastError() == ERROR_BROKEN_PIPE)
         {
-            sprintf_s(msgbuf, "Could not read a byte from named pipe 0x%08x: Client disconnected/Broken Pipe", myReadHandle);
+            sprintf_s(msgbuf, "Could not read a byte from named pipe %s: Client disconnected/Broken Pipe", myReadPipeName);
         }
         else
         {
-            sprintf_s(msgbuf, "Could not read a byte from named pipe 0x%08x: Miscellaneous error %d", myReadHandle, GetLastError());
+            sprintf_s(msgbuf, "Could not read a byte from named pipe %s: Miscellaneous error %d", myReadPipeName, GetLastError());
         }
         logWarn(msgbuf);
         throw runtime_error(msgbuf);
@@ -227,7 +227,7 @@ void NamedPipeLink::writeByte(BYTE buf) throw (exception) {
 
     if (!fSuccess)
     {
-        sprintf_s(msgbuf, "Could not write a byte to named pipe 0x%08x: Miscellaneous error %d", myWriteHandle, GetLastError());
+        sprintf_s(msgbuf, "Could not write a byte to named pipe %s: Miscellaneous error %d", myWritePipeName, GetLastError());
         logWarn(msgbuf);
         throw runtime_error(msgbuf);
     }
