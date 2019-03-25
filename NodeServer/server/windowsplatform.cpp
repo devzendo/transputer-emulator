@@ -32,15 +32,15 @@ WindowsPlatform::~WindowsPlatform() {
     logDebug("Destroying Windows platform");
 }
 
-bool WindowsPlatform::isCharAvailable() {
+bool WindowsPlatform::isConsoleCharAvailable() {
     return false;
 }
 
-BYTE WindowsPlatform::getChar() {
+BYTE WindowsPlatform::getConsoleChar() {
     return 0;
 }
 
-void WindowsPlatform::putChar(BYTE const ch) {
+void WindowsPlatform::putConsoleChar(BYTE const ch) {
     // TODO is there a setvbuf for windows??
     // TODO might be better to setvbuf on stdout, and undo this on terminate. Write there?
     fputc(ch, stderr);
