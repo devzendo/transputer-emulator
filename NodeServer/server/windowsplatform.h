@@ -26,8 +26,8 @@ public:
     ~WindowsPlatform(void);
 
     bool isCharAvailable();
-    BYTE getChar();
-    void putChar(BYTE const ch);
+    BYTE8 getChar();
+    void putChar(BYTE8 const ch);
 
     WORD32 getTimeMillis();
     UTCTime getUTCTime();
