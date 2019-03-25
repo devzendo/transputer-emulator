@@ -36,11 +36,11 @@ bool WindowsPlatform::isConsoleCharAvailable() {
     return false;
 }
 
-BYTE WindowsPlatform::getConsoleChar() {
+BYTE8 WindowsPlatform::getConsoleChar() {
     return 0;
 }
 
-void WindowsPlatform::putConsoleChar(BYTE const ch) {
+void WindowsPlatform::putConsoleChar(BYTE8 const ch) {
     // TODO is there a setvbuf for windows??
     // TODO might be better to setvbuf on stdout, and undo this on terminate. Write there?
     fputc(ch, stderr);
