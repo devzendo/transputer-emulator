@@ -15,7 +15,6 @@
 #define _PLATFORM_H
 
 #include <exception>
-using namespace std;
 
 #include "platformdetection.h"
 #include "types.h"

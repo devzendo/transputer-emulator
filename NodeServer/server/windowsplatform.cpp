@@ -15,7 +15,6 @@
 #include <stdexcept>
 // Thank you https://stackoverflow.com/questions/49001326/convert-the-linux-open-read-write-close-functions-to-work-on-windows
 #include <io.h>
-using namespace std;
 #include "types.h"
 #include "constants.h"
 #include "platform.h"

@@ -15,7 +15,6 @@
 #define _WINDOWSPLATFORM_H
 
 #include <exception>
-using namespace std;
 
 #include "types.h"
 #include "platform.h"
