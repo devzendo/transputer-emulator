@@ -173,7 +173,7 @@ void handleNodeServerProtocol(void) {
 					if (debugLink) {
 						logDebugF("CONSOLE_PUT_CHAR %02X '%c'", ch, isprint(ch) ? ch : '.');
 					}
-                    myPlatform->putChar(ch);
+				myPlatform->putConsoleChar(ch);
 				}
 				break;
 			case CONSOLE_PUT_PSTR: {
@@ -186,7 +186,7 @@ void handleNodeServerProtocol(void) {
 					}
 					for (int i = 0; i < len; i++) {
 					    // TODO optimise this with a putString
-						myPlatform->putChar(msgbuf[i]);
+						myPlatform->putConsoleChar(msgbuf[i]);
 					}
 				}
 				break;
@@ -207,7 +207,7 @@ void handleNodeServerProtocol(void) {
 					}
 					for (WORD32 j = 0; j < len; j++) {
                         // TODO optimise this with a putString
-                        myPlatform->putChar(msgbuf[j]);
+						myPlatform->putConsoleChar(msgbuf[j]);
 					}
 				}
 				break;
@@ -221,7 +221,7 @@ void handleNodeServerProtocol(void) {
 					if (debugLink) {
 						logDebug("CONSOLE_GET_AVAILABLE");
 					}
-					bool ready = myPlatform->isCharAvailable();
+					bool ready = myPlatform->isConsoleCharAvailable();
 					myLink->writeByte(ready ? 1 : 0);
 				}
 				break;
@@ -229,7 +229,7 @@ void handleNodeServerProtocol(void) {
 					if (debugLink) {
 						logDebug("CONSOLE_GET_CHAR");
 					}
-					BYTE8 inChar = myPlatform->getChar();
+					BYTE8 inChar = myPlatform->getConsoleChar();
 					myLink->writeByte(inChar); // TODO fix when we have a framebuffer
 				}
 				break;

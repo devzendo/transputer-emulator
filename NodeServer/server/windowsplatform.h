@@ -25,9 +25,9 @@ public:
     void initialise(void) throw (exception);
     ~WindowsPlatform(void);
 
-    bool isCharAvailable();
-    BYTE8 getChar();
-    void putChar(BYTE8 const ch);
+    bool isConsoleCharAvailable();
+    BYTE8 getConsoleChar();
+    void putConsoleChar(BYTE8 const ch);
 
     WORD32 getTimeMillis();
     UTCTime getUTCTime();

@@ -59,7 +59,7 @@ POSIXPlatform::~POSIXPlatform() {
     tcsetattr(stdinfd, TCSANOW, &origterm);
 }
 
-bool POSIXPlatform::isCharAvailable() {
+bool POSIXPlatform::isConsoleCharAvailable() {
     BYTE8 ready = 0;
     for (;;) {
         FD_ZERO(&stdinfdset);
@@ -69,7 +69,7 @@ bool POSIXPlatform::isCharAvailable() {
             if (errno == EINTR) {
                 continue; // try again
             }
-            logWarnF("isCharAvailable select failed: %s", strerror(errno));
+            logWarnF("isConsoleCharAvailable select failed: %s", strerror(errno));
             break;
         }
         if (fds == 0) {
@@ -79,19 +79,19 @@ bool POSIXPlatform::isCharAvailable() {
             ready = 1;
             break;
         }
-        logWarnF("isCharAvailable select returned %d", fds);
+        logWarnF("isConsoleCharAvailable select returned %d", fds);
         break;
     }
     return ready;
 }
 
-BYTE8 POSIXPlatform::getChar() {
+BYTE8 POSIXPlatform::getConsoleChar() {
     BYTE8 inChar;
     read(stdinfd, &inChar, 1);
     return inChar;
 }
 
-void POSIXPlatform::putChar(BYTE8 const ch) {
+void POSIXPlatform::putConsoleChar(const BYTE8 ch) {
     // TODO might be better to setvbuf on stdout, and undo this on terminate. Write there?
     fputc(ch, stderr);
 }

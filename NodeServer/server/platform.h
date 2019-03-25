@@ -47,9 +47,9 @@ public:
     virtual ~Platform(void);
     void setDebug(bool newDebug);
 
-    virtual bool isCharAvailable() = 0;
-    virtual BYTE8 getChar() = 0;
-    virtual void putChar(BYTE8 const ch) = 0;
+    virtual bool isConsoleCharAvailable() = 0;
+    virtual BYTE8 getConsoleChar() = 0;
+    virtual void putConsoleChar(const BYTE8 ch) = 0;
 
     virtual WORD32 getTimeMillis() = 0;
     virtual UTCTime getUTCTime() = 0;

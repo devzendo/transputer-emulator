@@ -30,9 +30,9 @@ public:
     void initialise(void) throw (exception);
     ~POSIXPlatform(void);
 
-    bool isCharAvailable();
-    BYTE8 getChar();
-    void putChar(BYTE8 const ch);
+    bool isConsoleCharAvailable();
+    BYTE8 getConsoleChar();
+    void putConsoleChar(const BYTE8 ch);
 
     WORD32 getTimeMillis();
     UTCTime getUTCTime();
