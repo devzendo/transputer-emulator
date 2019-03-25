@@ -12,7 +12,6 @@
 //------------------------------------------------------------------------------
 
 #include <exception>
-using namespace std;
 
 #include "types.h"
 #include "constants.h"
@@ -30,7 +29,7 @@ Link::~Link(void) {
 	logDebugF("Destroying link %d", myLinkNo);
 }
 
-WORD32 Link::readWord(void) throw (exception) {
+WORD32 Link::readWord(void) throw (std::exception) {
 	// Input a little-endian word, LSB first MSB last
 	return (readByte()) |
 		  (readByte() << 8) |
@@ -38,7 +37,7 @@ WORD32 Link::readWord(void) throw (exception) {
 		  (readByte() << 24);
 }
 
-void Link::writeWord(WORD32 w) throw (exception) {
+void Link::writeWord(WORD32 w) throw (std::exception) {
 	// Always output as a little-endian word, LSB first MSB last
 	writeByte(w & 0x000000ff);
 	writeByte((w & 0x0000ff00) >> 8);

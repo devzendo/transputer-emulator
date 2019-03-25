@@ -16,7 +16,6 @@
 #include <windows.h>
 #include <winbase.h>
 #include <fileapi.h>
-using namespace std;
 
 #include "platformdetection.h"
 
@@ -42,7 +41,7 @@ NamedPipeLink::NamedPipeLink(int linkNo, bool isServer) : Link(linkNo, isServer)
     myWritePipeName[0] = '\0';
 }
 
-void NamedPipeLink::initialise(void) throw (exception) {
+void NamedPipeLink::initialise(void) throw (std::exception) {
 	static char msgbuf[255];
 
 	// Filenames are relative to the CPU client.
@@ -80,7 +79,7 @@ void NamedPipeLink::initialise(void) throw (exception) {
 
     if (myReadHandle == INVALID_HANDLE_VALUE) {
         sprintf_s(msgbuf, "Could not create/open read named pipe: Error %d", GetLastError());
-        throw runtime_error(msgbuf);
+        throw std::runtime_error(msgbuf);
     }
     logDebug("Read named pipe created");
 
@@ -118,7 +117,7 @@ void NamedPipeLink::initialise(void) throw (exception) {
 
     if (myWriteHandle == INVALID_HANDLE_VALUE) {
         sprintf_s(msgbuf, "Could not create/open write named pipe: Error %d", GetLastError());
-        throw runtime_error(msgbuf);
+        throw std::runtime_error(msgbuf);
     }
     logDebug("Write named pipe created");
 }
@@ -149,7 +148,7 @@ NamedPipeLink::~NamedPipeLink() {
 	}
 }
 
-void NamedPipeLink::connect(void) throw (exception) {
+void NamedPipeLink::connect(void) throw (std::exception) {
     if (myConnected) {
         return;
     }
@@ -163,7 +162,7 @@ void NamedPipeLink::connect(void) throw (exception) {
             logDebug("Connected");
         } else {
             logWarnF("Failed to connect to pipe %s", myReadPipeName);
-            throw runtime_error("Failed to connect to pipe");
+            throw std::runtime_error("Failed to connect to pipe");
         }
     } else {
     }
@@ -171,7 +170,7 @@ void NamedPipeLink::connect(void) throw (exception) {
     myConnected = true;
 }
 
-BYTE NamedPipeLink::readByte() throw (exception) {
+BYTE NamedPipeLink::readByte() throw (std::exception) {
     static char msgbuf[255];
     BYTE buf;
     DWORD cbBytesRead = 0, cbReplyBytes = 0, cbWritten = 0;
@@ -197,7 +196,7 @@ BYTE NamedPipeLink::readByte() throw (exception) {
             sprintf_s(msgbuf, "Could not read a byte from named pipe %s: Miscellaneous error %d", myReadPipeName, GetLastError());
         }
         logWarn(msgbuf);
-        throw runtime_error(msgbuf);
+        throw std::runtime_error(msgbuf);
     }
     if (bDebug) {
         logDebugF("Link %d R #%08X %02X (%c)", myLinkNo, myReadSequence++, buf, isprint(buf) ? buf : '.');
@@ -205,7 +204,7 @@ BYTE NamedPipeLink::readByte() throw (exception) {
     return buf;
 }
 
-void NamedPipeLink::writeByte(BYTE buf) throw (exception) {
+void NamedPipeLink::writeByte(BYTE buf) throw (std::exception) {
     static char msgbuf[255];
 
     BYTE bufstore = buf;
@@ -229,11 +228,11 @@ void NamedPipeLink::writeByte(BYTE buf) throw (exception) {
     {
         sprintf_s(msgbuf, "Could not write a byte to named pipe %s: Miscellaneous error %d", myWritePipeName, GetLastError());
         logWarn(msgbuf);
-        throw runtime_error(msgbuf);
+        throw std::runtime_error(msgbuf);
     }
 }
 
-void NamedPipeLink::resetLink(void) throw (exception) {
+void NamedPipeLink::resetLink(void) throw (std::exception) {
 	// TODO
 }
 

@@ -13,7 +13,6 @@
 
 #include <exception>
 #include <stdexcept>
-using namespace std;
 #include <sys/types.h>
 #include <sys/stat.h>
 
@@ -38,7 +37,7 @@ FIFOLink::FIFOLink(int linkNo, bool isServer) : Link(linkNo, isServer) {
 	myWriteSequence = myReadSequence = 0;
 }
 
-void FIFOLink::initialise(void) throw (exception) {
+void FIFOLink::initialise(void) throw (std::exception) {
 	static char msgbuf[255];
 	struct stat st;
 	// Filenames are relative to the CPU client.
@@ -50,16 +49,16 @@ void FIFOLink::initialise(void) throw (exception) {
 		// make the fifo
 		if (mkfifo(myReadFifoName, 0600) == -1) {
 			sprintf(msgbuf, "Could not create read FIFO %s: %s", myReadFifoName, strerror(errno));
-			throw runtime_error(msgbuf);
+			throw std::runtime_error(msgbuf);
 		}
 		if (stat(myReadFifoName, &st) == -1) {
 			sprintf(msgbuf, "Could not obtain details of read FIFO %s: %s", myReadFifoName, strerror(errno));
-			throw runtime_error(msgbuf);
+			throw std::runtime_error(msgbuf);
 		}
 	}
 	if (!S_ISFIFO(st.st_mode)) {
 		sprintf(msgbuf, "Read FIFO file %s is not a FIFO", myReadFifoName);
-		throw runtime_error(msgbuf);
+		throw std::runtime_error(msgbuf);
 	}
 	// WRITE FIFO
 	sprintf(myWriteFifoName, "/tmp/t800emul-write-%d", myLinkNo);
@@ -67,16 +66,16 @@ void FIFOLink::initialise(void) throw (exception) {
 		// make the fifo
 		if (mkfifo(myWriteFifoName, 0600) == -1) {
 			sprintf(msgbuf, "Could not create write FIFO %s: %s", myWriteFifoName, strerror(errno));
-			throw runtime_error(msgbuf);
+			throw std::runtime_error(msgbuf);
 		}
 		if (stat(myWriteFifoName, &st) == -1) {
 			sprintf(msgbuf, "Could not obtain details of write FIFO %s: %s", myWriteFifoName, strerror(errno));
-			throw runtime_error(msgbuf);
+			throw std::runtime_error(msgbuf);
 		}
 	}
 	if (!S_ISFIFO(st.st_mode)) {
 		sprintf(msgbuf, "Write FIFO file %s is not a FIFO", myWriteFifoName);
-		throw runtime_error(msgbuf);
+		throw std::runtime_error(msgbuf);
 	}
 	// Now open the FIFOs, using the FDs that will be used appropriately
 	// for read/write given that the user is a server/CPU client.
@@ -87,26 +86,26 @@ void FIFOLink::initialise(void) throw (exception) {
 		myWriteFD = open(myReadFifoName, O_RDWR);
 		if (myWriteFD == -1) {
 			sprintf(msgbuf, "Could not open write FIFO %s: %s", myReadFifoName, strerror(errno));
-			throw runtime_error(msgbuf);
+			throw std::runtime_error(msgbuf);
 		}
 		logDebugF("Opening %s read-only", myWriteFifoName);
 		myReadFD = open(myWriteFifoName, O_RDWR);
 		if (myReadFD == -1) {
 			sprintf(msgbuf, "Could not open read FIFO %s: %s", myWriteFifoName, strerror(errno));
-			throw runtime_error(msgbuf);
+			throw std::runtime_error(msgbuf);
 		}
 	} else {
 		logDebugF("Opening %s read-only", myReadFifoName);
 		myReadFD = open(myReadFifoName, O_RDWR);
 		if (myReadFD == -1) {
 			sprintf(msgbuf, "Could not open read FIFO %s: %s", myReadFifoName, strerror(errno));
-			throw runtime_error(msgbuf);
+			throw std::runtime_error(msgbuf);
 		}
 		logDebugF("Opening %s write-only", myWriteFifoName);
 		myWriteFD = open(myWriteFifoName, O_RDWR);
 		if (myWriteFD == -1) {
 			sprintf(msgbuf, "Could not open write FIFO %s: %s", myWriteFifoName, strerror(errno));
-			throw runtime_error(msgbuf);
+			throw std::runtime_error(msgbuf);
 		}
 	}
 }
@@ -132,7 +131,7 @@ FIFOLink::~FIFOLink() {
     }
 }
 
-BYTE8 FIFOLink::readByte() throw (exception) {
+BYTE8 FIFOLink::readByte() throw (std::exception) {
 	static char msgbuf[255];
 	BYTE8 buf;
 	if (read(myReadFD, &buf, 1) == 1) {
@@ -143,10 +142,10 @@ BYTE8 FIFOLink::readByte() throw (exception) {
 	}
 	sprintf(msgbuf, "Could not read a byte from FIFO FD#%d: %s", myReadFD, strerror(errno));
 	logWarn(msgbuf);
-	throw runtime_error(msgbuf);
+	throw std::runtime_error(msgbuf);
 }
 
-void FIFOLink::writeByte(BYTE8 buf) throw (exception) {
+void FIFOLink::writeByte(BYTE8 buf) throw (std::exception) {
 	static char msgbuf[255];
 	BYTE8 bufstore = buf;
 	if (bDebug) {
@@ -156,10 +155,10 @@ void FIFOLink::writeByte(BYTE8 buf) throw (exception) {
 		return;
 	}
 	sprintf(msgbuf, "Could not write a byte to FIFO FD#%d: %s", myWriteFD, strerror(errno));
-	throw runtime_error(msgbuf);
+	throw std::runtime_error(msgbuf);
 }
 
-void FIFOLink::resetLink(void) throw (exception) {
+void FIFOLink::resetLink(void) throw (std::exception) {
 	// TODO
 }
 

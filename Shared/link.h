@@ -15,7 +15,6 @@
 #define _LINK_H
 
 #include <exception>
-using namespace std;
 
 #include "platformdetection.h"
 #include "types.h"
@@ -28,7 +27,7 @@ using namespace std;
 class Link {
 public:
 	Link(int linkNo, bool isServer);
-	virtual void initialise(void) throw (exception) = 0;
+	virtual void initialise(void) throw (std::exception) = 0;
 	virtual ~Link(void);
 	// TODO may need buffer-centric versions of these, and
 	// these are entirely synchronous. to prevent blocking I/O
@@ -37,11 +36,11 @@ public:
 	// asynchrony.
 	// For now, just to get data flowing from the Node Server,
 	// I'll use the synchronous forms.
-	virtual BYTE8 readByte(void) throw (exception) = 0;
-	virtual void writeByte(BYTE8 b) throw (exception) = 0;
-	WORD32 readWord(void) throw (exception);
-	void writeWord(WORD32 w) throw (exception);
-	virtual void resetLink(void) throw (exception) = 0;
+	virtual BYTE8 readByte(void) throw (std::exception) = 0;
+	virtual void writeByte(BYTE8 b) throw (std::exception) = 0;
+	WORD32 readWord(void) throw (std::exception);
+	void writeWord(WORD32 w) throw (std::exception);
+	virtual void resetLink(void) throw (std::exception) = 0;
 	int getLinkNo(void);
 	void setDebug(bool newDebug);
 protected:
