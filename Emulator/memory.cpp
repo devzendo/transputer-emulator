@@ -145,7 +145,7 @@ WORD32 Memory::getMemEnd() {
 int Memory::getMemSize() {
 	return mySize;
 }
-int Memory::getHighestAccess() {
+WORD32 Memory::getHighestAccess() {
 	return myHighestAccess;
 }
 

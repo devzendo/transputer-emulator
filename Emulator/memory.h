@@ -24,7 +24,7 @@ class Memory {
 		~Memory();
 		WORD32 getMemEnd();
 		int getMemSize();
-		int getHighestAccess();
+		WORD32 getHighestAccess();
 		BYTE8 getByte(WORD32 addr);
 		BYTE8 getInstruction(WORD32 addr);
 		void setByte(WORD32 addr, BYTE8 value);
@@ -41,7 +41,7 @@ class Memory {
 		BYTE8 *myMemory;
 		int mySize;
 		WORD32 myMemEnd;
-		int myHighestAccess;
+		WORD32 myHighestAccess;
 		//=(InternalMemStart + MemSize);
 		void resetMemory();
 		int myCurrentCycles;
