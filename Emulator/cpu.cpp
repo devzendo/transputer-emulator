@@ -212,14 +212,22 @@ WORD32 CPU::disassembleRange(WORD32 addr, WORD32 maxlen) {
 	WORD32 oprStart = addr;
 	int i;
 	line[0] = '\0';
-	sprintf(line, "%08X ", addr);
+#if defined(PLATFORM_WINDOWS)
+    sprintf_s(line, 256, "%08X ", addr);
+#elif defined(PLATFORM_OSX) || defined(PLATFORM_LINUX)
+    sprintf(line, "%08X ", addr);
+#endif
 	for (caddr = addr; caddr < addr + maxlen; caddr++) {
 		BYTE8 b = myMemory->getInstruction(caddr);
 		// Decode it
 		BYTE8 cInstruction = b & 0xf0;
 		cOreg |= (b & 0x0f);
-		sprintf(misc, "%02X ", b);
-		strcat(line, misc); // TODO: fix potential BUFFER OVERFLOW
+#if defined(PLATFORM_WINDOWS)
+        sprintf_s(misc, 256, "%02X ", b);
+#elif defined(PLATFORM_OSX) || defined(PLATFORM_LINUX)
+        sprintf(misc, "%02X ", b);
+#endif
+        strcat(line, misc); // TODO: fix potential BUFFER OVERFLOW
 		clen++;
 		switch (cInstruction) {
 			case D_pfix:
@@ -248,8 +256,12 @@ WORD32 CPU::disassembleRange(WORD32 addr, WORD32 maxlen) {
 				logInfo(line);
 				// initialise for next op
 				oprStart = caddr + 1;
-				sprintf(line, "%08X ", oprStart);
-				cOreg = 0;
+#if defined(PLATFORM_WINDOWS)
+                sprintf_s(line, 256, "%08X ", oprStart);
+#elif defined(PLATFORM_OSX) || defined(PLATFORM_LINUX)
+                sprintf(line, "%08X ", oprStart);
+#endif
+                cOreg = 0;
 				retval += clen;
 				clen = 0;
 				break;
@@ -261,8 +273,12 @@ WORD32 CPU::disassembleRange(WORD32 addr, WORD32 maxlen) {
 				logInfo(line);
 				// initialise for next op
 				oprStart = caddr + 1;
-				sprintf(line, "%08X ", oprStart);
-				cOreg = 0;
+#if defined(PLATFORM_WINDOWS)
+                sprintf_s(line, 256, "%08X ", oprStart);
+#elif defined(PLATFORM_OSX) || defined(PLATFORM_LINUX)
+                sprintf(line, "%08X ", oprStart);
+#endif
+                cOreg = 0;
 				retval += clen;
 				clen = 0;
 				break;
