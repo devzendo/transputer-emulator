@@ -224,10 +224,11 @@ WORD32 CPU::disassembleRange(WORD32 addr, WORD32 maxlen) {
 		cOreg |= (b & 0x0f);
 #if defined(PLATFORM_WINDOWS)
         sprintf_s(misc, 256, "%02X ", b);
+		strcat_s(line, 256, misc); // TODO: fix potential BUFFER OVERFLOW
 #elif defined(PLATFORM_OSX) || defined(PLATFORM_LINUX)
         sprintf(misc, "%02X ", b);
+		strcat(line, misc); // TODO: fix potential BUFFER OVERFLOW
 #endif
-        strcat(line, misc); // TODO: fix potential BUFFER OVERFLOW
 		clen++;
 		switch (cInstruction) {
 			case D_pfix:
@@ -249,10 +250,17 @@ WORD32 CPU::disassembleRange(WORD32 addr, WORD32 maxlen) {
 				// cInstruction is fpentry, and Areg codes for
 				// a floating point instruction. So just say 0,
 				// for Areg, and this'll cause ?fp? to be used.
+#if defined(PLATFORM_WINDOWS)
+				for (i = 0; i < 8 - clen; i++) {
+					strcat_s(line, 256, "   ");
+				}
+				strcat_s(line, 256, disassembleIndirectOperation(cOreg, 0)); // TODO: fix potential BUFFER OVERFLOW
+#elif defined(PLATFORM_OSX) || defined(PLATFORM_LINUX)
 				for (i = 0; i < 8 - clen; i++) {
 					strcat(line, "   ");
 				}
 				strcat(line, disassembleIndirectOperation(cOreg, 0)); // TODO: fix potential BUFFER OVERFLOW
+#endif
 				logInfo(line);
 				// initialise for next op
 				oprStart = caddr + 1;
@@ -266,10 +274,17 @@ WORD32 CPU::disassembleRange(WORD32 addr, WORD32 maxlen) {
 				clen = 0;
 				break;
 			default: // another direct instruction
+#if defined(PLATFORM_WINDOWS)
+				for (i = 0; i < 8 - clen; i++) {
+					strcat_s(line, 256, "   ");
+				}
+				strcat_s(line, 256, disassembleDirectOperation(cInstruction, cOreg)); // TODO: fix potential BUFFER OVERFLOW
+#elif defined(PLATFORM_OSX) || defined(PLATFORM_LINUX)
 				for (i = 0; i < 8 - clen; i++) {
 					strcat(line, "   ");
 				}
 				strcat(line, disassembleDirectOperation(cInstruction, cOreg)); // TODO: fix potential BUFFER OVERFLOW
+#endif
 				logInfo(line);
 				// initialise for next op
 				oprStart = caddr + 1;

@@ -459,9 +459,17 @@ char *disassembleIndirectOperation(WORD32 Oreg, WORD32 Areg) {
 			sprintf_s(buf, 255, " (fpentry A=#%08X) ", Areg);
 #endif
 		} else {
-			strcat(buf," ");
+#if defined(PLATFORM_OSX) || defined(PLATFORM_LINUX)
+			strcat(buf, " ");
+#elif defined(PLATFORM_WINDOWS)
+			strcat_s(buf, 255, " ");
+#endif
         }
     }
+#if defined(PLATFORM_OSX) || defined(PLATFORM_LINUX)
 	strcat(buf, disassembleIndirectInstName(Oreg, Areg));
+#elif defined(PLATFORM_WINDOWS)
+	strcat_s(buf, 255, disassembleIndirectInstName(Oreg, Areg));
+#endif
 	return buf;
 }
