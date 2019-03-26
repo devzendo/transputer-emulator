@@ -22,7 +22,7 @@ class Memory {
 		Memory();
 		bool initialise(long initialRAMSize, const char *romFileName);
 		~Memory();
-		int getMemEnd();
+		WORD32 getMemEnd();
 		int getMemSize();
 		int getHighestAccess();
 		BYTE8 getByte(WORD32 addr);
@@ -40,7 +40,7 @@ class Memory {
 		bool loadROMFile(const char *romFileName);
 		BYTE8 *myMemory;
 		int mySize;
-		int myMemEnd;
+		WORD32 myMemEnd;
 		int myHighestAccess;
 		//=(InternalMemStart + MemSize);
 		void resetMemory();

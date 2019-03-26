@@ -138,7 +138,7 @@ Memory::~Memory() {
 	}
 }
 
-int Memory::getMemEnd() {
+WORD32 Memory::getMemEnd() {
 	return myMemEnd;
 }
 
