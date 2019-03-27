@@ -210,7 +210,7 @@ WORD32 CPU::disassembleRange(WORD32 addr, WORD32 maxlen) {
 	WORD32 retval = 0;
 	WORD32 cOreg = 0;
 	WORD32 oprStart = addr;
-	int i;
+	WORD32 i;
 	line[0] = '\0';
 #if defined(PLATFORM_WINDOWS)
     sprintf_s(line, 256, "%08X ", addr);
@@ -377,7 +377,7 @@ void CPU::showBreakpointAddresses() {
 // Monitor. Return true to single step to next instruction; false to quit emulator or monitor (check flags).
 inline bool CPU::monitor(void) {
 	char instr[80];
-	int len;
+	size_t len;
 	WORD32 a1, a2;
 	// The instruction has just been disassembled, but we allow for
 	// other commands to be issued. Return exits the monitor,
@@ -428,7 +428,11 @@ inline bool CPU::monitor(void) {
 		} else if (strcmp(instr, "ci") == 0) {
 			disassembleCurrInstruction(LOGLEVEL_INFO);
 		} else if (strncmp("di", instr, 2) == 0) {
+#if defined(PLATFORM_WINDOWS)
+			if (sscanf_s(instr, "di %x %x", &a1, &a2) == 2) {
+#elif defined(PLATFORM_OSX) || defined(PLATFORM_LINUX)
 			if (sscanf(instr, "di %x %x", &a1, &a2) == 2) {
+#endif
 				CurrDisasmAddress = a1;
 				CurrDisasmLen = a2;
 			} else if (sscanf(instr, "di %x", &a1) == 1) {
@@ -436,7 +440,11 @@ inline bool CPU::monitor(void) {
 			}
 			CurrDisasmAddress += disassembleRange(CurrDisasmAddress, CurrDisasmLen);
 		} else if (strncmp("db", instr, 2) == 0) {
+#if defined(PLATFORM_WINDOWS)
+			if (sscanf_s(instr, "db %x %x", &a1, &a2) == 2) {
+#elif defined(PLATFORM_OSX) || defined(PLATFORM_LINUX)
 			if (sscanf(instr, "db %x %x", &a1, &a2) == 2) {
+#endif
 				CurrDataAddress = a1;
 				CurrDataLen = a2;
 			} else if (sscanf(instr, "db %x", &a1) == 1) {
@@ -446,7 +454,11 @@ inline bool CPU::monitor(void) {
 			myMemory->hexDump(CurrDataAddress, CurrDataLen);
 			CurrDataAddress += CurrDataLen;
 		} else if (strncmp("dw", instr, 2) == 0) {
+#if defined(PLATFORM_WINDOWS)
+			if (sscanf_s(instr, "dw %x %x", &a1, &a2) == 2) {
+#elif defined(PLATFORM_OSX) || defined(PLATFORM_LINUX)
 			if (sscanf(instr, "dw %x %x", &a1, &a2) == 2) {
+#endif
 				CurrDataAddress = a1;
 				CurrDataLen = a2;
 			} else if (sscanf(instr, "dw %x", &a1) == 1) {
@@ -457,7 +469,11 @@ inline bool CPU::monitor(void) {
 			CurrDataAddress += CurrDataLen;
         } else if (strncmp("w", instr, 1) == 0) {
             CurrDataAddress = Wdesc_WPtr(Wdesc);
+#if defined(PLATFORM_WINDOWS)
+			if (sscanf_s(instr, "w %x", &a1) == 1) {
+#elif defined(PLATFORM_OSX) || defined(PLATFORM_LINUX)
             if (sscanf(instr, "w %x", &a1) == 1) {
+#endif
                 CurrDataLen = a1 << 2;
             } else {
                 CurrDataLen = LastAjwInBytes;
@@ -466,15 +482,27 @@ inline bool CPU::monitor(void) {
         } else if (strncmp("b?", instr, 2) == 0) {
 		    showBreakpointAddresses();
 		} else if (strncmp("b+", instr, 2) == 0) {
+#if defined(PLATFORM_WINDOWS)
+			if (sscanf_s(instr, "b+ %x", &a1) == 1) {
+#elif defined(PLATFORM_OSX) || defined(PLATFORM_LINUX)
 			if (sscanf(instr, "b+ %x", &a1) == 1) {
+#endif
 				addBreakpoint(a1);
 			}
 		} else if (strncmp("b-", instr, 2) == 0) {
+#if defined(PLATFORM_WINDOWS)
+			if (sscanf_s(instr, "b- %x", &a1) == 1) {
+#elif defined(PLATFORM_OSX) || defined(PLATFORM_LINUX)
 			if (sscanf(instr, "b- %x", &a1) == 1) {
+#endif
 				removeBreakpoint(a1);
 			}
         } else if (strncmp("b", instr, 1) == 0) {
+#if defined(PLATFORM_WINDOWS)
+			if (sscanf_s(instr, "b %x", &a1) == 1) {
+#elif defined(PLATFORM_OSX) || defined(PLATFORM_LINUX)
 			if (sscanf(instr, "b %x", &a1) == 1) {
+#endif
 				addBreakpoint(a1);
 			} else {
 				showBreakpointAddresses();
