@@ -435,7 +435,11 @@ inline bool CPU::monitor(void) {
 #endif
 				CurrDisasmAddress = a1;
 				CurrDisasmLen = a2;
-			} else if (sscanf(instr, "di %x", &a1) == 1) {
+#if defined(PLATFORM_WINDOWS)
+			} else if (sscanf_s(instr, "di %x", &a1) == 1) {
+#elif defined(PLATFORM_OSX) || defined(PLATFORM_LINUX)
+            } else if (sscanf(instr, "di %x", &a1) == 1) {
+#endif
 				CurrDisasmAddress = a1;
 			}
 			CurrDisasmAddress += disassembleRange(CurrDisasmAddress, CurrDisasmLen);
@@ -447,7 +451,11 @@ inline bool CPU::monitor(void) {
 #endif
 				CurrDataAddress = a1;
 				CurrDataLen = a2;
-			} else if (sscanf(instr, "db %x", &a1) == 1) {
+#if defined(PLATFORM_WINDOWS)
+            } else if (sscanf_s(instr, "db %x", &a1) == 1) {
+#elif defined(PLATFORM_OSX) || defined(PLATFORM_LINUX)
+            } else if (sscanf(instr, "db %x", &a1) == 1) {
+#endif
 				CurrDataAddress = a1;
 			}
 			//logInfoF("db addr %08X len %08X", CurrDataAddress, CurrDataLen);
@@ -461,7 +469,11 @@ inline bool CPU::monitor(void) {
 #endif
 				CurrDataAddress = a1;
 				CurrDataLen = a2;
+#if defined(PLATFORM_WINDOWS)
+            } else if (sscanf_s(instr, "dw %x", &a1) == 1) {
+#elif defined(PLATFORM_OSX) || defined(PLATFORM_LINUX)
 			} else if (sscanf(instr, "dw %x", &a1) == 1) {
+#endif
 				CurrDataAddress = a1;
 			}
 			//logInfoF("dw addr %08X len %08X", CurrDataAddress, CurrDataLen);
