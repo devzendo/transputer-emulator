@@ -1256,6 +1256,7 @@ inline void CPU::interpret(void) {
 					break;
 
 				case O_cword: // check word
+					// warning C4146: unary minus operator applied to unsigned type, result still unsigned
 					if (( Breg >= Areg ) || ( Breg <= ( - Areg ) )) {
 						SET_FLAGS(EmulatorState_ErrorFlag);
 					}
