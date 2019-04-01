@@ -65,16 +65,6 @@ void NamedPipeLink::initialise(void) throw (std::exception) {
                 0,                        // client time-out
                 NULL);                    // default security attribute
     } else {
-        logDebugF("Client opening named pipe %s", myReadPipeName);
-        myReadHandle = CreateFile(
-                myReadPipeName, // pipe name
-                GENERIC_READ |  // read and write access
-                GENERIC_WRITE,
-                0,              // no sharing
-                NULL,           // default security attributes
-                OPEN_EXISTING,  // opens existing pipe
-                0,              // default attributes
-                NULL);          // no template file
     }
 
     if (myReadHandle == INVALID_HANDLE_VALUE) {
@@ -103,16 +93,6 @@ void NamedPipeLink::initialise(void) throw (std::exception) {
                 0,                        // client time-out
                 NULL);                    // default security attribute
     } else {
-        logDebugF("Client opening named pipe %s", myWritePipeName);
-        myWriteHandle = CreateFile(
-                myWritePipeName, // pipe name
-                GENERIC_READ |   // read and write access
-                GENERIC_WRITE,
-                0,               // no sharing
-                NULL,            // default security attributes
-                OPEN_EXISTING,   // opens existing pipe
-                0,               // default attributes
-                NULL);           // no template file
     }
 
     if (myWriteHandle == INVALID_HANDLE_VALUE) {
@@ -165,6 +145,59 @@ void NamedPipeLink::connect(void) throw (std::exception) {
             throw std::runtime_error("Failed to connect to pipe");
         }
     } else {
+        while (true) {
+            logDebugF("Client opening read named pipe %s", myReadPipeName);
+            myReadHandle = CreateFile(
+                    myReadPipeName, // pipe name
+                    GENERIC_READ |  // read and write access
+                    GENERIC_WRITE,
+                    0,              // no sharing
+                    NULL,           // default security attributes
+                    OPEN_EXISTING,  // opens existing pipe
+                    0,              // default attributes
+                    NULL);          // no template file
+            if (myReadHandle != INVALID_HANDLE_VALUE) {
+                break; // it's open
+            }
+            if (GetLastError() != ERROR_PIPE_BUSY) {
+                logWarnF("Could not open read named pipe. GLE=%d"), GetLastError());
+                throw std::runtime_error("Failed to open read named pipe in connect");
+            }
+            // All pipe instances are busy, so wait....
+            logDebugF("Waiting for server of read named pipe...");
+            if (WaitNamedPipe(myReadPipeName, 1000)) // ms
+            {
+                logDebugF("Server connected");
+                break;
+            }
+        }
+
+        while (true) {
+            logDebugF("Client opening write named pipe %s", myWritePipeName);
+            myWriteHandle = CreateFile(
+                    myWritePipeName, // pipe name
+                    GENERIC_READ |  // read and write access
+                    GENERIC_WRITE,
+                    0,              // no sharing
+                    NULL,           // default security attributes
+                    OPEN_EXISTING,  // opens existing pipe
+                    0,              // default attributes
+                    NULL);          // no template file
+            if (myWriteHandle != INVALID_HANDLE_VALUE) {
+                break; // it's open
+            }
+            if (GetLastError() != ERROR_PIPE_BUSY) {
+                logWarnF("Could not open write named pipe. GLE=%d"), GetLastError());
+                throw std::runtime_error("Failed to open write named pipe in connect");
+            }
+            // All pipe instances are busy, so wait....
+            logDebugF("Waiting for server of write named pipe...");
+            if (WaitNamedPipe(myWritePipeName, 1000)) // ms
+            {
+                logDebugF("Server connected");
+                break;
+            }
+        }
     }
 
     myConnected = true;
