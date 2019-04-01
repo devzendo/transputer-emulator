@@ -14,10 +14,13 @@
 #include "gtest/gtest.h"
 #include "link.h"
 #include "linkfactory.h"
+#include "log.h"
 
 class LinkTest : public ::testing::Test {
 protected:
+
     void SetUp() override {
+        setLogLevel(LOGLEVEL_DEBUG);
         cpuLinkFactory = new LinkFactory(false, true);
         serverLinkFactory = new LinkFactory(true, true);
         cpuLink = cpuLinkFactory->createLink(0);
@@ -31,6 +34,7 @@ protected:
     void TearDown() override {
         cpuLink->resetLink();
         serverLink->resetLink();
+        logFlush();
     }
 
     LinkFactory *cpuLinkFactory;
