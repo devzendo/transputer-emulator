@@ -160,7 +160,7 @@ void NamedPipeLink::connect(void) throw (std::exception) {
                 break; // it's open
             }
             if (GetLastError() != ERROR_PIPE_BUSY) {
-                logWarnF("Could not open read named pipe. GLE=%d"), GetLastError());
+                logWarnF("Could not open read named pipe. GLE=%d", GetLastError());
                 throw std::runtime_error("Failed to open read named pipe in connect");
             }
             // All pipe instances are busy, so wait....
@@ -187,7 +187,7 @@ void NamedPipeLink::connect(void) throw (std::exception) {
                 break; // it's open
             }
             if (GetLastError() != ERROR_PIPE_BUSY) {
-                logWarnF("Could not open write named pipe. GLE=%d"), GetLastError());
+                logWarnF("Could not open write named pipe. GLE=%d", GetLastError());
                 throw std::runtime_error("Failed to open write named pipe in connect");
             }
             // All pipe instances are busy, so wait....
