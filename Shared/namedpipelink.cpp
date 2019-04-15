@@ -42,8 +42,8 @@ NamedPipeLink::NamedPipeLink(int linkNo, bool isServer) : Link(linkNo, isServer)
 void NamedPipeLink::initialise(void) throw (std::exception) {
 	static char msgbuf[255];
 
-    sprintf_s(myPipeName, NAME_LEN, "\\\\.\\pipe\\temulink%d", myLinkNo);
-    logDebugF("[init] Named pipe called %s", myPipeName);
+    sprintf_s(myPipeName, NAME_LEN, "\\\\\\\\.\\\\pipe\\\\temulink%d", myLinkNo);
+    logDebugF("[init] Named pipe link %d for %s called %s", myLinkNo, isServer ? "server" : "cpu client", myPipeName);
 
     if (bServer) {
         logDebugF("[init] Server creating named pipe %s", myPipeName);
