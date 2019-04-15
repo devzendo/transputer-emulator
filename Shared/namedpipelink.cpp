@@ -140,9 +140,9 @@ void NamedPipeLink::connect(void) throw (std::exception) {
         // the function returns a nonzero value. If the function
         // returns zero, GetLastError returns ERROR_PIPE_CONNECTED.
         if (ConnectNamedPipe(myReadHandle, NULL) ? true : (GetLastError() == ERROR_PIPE_CONNECTED)) {
-            logDebug("[connect] Server connected");
+            logDebug("[connect] Server detected Client connected");
         } else {
-            logWarnF("[connect] Server failed to connect to pipe %s", myReadPipeName);
+            logWarnF("[connect] Server failed to detect client connect to pipe %s", myReadPipeName);
             throw std::runtime_error("Failed to connect to pipe");
         }
     } else {
