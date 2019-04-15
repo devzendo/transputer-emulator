@@ -40,18 +40,22 @@ protected:
 
     void TearDown() override {
         logDebug("TearDown start");
-        logDebug("Resetting CPU Link");
-        cpuLink->resetLink();
-        logDebug("Resetting Server Link");
-        serverLink->resetLink();
+        if (cpuLink != nullptr) {
+            logDebug("Resetting CPU Link");
+            cpuLink->resetLink();
+        }
+        if (serverLink != nullptr) {
+            logDebug("Resetting Server Link");
+            serverLink->resetLink();
+        }
         logDebug("TearDown complete");
         logFlush();
     }
 
-    LinkFactory *cpuLinkFactory;
-    LinkFactory *serverLinkFactory;
-    Link *cpuLink;
-    Link *serverLink;
+    LinkFactory *cpuLinkFactory = nullptr;
+    LinkFactory *serverLinkFactory = nullptr;
+    Link *cpuLink = nullptr;
+    Link *serverLink = nullptr;
 };
 
 // Note that links are currently blocking, and synchronous. If more than PIPE_BUF bytes are written, write() will block
