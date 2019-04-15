@@ -21,19 +21,30 @@ protected:
 
     void SetUp() override {
         setLogLevel(LOGLEVEL_DEBUG);
+        logDebug("SetUp start");
         cpuLinkFactory = new LinkFactory(false, true);
         serverLinkFactory = new LinkFactory(true, true);
+        logDebug("Creating CPU Link");
         cpuLink = cpuLinkFactory->createLink(0);
-        serverLink = serverLinkFactory->createLink(0);
         cpuLink->setDebug(true);
+        logDebug("Initialising CPU Link");
         cpuLink->initialise();
+        logDebug("Creating Server Link");
+        serverLink = serverLinkFactory->createLink(0);
         serverLink->setDebug(true);
+        logDebug("Initialising Server Link");
         serverLink->initialise();
+        logDebug("Setup complete");
+        logFlush();
     }
 
     void TearDown() override {
+        logDebug("TearDown start");
+        logDebug("Resetting CPU Link");
         cpuLink->resetLink();
+        logDebug("Resetting Server Link");
         serverLink->resetLink();
+        logDebug("TearDown complete");
         logFlush();
     }
 
