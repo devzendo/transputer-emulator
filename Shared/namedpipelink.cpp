@@ -210,10 +210,10 @@ BYTE NamedPipeLink::readByte() throw (std::exception) {
     BYTE buf;
     DWORD cbBytesRead = 0, cbReplyBytes = 0, cbWritten = 0;
     BOOL fSuccess = FALSE;
-    logDebugF("[readByte] Read byte on link %d by %s", myLinkNo, isServer ? "server" : "cpu client");
+    logDebugF("[readByte] Read byte on link %d by %s", myLinkNo, bServer ? "server" : "cpu client");
 
     connect();
-    logDebugF("[readByte] ReadFile call by link %d by %s", myLinkNo, isServer ? "server" : "cpu client");
+    logDebugF("[readByte] ReadFile call by link %d by %s", myLinkNo, bServer ? "server" : "cpu client");
 
     fSuccess = ReadFile(
             myReadHandle, // handle to pipe
@@ -248,14 +248,14 @@ void NamedPipeLink::writeByte(BYTE buf) throw (std::exception) {
     BYTE bufstore = buf;
     DWORD cbBytesRead = 0, cbReplyBytes = 0, cbWritten = 0;
     BOOL fSuccess = FALSE;
-    logDebugF("[writeByte] Write byte on link %d by %s", myLinkNo, isServer ? "server" : "cpu client");
+    logDebugF("[writeByte] Write byte on link %d by %s", myLinkNo, bServer ? "server" : "cpu client");
 
     connect();
 
     if (bDebug) {
         logDebugF("Link %d W #%08X %02X (%c)", myLinkNo, myWriteSequence++, buf, isprint(buf) ? buf : '.');
     }
-    logDebugF("[writeByte] WriteFile call by link %d by %s", myLinkNo, isServer ? "server" : "cpu client");
+    logDebugF("[writeByte] WriteFile call by link %d by %s", myLinkNo, bServer ? "server" : "cpu client");
 
     fSuccess = WriteFile(
             myWriteHandle, // pipe handle
@@ -275,6 +275,6 @@ void NamedPipeLink::writeByte(BYTE buf) throw (std::exception) {
 
 void NamedPipeLink::resetLink(void) throw (std::exception) {
 	// TODO
-    logDebugF("[resetLink] Reset link %d by %s", myLinkNo, isServer ? "server" : "cpu client");
+    logDebugF("[resetLink] Reset link %d by %s", myLinkNo, bServer ? "server" : "cpu client");
 }
 
