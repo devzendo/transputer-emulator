@@ -61,7 +61,7 @@ void NamedPipeLink::initialise(void) throw (std::exception) {
     } else {
     }
 
-    if (myReadHandle == INVALID_HANDLE_VALUE) {
+    if (myPipeHandle == INVALID_HANDLE_VALUE) {
         sprintf_s(msgbuf, "Could not create/open named pipe: Error %d", GetLastError());
         throw std::runtime_error(msgbuf);
     }
