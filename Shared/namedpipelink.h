@@ -33,10 +33,9 @@ public:
 private:
     void connect(void) throw (std::exception);
     bool myConnected = false;
-    HANDLE myWriteHandle, myReadHandle;
+    HANDLE myPipeHandle;
     WORD32 myWriteSequence, myReadSequence;
-    char myReadPipeName[NAME_LEN];
-    char myWritePipeName[NAME_LEN];
+    char myPipeName[NAME_LEN];
 };
 
 #endif // _NAMEDPIPELINK_H

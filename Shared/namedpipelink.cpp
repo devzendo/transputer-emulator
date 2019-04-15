@@ -34,30 +34,24 @@ const int BUFSIZE = 512;
 
 NamedPipeLink::NamedPipeLink(int linkNo, bool isServer) : Link(linkNo, isServer) {
 	logDebugF("[CTOR] Constructing named pipe link %d for %s", myLinkNo, isServer ? "server" : "cpu client");
-    myWriteHandle = INVALID_HANDLE_VALUE;
-    myReadHandle = INVALID_HANDLE_VALUE;
+    myPipeHandle = INVALID_HANDLE_VALUE;
     myWriteSequence = myReadSequence = 0;
-    myReadPipeName[0] = '\0';
-    myWritePipeName[0] = '\0';
+    myPipeName[0] = '\0';
 }
 
 void NamedPipeLink::initialise(void) throw (std::exception) {
 	static char msgbuf[255];
 
-	// Filenames are relative to the CPU client.
-	// The CPU client reads on the read FIFO and writes on the write FIFO.
-    // The server reads on the write FIFO and writes on the read FIFO.
-	// READ NAMED PIPE
-    sprintf_s(myReadPipeName, NAME_LEN, "\\\\.\\pipe\\temulink%d", myLinkNo);
-    logDebugF("[init] Read named pipe called %s", myReadPipeName);
+    sprintf_s(myPipeName, NAME_LEN, "\\\\.\\pipe\\temulink%d", myLinkNo);
+    logDebugF("[init] Named pipe called %s", myPipeName);
 
     if (bServer) {
-        logDebugF("[init] Server creating named pipe %s", myReadPipeName);
-        myReadHandle = CreateNamedPipe(
-                myReadPipeName,           // pipe name
+        logDebugF("[init] Server creating named pipe %s", myPipeName);
+        myPipeHandle = CreateNamedPipeA(
+                myPipeName,               // pipe name
                 PIPE_ACCESS_DUPLEX,       // read/write access
                 PIPE_TYPE_MESSAGE |       // message type pipe
-                PIPE_READMODE_MESSAGE |   // message-read mode
+                  PIPE_READMODE_MESSAGE | // message-read mode
                 PIPE_WAIT,                // blocking mode
                 PIPE_UNLIMITED_INSTANCES, // max. instances
                 BUFSIZE,                  // output buffer size
@@ -68,48 +62,20 @@ void NamedPipeLink::initialise(void) throw (std::exception) {
     }
 
     if (myReadHandle == INVALID_HANDLE_VALUE) {
-        sprintf_s(msgbuf, "Could not create/open read named pipe: Error %d", GetLastError());
+        sprintf_s(msgbuf, "Could not create/open named pipe: Error %d", GetLastError());
         throw std::runtime_error(msgbuf);
     }
-    logDebug("[init] Read named pipe created");
-
-
-
-    // WRITE NAMED PIPE
-    sprintf_s(myWritePipeName, NAME_LEN, "\\\\.\\pipe\\temulink%d", myLinkNo);
-    logDebugF("[init] Write named pipe called %s", myWritePipeName);
-
-    if (bServer) {
-        logDebugF("[init] Server creating named pipe %s", myWritePipeName);
-        myWriteHandle = CreateNamedPipe(
-                myWritePipeName,          // pipe name
-                PIPE_ACCESS_DUPLEX,       // read/write access
-                PIPE_TYPE_MESSAGE |       // message type pipe
-                PIPE_READMODE_MESSAGE |   // message-read mode
-                PIPE_WAIT,                // blocking mode
-                PIPE_UNLIMITED_INSTANCES, // max. instances
-                BUFSIZE,                  // output buffer size
-                BUFSIZE,                  // input buffer size
-                0,                        // client time-out
-                NULL);                    // default security attribute
-    } else {
-    }
-
-    if (myWriteHandle == INVALID_HANDLE_VALUE) {
-        sprintf_s(msgbuf, "Could not create/open write named pipe: Error %d", GetLastError());
-        throw std::runtime_error(msgbuf);
-    }
-    logDebug("[init] Write named pipe created");
+    logDebug("[init] Named pipe created");
 }
 
 NamedPipeLink::~NamedPipeLink() {
     if (myConnected) {
         if (bServer) {
             logDebugF("[DTOR] Server disconnecting from named pipe link %d", myLinkNo);
-            if (DisconnectNamedPipe(myReadHandle)) {
+            if (DisconnectNamedPipe(myPipeHandle)) {
                 logDebug("[DTOR] Disconnected");
             } else {
-                logWarnF("[DTOR] Failed to disconnect from pipe %s: Error %d", myReadPipeName, GetLastError());
+                logWarnF("[DTOR] Failed to disconnect from pipe %s: Error %d", myPipeName, GetLastError());
             }
         } else {
             // Just closing (below) is sufficient.
@@ -118,13 +84,9 @@ NamedPipeLink::~NamedPipeLink() {
     }
 
 	logDebugF("[DTOR] Destroying named pipe link %d", myLinkNo);
-	if (myReadHandle != INVALID_HANDLE_VALUE) {
-	    CloseHandle(myReadHandle);
-	    myReadHandle = INVALID_HANDLE_VALUE;
-	}
-	if (myWriteHandle != INVALID_HANDLE_VALUE) {
-	    CloseHandle(myWriteHandle);
-	    myWriteHandle = INVALID_HANDLE_VALUE;
+	if (myPipeHandle != INVALID_HANDLE_VALUE) {
+	    CloseHandle(myPipeHandle);
+	    myPipeHandle = INVALID_HANDLE_VALUE;
 	}
     logDebugF("[DTOR] Destroyed named pipe link %d", myLinkNo);
 }
@@ -135,67 +97,40 @@ void NamedPipeLink::connect(void) throw (std::exception) {
     }
 
     if (bServer) {
-        logDebugF("[connect] Server connecting to named pipe %s", myReadPipeName);
+        logDebugF("[connect] Server connecting to named pipe %s", myPipeName);
         // Wait for the client to connect; if it succeeds,
         // the function returns a nonzero value. If the function
         // returns zero, GetLastError returns ERROR_PIPE_CONNECTED.
-        if (ConnectNamedPipe(myReadHandle, NULL) ? true : (GetLastError() == ERROR_PIPE_CONNECTED)) {
+        if (ConnectNamedPipe(myPipeHandle, NULL) ? true : (GetLastError() == ERROR_PIPE_CONNECTED)) {
             logDebug("[connect] Server detected Client connected");
         } else {
-            logWarnF("[connect] Server failed to detect client connect to pipe %s", myReadPipeName);
+            logWarnF("[connect] Server failed to detect client connect to pipe %s", myPipeName);
             throw std::runtime_error("Failed to connect to pipe");
         }
     } else {
         while (true) {
-            logDebugF("[connect] Client opening read named pipe %s", myReadPipeName);
-            myReadHandle = CreateFile(
-                    myReadPipeName, // pipe name
+            logDebugF("[connect] Client opening named pipe %s", myPipeName);
+            myPipeHandle = CreateFile(
+                    myPipeName,     // pipe name
                     GENERIC_READ |  // read and write access
-                    GENERIC_WRITE,
+                      GENERIC_WRITE,
                     0,              // no sharing
                     NULL,           // default security attributes
                     OPEN_EXISTING,  // opens existing pipe
                     0,              // default attributes
                     NULL);          // no template file
-            if (myReadHandle != INVALID_HANDLE_VALUE) {
+            if (myPipeHandle != INVALID_HANDLE_VALUE) {
                 break; // it's open
             }
             if (GetLastError() != ERROR_PIPE_BUSY) {
-                logWarnF("[connect] Client could not open read named pipe. GLE=%d", GetLastError());
-                throw std::runtime_error("Failed to open read named pipe in connect");
+                logWarnF("[connect] Client could not open named pipe. GLE=%d", GetLastError());
+                throw std::runtime_error("Failed to open named pipe in connect");
             }
             // All pipe instances are busy, so wait....
-            logDebugF("[connect] Client waiting for server of read named pipe...");
-            if (WaitNamedPipe(myReadPipeName, 1000)) // ms
+            logDebugF("[connect] Client waiting for server of named pipe...");
+            if (WaitNamedPipe(myPipeName, 1000)) // ms
             {
-                logDebug("[connect] Client detected Server connected to read named pipe");
-                break;
-            }
-        }
-
-        while (true) {
-            logDebugF("[connect] Client opening write named pipe %s", myWritePipeName);
-            myWriteHandle = CreateFile(
-                    myWritePipeName, // pipe name
-                    GENERIC_READ |  // read and write access
-                    GENERIC_WRITE,
-                    0,              // no sharing
-                    NULL,           // default security attributes
-                    OPEN_EXISTING,  // opens existing pipe
-                    0,              // default attributes
-                    NULL);          // no template file
-            if (myWriteHandle != INVALID_HANDLE_VALUE) {
-                break; // it's open
-            }
-            if (GetLastError() != ERROR_PIPE_BUSY) {
-                logWarnF("[connect] Client could not open write named pipe. GLE=%d", GetLastError());
-                throw std::runtime_error("Failed to open write named pipe in connect");
-            }
-            // All pipe instances are busy, so wait....
-            logDebugF("[connect] Client waiting for server of write named pipe...");
-            if (WaitNamedPipe(myWritePipeName, 1000)) // ms
-            {
-                logDebug("[connect] Client detected Server connected to write named pipe");
+                logDebug("[connect] Client detected Server connected to named pipe");
                 break;
             }
         }
@@ -216,7 +151,7 @@ BYTE NamedPipeLink::readByte() throw (std::exception) {
     logDebugF("[readByte] ReadFile call by link %d by %s", myLinkNo, bServer ? "server" : "cpu client");
 
     fSuccess = ReadFile(
-            myReadHandle, // handle to pipe
+            myPipeHandle, // handle to pipe
             &buf,         // buffer to receive data
             1,            // size of buffer
             &cbBytesRead, // number of bytes read
@@ -227,11 +162,11 @@ BYTE NamedPipeLink::readByte() throw (std::exception) {
     {
         if (GetLastError() == ERROR_BROKEN_PIPE)
         {
-            sprintf_s(msgbuf, "Could not read a byte from named pipe %s: Client disconnected/Broken Pipe", myReadPipeName);
+            sprintf_s(msgbuf, "Could not read a byte from named pipe %s: Client disconnected/Broken Pipe", myPipeName);
         }
         else
         {
-            sprintf_s(msgbuf, "Could not read a byte from named pipe %s: Miscellaneous error %d", myReadPipeName, GetLastError());
+            sprintf_s(msgbuf, "Could not read a byte from named pipe %s: Miscellaneous error %d", myPipeName, GetLastError());
         }
         logWarn(msgbuf);
         throw std::runtime_error(msgbuf);
@@ -258,7 +193,7 @@ void NamedPipeLink::writeByte(BYTE buf) throw (std::exception) {
     logDebugF("[writeByte] WriteFile call by link %d by %s", myLinkNo, bServer ? "server" : "cpu client");
 
     fSuccess = WriteFile(
-            myWriteHandle, // pipe handle
+            myPipeHandle, // pipe handle
             &bufstore,     // message
             1,             // message length
             &cbWritten,    // bytes written
@@ -267,7 +202,7 @@ void NamedPipeLink::writeByte(BYTE buf) throw (std::exception) {
 
     if (!fSuccess)
     {
-        sprintf_s(msgbuf, "Could not write a byte to named pipe %s: Miscellaneous error %d", myWritePipeName, GetLastError());
+        sprintf_s(msgbuf, "Could not write a byte to named pipe %s: Miscellaneous error %d", myPipeName, GetLastError());
         logWarn(msgbuf);
         throw std::runtime_error(msgbuf);
     }
