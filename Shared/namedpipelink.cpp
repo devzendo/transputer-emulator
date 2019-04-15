@@ -48,7 +48,7 @@ void NamedPipeLink::initialise(void) throw (std::exception) {
 	// The CPU client reads on the read FIFO and writes on the write FIFO.
     // The server reads on the write FIFO and writes on the read FIFO.
 	// READ NAMED PIPE
-    sprintf_s(myReadPipeName, NAME_LEN, "\\\\.\\pipe\\t800emul-read-%d", myLinkNo);
+    sprintf_s(myReadPipeName, NAME_LEN, "\\\\.\\pipe\\temulink%d", myLinkNo);
     logDebugF("[init] Read named pipe called %s", myReadPipeName);
 
     if (bServer) {
@@ -76,7 +76,7 @@ void NamedPipeLink::initialise(void) throw (std::exception) {
 
 
     // WRITE NAMED PIPE
-    sprintf_s(myWritePipeName, NAME_LEN, "\\\\.\\pipe\\t800emul-write-%d", myLinkNo);
+    sprintf_s(myWritePipeName, NAME_LEN, "\\\\.\\pipe\\temulink%d", myLinkNo);
     logDebugF("[init] Write named pipe called %s", myWritePipeName);
 
     if (bServer) {
