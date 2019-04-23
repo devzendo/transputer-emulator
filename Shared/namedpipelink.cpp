@@ -42,7 +42,7 @@ NamedPipeLink::NamedPipeLink(int linkNo, bool isServer) : Link(linkNo, isServer)
 void NamedPipeLink::initialise(void) throw (std::exception) {
 	static char msgbuf[255];
 
-    sprintf_s(myPipeName, NAME_LEN, "\\\\\\\\.\\\\pipe\\\\temulink%d", myLinkNo);
+    sprintf_s(myPipeName, NAME_LEN, "\\\\.\\pipe\\temulink%d", myLinkNo);
     logDebugF("[init] Named pipe link %d for %s called %s", myLinkNo, bServer ? "server" : "cpu client", myPipeName);
 
     if (bServer) {
@@ -50,26 +50,29 @@ void NamedPipeLink::initialise(void) throw (std::exception) {
         myPipeHandle = CreateNamedPipeA(
                 myPipeName,               // pipe name
                 PIPE_ACCESS_DUPLEX,       // read/write access
-                PIPE_TYPE_MESSAGE |       // message type pipe
-                  PIPE_READMODE_MESSAGE | // message-read mode
-                PIPE_WAIT,                // blocking mode
-                PIPE_UNLIMITED_INSTANCES, // max. instances
+                PIPE_TYPE_BYTE |          // byte type pipe
+                  PIPE_READMODE_BYTE |    // byte-read mode
+                  PIPE_WAIT,              // blocking mode
+                2,                        // max. instances
                 BUFSIZE,                  // output buffer size
                 BUFSIZE,                  // input buffer size
                 0,                        // client time-out
                 NULL);                    // default security attribute
-    } else {
-    }
 
-    if (myPipeHandle == INVALID_HANDLE_VALUE) {
-        sprintf_s(msgbuf, "Could not create/open named pipe: Error %d", GetLastError());
-        throw std::runtime_error(msgbuf);
+        if (myPipeHandle == INVALID_HANDLE_VALUE) {
+            sprintf_s(msgbuf, "Could not create/open named pipe: Error %d", GetLastError());
+            throw std::runtime_error(msgbuf);
+        }
+        logDebug("[init] Named pipe created");
+    } else {
+        logDebugF("[init] Client waiting to read/write before connecting to named pipe %s", myPipeName);
     }
-    logDebug("[init] Named pipe created");
 }
 
 NamedPipeLink::~NamedPipeLink() {
     if (myConnected) {
+        logDebugF("[DTOR] Flushing named pipe link %d", myLinkNo);
+		FlushFileBuffers(myPipeHandle);
         if (bServer) {
             logDebugF("[DTOR] Server disconnecting from named pipe link %d", myLinkNo);
             if (DisconnectNamedPipe(myPipeHandle)) {
@@ -120,6 +123,7 @@ void NamedPipeLink::connect(void) throw (std::exception) {
                     0,              // default attributes
                     NULL);          // no template file
             if (myPipeHandle != INVALID_HANDLE_VALUE) {
+                logDebugF("[connect] Client opened named pipe %s; got handle %d", myPipeName, myPipeHandle);
                 break; // it's open
             }
             if (GetLastError() != ERROR_PIPE_BUSY) {
@@ -156,7 +160,7 @@ BYTE NamedPipeLink::readByte() throw (std::exception) {
             1,            // size of buffer
             &cbBytesRead, // number of bytes read
             NULL);        // not overlapped I/O
-    logDebugF("[readByte] ReadFile return %s, bytes read=%d", fSuccess, cbBytesRead);
+    logDebugF("[readByte] ReadFile return %d, bytes read=%d", fSuccess, cbBytesRead);
 
     if (!fSuccess || cbBytesRead == 0)
     {
@@ -190,7 +194,7 @@ void NamedPipeLink::writeByte(BYTE buf) throw (std::exception) {
     if (bDebug) {
         logDebugF("Link %d W #%08X %02X (%c)", myLinkNo, myWriteSequence++, buf, isprint(buf) ? buf : '.');
     }
-    logDebugF("[writeByte] WriteFile call by link %d by %s", myLinkNo, bServer ? "server" : "cpu client");
+    logDebugF("[writeByte] WriteFile call by link %d by %s with handle %d", myLinkNo, bServer ? "server" : "cpu client", myPipeHandle);
 
     fSuccess = WriteFile(
             myPipeHandle, // pipe handle
@@ -198,7 +202,7 @@ void NamedPipeLink::writeByte(BYTE buf) throw (std::exception) {
             1,             // message length
             &cbWritten,    // bytes written
             NULL);         // not overlapped
-    logDebugF("[writeByte] WriteFile return %s, bytes read=%d", fSuccess, cbWritten);
+    logDebugF("[writeByte] WriteFile return %d, bytes written=%d", fSuccess, cbWritten);
 
     if (!fSuccess)
     {
