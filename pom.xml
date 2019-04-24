@@ -46,12 +46,26 @@
     </properties>
 
     <!-- use mvn enforcer:display-info to find platform name/family values -->
+    <!-- CentOS 7:
+         [INFO] Maven Version: 3.6.0
+         [INFO] JDK Version: 1.8.0_201 normalized as: 1.8.0-201
+         [INFO] OS Info: Arch: amd64 Family: unix Name: linux Version: 3.10.0-957.5.1.el7.x86_64
+         Raspbian:
+         [INFO] Maven Version: 3.6.0
+         [INFO] JDK Version: 1.8.0_65 normalized as: 1.8.0-65
+         [INFO] OS Info: Arch: arm Family: unix Name: linux Version: 4.9.35+
+         Mac OS High Sierra:
+         [INFO] Maven Version: 3.6.0
+         [INFO] JDK Version: 1.8.0_25 normalized as: 1.8.0-25
+         [INFO] OS Info: Arch: x86_64 Family: mac Name: mac os x Version: 10.11.6
+    -->
     <profiles>
         <profile>
-            <id>linux</id>
+            <id>linux-amd64</id>
             <activation>
                 <os>
                     <name>linux</name>
+                    <arch>amd64</arch>
                 </os>
             </activation>
             <properties>
@@ -62,6 +76,30 @@
                 <cmake.generator>Unix Makefiles</cmake.generator>
                 <!-- The classifier of the current platform. One of [windows-x86_32, windows-x86_64, linux-x86_32, linux-x86_64, linux-arm_32, mac-x86_64]. -->
                 <cmake.classifier>linux-x86_64</cmake.classifier>
+
+                <install.dir>/opt/parachute</install.dir>
+                <binary.suffix></binary.suffix>
+                <assembly.name>posix-distribution</assembly.name>
+            </properties>
+            <build>
+            </build>
+        </profile>
+        <profile>
+            <id>linux-arm</id>
+            <activation>
+                <os>
+                    <name>linux</name>
+                    <arch>arm</arch>
+                </os>
+            </activation>
+            <properties>
+                <!-- The CMake maven plugin understands cmake.root.dir -->
+                <cmake.root.dir>/opt/cmake</cmake.root.dir>
+
+                <!-- One of the generators defined at https://cmake.org/cmake/help/v3.7/manual/cmake-generators.7.html -->
+                <cmake.generator>Unix Makefiles</cmake.generator>
+                <!-- The classifier of the current platform. One of [windows-x86_32, windows-x86_64, linux-x86_32, linux-x86_64, linux-arm_32, mac-x86_64]. -->
+                <cmake.classifier>linux-arm_32</cmake.classifier>
 
                 <install.dir>/opt/parachute</install.dir>
                 <binary.suffix></binary.suffix>
