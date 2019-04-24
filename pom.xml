@@ -65,6 +65,7 @@
 
                 <install.dir>/opt/parachute</install.dir>
                 <binary.suffix></binary.suffix>
+                <assembly.name>posix-distribution</assembly.name>
             </properties>
             <build>
             </build>
@@ -88,6 +89,7 @@
 
                 <install.dir>/opt/parachute</install.dir>
                 <binary.suffix></binary.suffix>
+                <assembly.name>posix-distribution</assembly.name>
             </properties>
             <build>
             </build>
@@ -111,6 +113,7 @@
 
                 <install.dir>C:/parachute</install.dir>
                 <binary.suffix>.exe</binary.suffix>
+                <assembly.name>windows-distribution</assembly.name>
             </properties>
             <build>
             </build>
@@ -248,6 +251,25 @@
                             <!-- Optional dashboard configuration; used with CTestConfig.cmake -->
                             <!-- <dashboard>Experimental</dashboard> -->
                         </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+
+            <plugin>
+                <artifactId>maven-assembly-plugin</artifactId>
+                <version>3.1.1</version>
+                <configuration>
+                    <descriptors>
+                        <descriptor>src/main/assembly/${assembly.name}.xml</descriptor>
+                    </descriptors>
+                </configuration>
+                <executions>
+                    <execution>
+                        <id>make-assembly</id>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>single</goal>
+                        </goals>
                     </execution>
                 </executions>
             </plugin>
