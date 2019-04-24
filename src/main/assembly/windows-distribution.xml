@@ -12,14 +12,14 @@
         <fileSet>
             <directory>${project.basedir}/${cmake.binary.dir}/Emulator</directory>
             <includes>
-                <include>temulate</include>
+                <include>temulate.exe</include>
             </includes>
             <outputDirectory>bin</outputDirectory>
         </fileSet>
         <fileSet>
             <directory>${project.basedir}/${cmake.binary.dir}/NodeServer/server</directory>
             <includes>
-                <include>nodeserver</include>
+                <include>nodeserver.exe</include>
             </includes>
             <outputDirectory>bin</outputDirectory>
         </fileSet>
