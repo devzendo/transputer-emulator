@@ -40,7 +40,7 @@ static char *progName;
 set<WORD32> breakpointAddresses;
 
 void usage() {
-	logInfoF("Parachute v%s T800 Emulator " __DATE__, projectVersion);
+	logInfoF("Parachute v%s Portable Transputer Emulator " __DATE__, projectVersion);
 	logInfo("  (C) 2005-2019 Matt J. Gumbley");
 	logInfo("  http://devzendo.github.io/parachute");
 	logInfo("Usage:");

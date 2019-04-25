@@ -1,7 +1,9 @@
 transputer-emulator
 ===================
-This is an emulator of the 32-bit Inmos T414/T800/T801/T805 Transputer family, and a Node Server that interfaces it
-to a host OS, providing boot/debug/IO facilities.
+This is a portable, open source emulator of the 32-bit Inmos T414/T800/T801/T805 Transputer family, and a Node Server
+that interfaces it to a host OS, providing boot/debug/IO facilities.
+
+It runs on Apple macOS (El Capitan+), Windows 10, CentOS 7 and Raspbian Stretch.
 
 It is part of the [Parachute Project](https://devzendo.github.io/parachute).
 
@@ -13,20 +15,18 @@ http://devzendo.github.io/parachute
 
 Status
 ------
-In progress, March 2019. Modernising, building on modern OSX/Linux/Windows.
+In progress, April 2019. Modernising, building on modern macOS/Linux/Windows.
 
-* Building using Maven/CMake/Microsoft Visual Studio Command line tools on Windows 10 64-bit, and porting POSIX calls
-  to Win32 API.
-* Building using Maven/CMake/Clang on CentOS 7 and Raspbian Stretch.
-* Converting older C code (that's not very portable) to C++11(+) (that hopefully is).
+* Building using Maven/CMake/Clang on Ubuntu.
 
 Roadmap
 -------
 First release:
-* Ported to Mac OSX (El Capitan +), Linux (Ubuntu, CentOS 7, Raspbian Stretch), Windows 10.
+* Ported to macOS (El Capitan +), Linux (Ubuntu, CentOS 7, Raspbian Stretch), Windows 10.
 * A Cross Platform system that can run "Hello World" (via my NodeServer implementation).
 
 Second release:
+* Converting older C code (that's not very portable) to C++11(+) (that hopefully is).
 * Convert the NodeServer to be iServer compatible. Similarly, "Hello World".
 
 Third release:
@@ -50,7 +50,7 @@ Release Notes
   Added the -j flag to enable 'j 0' breakpoints.
 * Described current implementation/missing status in the above section.
 * The T810 instructions from "The IMS T810 - A Preliminary Survey" are not implemented.
-* Builds using Maven/CMake/CLion on OSX.
+* Builds using Maven/CMake/CLion on macOS, Windows 10, CentOS 7, Raspbian Stretch.
 * Added Boot-from-ROM, fixed Wdesc bug after boot from link.
 * Fixes: xword, call, j & scheduling (with assistance from Michael Brüstle), locations of TPtrLoc1, TPtrLoc0.
   csngl and xdble: correct detection of sign of Areg
@@ -93,7 +93,7 @@ Correctness
 
 Build/Releases
 ==============
-* Build on Linuxes
+* Build on Ubuntu
 * Upgrade to C++11 or more recent
 
 Bugs
@@ -226,7 +226,7 @@ Shared - utility code that is common to many parts of the system.
 
 NodeServer - the client and server portions of the node server and its protocol
 definition. The server runs on your host computer (i.e. under Windows, Linux,
-Mac OS X etc.). The client runs under Transputer emulation as part of your
+macOS etc.). The client runs under Transputer emulation as part of your
 application; it's an assembly language include file.
 
 Emulator - the T414/T800/T801/T805 emulator.
@@ -235,18 +235,17 @@ Emulator - the T414/T800/T801/T805 emulator.
 Building and Installing
 -----------------------
 The distribution currently builds under the following systems:
-* Mac OSX 'El Capitan' 10.11 (untested on more recent versions)
-* Windows 7 (untested on more recent versions especially 10)
-* CentOS Linux 7.4 Intel x86-64
-
-* Raspbian Stretch (ongoing)
+* Apple macOS 'El Capitan' 10.11 (untested on more recent versions)
+* Windows 10 64-bit (untested on earlier versions e.g. XP, 7, 8, 8.1)
+* CentOS Linux 7.6 Intel x86-64
+* Raspbian Stretch
 
 Later I intend to provide builds for:
 * Ubuntu Linux 16.04.4 LTS Intel x86-64
 
 Prerequisites:
 - All Operating Systems:
-  - Mercurial (to download the source). I use SourceTree on OSX and Windows, TortoiseHg on Windows, and hg on Linux.
+  - Mercurial (to download the source). I use SourceTree on macOS and Windows, TortoiseHg on Windows, and hg on Linux.
   - Git (for CMake to download GoogleTest). Command line tool needs to be on the PATH.
   - Python (2.x or 3.x is fine) (required by the GoogleTest build)
   - Java 8 JDK (for Maven).
@@ -256,25 +255,27 @@ Prerequisites:
   - If you want to build the client-examples programs, you'll need the
     <a href="https://bitbucket.org/devzendo/transputer-macro-assembler">DevZendo.org Transputer Macro Assembler</a>
     installed and on your PATH.
-- OSX:
+- macOS 'El Capitan' 10.11.6:
   - GNU Make. I use 4.2.1.
-  - clang (e.g. via XCode Developer tools, or MacPorts). I use Apple LLVM version 8.0.0 (clang-800.0.42.1) on
-    Mac OSX 'El Capitan' 10.11.6
-- Windows:
-  - Microsoft Visual Studio Build Tools 2017, v 15.9.xxx
+  - clang (e.g. via XCode Developer tools, or MacPorts). Apple LLVM version 8.0.0 (clang-800.0.42.1) on
+  - untested on more recent versions of macOS
+- Windows 10 Home:
+  - Microsoft Visual Studio Build Tools 2017, v 15.9.28307.423
+    (cl 19.16.27027.1 for x64)
   - CMake is installed in C:\Program Files\CMake
   - Maven is installed in C:\Program Files\apache-maven-3.6.0
   - (these locations are noted in the pom.xml).
 - Ubuntu Linux: build-essential (=> gcc) [DOES NOT BUILD HERE YET]
-- CentOS 7:
+- CentOS 7.6.1810:
   - Clang/LLVM 7:
     yum install centos-release-scl-rh
     yum --enablerepo=centos-sclo-rh-testing install devtoolset-7 devtoolset-7-llvm
-- Raspbian Strecth:
-  - Clang or gcc (latest versions - TODO note the versions here)
+    (Clang 5.0.1)
+- Raspbian Stretch:
+  - Clang 3.5.0
 
 The typical install location is:
-- OSX/Linux: /opt/parachute
+- macOS/Linux: /opt/parachute
 - Windows: C:\parachute
 
 Building
@@ -301,11 +302,11 @@ Installing the Built Code
 =========================
 To install into the default install location, you'll need to have permission to create it and
 write files there. 
-e.g. on OSX/Linux: 
+e.g. on macOS/Linux:
 $ sudo mkdir /opt/parachute
 Password: <enter your password, assuming you have sudo rights>
 $ sudo chown myuser:myuser /opt/parachute # e.g. Linux
-$ sudo chown myuser:staff /opt/parachute  # e.g. OSX
+$ sudo chown myuser:staff /opt/parachute  # e.g. macOS
 
 e.g. on Windows:
 In File Explorer, create C:\parachute and set it writable by your user account, however you do this.
