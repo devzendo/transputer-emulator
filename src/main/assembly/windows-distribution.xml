@@ -23,6 +23,30 @@
             </includes>
             <outputDirectory>bin</outputDirectory>
         </fileSet>
+        <fileSet>
+            <directory>${project.basedir}/NodeServer/client-examples/hello2</directory>
+            <includes>
+                <include>hello2.lst</include>
+                <include>hello2.asm</include>
+            </includes>
+            <outputDirectory>examples/hello2</outputDirectory>
+            <lineEnding>windows</lineEnding>
+        </fileSet>
+        <fileSet>
+            <directory>${project.basedir}/NodeServer/client-examples/hello2</directory>
+            <includes>
+                <include>hello2.bin</include>
+            </includes>
+            <outputDirectory>examples/hello2</outputDirectory>
+        </fileSet>
     </fileSets>
+    <files>
+        <file>
+            <source>${project.basedir}/README.md</source>
+            <outputDirectory>./</outputDirectory>
+            <destName>README-transputer-emulator.md</destName>
+            <lineEnding>windows</lineEnding>
+        </file>
+    </files>
 
 </assembly>

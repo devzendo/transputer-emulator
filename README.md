@@ -3,7 +3,7 @@ transputer-emulator
 This is a portable, open source emulator of the 32-bit Inmos T414/T800/T801/T805 Transputer family, and a Node Server
 that interfaces it to a host OS, providing boot/debug/IO facilities.
 
-It runs on Apple macOS (El Capitan+), Windows 10, CentOS 7 and Raspbian Stretch.
+It runs on Apple macOS (El Capitan+), Windows 10, CentOS 7.6, Ubuntu 16.04 and Raspbian Stretch.
 
 It is part of the [Parachute Project](https://devzendo.github.io/parachute).
 
@@ -18,16 +18,17 @@ Status
 In progress, April 2019. Modernising, building on modern macOS/Linux/Windows.
 
 * Building using Maven/CMake/Clang on Ubuntu.
+* Ship the hello world example.
 
 Roadmap
 -------
 First release:
-* Ported to macOS (El Capitan +), Linux (Ubuntu, CentOS 7, Raspbian Stretch), Windows 10.
+* Ported to macOS (El Capitan +), Linux (Ubuntu 16.04, CentOS 7.6, Raspbian Stretch), Windows 10.
 * A Cross Platform system that can run "Hello World" (via my NodeServer implementation).
 
 Second release:
-* Converting older C code (that's not very portable) to C++11(+) (that hopefully is).
 * Convert the NodeServer to be iServer compatible. Similarly, "Hello World".
+* Converting older C code (that's not very portable) to C++11(+) (that hopefully is).
 
 Third release:
 * Capable of running eForth.
