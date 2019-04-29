@@ -265,7 +265,9 @@ Prerequisites:
   - CMake is installed in C:\Program Files\CMake
   - Maven is installed in C:\Program Files\apache-maven-3.6.0
   - (these locations are noted in the pom.xml).
-- Ubuntu Linux: build-essential (=> gcc) [DOES NOT BUILD HERE YET]
+- Ubuntu Linux:
+  - Clang etc.:
+    apt-get install build-essential clang-6.0 make
 - CentOS 7.6.1810:
   - Clang/LLVM 7:
     yum install centos-release-scl-rh

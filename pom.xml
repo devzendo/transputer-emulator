@@ -103,7 +103,7 @@
 
                 <install.dir>/opt/parachute</install.dir>
                 <binary.suffix></binary.suffix>
-                <assembly.name>posix-distribution</assembly.name>
+                <assembly.name>linux-distribution</assembly.name>
             </properties>
             <build>
             </build>
@@ -127,7 +127,7 @@
 
                 <install.dir>/opt/parachute</install.dir>
                 <binary.suffix></binary.suffix>
-                <assembly.name>posix-distribution</assembly.name>
+                <assembly.name>macos-distribution</assembly.name>
             </properties>
             <build>
             </build>
