@@ -3,7 +3,7 @@ transputer-emulator
 This is a portable, open source emulator of the 32-bit Inmos T414/T800/T801/T805 Transputer family, and a Node Server
 that interfaces it to a host OS, providing boot/debug/IO facilities.
 
-It runs on Apple macOS (El Capitan+), Windows 10, CentOS 7.6, Ubuntu 16.04 and Raspbian Stretch.
+It runs on Apple macOS (El Capitan+), Windows 10, CentOS 7.6, Ubuntu 16.04/18.04 and Raspbian Stretch.
 
 It is part of the [Parachute Project](https://devzendo.github.io/parachute).
 
@@ -17,13 +17,13 @@ Status
 ------
 In progress, April 2019. Modernising, building on modern macOS/Linux/Windows.
 
-* Building using Maven/CMake/Clang on Ubuntu.
+* Building using Maven/CMake/Clang on Ubuntu 18.04.
 * Ship the hello world example.
 
 Roadmap
 -------
 First release:
-* Ported to macOS (El Capitan +), Linux (Ubuntu 16.04, CentOS 7.6, Raspbian Stretch), Windows 10.
+* Ported to macOS (El Capitan +), Linux (Ubuntu 16.04, Ubuntu 18.04, CentOS 7.6, Raspbian Stretch), Windows 10.
 * A Cross Platform system that can run "Hello World" (via my NodeServer implementation).
 
 Second release:
@@ -51,7 +51,7 @@ Release Notes
   Added the -j flag to enable 'j 0' breakpoints.
 * Described current implementation/missing status in the above section.
 * The T810 instructions from "The IMS T810 - A Preliminary Survey" are not implemented.
-* Builds using Maven/CMake/CLion on macOS, Windows 10, CentOS 7, Raspbian Stretch.
+* Builds using Maven/CMake/CLion on macOS, Windows 10, CentOS 7, Ubuntu LTS, Raspbian Stretch.
 * Added Boot-from-ROM, fixed Wdesc bug after boot from link.
 * Fixes: xword, call, j & scheduling (with assistance from Michael Brüstle), locations of TPtrLoc1, TPtrLoc0.
   csngl and xdble: correct detection of sign of Areg
@@ -240,9 +240,8 @@ The distribution currently builds under the following systems:
 * Windows 10 64-bit (untested on earlier versions e.g. XP, 7, 8, 8.1)
 * CentOS Linux 7.6 Intel x86-64
 * Raspbian Stretch
-
-Later I intend to provide builds for:
 * Ubuntu Linux 16.04.4 LTS Intel x86-64
+* Ubuntu Linux 18.04.2 LTS Intel x86-64
 
 Prerequisites:
 - All Operating Systems:
@@ -266,9 +265,12 @@ Prerequisites:
   - CMake is installed in C:\Program Files\CMake
   - Maven is installed in C:\Program Files\apache-maven-3.6.0
   - (these locations are noted in the pom.xml).
-- Ubuntu Linux:
+- Ubuntu 16.04:
   - Clang etc.:
-    apt-get install build-essential clang-6.0 make
+    apt-get install build-essential clang-6.0 make clang
+- Ubuntu 18.04:
+  - Clang etc.:
+    apt-get install build-essential clang-7 make clang
 - CentOS 7.6.1810:
   - Clang/LLVM 7:
     yum install centos-release-scl-rh
