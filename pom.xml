@@ -27,11 +27,13 @@
             <distribution>repo</distribution>
         </license>
     </licenses>
+
     <scm>
         <url>https://bitbucket.org/devzendo/transputer-emulator/</url>
         <connection>scm:hg:https://bitbucket.org/devzendo/transputer-emulator/</connection>
         <developerConnection>scm:hg:https://bitbucket.org/devzendo/transputer-emulator/</developerConnection>
     </scm>
+
     <developers>
         <developer>
             <id>matt.gumbley</id>
@@ -39,6 +41,17 @@
             <email>matt.gumbley@devzendo.org</email>
         </developer>
     </developers>
+
+    <distributionManagement>
+        <snapshotRepository>
+            <id>sonatype-nexus-snapshots</id>
+            <url>https://oss.sonatype.org/content/repositories/snapshots</url>
+        </snapshotRepository>
+        <repository>
+            <id>sonatype-nexus-staging</id>
+            <url>https://oss.sonatype.org/service/local/staging/deploy/maven2/</url>
+        </repository>
+    </distributionManagement>
 
     <properties>
         <cmake.binary.dir>cmake-build-debug</cmake.binary.dir>
@@ -319,6 +332,37 @@
                     </execution>
                 </executions>
             </plugin>
+
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-gpg-plugin</artifactId>
+                <version>1.6</version>
+                <executions>
+                    <execution>
+                        <id>sign-artifacts</id>
+                        <phase>verify</phase>
+                        <goals>
+                            <goal>sign</goal>
+                        </goals>
+                        <configuration>
+                            <executable>gpg2</executable>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+
+            <plugin>
+                <groupId>org.sonatype.plugins</groupId>
+                <artifactId>nexus-staging-maven-plugin</artifactId>
+                <version>1.6.8</version>
+                <extensions>true</extensions>
+                <configuration>
+                    <serverId>sonatype-nexus-staging</serverId>
+                    <nexusUrl>https://oss.sonatype.org/</nexusUrl>
+                    <skipStagingRepositoryClose>true</skipStagingRepositoryClose> <!-- because we have many platforms to deploy from -->
+                </configuration>
+            </plugin>
+
         </plugins>
     </build>
 </project>
