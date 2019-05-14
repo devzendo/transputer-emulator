@@ -350,7 +350,10 @@
                         </goals>
                         <configuration>
                             <executable>gpg2</executable>
-                            <homedir>${jenkins.homedir}/.gnupg</homedir>
+                            <gpgArguments>
+                                <arg>--homedir</arg>
+                                <arg>${jenkins.homedir}/.gnupg</arg>
+                            </gpgArguments>
                         </configuration>
                     </execution>
                 </executions>
