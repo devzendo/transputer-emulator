@@ -93,9 +93,6 @@
                 <install.dir>/opt/parachute</install.dir>
                 <binary.suffix></binary.suffix>
                 <assembly.name>linux-distribution</assembly.name>
-
-                <secring>${env.GPGHOME}/secring.gpg</secring>
-                <keyring>${env.GPGHOME}/pubring.gpg</keyring>
             </properties>
             <build>
             </build>
@@ -120,9 +117,6 @@
                 <install.dir>/opt/parachute</install.dir>
                 <binary.suffix></binary.suffix>
                 <assembly.name>linux-distribution</assembly.name>
-                <gpg.homedir>/home/jenkins/.gnupg</gpg.homedir>
-                <secring>${gpg.homedir}/secring.gpg</secring>
-                <keyring>${gpg.homedir}/pubring.gpg</keyring>
             </properties>
             <build>
             </build>
@@ -147,9 +141,6 @@
                 <install.dir>/opt/parachute</install.dir>
                 <binary.suffix></binary.suffix>
                 <assembly.name>macos-distribution</assembly.name>
-                <gpg.homedir>/Users/jenkins/.gnupg</gpg.homedir>
-                <secring>${gpg.homedir}/secring.gpg</secring>
-                <keyring>${gpg.homedir}/pubring.gpg</keyring>
             </properties>
             <build>
             </build>
@@ -174,9 +165,6 @@
                 <install.dir>C:/parachute</install.dir>
                 <binary.suffix>.exe</binary.suffix>
                 <assembly.name>windows-distribution</assembly.name>
-                <gpg.homedir>C:/Users/jenkins/.gnupg</gpg.homedir>
-                <secring>${gpg.homedir}/secring.gpg</secring>
-                <keyring>${gpg.homedir}/pubring.gpg</keyring>
             </properties>
             <build>
             </build>
@@ -358,9 +346,9 @@
                         </goals>
                         <configuration>
                             <executable>gpg2</executable>
-                            <homedir>${gpg.homedir}</homedir>
-                            <publicKeyring>${keyring}</publicKeyring>
-                            <secretKeyring>${secring}</secretKeyring>
+                            <homedir>${env.GPGHOME}</homedir>
+                            <secretKeyring>${env.GPGHOME}/secring.gpg</secretKeyring>
+                            <publicKeyring>${env.GPGHOME}/pubring.gpg</publicKeyring>
                         </configuration>
                     </execution>
                 </executions>
