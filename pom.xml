@@ -93,7 +93,7 @@
                 <install.dir>/opt/parachute</install.dir>
                 <binary.suffix></binary.suffix>
                 <assembly.name>linux-distribution</assembly.name>
-                <gpg.homedir>/home/jenkins/.gnupg</gpg.homedir>
+                <gpg.homedir>$ENV{HOME}/.gnupg</gpg.homedir>
                 <secring>${gpg.homedir}/secring.gpg</secring>
                 <keyring>${gpg.homedir}/pubring.gpg</keyring>
             </properties>
