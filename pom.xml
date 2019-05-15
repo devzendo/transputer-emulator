@@ -93,9 +93,9 @@
                 <install.dir>/opt/parachute</install.dir>
                 <binary.suffix></binary.suffix>
                 <assembly.name>linux-distribution</assembly.name>
-                <gpg.homedir>${env.HOME}/.gnupg</gpg.homedir>
-                <secring>${gpg.homedir}/secring.gpg</secring>
-                <keyring>${gpg.homedir}/pubring.gpg</keyring>
+
+                <secring>${env.GPGHOME}/secring.gpg</secring>
+                <keyring>${env.GPGHOME}/pubring.gpg</keyring>
             </properties>
             <build>
             </build>
