@@ -93,8 +93,7 @@
                 <install.dir>/opt/parachute</install.dir>
                 <binary.suffix></binary.suffix>
                 <assembly.name>linux-distribution</assembly.name>
-                <jenkins.homedir>/home/jenkins</jenkins.homedir>
-                <gpg.homedir>${jenkins.homedir}/.gnupg</gpg.homedir>
+                <gpg.homedir>/home/jenkins/.gnupg</gpg.homedir>
                 <secring>${gpg.homedir}/secring.gpg</secring>
                 <keyring>${gpg.homedir}/pubring.gpg</keyring>
             </properties>
@@ -121,8 +120,7 @@
                 <install.dir>/opt/parachute</install.dir>
                 <binary.suffix></binary.suffix>
                 <assembly.name>linux-distribution</assembly.name>
-                <jenkins.homedir>/home/jenkins</jenkins.homedir>
-                <gpg.homedir>${jenkins.homedir}/.gnupg</gpg.homedir>
+                <gpg.homedir>/home/jenkins/.gnupg</gpg.homedir>
                 <secring>${gpg.homedir}/secring.gpg</secring>
                 <keyring>${gpg.homedir}/pubring.gpg</keyring>
             </properties>
@@ -149,8 +147,7 @@
                 <install.dir>/opt/parachute</install.dir>
                 <binary.suffix></binary.suffix>
                 <assembly.name>macos-distribution</assembly.name>
-                <jenkins.homedir>/Users/jenkins</jenkins.homedir>
-                <gpg.homedir>${jenkins.homedir}/.gnupg</gpg.homedir>
+                <gpg.homedir>/Users/jenkins/.gnupg</gpg.homedir>
                 <secring>${gpg.homedir}/secring.gpg</secring>
                 <keyring>${gpg.homedir}/pubring.gpg</keyring>
             </properties>
@@ -177,8 +174,7 @@
                 <install.dir>C:/parachute</install.dir>
                 <binary.suffix>.exe</binary.suffix>
                 <assembly.name>windows-distribution</assembly.name>
-                <jenkins.homedir>C:/Users/jenkins</jenkins.homedir>
-                <gpg.homedir>${jenkins.homedir}/.gnupg</gpg.homedir>
+                <gpg.homedir>C:/Users/jenkins/.gnupg</gpg.homedir>
                 <secring>${gpg.homedir}/secring.gpg</secring>
                 <keyring>${gpg.homedir}/pubring.gpg</keyring>
             </properties>
