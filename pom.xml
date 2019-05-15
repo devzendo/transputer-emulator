@@ -96,7 +96,7 @@
                 <jenkins.homedir>/home/jenkins</jenkins.homedir>
                 <gpg.homedir>${jenkins.homedir}/.gnupg</gpg.homedir>
                 <secring>${gpg.homedir}/secring.gpg</secring>
-                <keyring>${gpg.homedir}/keyring.gpg</keyring>
+                <keyring>${gpg.homedir}/pubring.gpg</keyring>
             </properties>
             <build>
             </build>
@@ -124,7 +124,7 @@
                 <jenkins.homedir>/home/jenkins</jenkins.homedir>
                 <gpg.homedir>${jenkins.homedir}/.gnupg</gpg.homedir>
                 <secring>${gpg.homedir}/secring.gpg</secring>
-                <keyring>${gpg.homedir}/keyring.gpg</keyring>
+                <keyring>${gpg.homedir}/pubring.gpg</keyring>
             </properties>
             <build>
             </build>
@@ -152,7 +152,7 @@
                 <jenkins.homedir>/Users/jenkins</jenkins.homedir>
                 <gpg.homedir>${jenkins.homedir}/.gnupg</gpg.homedir>
                 <secring>${gpg.homedir}/secring.gpg</secring>
-                <keyring>${gpg.homedir}/keyring.gpg</keyring>
+                <keyring>${gpg.homedir}/pubring.gpg</keyring>
             </properties>
             <build>
             </build>
@@ -180,7 +180,7 @@
                 <jenkins.homedir>C:/Users/jenkins</jenkins.homedir>
                 <gpg.homedir>${jenkins.homedir}/.gnupg</gpg.homedir>
                 <secring>${gpg.homedir}/secring.gpg</secring>
-                <keyring>${gpg.homedir}/keyring.gpg</keyring>
+                <keyring>${gpg.homedir}/pubring.gpg</keyring>
             </properties>
             <build>
             </build>
