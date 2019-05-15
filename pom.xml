@@ -94,6 +94,9 @@
                 <binary.suffix></binary.suffix>
                 <assembly.name>linux-distribution</assembly.name>
                 <jenkins.homedir>/home/jenkins</jenkins.homedir>
+                <gpg.homedir>${jenkins.homedir}/.gnupg</gpg.homedir>
+                <secring>${gpg.homedir}/secring.gpg</secring>
+                <keyring>${gpg.homedir}/keyring.gpg</keyring>
             </properties>
             <build>
             </build>
@@ -119,6 +122,9 @@
                 <binary.suffix></binary.suffix>
                 <assembly.name>linux-distribution</assembly.name>
                 <jenkins.homedir>/home/jenkins</jenkins.homedir>
+                <gpg.homedir>${jenkins.homedir}/.gnupg</gpg.homedir>
+                <secring>${gpg.homedir}/secring.gpg</secring>
+                <keyring>${gpg.homedir}/keyring.gpg</keyring>
             </properties>
             <build>
             </build>
@@ -144,6 +150,9 @@
                 <binary.suffix></binary.suffix>
                 <assembly.name>macos-distribution</assembly.name>
                 <jenkins.homedir>/Users/jenkins</jenkins.homedir>
+                <gpg.homedir>${jenkins.homedir}/.gnupg</gpg.homedir>
+                <secring>${gpg.homedir}/secring.gpg</secring>
+                <keyring>${gpg.homedir}/keyring.gpg</keyring>
             </properties>
             <build>
             </build>
@@ -169,6 +178,9 @@
                 <binary.suffix>.exe</binary.suffix>
                 <assembly.name>windows-distribution</assembly.name>
                 <jenkins.homedir>C:/Users/jenkins</jenkins.homedir>
+                <gpg.homedir>${jenkins.homedir}/.gnupg</gpg.homedir>
+                <secring>${gpg.homedir}/secring.gpg</secring>
+                <keyring>${gpg.homedir}/keyring.gpg</keyring>
             </properties>
             <build>
             </build>
@@ -350,7 +362,9 @@
                         </goals>
                         <configuration>
                             <executable>gpg2</executable>
-                            <homedir>${jenkins.homedir}/.gnupg</homedir>
+                            <homedir>${gpg.homedir}</homedir>
+                            <publicKeyring>${keyring}</publicKeyring>
+                            <secretKeyring>${secring}</secretKeyring>
                         </configuration>
                     </execution>
                 </executions>
