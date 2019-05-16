@@ -345,7 +345,7 @@
                             <goal>sign</goal>
                         </goals>
                         <configuration>
-                            <executable>gpg2</executable>
+                            <executable>${env.GPGEXE}</executable>
                             <homedir>${env.GPGHOME}</homedir> <!-- must be picked up from environment: setting this as a profile parameter does NOT work, oddly -->
                             <secretKeyring>${env.GPGHOME}/secring.gpg</secretKeyring>
                             <publicKeyring>${env.GPGHOME}/pubring.gpg</publicKeyring>
