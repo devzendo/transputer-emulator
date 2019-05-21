@@ -140,7 +140,7 @@
 
                 <install.dir>/opt/parachute</install.dir>
                 <binary.suffix></binary.suffix>
-                <assembly.name>macos-distribution</assembly.name>
+                <assembly.name>macosx-distribution</assembly.name>
             </properties>
             <build>
             </build>
