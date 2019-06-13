@@ -15,10 +15,11 @@ http://devzendo.github.io/parachute
 
 Status
 ------
-In progress, April 2019. Modernising, building on modern macOS/Linux/Windows.
+First release 0.0.1 Midsummer 2019 (13 June 2019) as part of Parachute 0.0.1.
 
-* Building using Maven/CMake/Clang on Ubuntu 18.04.
-* Ship the hello world example.
+Project started around 19/08/2005, with a long hiatus.
+
+In active development.
 
 Roadmap
 -------
@@ -41,7 +42,7 @@ Fifth release:
 
 Release Notes
 -------------
-0.01 (ongoing work for the first release)
+0.0.1 First Release
 * Versioning and build now controlled by Maven and CMake.
 * Successfully runs hello2.asm !
 * Renamed emulator binary from t800emul to temulate.
@@ -330,8 +331,22 @@ This code is released under the Apache 2.0 License: http://www.apache.org/licens
 
 Acknowledgements
 ----------------
-Thanks to Michael Brüstle of transputer.net for assistance with details of the T800, and for finding problems with
+This project would not have been possible without the hard work and inspiration of many individuals.
+
+Notably, thanks to:
+
+Michael Brüstle of transputer.net for assistance with details of the T800, and for finding problems with
 timer queue addresses - and for maintaining a superb archive.
+
+Dr. Barry Cook, formerly of Keele University, for starting my interest in the transputer, and for my final year
+undergraduate Computer Science project, also a transputer emulator (with different goals).
+
+The transputer designers, and all at Inmos/ST who developed it.
+
+Julian Highfield for his T414 emulator.
+
+Yury Shevchuk and Roman Pozlevich for the gcc-t800 port, ttools and libxputer packages.  These were used throughout
+an earlier version of the project, for bootstrap code, object and executable file format and loader.
 
 
 Bibliography
