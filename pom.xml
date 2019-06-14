@@ -362,8 +362,11 @@
                 <configuration>
                     <serverId>sonatype-nexus-staging</serverId>
                     <nexusUrl>https://oss.sonatype.org/</nexusUrl>
-                    <skipStagingRepositoryClose>true</skipStagingRepositoryClose> <!-- because we have many platforms to deploy from -->
-                    <skipStaging>true</skipStaging> <!-- because we have many platforms to deploy from -->
+
+                    <!-- because we have many platforms to deploy from: -->
+                    <skipStagingRepositoryClose>true</skipStagingRepositoryClose>
+                    <skipStaging>true</skipStaging>
+                    <autoReleaseAfterClose>false</autoReleaseAfterClose>
                 </configuration>
             </plugin>
 
