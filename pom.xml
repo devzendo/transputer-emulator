@@ -365,7 +365,7 @@
 
                     <!-- because we have many platforms to deploy from: -->
                     <skipStagingRepositoryClose>true</skipStagingRepositoryClose>
-                    <!-- <skipStaging>true</skipStaging> -->
+                    <skipStaging>true</skipStaging>
                     <autoReleaseAfterClose>false</autoReleaseAfterClose>
                     <stagingRepositoryId>${project.artifactId}-${project.version}-repo</stagingRepositoryId>
                 </configuration>
