@@ -367,6 +367,7 @@
                     <skipStagingRepositoryClose>true</skipStagingRepositoryClose>
                     <skipStaging>true</skipStaging>
                     <autoReleaseAfterClose>false</autoReleaseAfterClose>
+                    <stagingRepositoryId>${project.artifactId}-${project.version}-repo</stagingRepositoryId>
                 </configuration>
             </plugin>
 
