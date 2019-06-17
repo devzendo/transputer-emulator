@@ -413,7 +413,6 @@
                             </execution>
                         </executions>
                     </plugin>
-<!--
                     <plugin>
                         <groupId>org.sonatype.plugins</groupId>
                         <artifactId>nexus-staging-maven-plugin</artifactId>
@@ -424,7 +423,6 @@
                             <nexusUrl>https://oss.sonatype.org/</nexusUrl>
                         </configuration>
                     </plugin>
--->
                 </plugins>
             </build>
         </profile>
