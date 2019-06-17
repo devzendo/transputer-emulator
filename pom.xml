@@ -369,7 +369,7 @@
                                         <artifact>
                                             <file>${project.build.directory}/${project.artifactId}-${project.version}-mac-x86_64.tar.gz</file>
                                             <type>tar.gz</type>
-                                            <classifier>mac-linux-x86_64</classifier>
+                                            <classifier>mac-x86_64</classifier>
                                         </artifact>
                                         <artifact>
                                             <file>${project.build.directory}/${project.artifactId}-${project.version}-raspbian-9-linux-arm_32.tar.gz</file>
@@ -388,7 +388,7 @@
                                         </artifact>
                                         <artifact>
                                             <file>${project.build.directory}/${project.artifactId}-${project.version}-windows-x86_64.zip</file>
-                                            <type>tar.gz</type>
+                                            <type>zip</type>
                                             <classifier>windows-x86_64</classifier>
                                         </artifact>
                                     </artifacts>
