@@ -73,6 +73,144 @@
          [INFO] OS Info: Arch: x86_64 Family: mac Name: mac os x Version: 10.11.6
     -->
     <profiles>
+        <!-- There are two main profiles, build and deploy.
+
+             build is used on each Jenkins node to compile, link and assemble the OS-specific archive. Jenkins runs
+             this profile across all OS-varying nodes, then archives the artifact.
+
+             deploy is used on the Jenkins master. The master Jenkins job runs the build profile across all nodes as
+             above, and then copies all artifacts from all nodes (using the Copy Artifact Plugin) to the target folder.
+             Then the build helper plugin attaches these externally generated archive artifacts to the project,
+             they are then signed, and uploaded to nexus.
+
+             This funk is since the behaviour of the nexus staging plugin differs in snapshot and release mode: all
+             snapshots are deployed to the same repo, but each release is deployed to its own - and I haven't managed
+             to work out how to get the snapshot behaviour on release.
+
+
+             There are also OS-specific profiles that activate on each OS-specific node.
+        -->
+        <profile>
+            <id>build</id>
+            <build>
+                <resources>
+                    <resource>
+                        <directory>src/main/resources</directory>
+                        <filtering>true</filtering>
+                    </resource>
+                </resources>
+
+                <plugins>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-clean-plugin</artifactId>
+                        <version>3.1.0</version>
+                        <configuration>
+                            <filesets>
+                                <fileset>
+                                    <directory>${cmake.binary.dir}</directory>
+                                    <followSymlinks>false</followSymlinks>
+                                </fileset>
+                            </filesets>
+                        </configuration>
+                    </plugin>
+
+                    <!-- Generate the target/classes/version.cpp file that CMakeLists.txt picks up -->
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-resources-plugin</artifactId>
+                        <version>3.0.1</version>
+                        <executions>
+                            <execution>
+                                <id>default-resources</id>
+                                <phase>generate-resources</phase>
+                                <goals>
+                                    <goal>resources</goal>
+                                </goals>
+                            </execution>
+                        </executions>
+                    </plugin>
+
+                    <plugin>
+                        <groupId>com.googlecode.cmake-maven-project</groupId>
+                        <artifactId>cmake-maven-plugin</artifactId>
+                        <version>3.7.2-b1</version>
+                        <executions>
+                            <!-- Generate the CMake cache/binary build dir -->
+                            <execution>
+                                <id>cmake-generate</id>
+                                <phase>process-resources</phase>
+                                <goals>
+                                    <goal>generate</goal>
+                                </goals>
+                                <configuration>
+                                    <sourcePath>${project.basedir}</sourcePath>
+                                    <targetPath>${project.basedir}/${cmake.binary.dir}</targetPath>
+                                    <generator>${cmake.generator}</generator>
+                                    <classifier>${cmake.classifier}</classifier>
+                                </configuration>
+                            </execution>
+
+                            <execution>
+                                <id>cmake-compile</id>
+                                <goals>
+                                    <goal>compile</goal>
+                                </goals>
+                                <configuration>
+                                    <target>all</target>
+                                    <!-- "targetPath" from the "generate" goal: -->
+                                    <projectDirectory>${project.basedir}/${cmake.binary.dir}</projectDirectory>
+                                    <classifier>${cmake.classifier}</classifier>
+                                </configuration>
+                            </execution>
+
+                            <execution>
+                                <id>cmake-test</id>
+                                <goals>
+                                    <goal>test</goal>
+                                </goals>
+                                <configuration>
+                                    <!-- "buildDirectory" is "targetPath" from the "generate" goal -->
+                                    <buildDirectory>${project.basedir}/${cmake.binary.dir}</buildDirectory>
+                                    <options>
+                                        <option>--verbose</option>
+                                    </options>
+                                    <!-- Optional way to not fail the build on test failures -->
+                                    <!-- <testFailureIgnore>true</testFailureIgnore> -->
+                                    <!-- Optional way to skip just the ctest tests -->
+                                    <!-- <ctest.skip.tests>true</ctest.skip.tests> -->
+                                    <!-- Optional/standard way to skip all Maven tests -->
+                                    <!-- <maven.test.skip>true</maven.test.skip> -->
+                                    <!-- Optional way to configure number of threads tests should use -->
+                                    <!-- <threadCount>2</threadCount> -->
+                                    <!-- Optional dashboard configuration; used with CTestConfig.cmake -->
+                                    <!-- <dashboard>Experimental</dashboard> -->
+                                </configuration>
+                            </execution>
+                        </executions>
+                    </plugin>
+
+                    <plugin>
+                        <artifactId>maven-assembly-plugin</artifactId>
+                        <version>3.1.1</version>
+                        <configuration>
+                            <descriptors>
+                                <descriptor>src/main/assembly/${assembly.name}.xml</descriptor>
+                            </descriptors>
+                        </configuration>
+                        <executions>
+                            <execution>
+                                <id>make-assembly</id>
+                                <phase>package</phase>
+                                <goals>
+                                    <goal>single</goal>
+                                </goals>
+                            </execution>
+                        </executions>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
         <profile>
             <id>linux-amd64</id>
             <activation>
@@ -205,16 +343,94 @@
                 </plugins>
             </build>
         </profile>
+
+        <profile>
+            <id>deploy</id>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.codehaus.mojo</groupId>
+                        <artifactId>build-helper-maven-plugin</artifactId>
+                        <version>3.0.0</version>
+                        <executions>
+                            <execution>
+                                <id>attach-artifacts</id>
+                                <phase>package</phase>
+                                <goals>
+                                    <goal>attach-artifact</goal>
+                                </goals>
+                                <configuration>
+                                    <artifacts>
+                                        <artifact>
+                                            <file>${project.build.directory}/${project.artifactId}-${project.version}-centos-7-linux-x86_64.tar.gz</file>
+                                            <type>tar.gz</type>
+                                            <classifier>centos-7-linux-x86_64</classifier>
+                                        </artifact>
+                                        <artifact>
+                                            <file>${project.build.directory}/${project.artifactId}-${project.version}-mac-x86_64.tar.gz</file>
+                                            <type>tar.gz</type>
+                                            <classifier>mac-linux-x86_64</classifier>
+                                        </artifact>
+                                        <artifact>
+                                            <file>${project.build.directory}/${project.artifactId}-${project.version}-raspbian-9-linux-arm_32.tar.gz</file>
+                                            <type>tar.gz</type>
+                                            <classifier>raspbian-9-linux-arm_32</classifier>
+                                        </artifact>
+                                        <artifact>
+                                            <file>${project.build.directory}/${project.artifactId}-${project.version}-ubuntu-16.04-linux-x86_64.tar.gz</file>
+                                            <type>tar.gz</type>
+                                            <classifier>ubuntu-16.04-linux-x86_64</classifier>
+                                        </artifact>
+                                        <artifact>
+                                            <file>${project.build.directory}/${project.artifactId}-${project.version}-ubuntu-18.04-linux-x86_64.tar.gz</file>
+                                            <type>tar.gz</type>
+                                            <classifier>ubuntu-18.04-linux-x86_64</classifier>
+                                        </artifact>
+                                        <artifact>
+                                            <file>${project.build.directory}/${project.artifactId}-${project.version}-windows-x86_64.zip</file>
+                                            <type>tar.gz</type>
+                                            <classifier>windows-x86_64</classifier>
+                                        </artifact>
+                                    </artifacts>
+                                </configuration>
+                            </execution>
+                        </executions>
+                    </plugin>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-gpg-plugin</artifactId>
+                        <version>1.6</version>
+                        <executions>
+                            <execution>
+                                <id>sign-artifacts</id>
+                                <phase>verify</phase>
+                                <goals>
+                                    <goal>sign</goal>
+                                </goals>
+                                <configuration>
+                                    <executable>gpg2</executable>
+                                </configuration>
+                            </execution>
+                        </executions>
+                    </plugin>
+<!--
+                    <plugin>
+                        <groupId>org.sonatype.plugins</groupId>
+                        <artifactId>nexus-staging-maven-plugin</artifactId>
+                        <version>1.6.8</version>
+                        <extensions>true</extensions>
+                        <configuration>
+                            <serverId>sonatype-nexus-staging</serverId>
+                            <nexusUrl>https://oss.sonatype.org/</nexusUrl>
+                        </configuration>
+                    </plugin>
+-->
+                </plugins>
+            </build>
+        </profile>
     </profiles>
 
     <build>
-        <resources>
-            <resource>
-                <directory>src/main/resources</directory>
-                <filtering>true</filtering>
-            </resource>
-        </resources>
-
         <extensions>
             <extension>
                 <groupId>kr.motd.maven</groupId>
@@ -222,156 +438,5 @@
                 <version>1.6.1</version>
             </extension>
         </extensions>
-
-        <plugins>
-
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-clean-plugin</artifactId>
-                <version>3.1.0</version>
-                <configuration>
-                    <filesets>
-                        <fileset>
-                            <directory>${cmake.binary.dir}</directory>
-                            <followSymlinks>false</followSymlinks>
-                        </fileset>
-                    </filesets>
-                </configuration>
-            </plugin>
-
-            <!-- Generate the target/classes/version.cpp file that CMakeLists.txt picks up -->
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-resources-plugin</artifactId>
-                <version>3.0.1</version>
-                <executions>
-                    <execution>
-                        <id>default-resources</id>
-                        <phase>generate-resources</phase>
-                        <goals>
-                            <goal>resources</goal>
-                        </goals>
-                    </execution>
-                </executions>
-            </plugin>
-
-            <plugin>
-                <groupId>com.googlecode.cmake-maven-project</groupId>
-                <artifactId>cmake-maven-plugin</artifactId>
-                <version>3.7.2-b1</version>
-                <executions>
-                    <!-- Generate the CMake cache/binary build dir -->
-                    <execution>
-                        <id>cmake-generate</id>
-                        <phase>process-resources</phase>
-                        <goals>
-                            <goal>generate</goal>
-                        </goals>
-                        <configuration>
-                            <sourcePath>${project.basedir}</sourcePath>
-                            <targetPath>${project.basedir}/${cmake.binary.dir}</targetPath>
-                            <generator>${cmake.generator}</generator>
-                            <classifier>${cmake.classifier}</classifier>
-                        </configuration>
-                    </execution>
-
-                    <execution>
-                        <id>cmake-compile</id>
-                        <goals>
-                            <goal>compile</goal>
-                        </goals>
-                        <configuration>
-                            <target>all</target>
-                            <!-- "targetPath" from the "generate" goal: -->
-                            <projectDirectory>${project.basedir}/${cmake.binary.dir}</projectDirectory>
-                            <classifier>${cmake.classifier}</classifier>
-                        </configuration>
-                    </execution>
-
-                    <execution>
-                        <id>cmake-test</id>
-                        <goals>
-                            <goal>test</goal>
-                        </goals>
-                        <configuration>
-                            <!-- "buildDirectory" is "targetPath" from the "generate" goal -->
-                            <buildDirectory>${project.basedir}/${cmake.binary.dir}</buildDirectory>
-                            <options>
-                                <option>--verbose</option>
-                            </options>
-                            <!-- Optional way to not fail the build on test failures -->
-                            <!-- <testFailureIgnore>true</testFailureIgnore> -->
-                            <!-- Optional way to skip just the ctest tests -->
-                            <!-- <ctest.skip.tests>true</ctest.skip.tests> -->
-                            <!-- Optional/standard way to skip all Maven tests -->
-                            <!-- <maven.test.skip>true</maven.test.skip> -->
-                            <!-- Optional way to configure number of threads tests should use -->
-                            <!-- <threadCount>2</threadCount> -->
-                            <!-- Optional dashboard configuration; used with CTestConfig.cmake -->
-                            <!-- <dashboard>Experimental</dashboard> -->
-                        </configuration>
-                    </execution>
-                </executions>
-            </plugin>
-
-            <plugin>
-                <artifactId>maven-assembly-plugin</artifactId>
-                <version>3.1.1</version>
-                <configuration>
-                    <descriptors>
-                        <descriptor>src/main/assembly/${assembly.name}.xml</descriptor>
-                    </descriptors>
-                </configuration>
-                <executions>
-                    <execution>
-                        <id>make-assembly</id>
-                        <phase>package</phase>
-                        <goals>
-                            <goal>single</goal>
-                        </goals>
-                    </execution>
-                </executions>
-            </plugin>
-
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-gpg-plugin</artifactId>
-                <version>1.6</version>
-                <executions>
-                    <execution>
-                        <id>sign-artifacts</id>
-                        <phase>verify</phase>
-                        <goals>
-                            <goal>sign</goal>
-                        </goals>
-                        <configuration>
-                            <executable>${env.GPGEXE}</executable>
-                            <homedir>${env.GPGHOME}</homedir> <!-- must be picked up from environment: setting this as a profile parameter does NOT work, oddly -->
-                            <secretKeyring>${env.GPGHOME}/secring.gpg</secretKeyring>
-                            <publicKeyring>${env.GPGHOME}/pubring.gpg</publicKeyring>
-                        </configuration>
-                    </execution>
-                </executions>
-            </plugin>
-
-            <plugin>
-                <groupId>org.sonatype.plugins</groupId>
-                <artifactId>nexus-staging-maven-plugin</artifactId>
-                <version>1.6.8</version>
-                <extensions>true</extensions>
-                <configuration>
-                    <serverId>sonatype-nexus-staging</serverId>
-                    <nexusUrl>https://oss.sonatype.org/</nexusUrl>
-
-                    <!-- because we have many platforms to deploy from: -->
-                    <skipStagingRepositoryClose>true</skipStagingRepositoryClose>
-                    <!-- <skipStaging>true</skipStaging> -->
-                    <!-- <autoReleaseAfterClose>false</autoReleaseAfterClose> -->
-                    <stagingRepositoryId>${project.artifactId}-${project.version}-repo</stagingRepositoryId>
-                    <stagingProfileId>${env.STAGINGPROFILEID}</stagingProfileId>
-                </configuration>
-            </plugin>
-
-        </plugins>
     </build>
 </project>
