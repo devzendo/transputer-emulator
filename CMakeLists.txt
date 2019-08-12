@@ -56,5 +56,5 @@ enable_testing()
 # Build the transputer emulator and related code...
 add_subdirectory(target/classes)
 add_subdirectory(Shared)
-add_subdirectory(NodeServer)
+add_subdirectory(IServer)
 add_subdirectory(Emulator)

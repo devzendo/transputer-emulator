@@ -1,7 +1,7 @@
 //------------------------------------------------------------------------------
 //
-// File        : nodeserver.cpp
-// Description : main entry point for the node server
+// File        : iserver.cpp
+// Description : main entry point for the host/file I/O server
 // License     : Apache License v2.0 - see LICENSE.txt for more details
 // Created     : 19/08/2005
 //
@@ -30,7 +30,7 @@ using namespace std;
 #include "platform.h"
 #include "platformfactory.h"
 #include "hexdump.h"
-#include "nsproto.h"
+#include "isproto.h"
 #include "version.h"
 
 // global variables
@@ -49,7 +49,7 @@ const int MSGBUF_MAX = CONSOLE_PUT_CSTR_BUF_LIMIT;
 static char msgbuf[MSGBUF_MAX];
 
 void usage() {
-	logInfoF("Parachute v%s Node Server - Protocol v%d " __DATE__, projectVersion, NS_PROTOCOL_VERSION);
+	logInfoF("Parachute v%s IServer - Protocol v%d " __DATE__, projectVersion, NS_PROTOCOL_VERSION);
 	logInfo(" (C) 2005-2019 Matt J. Gumbley");
 	logInfo("  http://devzendo.github.io/parachute");
 	logInfo("Usage:");
@@ -146,7 +146,7 @@ char *printableString(BYTE8 *orig, BYTE8 len) {
 // Handle a single request over the link.
 // Called repeatedly until we see a SERVER_EXIT request or the link fails.
 // TODO: can we recover from a link failure?
-void handleNodeServerProtocol(void) {
+void handleIServerProtocol(void) {
 	try {
 		// Read the message type identifier
 		WORD32 msgType = myLink->readWord();
@@ -261,7 +261,7 @@ void handleNodeServerProtocol(void) {
 					// deprecated this to a debug for now - should be warn
 					logDebugF("LIT_LOAD_FATAL at line 0x%04X = %d", line, line);
 				} else {
-					logWarnF("Unknown node server protocol message type identifier %08X", msgType);
+					logWarnF("Unknown iserver protocol message type identifier %08X", msgType);
 				}
 				break;
 		}
@@ -349,7 +349,7 @@ void segViolHandler(int sig) {
 
 void interruptHandler(int sig) {
 	signal(SIGINT, interruptHandler);
-	logWarn("Node Server interrupted. Terminating...");
+	logWarn("IServer interrupted. Terminating...");
 
 	finished = true; // blocking read on link won't be interrupted...
 
@@ -413,7 +413,7 @@ int main(int argc, char *argv[]) {
 		exit(1);
 	}
 
-	// start node server operations
+	// start iserver operations
 	if (bootFile != NULL) {
 		sendBootFile();
 		logDebug("End of boot file send");
@@ -423,7 +423,7 @@ int main(int argc, char *argv[]) {
 		monitorBootLink();
 	} else {
 		while (!finished) {
-			handleNodeServerProtocol();
+            handleIServerProtocol();
 		}
 	}
 

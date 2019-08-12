@@ -329,9 +329,9 @@
                                               todir="${install.dir}/bin"/>
                                         <chmod file="${install.dir}/bin/temulate${binary.suffix}" perm="755" />
 
-                                        <copy file="${cmake.binary.dir}/NodeServer/server/nodeserver${binary.suffix}"
+                                        <copy file="${cmake.binary.dir}/IServer/server/iserver${binary.suffix}"
                                               todir="${install.dir}/bin"/>
-                                        <chmod file="${install.dir}/bin/nodeserver${binary.suffix}" perm="755" />
+                                        <chmod file="${install.dir}/bin/iserver${binary.suffix}" perm="755" />
                                     </target>
                                 </configuration>
                                 <goals>

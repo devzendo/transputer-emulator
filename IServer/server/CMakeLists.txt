@@ -11,4 +11,4 @@ if(UNIX)
     set(platform_sources posixplatform.cpp posixplatform.h)
 endif(UNIX)
 
-add_executable(nodeserver nodeserver.cpp platform.cpp platform.h platformfactory.h platformfactory.cpp "${platform_sources}")
+add_executable(iserver iserver.cpp platform.cpp platform.h platformfactory.h platformfactory.cpp "${platform_sources}")

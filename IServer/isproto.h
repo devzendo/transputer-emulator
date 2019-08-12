@@ -1,7 +1,7 @@
 //------------------------------------------------------------------------------
 //
-// File        : nsproto.h
-// Description : Node Server protocol definition
+// File        : isproto.h
+// Description : IServer protocol definition
 // License     : Apache License v2.0 - see LICENSE.txt for more details
 // Created     : 31/08/2005
 //
@@ -10,24 +10,25 @@
 // http://devzendo.github.io/parachute
 //
 //------------------------------------------------------------------------------
-// This protocol is used between users of the libnodeserver.a client library
-// (source for which can be found in the client directory), and the node
-// server process (source is in the server directory).
+// This protocol is used between users of the libiserver.a client library
+// (source for which can be found in the client directory), and the iserver
+// process (source is in the server directory).
 //
-// The node server is the interface point between code running on the
+// The iserver is the interface point between code running on the
 // emulator, and the host OS. The only other aspects of the host computer that
 // emulated code has access to are the links, and the currently allocated
 // memory area.
 //
 // Access to any other resource - console, chroot-jail filesystem area,
 // notification of updates to the display surface, mouse events, etc. -
-// is performed via the node server protocol.
+// is performed via the iserver protocol, which is an extended version of the
+// INMOS iserver protocol.
 //
 // Accordingly, there are bits defined in the message type for each major
-// subsystem accessible via the node server.
+// subsystem accessible via the iserver.
 //
-// Access to the node server is serialised - only one request can be
-// outstanding at once. This is guaranteed by the libnodeserver code
+// Access to the iserver is serialised - only one request can be
+// outstanding at once. This is guaranteed by the libiserver code
 // maintaining a common semaphore.
 //
 // Some messages may be oneway; some require a response.
@@ -41,8 +42,8 @@
 // 0       Initial version.
 //------------------------------------------------------------------------------
 
-#ifndef _NSPROTO_H
-#define _NSPROTO_H
+#ifndef _ISPROTO_H
+#define _ISPROTO_H
 
 #include "types.h"
 
@@ -202,5 +203,5 @@ const int CONSOLE_PUT_CSTR_BUF_LIMIT=16384;
 // +-------------------------------+
 // NB: secondInMinute can be up to 61 to allow for leap seconds.
 
-#endif // _NSPROTO_H
+#endif // _ISPROTO_H
 

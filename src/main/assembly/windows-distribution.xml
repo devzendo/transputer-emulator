@@ -17,14 +17,14 @@
             <outputDirectory>bin</outputDirectory>
         </fileSet>
         <fileSet>
-            <directory>${project.basedir}/${cmake.binary.dir}/NodeServer/server</directory>
+            <directory>${project.basedir}/${cmake.binary.dir}/IServer/server</directory>
             <includes>
-                <include>nodeserver.exe</include>
+                <include>iserver.exe</include>
             </includes>
             <outputDirectory>bin</outputDirectory>
         </fileSet>
         <fileSet>
-            <directory>${project.basedir}/NodeServer/client-examples/hello2</directory>
+            <directory>${project.basedir}/IServer/client-examples/hello2</directory>
             <includes>
                 <include>hello2.lst</include>
                 <include>hello2.asm</include>
@@ -33,7 +33,7 @@
             <lineEnding>windows</lineEnding>
         </fileSet>
         <fileSet>
-            <directory>${project.basedir}/NodeServer/client-examples/hello2</directory>
+            <directory>${project.basedir}/IServer/client-examples/hello2</directory>
             <includes>
                 <include>hello2.bin</include>
             </includes>

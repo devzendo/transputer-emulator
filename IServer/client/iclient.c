@@ -1,7 +1,7 @@
 //------------------------------------------------------------------------------
 //
-// File        : nodeclient.cpp
-// Description : library of functions that encapsulate the node server
+// File        : iclient.cpp
+// Description : library of functions that encapsulate the iserver
 //               protocol, for client code to use.
 // License     : Apache License v2.0 - see LICENSE.txt for more details
 // Created     : 06/09/2005
@@ -14,8 +14,10 @@
 
 #include "types.h"
 #include "memloc.h"
-#include "nsproto.h"
-#include "nodeclient.h"
+#include "isproto.h"
+#include "iclient.h"
+
+// TODO rewrite using the iserver protocol, in assembler.
 
 //------------------------------------------------------------------------------
 // API functions

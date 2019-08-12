@@ -1,7 +1,7 @@
 transputer-emulator
 ===================
-This is a portable, open source emulator of the 32-bit Inmos T414/T800/T801/T805 Transputer family, and a Node Server
-that interfaces it to a host OS, providing boot/debug/IO facilities.
+This is a portable, open source emulator of the 32-bit Inmos T414/T800/T801/T805 Transputer family, and a host/file
+I/O Server that interfaces it to a host OS, providing boot/debug/IO facilities.
 
 It runs on Apple macOS (El Capitan+), Windows 10, CentOS 7.6, Ubuntu 16.04/18.04 and Raspbian Stretch.
 
@@ -19,16 +19,18 @@ First release 0.0.1 Midsummer 2019 (13 June 2019) as part of Parachute 0.0.1.
 
 Project started around 19/08/2005, with a long hiatus.
 
-In active development.
+In active development:
+* Converting the NodeServer to be IServer compatible. Similarly, "Hello World".
+
 
 Roadmap
 -------
 First release:
 * Ported to macOS (El Capitan +), Linux (Ubuntu 16.04, Ubuntu 18.04, CentOS 7.6, Raspbian Stretch), Windows 10.
-* A Cross Platform system that can run "Hello World" (via my NodeServer implementation).
+* A Cross Platform system that can run "Hello World" (via my NodeServer (custom protocol) implementation).
 
 Second release:
-* Convert the NodeServer to be iServer compatible. Similarly, "Hello World".
+* Convert the NodeServer to be IServer compatible. Similarly, "Hello World".
 * Converting older C code (that's not very portable) to C++11(+) (that hopefully is).
 
 Third release:
@@ -42,6 +44,9 @@ Fifth release:
 
 Release Notes
 -------------
+0.0.2 Second Release (work in progress)
+* Converting the NodeServer to be IServer compatible. Similarly, "Hello World".
+
 0.0.1 First Release
 * Versioning and build now controlled by Maven and CMake.
 * Successfully runs hello2.asm !
@@ -70,11 +75,10 @@ Remaining Work
 --------------
 ....
 
-Node Server
-===========
-* Replace NodeServer with an iserver/afserver-protocol compatible version
-* Node Server client library in tmasm assembler
-* Node server needs to support terminal I/O facilities (no echo key reads, sensing available readable keys) for eForth
+IServer
+=======
+* IServer client library in tmasm assembler
+* Iserver needs to support terminal I/O facilities (no echo key reads, sensing available readable keys) for eForth
 
 Functionality
 =============
@@ -95,7 +99,6 @@ Correctness
 
 Build/Releases
 ==============
-* Build on Ubuntu
 * Upgrade to C++11 or more recent
 
 Bugs
@@ -104,7 +107,7 @@ Bugs
 
 Example Code
 ============
-* Rework example code with iserver protocol library.
+* Rework example code with IServer protocol library.
 
 Documentation
 =============
@@ -182,19 +185,19 @@ Using the Emulator
 Full documentation to follow.. but in the meantime...
 
 Basically, given a binary boot file, then in two terminal sessions:
-1) nodeserver -ld -df bootfile.bin     # The -ld -df is 'debug mode'.
+1) iserver -ld -df bootfile.bin        # The -ld -df is 'debug mode'.
 2) temulate -df -ld -t                 # Ditto. -t terminates on memory violation.
 
 The emulator waits for its boot file, down link 0. It then runs it.
-The nodeserver sends the boot file, then switches to handle its host I/O protocol down link 0.
+The iserver sends the boot file, then switches to handle its host I/O protocol down link 0.
 
-Run nodeserver or temulate with -? or -h to get their command line summaries.
+Run iserver or temulate with -? or -h to get their command line summaries.
 
 To run the 'hello world' client program:
 
 In one terminal window...
 
-$ cd NodeServer/client-examples/hello2
+$ cd IServer/client-examples/hello2
 $ tmasm  -b hello2.bin -l hello2.lst hello2.asm
 Pass 1: Creating model from 233 macro-expanded line(s)
 End of Pass 1: Checking for unresolved forward references
@@ -205,7 +208,7 @@ Start address 0x8000006F
 End address 0x80000147
 Writing listing file hello2.lst
 
-$ nodeserver hello2.bin
+$ iserver hello2.bin
 (does not return)
 
 In second terminal window...
@@ -213,7 +216,7 @@ $ temulate
 $
 
 The first terminal window should now show:
-$ nodeserver hello2.bin
+$ iserver hello2.bin
 hello world
 (still does not return)
 Ctrl-C <<- you'll have to interrupt it.
@@ -226,7 +229,7 @@ The source is split into the following directories:
 
 Shared - utility code that is common to many parts of the system.
 
-NodeServer - the client and server portions of the node server and its protocol
+IServer - the client and server portions of the file/host I/O server and its protocol
 definition. The server runs on your host computer (i.e. under Windows, Linux,
 macOS etc.). The client runs under Transputer emulation as part of your
 application; it's an assembly language include file.
@@ -287,15 +290,15 @@ The typical install location is:
 Building
 ========
 To build, cd to the top level directory (where this README.md is) and do:
-mvn clean compile
+mvn clean compile -P build
 
 This creates the shared library code that contains the project version, in
 the target/classes directory, then does: 
 cd cmake-build-debug; cmake .. (ie regenerate the cmake cache)
 cmake --build cmake-build-debug --target all -- -j 4
 
-This build will build the entire system: T800 emulator and node
-server, client libraries, etc. This doesn't install it on your system - see below.
+This build will build the entire system: T800 emulator and iserver, client libraries, etc. This doesn't install it on
+your system - see below.
 
 Cleaning the Build Tree
 =======================
@@ -374,3 +377,6 @@ Bibliography
 
 "The IMS T810 - A Preliminary Survey, Guy Harriman"
   http://www.transputer.net/fbooks/t810pre/t810pre.pdf
+
+"Transputer Development System, second edition"
+  http://transputer.net/prog/72-trn-011-01/tds2nd.pdf
