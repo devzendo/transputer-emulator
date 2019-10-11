@@ -34,10 +34,12 @@ public:
 	// suspending the whole emulator, I should make each link
 	// driven by a state machine to introduce some polled
 	// asynchrony.
-	// For now, just to get data flowing from the Node Server,
+	// For now, just to get data flowing from the IServer,
 	// I'll use the synchronous forms.
 	virtual BYTE8 readByte(void) throw (std::exception) = 0;
 	virtual void writeByte(BYTE8 b) throw (std::exception) = 0;
+	WORD16 readShort(void) throw (std::exception);
+    void writeShort(WORD16 b) throw (std::exception);
 	WORD32 readWord(void) throw (std::exception);
 	void writeWord(WORD32 w) throw (std::exception);
 	virtual void resetLink(void) throw (std::exception) = 0;

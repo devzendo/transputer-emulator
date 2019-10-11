@@ -29,6 +29,18 @@ Link::~Link(void) {
 	logDebugF("Destroying link %d", myLinkNo);
 }
 
+WORD16 Link::readShort(void) throw (std::exception) {
+    // Input a little-endian short, LSB first MSB last
+    return (readByte()) |
+           (readByte() << 8);
+}
+
+void Link::writeShort(WORD16 w) throw (std::exception) {
+    // Always output as a little-endian short, LSB first MSB last
+    writeByte(w & 0x00ff);
+    writeByte((w & 0xff00) >> 8);
+}
+
 WORD32 Link::readWord(void) throw (std::exception) {
 	// Input a little-endian word, LSB first MSB last
 	return (readByte()) |

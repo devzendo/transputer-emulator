@@ -78,6 +78,11 @@ TEST_F(LinkTest, CPUWriteAndReadByte) {
 //    EXPECT_EQ(cpuLink->readByte(), 32);
 //}
 
+TEST_F(LinkTest, CPUWriteAndReadShort) {
+    cpuLink->writeShort(0x0102);
+    EXPECT_EQ(serverLink->readShort(), 0x0102);
+}
+
 TEST_F(LinkTest, CPUWriteAndReadWord) {
     cpuLink->writeWord(0x01020304);
     EXPECT_EQ(serverLink->readWord(), 0x01020304);
