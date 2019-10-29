@@ -38,6 +38,8 @@ public:
 	// I'll use the synchronous forms.
 	virtual BYTE8 readByte(void) throw (std::exception) = 0;
 	virtual void writeByte(BYTE8 b) throw (std::exception) = 0;
+	int readBytes(BYTE8* buffer, int bytesToRead) throw (std::exception);
+	int writeBytes(BYTE8* buffer, int bytesToWrite) throw (std::exception);
 	WORD16 readShort(void) throw (std::exception);
     void writeShort(WORD16 b) throw (std::exception);
 	WORD32 readWord(void) throw (std::exception);

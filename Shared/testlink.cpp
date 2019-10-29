@@ -72,6 +72,21 @@ TEST_F(LinkTest, CPUWriteAndReadByte) {
     EXPECT_EQ(serverLink->readByte(), 16);
 }
 
+TEST_F(LinkTest, CPUWriteAndReadBytes) {
+    BYTE8 writeBuf[4] = { 0xff, 0x7f, 0x60, 0x21 };
+    int bytesWritten = cpuLink->writeBytes(writeBuf, 4);
+    EXPECT_EQ(bytesWritten, 4);
+
+    BYTE8 readBuf[4];
+    int bytesRead = serverLink->readBytes(readBuf, 4);
+    EXPECT_EQ(bytesRead, 4);
+
+    EXPECT_EQ(readBuf[0], 0xff);
+    EXPECT_EQ(readBuf[1], 0x7f);
+    EXPECT_EQ(readBuf[2], 0x60);
+    EXPECT_EQ(readBuf[3], 0x21);
+}
+
 // Server named pipe on windows blocks on ConnectNamedPipe. Need better mechanism.
 //TEST_F(LinkTest, ServerWriteAndReadByte) {
 //    serverLink->writeByte(32);

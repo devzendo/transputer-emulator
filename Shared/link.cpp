@@ -29,6 +29,24 @@ Link::~Link(void) {
 	logDebugF("Destroying link %d", myLinkNo);
 }
 
+int Link::readBytes(BYTE8* buffer, int bytesToRead) throw (std::exception) {
+    // TODO improve inefficiency
+    int readCount = 0;
+    for (; readCount < bytesToRead; readCount++) {
+        buffer[readCount] = readByte();
+    }
+    return readCount;
+}
+
+int Link::writeBytes(BYTE8* buffer, int bytesToWrite) throw (std::exception) {
+    // TODO improve inefficiency
+    int writtenCount = 0;
+    for (; writtenCount < bytesToWrite; writtenCount++) {
+        writeByte(buffer[writtenCount]);
+    }
+    return writtenCount;
+}
+
 WORD16 Link::readShort(void) throw (std::exception) {
     // Input a little-endian short, LSB first MSB last
     return (readByte()) |
