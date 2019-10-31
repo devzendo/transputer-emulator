@@ -47,6 +47,83 @@
 
 #include "types.h"
 
+// Protocol format on the wire is:
+// +----------------+
+// | WORD16 lenLsb  | Least significant byte of the 16-bit frame length.
+// | WORD16 lenMsb  | Most significant byte of the 16-bit frame length.
+// +----------------+
+// | BYTE8 tag      | Indicates the type of protocol message that follows. See REQ_xxx..
+// +----------------+
+// | BYTE8 ........ | data pertinent to the message type, an undifferentiated
+// |                | byte stream.
+
+// Frame length encoded in the first two bytes (little endian).
+// Minimum frame length is 8 (ie minimum message length of 6 bytes in the to-server
+// direction), maximum 512. Packet size must always be an even number of bytes.
+// (TDS 2nd ed, p356, sec 16.5.1.)
+// Inmos iServer has max packet size of 1040 ? Is that from T9000?
+
+// File/Console handling
+
+const BYTE8 REQ_OPEN = 10;
+const BYTE8 REQ_CLOSE = 11;
+const BYTE8 REQ_READ = 12;
+const BYTE8 REQ_WRITE = 13;
+const BYTE8 REQ_GETS = 14;
+const BYTE8 REQ_PUTS = 15;
+const BYTE8 REQ_FLUSH = 16;
+const BYTE8 REQ_SEEK = 17;
+const BYTE8 REQ_TELL = 18;
+const BYTE8 REQ_EOF = 19;
+const BYTE8 REQ_FERROR = 20;
+const BYTE8 REQ_REMOVE = 21;
+const BYTE8 REQ_RENAME = 22;
+const BYTE8 REQ_GETBLOCK = 23;
+const BYTE8 REQ_PUTBLOCK = 24;
+const BYTE8 REQ_ISATTY = 25;
+const BYTE8 REQ_OPENREC = 26;
+const BYTE8 REQ_GETREC = 27;
+const BYTE8 REQ_PUTREC = 28;
+const BYTE8 REQ_PUTEOF = 29;
+const BYTE8 REQ_GETKEY = 30;
+const BYTE8 REQ_POLLKEY = 31;
+
+const BYTE8 REQ_GETENV = 32;
+const BYTE8 REQ_TIME = 33;
+const BYTE8 REQ_SYSTEM = 34;
+const BYTE8 REQ_EXIT = 35;
+
+const BYTE8 REQ_COMMAND = 40;
+const BYTE8 REQ_CORE = 41;
+const BYTE8 REQ_ID = 42;
+const BYTE8 REQ_GETINFO = 43;
+
+const BYTE8 REQ_MSDOS = 50;
+
+const BYTE8 REQ_FILEEXISTS = 80;
+const BYTE8 REQ_TRANSLATE = 81;
+const BYTE8 REQ_FERRSTAT = 82;
+const BYTE8 REQ_COMMANDARG = 83;
+
+// Result codes
+const BYTE8 RES_SUCCESS = 0;
+const BYTE8 RES_UNIMPLEMENTED = 1;
+const BYTE8 RES_ERROR = 129;
+const BYTE8 RES_NOPRIV = 131;
+const BYTE8 RES_NORESOURCE = 132;
+const BYTE8 RES_NOFILE = 133;
+const BYTE8 RES_TRUNCATED = 134;
+const BYTE8 RES_BADID = 135;
+const BYTE8 RES_NOPOSN = 136;
+const BYTE8 RES_NOTAVAILABLE = 137;
+const BYTE8 RES_EOF = 138;
+const BYTE8 RES_AKEYREPLY = 139;
+const BYTE8 RES_BADPARAMS = 141;
+const BYTE8 RES_NOTERM = 142;
+const BYTE8 RES_RECTOOBIG = 143;
+
+
+
 // I'm using definitions rather than constants as it yields code that does less
 // workspace thrashing.
 

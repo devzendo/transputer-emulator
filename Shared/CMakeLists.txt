@@ -4,7 +4,7 @@ endif(WIN32)
 if(UNIX)
     set(platform_sources fifolink.cpp fifolink.h)
 endif(UNIX)
-add_library(parachutedev STATIC log.h log.cpp misc.h misc.cpp hexdump.h hexdump.cpp link.h link.cpp "${platform_sources}" linkfactory.h linkfactory.cpp constants.h emuquery.h memloc.h platformdetection.h types.h)
+add_library(parachutedev STATIC log.h log.cpp misc.h misc.cpp hexdump.h hexdump.cpp link.h link.cpp "${platform_sources}" linkfactory.h linkfactory.cpp constants.h emuquery.h memloc.h platformdetection.h types.h stublink.cpp stublink.h)
 
 add_executable(testtypes testtypes.cpp)
 target_link_libraries(testtypes gtest gmock_main)
