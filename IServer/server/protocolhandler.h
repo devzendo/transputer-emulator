@@ -44,8 +44,9 @@ private:
     WORD64 myFrameCount;
     WORD64 myBadFrameCount;
     BYTE8 myTransactionBuffer[TransactionBufferSize];
-    WORD16 myFrameSize; // set if readFrame returns true
-    bool readFrame(); 
+    WORD16 myReadFrameSize; // set if readFrame returns true
+    WORD16 myWriteFrameSize;
+    bool readFrame();
     bool requestResponse();
     bool writeFrame();
 };

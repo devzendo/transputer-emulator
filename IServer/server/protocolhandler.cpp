@@ -93,7 +93,7 @@ bool ProtocolHandler::processFrame() {
 }
 
 bool ProtocolHandler::readFrame() {
-    myFrameSize = 0;
+    myReadFrameSize = 0;
     // Frame length encoded in the first two bytes (little endian).
     // Minimum frame length is 8 (ie minimum message length of 6 bytes in the to-server
     // direction), maximum 512. Packet size must always be an even number of bytes.
@@ -102,30 +102,30 @@ bool ProtocolHandler::readFrame() {
 
     // Read 8 bytes into transaction buffer; extract frame size from first two bytes.
     // Fail if we fail to read 8 bytes.
-    myFrameSize = myIOLink.readShort();
+    myReadFrameSize = myIOLink.readShort();
     // TODO when link abstraction is improved to add timeout reads, and analyse/reset/error
     // rework this to take those into account.
     myFrameCount++;
     if (bDebug) {
-        logDebugF("Message length word is %04X (%d)", myFrameSize, myFrameSize);
+        logDebugF("Message length word is %04X (%d)", myReadFrameSize, myReadFrameSize);
     }
-    if (myFrameSize < 6 || myFrameSize > 510) {
-        logWarnF("Frame size %04X out of range", myFrameSize);
+    if (myReadFrameSize < 6 || myReadFrameSize > 510) {
+        logWarnF("Frame size %04X out of range", myReadFrameSize);
         myBadFrameCount++;
         return false;
     }
-    if ((myFrameSize & 0x01) == 0x01) {
-        logWarnF("Frame size %04X is odd", myFrameSize);
+    if ((myReadFrameSize & 0x01) == 0x01) {
+        logWarnF("Frame size %04X is odd", myReadFrameSize);
         myBadFrameCount++;
         return false;
     }
     // Fail if frame size > max frame length.
     // Store frameSize at positions 0 and 1 in myTransactionBuffer?
     // Read remaining data.
-    WORD16 bytesRead = myIOLink.readBytes(&myTransactionBuffer[2], myFrameSize);
+    WORD16 bytesRead = myIOLink.readBytes(&myTransactionBuffer[2], myReadFrameSize);
     // Fail if we fail to read all of it.
-    if (bytesRead < myFrameSize) {
-        logWarnF("Truncated frame read: read %d bytes, expecting %d bytes", bytesRead, myFrameSize);
+    if (bytesRead < myReadFrameSize) {
+        logWarnF("Truncated frame read: read %d bytes, expecting %d bytes", bytesRead, myReadFrameSize);
         return false;
         // How to resynchronise? Reset link?
     }
