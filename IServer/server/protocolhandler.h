@@ -27,7 +27,8 @@ class ProtocolHandler {
 public:
     ProtocolHandler(Link & ioLink, Platform & platform):
         myIOLink(ioLink), myPlatform(platform), bDebug(false),
-        myFrameCount(0L), myBadFrameCount(0L) {};
+        myFrameCount(0L), myBadFrameCount(0L), myUnimplementedFrameCount(0L),
+        myReadFrameSize(0), myWriteFrameIndex(0) {};
     ~ProtocolHandler();
     void setDebug(bool newDebug);
 
@@ -37,18 +38,26 @@ public:
 
     WORD64 frameCount();
     WORD64 badFrameCount();
+    WORD64 unimplementedFrameCount();
 private:
     bool bDebug;
     Link & myIOLink;
     Platform & myPlatform;
     WORD64 myFrameCount;
     WORD64 myBadFrameCount;
+    WORD64 myUnimplementedFrameCount;
     BYTE8 myTransactionBuffer[TransactionBufferSize];
     WORD16 myReadFrameSize; // set if readFrame returns true
-    WORD16 myWriteFrameSize;
+    WORD16 myWriteFrameIndex;
+    void put(const BYTE8 byte8);
+    void put(const WORD16 word16);
+    void put(const WORD32 word32);
     bool readFrame();
     bool requestResponse();
+    void resetWriteFrame();
     bool writeFrame();
+
+    WORD16 fillInFrameSize();
 };
 
 #endif // _PROTOCOL_HANDLER_H

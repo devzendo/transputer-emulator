@@ -65,6 +65,8 @@
 
 // File/Console handling
 
+// Note for future extension: 9 is used as an 'unimplemented' value in tests.
+
 const BYTE8 REQ_OPEN = 10;
 const BYTE8 REQ_CLOSE = 11;
 const BYTE8 REQ_READ = 12;
@@ -95,7 +97,7 @@ const BYTE8 REQ_EXIT = 35;
 
 const BYTE8 REQ_COMMAND = 40;
 const BYTE8 REQ_CORE = 41;
-const BYTE8 REQ_ID = 42;
+const BYTE8 REQ_ID = 42; // a.k.a. 'Version'
 const BYTE8 REQ_GETINFO = 43;
 
 const BYTE8 REQ_MSDOS = 50;
@@ -121,7 +123,6 @@ const BYTE8 RES_AKEYREPLY = 139;
 const BYTE8 RES_BADPARAMS = 141;
 const BYTE8 RES_NOTERM = 142;
 const BYTE8 RES_RECTOOBIG = 143;
-
 
 
 // I'm using definitions rather than constants as it yields code that does less

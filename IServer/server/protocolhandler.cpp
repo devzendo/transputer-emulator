@@ -61,6 +61,23 @@ namespace {
             case REQ_TRANSLATE: return "Translate";
             case REQ_FERRSTAT: return "FErrStat";
             case REQ_COMMANDARG: return "CommandArg";
+
+            case RES_SUCCESS: return "Success";
+            case RES_UNIMPLEMENTED: return "Unimplement";
+            case RES_ERROR: return "Error";
+            case RES_NOPRIV: return "NoPriv";
+            case RES_NORESOURCE: return "NoResource";
+            case RES_NOFILE: return "NoFile";
+            case RES_TRUNCATED: return "Truncated";
+            case RES_BADID: return "BadId";
+            case RES_NOPOSN: return "NoPosn";
+            case RES_NOTAVAILABLE: return "NotAvailable";
+            case RES_EOF: return "EOF";
+            case RES_AKEYREPLY: return "AKeyReply";
+            case RES_BADPARAMS: return "BadParams";
+            case RES_NOTERM: return "NoTerm";
+            case RES_RECTOOBIG: return "RecTooBig";
+
             default: return "Unknown";
         }
     }
@@ -92,6 +109,24 @@ bool ProtocolHandler::processFrame() {
     return exitFrameReceived;
 }
 
+void ProtocolHandler::put(const BYTE8 byte8) {
+    logDebugF("put BYTE8 %02X @ %04X", byte8, myWriteFrameIndex);
+    myTransactionBuffer[myWriteFrameIndex++] = byte8;
+}
+
+void ProtocolHandler::put(const WORD16 word16) {
+    logDebugF("put WORD16 %04X @ %04X UNFINISHED TEST", word16, myWriteFrameIndex);
+    myTransactionBuffer[myWriteFrameIndex++] = (BYTE8) (word16 & (BYTE8)0xff);
+
+// TODO how to test this?    myTransactionBuffer[myWriteFrameIndex++] = (BYTE8) (word16 >> (BYTE8)8) & (BYTE8)0xff;
+    myTransactionBuffer[myWriteFrameIndex++] = (BYTE8) 0;  // BAD DATA - NEED TEST TO ESTABLISH ABOVE
+}
+
+void ProtocolHandler::put(const WORD32 word32) {
+    logDebugF("put WORD32 %08X @ %04X UNIMPLEMENTD", word32, myWriteFrameIndex);
+
+}
+
 bool ProtocolHandler::readFrame() {
     myReadFrameSize = 0;
     // Frame length encoded in the first two bytes (little endian).
@@ -107,15 +142,15 @@ bool ProtocolHandler::readFrame() {
     // rework this to take those into account.
     myFrameCount++;
     if (bDebug) {
-        logDebugF("Message length word is %04X (%d)", myReadFrameSize, myReadFrameSize);
+        logDebugF("Read frame size word is %04X (%d)", myReadFrameSize, myReadFrameSize);
     }
     if (myReadFrameSize < 6 || myReadFrameSize > 510) {
-        logWarnF("Frame size %04X out of range", myReadFrameSize);
+        logWarnF("Read frame size %04X out of range", myReadFrameSize);
         myBadFrameCount++;
         return false;
     }
     if ((myReadFrameSize & 0x01) == 0x01) {
-        logWarnF("Frame size %04X is odd", myReadFrameSize);
+        logWarnF("Read frame size %04X is odd", myReadFrameSize);
         myBadFrameCount++;
         return false;
     }
@@ -134,13 +169,166 @@ bool ProtocolHandler::readFrame() {
 
 bool ProtocolHandler::requestResponse() {
     BYTE8 tag = myTransactionBuffer[2];
-    logDebugF("Frame tag %02X (%s)", tag, tagToName(tag));
-    //switch
+    logDebugF("Read frame tag %02X (%s)", tag, tagToName(tag));
+    resetWriteFrame();
+    switch (tag) {
+        case REQ_OPEN: {
+            break;
+        }
+        case REQ_CLOSE: {
+            break;
+        }
+        case REQ_READ: {
+            break;
+        }
+        case REQ_WRITE: {
+            break;
+        }
+        case REQ_GETS: {
+            break;
+        }
+        case REQ_PUTS: {
+            break;
+        }
+        case REQ_FLUSH: {
+            break;
+        }
+        case REQ_SEEK: {
+            break;
+        }
+        case REQ_TELL: {
+            break;
+        }
+        case REQ_EOF: {
+            break;
+        }
+        case REQ_FERROR: {
+            break;
+        }
+        case REQ_REMOVE: {
+            break;
+        }
+        case REQ_RENAME: {
+            break;
+        }
+        case REQ_GETBLOCK: {
+            break;
+        }
+        case REQ_PUTBLOCK: {
+            break;
+        }
+        case REQ_ISATTY: {
+            break;
+        }
+        case REQ_OPENREC: {
+            break;
+        }
+        case REQ_GETREC: {
+            break;
+        }
+        case REQ_PUTREC: {
+            break;
+        }
+        case REQ_PUTEOF: {
+            break;
+        }
+        case REQ_GETKEY: {
+            break;
+        }
+        case REQ_POLLKEY: {
+            break;
+        }
+
+        case REQ_GETENV: {
+            break;
+        }
+        case REQ_TIME: {
+            break;
+        }
+        case REQ_SYSTEM: {
+            break;
+        }
+        case REQ_EXIT: {
+            break;
+        }
+
+        case REQ_COMMAND: {
+            break;
+        }
+        case REQ_CORE: {
+            break;
+        }
+        case REQ_ID: {
+            put((BYTE8) 0x00); // TODO extract real version from productVersion string
+            break;
+        }
+        case REQ_GETINFO: {
+            break;
+        }
+
+        case REQ_MSDOS: {
+            break;
+        }
+
+        case REQ_FILEEXISTS: {
+            break;
+        }
+        case REQ_TRANSLATE: {
+            break;
+        }
+        case REQ_FERRSTAT: {
+            break;
+        }
+        case REQ_COMMANDARG: {
+            break;
+        }
+
+        default: {
+            logWarnF("Frame tag %02X is unknown", tag);
+            myUnimplementedFrameCount++;
+            put(RES_UNIMPLEMENTED);
+            break;
+        }
+    }
     return tag == REQ_EXIT;
 }
 
+void ProtocolHandler::resetWriteFrame() {
+    myWriteFrameIndex = 2;
+    // start putting data after the first two size fields
+    // the size fields are set in fillInFrameSize()
+}
+
 bool ProtocolHandler::writeFrame() {
+    if (myWriteFrameIndex == 0) {
+        logWarn("No write frame has been prepared");
+        return false;
+    }
+    WORD16 frameSize = fillInFrameSize();
+    if (bDebug) {
+        BYTE8 tag = myTransactionBuffer[2];
+        logDebugF("Write frame: size word is %04X (%d) tag %02X (%s)",
+                frameSize, frameSize, tag, tagToName(tag));
+    }
+
+    myIOLink.writeBytes(myTransactionBuffer, myWriteFrameIndex);
     return true;
+}
+
+// Wind back to the start to set the 2 length bytes.
+WORD16 ProtocolHandler::fillInFrameSize() {
+    // TODO inc by 1 if odd
+    // TODO if incremented, set that final byte to 0
+    if ((myWriteFrameIndex & (WORD16)0x01) == 0x01) {
+        logWarn("WRITING ODD LENGTH FRAME - UNTESTED, NEEDS TO BE MADE EVEN BY PADDING 0");
+    }
+
+    WORD16 oldWriteFrameIndex = myWriteFrameIndex;
+    myWriteFrameIndex = 0;
+    WORD16 frameSize = (oldWriteFrameIndex - 2);
+    put(frameSize);
+    myWriteFrameIndex = oldWriteFrameIndex;
+    return frameSize;
 }
 
 WORD64 ProtocolHandler::frameCount() {
@@ -149,4 +337,8 @@ WORD64 ProtocolHandler::frameCount() {
 
 WORD64 ProtocolHandler::badFrameCount() {
     return myBadFrameCount;
+}
+
+WORD64 ProtocolHandler::unimplementedFrameCount() {
+    return myUnimplementedFrameCount;
 }

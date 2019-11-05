@@ -79,6 +79,22 @@ protected:
         return isExit;
     }
 
+    void checkResponseFrameTag(const std::vector<BYTE8> &frame, const BYTE8 expectedResponseFrameTag) {
+        int actualResponseFrameTag = (int) frame[2];
+        EXPECT_EQ(actualResponseFrameTag, (int)expectedResponseFrameTag);
+    }
+
+    void checkResponseFrameSize(const std::vector<BYTE8> & frame, const WORD16 expectedResponseFrameSize) {
+        WORD16 actualResponseFrameSize = frame[0] + (frame[1]*256);
+        EXPECT_EQ(actualResponseFrameSize, expectedResponseFrameSize);
+    }
+
+    std::vector<BYTE8> readResponseFrame() {
+        // The protocol request/response is synchronous. So if the request was handled, there'll be
+        // a response.
+        return stubLink.getWrittenBytes();
+    }
+
     std::vector<BYTE8> & padFrame(std::vector<BYTE8> & unpaddedFrame) {
         while (unpaddedFrame.size() < 6 || ((unpaddedFrame.size() & 0x01) == 0x01))  {
             unpaddedFrame.push_back(0x00);
@@ -131,6 +147,7 @@ TEST_F(TestProtocolHandler, MaxFrame510IsGood)
     padTo(510, maxFrame);
 
     checkGoodFrame(maxFrame);
+    checkResponseFrameTag(maxFrame, RES_UNIMPLEMENTED);
 }
 
 TEST_F(TestProtocolHandler, LongFrame511IsOddlyBad)
@@ -205,20 +222,47 @@ TEST_F(TestProtocolHandler, PadFrame7ToEvenSize)
     EXPECT_EQ(padFrame(sevenBytes), eightBytes);
 }
 
+TEST_F(TestProtocolHandler, UnimplementedFrame)
+{
+    std::vector<BYTE8> unimplementedFrame = {9}; // an unimplemented tag
+    std::vector<BYTE8> padded = padFrame(unimplementedFrame);
+    EXPECT_EQ(checkGoodFrame(padded), false); // its length is good, it's not an exit frame
+    EXPECT_EQ(handler->unimplementedFrameCount(), 1L); // but it isn't an implemented tag
+    std::vector<BYTE8> response = readResponseFrame();
+    logDebugF("Read the response frame in the test size is %d", response.size());
+    checkResponseFrameSize(response, 1);
+    checkResponseFrameTag(response, RES_UNIMPLEMENTED);
+}
+
 TEST_F(TestProtocolHandler, IdFrame)
 {
     std::vector<BYTE8> idFrame = {REQ_ID};
     std::vector<BYTE8> padded = padFrame(idFrame);
-    EXPECT_EQ(checkGoodFrame(padded), false); // Not an exit frame
+    EXPECT_EQ(checkGoodFrame(padded), false); // its length is good, it's not an exit frame
+    EXPECT_EQ(handler->unimplementedFrameCount(), 0L); // it is an implemented tag
+    std::vector<BYTE8> response = readResponseFrame();
+    checkResponseFrameSize(response, 4);
+    checkResponseFrameTag(response, RES_SUCCESS);
+    EXPECT_EQ((int)response[3], 0); // version
+    EXPECT_EQ((int)response[4], 0); // host
+    EXPECT_EQ((int)response[5], 0); // os
+    EXPECT_EQ((int)response[6], 0); // board
 }
 
 TEST_F(TestProtocolHandler, ExitFrame)
 {
     std::vector<BYTE8> exitFrame = {REQ_EXIT};
+    // TODO there's more to the exit frame (a 32 bit value), just checking
+    // the handler's true (isexit) response for now
     std::vector<BYTE8> padded = padFrame(exitFrame);
     EXPECT_EQ(checkGoodFrame(padded), true); // It is an exit frame
+    std::vector<BYTE8> response = readResponseFrame();
+    checkResponseFrameTag(response, RES_SUCCESS);
+    checkResponseFrameSize(response, 1);
+    EXPECT_EQ(handler->unimplementedFrameCount(), 0L); // it is an implemented tag
 }
 
+// TODO test put16, and put32 indirectly
 // TODO a good 6 byte frame
 // TODO a good 510 byte frame
 // TODO a bad 511 byte frame
