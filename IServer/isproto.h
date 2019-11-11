@@ -124,6 +124,50 @@ const BYTE8 RES_BADPARAMS = 141;
 const BYTE8 RES_NOTERM = 142;
 const BYTE8 RES_RECTOOBIG = 143;
 
+// Protocol response format on the wire is:
+// +----------------+
+// | WORD32 lsbSize | Least significant byte of the size of the rest of the frame (always even)
+// | WORD32 msbSize | Most significant byte of the size of the rest of the frame (always even)
+// +----------------+
+// | WORD32 resType | one of the response type identifiers e.g. RES_SUCCESS
+// +----------------+
+// | rest of data.. | the contents of this 'rest of data' is described for each
+// | if any..       | specific response frame, below.
+// +----------------+
+
+// REQ_EXIT
+// Request:
+// +----------------+
+// | BYTE8 REQ_EXIT |
+// +----------------+
+// | WORD32 status  | a status code to send to the server; 999999999 is 'success'; -999999999 is 'failure'
+// +----------------+
+// Note: 'success' causes the IServer to exit with a success exit code (0); 'failure' exits it with
+// a failure exit code (1). Other values are used directly as the IServer exit code.
+//
+// Response data for REQ_EXIT:
+// +----------------+
+// | BYTE8 result   | RES_SUCCESS
+// +----------------+
+const WORD32 RES_EXIT_SUCCESS = 999999999;
+const WORD32 RES_EXIT_FAILURE = -999999999;
+
+// REQ_ID
+// Request:
+// +----------------+
+// | BYTE8 REQ_ID   |
+// +----------------+
+//
+// Response data for REQ_ID:
+// +----------------+
+// | BYTE8 result   | RES_SUCCESS
+// +----------------+
+// | BYTE8 version  | (major * 10) + (minor / 10)
+// | BYTE8 host     | 0=unknown; 1=PC (Windows or Linux); 9=Mac
+// | BYTE8 os       | 0=unknown; 6=Windows; 7=macOS; 8=Linux
+// +----------------+
+
+
 
 // I'm using definitions rather than constants as it yields code that does less
 // workspace thrashing.

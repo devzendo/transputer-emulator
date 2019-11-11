@@ -162,3 +162,6 @@ void FIFOLink::resetLink(void) throw (std::exception) {
 	// TODO
 }
 
+int FIFOLink::getLinkType() {
+    return LinkType_FIFO;
+}

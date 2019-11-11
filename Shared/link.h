@@ -24,6 +24,11 @@
 #pragma warning( disable : 4290 )
 #endif
 
+const int LinkType_FIFO = 0;
+const int LinkType_Socket = 1;
+const int LinkType_SharedMemory = 2;
+const int LinkType_Stub = 3; // for testing
+
 class Link {
 public:
 	Link(int linkNo, bool isServer);
@@ -47,6 +52,7 @@ public:
 	virtual void resetLink(void) throw (std::exception) = 0;
 	int getLinkNo(void);
 	void setDebug(bool newDebug);
+	virtual int getLinkType(void) = 0;
 protected:
 	int myLinkNo;
 	bool bServer;

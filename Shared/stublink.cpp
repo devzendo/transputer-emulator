@@ -76,3 +76,6 @@ void StubLink::setReadableBytes(std::vector<BYTE8> bytes) {
     }
 }
 
+int StubLink::getLinkType() {
+    return LinkType_Stub;
+}

@@ -7,6 +7,9 @@ It runs on Apple macOS (El Capitan+), Windows 10, CentOS 7.6, Ubuntu 16.04/18.04
 
 It is part of the [Parachute Project](https://devzendo.github.io/parachute).
 
+It is written in C++14 - the Raspbian Stretch distribution provides Clang 3.5.0, which does not support
+more recent C++ standards.
+
 (C) 2005-2019 Matt J. Gumbley
 matt.gumbley@devzendo.org
 @mattgumbley @devzendo
@@ -30,22 +33,30 @@ First release:
 * A Cross Platform system that can run "Hello World" (via my NodeServer (custom protocol) implementation).
 
 Second release:
-* Convert the NodeServer to be IServer compatible. Similarly, "Hello World".
-* Converting older C code (that's not very portable) to C++11(+) (that hopefully is).
+* Convert the NodeServer to be IServer compatible, implementing all frame types needed by "Hello World" and
+  eForth. Similarly, convert "Hello World" to be IServer compatible.
+* IServer is unfinished; it implements the following frame types:
+  * Id (Version)
+  * Exit
+* Converting older C code (that's not very portable) to C++14 (that hopefully is more portable).
+* Upgrade macOS build from El Capitan to Mojave.
 
 Third release:
 * Capable of running eForth.
 
-Fourth release: 
+Fourth release:
+* More IServer implementation.
 * Complete Integer functionality.
 
 Fifth release:
 * Complete Floating Point functionality.
+* Complete IServer implementation.
 
 Release Notes
 -------------
 0.0.2 Second Release (work in progress)
 * Converting the NodeServer to be IServer compatible. Similarly, "Hello World".
+* Release for macOS is upgraded from El Capitan to Mojave. Untested on Catalina.
 
 0.0.1 First Release
 * Versioning and build now controlled by Maven and CMake.
@@ -240,7 +251,7 @@ Emulator - the T414/T800/T801/T805 emulator.
 Building and Installing
 -----------------------
 The distribution currently builds under the following systems:
-* Apple macOS 'El Capitan' 10.11 (untested on more recent versions)
+* Apple macOS 'Mojave' 10.14 (untested on more recent versions)
 * Windows 10 64-bit (untested on earlier versions e.g. XP, 7, 8, 8.1)
 * CentOS Linux 7.6 Intel x86-64
 * Raspbian Stretch
@@ -259,9 +270,10 @@ Prerequisites:
   - If you want to build the client-examples programs, you'll need the
     <a href="https://bitbucket.org/devzendo/transputer-macro-assembler">DevZendo.org Transputer Macro Assembler</a>
     installed and on your PATH.
-- macOS 'El Capitan' 10.11.6:
+- macOS 'Mojave' 10.14.6:
+  - CMake 3.15.5 (from MacPorts) and 3.14.3 (from CLion)
   - GNU Make. I use 4.2.1.
-  - clang (e.g. via XCode Developer tools, or MacPorts). Apple LLVM version 8.0.0 (clang-800.0.42.1) on
+  - clang (e.g. via XCode Developer tools, or MacPorts). Apple LLVM version 11.0.0 (clang-1100.0.33.8) on
   - untested on more recent versions of macOS
 - Windows 10 Home:
   - Microsoft Visual Studio Build Tools 2017, v 15.9.28307.423

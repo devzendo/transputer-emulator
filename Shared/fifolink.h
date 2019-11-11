@@ -27,6 +27,7 @@ public:
 	BYTE8 readByte(void) throw (std::exception);
 	void writeByte(BYTE8 b) throw (std::exception);
 	void resetLink(void) throw (std::exception);
+    int getLinkType(void);
 private:
 	int myWriteFD, myReadFD;
 	WORD32 myWriteSequence, myReadSequence;

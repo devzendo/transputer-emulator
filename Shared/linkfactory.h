@@ -14,10 +14,6 @@
 #ifndef _LINKFACTORY_H
 #define _LINKFACTORY_H
 
-const int LinkType_FIFO = 0;
-const int LinkType_Socket = 1;
-const int LinkType_SharedMemory = 2;
-
 class LinkFactory {
 public:
 	LinkFactory(bool isServer, bool isDebug);

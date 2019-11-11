@@ -21,6 +21,7 @@
 #include "hexdump.h"
 #include "log.h"
 #include "protocolhandler.h"
+#include "platformdetection.h"
 #include "../isproto.h"
 
 namespace {
@@ -127,6 +128,24 @@ void ProtocolHandler::put(const WORD32 word32) {
 
 }
 
+BYTE8 ProtocolHandler::get8() {
+    return myTransactionBuffer[myReadFrameIndex++];
+}
+
+WORD16 ProtocolHandler::get16() {
+    // Input a little-endian short, LSB first MSB last
+    return (get8()) |
+           (get8() << 8);
+}
+
+WORD32 ProtocolHandler::get32() {
+    // Input a little-endian word, LSB first MSB last
+    return (get8()) |
+           (get8() << 8) |
+           (get8() << 16) |
+           (get8() << 24);
+}
+
 bool ProtocolHandler::readFrame() {
     myReadFrameSize = 0;
     // Frame length encoded in the first two bytes (little endian).
@@ -171,6 +190,7 @@ bool ProtocolHandler::requestResponse() {
     BYTE8 tag = myTransactionBuffer[2];
     logDebugF("Read frame tag %02X (%s)", tag, tagToName(tag));
     resetWriteFrame();
+    myReadFrameIndex = 3;
     switch (tag) {
         case REQ_OPEN: {
             break;
@@ -249,6 +269,21 @@ bool ProtocolHandler::requestResponse() {
             break;
         }
         case REQ_EXIT: {
+            const WORD32 status = get32();
+            logDebugF("Exit status received as %08X", status);
+
+            switch (status) {
+                case RES_EXIT_SUCCESS:
+                    myExitCode = 0;
+                    break;
+                case RES_EXIT_FAILURE:
+                    myExitCode = 1;
+                    break;
+                default:
+                    myExitCode = (int)status;
+            }
+            logDebugF("Exit code set to %04X", myExitCode);
+            put(RES_SUCCESS);
             break;
         }
 
@@ -259,7 +294,22 @@ bool ProtocolHandler::requestResponse() {
             break;
         }
         case REQ_ID: {
-            put((BYTE8) 0x00); // TODO extract real version from productVersion string
+            put(RES_SUCCESS);
+            put((BYTE8) 0x00); // Version: TODO extract real version from productVersion string
+#if defined(PLATFORM_WINDOWS)
+            put((BYTE8) 0X01); // Host: "PC"
+            put((BYTE8) 0X06); // OS: "Windows" (addition: not in iServer docs)
+#elif defined(PLATFORM_OSX)
+            put((BYTE8) 0X09); // Host: "Mac" (addition: not in iServer docs)
+            put((BYTE8) 0X07); // OS: "macOS" (addition: not in iServer docs)
+#elif defined(PLATFORM_LINUX)
+            put((BYTE8) 0X01); // Host: "PC"
+            put((BYTE8) 0X08); // OS: "Linux" (addition: not in iServer docs)
+#else
+            put((BYTE8) 0X00); // Host: ?
+            put((BYTE8) 0X00); // OS: ?
+#endif
+            put((BYTE8) ((BYTE8)myIOLink.getLinkType() & (BYTE8)0xff)); // Board: actually the link type
             break;
         }
         case REQ_GETINFO: {
@@ -317,10 +367,9 @@ bool ProtocolHandler::writeFrame() {
 
 // Wind back to the start to set the 2 length bytes.
 WORD16 ProtocolHandler::fillInFrameSize() {
-    // TODO inc by 1 if odd
-    // TODO if incremented, set that final byte to 0
     if ((myWriteFrameIndex & (WORD16)0x01) == 0x01) {
-        logWarn("WRITING ODD LENGTH FRAME - UNTESTED, NEEDS TO BE MADE EVEN BY PADDING 0");
+        logDebug("Padding odd length frame with 00");
+        put((BYTE8) 0x00); // increments myWriteFrameIndex
     }
 
     WORD16 oldWriteFrameIndex = myWriteFrameIndex;
@@ -341,4 +390,8 @@ WORD64 ProtocolHandler::badFrameCount() {
 
 WORD64 ProtocolHandler::unimplementedFrameCount() {
     return myUnimplementedFrameCount;
+}
+
+int ProtocolHandler::exitCode() {
+    return myExitCode;
 }
