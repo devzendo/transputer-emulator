@@ -37,6 +37,7 @@ using namespace std;
 static char *progName;
 static char *bootFile;
 static bool debugPlatform;
+static bool debugProtocol;
 static bool debugLink;
 static bool debugLinkRaw;
 static bool monitorLink;
@@ -60,6 +61,7 @@ void usage() {
 	logInfo("Options:");
 	logInfo("  -df   Full debug");
     logInfo("  -dp   Enables platform debug");
+    logInfo("  -dP   Enables protocol debug");
 	logInfo("  -dl   Enables link communications (high level) debug");
 	logInfo("  -dL   Enables link communications (high & low level) debug");
 	logInfo("  -m    Monitors boot link instead of handling protocol");
@@ -122,6 +124,9 @@ bool processCommandLine(int argc, char *argv[]) {
 						case 'p':
 							debugPlatform = true;
 							break;
+                        case 'P':
+                            debugProtocol = true;
+                            break;
 						default:
 							usage();
 							return 0;
@@ -368,10 +373,12 @@ int main(int argc, char *argv[]) {
 	progName = argv[0];
 	bootFile = NULL;
 	debugPlatform = false;
+	debugProtocol = false;
 	debugLink = false;
 	debugLinkRaw = false;
 	monitorLink = false;
 	finished = false;
+	int exitCode = 0;
 
 	if (!processCommandLine(argc, argv)) {
 		cleanup();
@@ -422,6 +429,14 @@ int main(int argc, char *argv[]) {
 	if (monitorLink) {
 		monitorBootLink();
 	} else {
+	    /*
+	    ProtocolHandler * myProtocolHandler = new ProtocolHandler(myLink, myPlatform);
+	    myProtocolHandler->setDebug(debugProtocol);
+	    while (!finished) {
+	        finished = myProtocolHandler->processFrame();
+	    }
+	    exitCode = myProtocolHandler->exitCode();
+	    */
 		while (!finished) {
             handleIServerProtocol();
 		}
@@ -434,6 +449,6 @@ int main(int argc, char *argv[]) {
 	}
 
 	cleanup();
-	return 0;
+	return exitCode;
 }
 
