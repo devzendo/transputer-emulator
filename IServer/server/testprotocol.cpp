@@ -262,24 +262,7 @@ TEST_F(TestProtocolHandler, UnimplementedFrame)
     checkResponseFrameTag(response, RES_UNIMPLEMENTED);
 }
 
-// ID
-
-TEST_F(TestProtocolHandler, IdFrame)
-{
-    std::vector<BYTE8> idFrame = {REQ_ID};
-    std::vector<BYTE8> padded = padFrame(idFrame);
-    EXPECT_EQ(checkGoodFrame(padded), false); // its length is good, it's not an exit frame
-    EXPECT_EQ(handler->unimplementedFrameCount(), 0L); // it is an implemented tag
-    std::vector<BYTE8> response = readResponseFrame();
-    checkResponseFrameSize(response, 6);
-    checkResponseFrameTag(response, RES_SUCCESS);
-    EXPECT_EQ((int)response[3], 0x00); // version TODO extract real version from productVersion
-    EXPECT_EQ((int)response[4], 0x09); // host
-    EXPECT_EQ((int)response[5], 0x07); // os
-    EXPECT_EQ((int)response[6], LinkType_Stub); // board a.k.a. link type
-}
-
-// EXIT
+// REQ_EXIT
 
 TEST_F(TestProtocolHandler, ExitFrameSuccess)
 {
@@ -322,6 +305,24 @@ TEST_F(TestProtocolHandler, ExitFrameCustom)
 
     EXPECT_EQ(handler->exitCode(), 0x12345678);
 }
+
+// REQ_ID
+
+TEST_F(TestProtocolHandler, IdFrame)
+{
+    std::vector<BYTE8> idFrame = {REQ_ID};
+    std::vector<BYTE8> padded = padFrame(idFrame);
+    EXPECT_EQ(checkGoodFrame(padded), false); // its length is good, it's not an exit frame
+    EXPECT_EQ(handler->unimplementedFrameCount(), 0L); // it is an implemented tag
+    std::vector<BYTE8> response = readResponseFrame();
+    checkResponseFrameSize(response, 6);
+    checkResponseFrameTag(response, RES_SUCCESS);
+    EXPECT_EQ((int)response[3], 0x00); // version TODO extract real version from productVersion
+    EXPECT_EQ((int)response[4], 0x09); // host
+    EXPECT_EQ((int)response[5], 0x07); // os
+    EXPECT_EQ((int)response[6], LinkType_Stub); // board a.k.a. link type
+}
+
 
 // TODO test put16 indirectly
 // TODO a good 510 byte frame
