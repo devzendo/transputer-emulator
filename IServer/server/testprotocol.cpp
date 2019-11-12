@@ -124,6 +124,8 @@ protected:
     };
 };
 
+// FRAME HANDLING
+
 TEST_F(TestProtocolHandler, InitialFrameCounts)
 {
     EXPECT_EQ(handler->frameCount(), 0L);
@@ -237,6 +239,18 @@ TEST_F(TestProtocolHandler, PadFrame7ToEvenSize)
     EXPECT_EQ(padFrame(sevenBytes), eightBytes);
 }
 
+TEST_F(TestProtocolHandler, OddSizeResponseFrameIsPaddedWithZero)
+{
+    std::vector<BYTE8> idFrame = {REQ_ID};
+    sendFrame(padFrame(idFrame));
+    std::vector<BYTE8> response = readResponseFrame();
+    checkResponseFrameSize(response, 6);
+    checkResponseFrameTag(response, RES_SUCCESS);
+    EXPECT_EQ((int)response[7], 0x00); // padding
+}
+
+// UNIMPLEMENTED
+
 TEST_F(TestProtocolHandler, UnimplementedFrame)
 {
     std::vector<BYTE8> unimplementedFrame = {9}; // an unimplemented tag
@@ -247,6 +261,8 @@ TEST_F(TestProtocolHandler, UnimplementedFrame)
     checkResponseFrameSize(response, 1 + 1); // padded
     checkResponseFrameTag(response, RES_UNIMPLEMENTED);
 }
+
+// ID
 
 TEST_F(TestProtocolHandler, IdFrame)
 {
@@ -263,15 +279,7 @@ TEST_F(TestProtocolHandler, IdFrame)
     EXPECT_EQ((int)response[6], LinkType_Stub); // board a.k.a. link type
 }
 
-TEST_F(TestProtocolHandler, OddSizeResponseFrameIsPaddedWithZero)
-{
-    std::vector<BYTE8> idFrame = {REQ_ID};
-    sendFrame(padFrame(idFrame));
-    std::vector<BYTE8> response = readResponseFrame();
-    checkResponseFrameSize(response, 6);
-    checkResponseFrameTag(response, RES_SUCCESS);
-    EXPECT_EQ((int)response[7], 0x00); // padding
-}
+// EXIT
 
 TEST_F(TestProtocolHandler, ExitFrameSuccess)
 {
@@ -315,6 +323,6 @@ TEST_F(TestProtocolHandler, ExitFrameCustom)
     EXPECT_EQ(handler->exitCode(), 0x12345678);
 }
 
-// TODO test put16, and put32 indirectly
+// TODO test put16 indirectly
 // TODO a good 510 byte frame
 // TODO a bad 511 byte frame
