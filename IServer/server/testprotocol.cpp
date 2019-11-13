@@ -262,6 +262,33 @@ TEST_F(TestProtocolHandler, UnimplementedFrame)
     checkResponseFrameTag(response, RES_UNIMPLEMENTED);
 }
 
+// REQ_OPEN
+// REQ_CLOSE
+// REQ_READ
+// REQ_WRITE
+// REQ_GETS
+// REQ_PUTS
+// REQ_FLUSH
+// REQ_SEEK
+// REQ_TELL
+// REQ_EOF
+// REQ_FERROR
+// REQ_REMOVE
+// REQ_RENAME
+// REQ_GETBLOCK
+// REQ_PUTBLOCK
+// REQ_ISATTY
+// REQ_OPENREC
+// REQ_GETREC
+// REQ_PUTREC
+// REQ_PUTEOF
+// REQ_GETKEY
+// REQ_POLLKEY
+
+// REQ_GETENV
+// REQ_TIME
+// REQ_SYSTEM
+
 // REQ_EXIT
 
 TEST_F(TestProtocolHandler, ExitFrameSuccess)
@@ -306,7 +333,11 @@ TEST_F(TestProtocolHandler, ExitFrameCustom)
     EXPECT_EQ(handler->exitCode(), 0x12345678);
 }
 
+// REQ_COMMAND
+// REQ_CORE
 // REQ_ID
+
+
 
 TEST_F(TestProtocolHandler, IdFrame)
 {
@@ -323,6 +354,14 @@ TEST_F(TestProtocolHandler, IdFrame)
     EXPECT_EQ((int)response[6], LinkType_Stub); // board a.k.a. link type
 }
 
+// REQ_GETINFO
+
+// REQ_MSDOS
+
+// REQ_FILEEXISTS
+// REQ_TRANSLATE
+// REQ_FERRSTAT
+// REQ_COMMANDARG
 
 // TODO test put16 indirectly
 // TODO a good 510 byte frame
