@@ -6,7 +6,7 @@
 
     <groupId>org.devzendo</groupId>
     <artifactId>transputer-emulator</artifactId>
-    <version>0.0.1</version>
+    <version>0.0.2-SNAPSHOT</version>
     <packaging>pom</packaging>
     <name>Transputer Emulator</name>
     <description>This is an emulator of the 32-bit Inmos T414/T800/T801/T805 Transputer family, and a Node Server that
