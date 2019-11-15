@@ -22,7 +22,7 @@ protected:
 
 TEST_F(TestFrameCodec, InitialFrameCounts)
 {
-//    EXPECT_EQ(codec.myReadFrameSize, 0L);
-//    EXPECT_EQ(codec.myReadFrameIndex, 0L);
-//    EXPECT_EQ(codec.myWriteFrameIndex, 0L);
+    EXPECT_EQ(codec.myReadFrameSize, 0L);
+    EXPECT_EQ(codec.myReadFrameIndex, 0L);
+    EXPECT_EQ(codec.myWriteFrameIndex, 0L);
 }

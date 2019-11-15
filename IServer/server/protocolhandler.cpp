@@ -111,59 +111,8 @@ bool ProtocolHandler::processFrame() {
     return exitFrameReceived;
 }
 
-void ProtocolHandler::put(const BYTE8 byte8) {
-    logDebugF("put BYTE8 %02X @ %04X", byte8, myWriteFrameIndex);
-    myTransactionBuffer[myWriteFrameIndex++] = byte8;
-}
-
-void ProtocolHandler::put(const WORD16 word16) {
-    logDebugF("put WORD16 %04X @ %04X UNFINISHED TEST", word16, myWriteFrameIndex);
-    myTransactionBuffer[myWriteFrameIndex++] = (BYTE8) (word16 & (BYTE8)0xff);
-
-// TODO how to test this?    myTransactionBuffer[myWriteFrameIndex++] = (BYTE8) (word16 >> (BYTE8)8) & (BYTE8)0xff;
-    myTransactionBuffer[myWriteFrameIndex++] = (BYTE8) 0;  // BAD DATA - NEED TEST TO ESTABLISH ABOVE
-}
-
-void ProtocolHandler::put(const WORD32 word32) {
-    logDebugF("put WORD32 %08X @ %04X UNIMPLEMENTD", word32, myWriteFrameIndex);
-
-}
-
-BYTE8 ProtocolHandler::get8() {
-    return myTransactionBuffer[myReadFrameIndex++];
-}
-
-WORD16 ProtocolHandler::get16() {
-    // Input a little-endian short, LSB first MSB last
-    return (get8()) |
-           (get8() << 8);
-}
-
-WORD32 ProtocolHandler::get32() {
-    // Input a little-endian word, LSB first MSB last
-    return (get8()) |
-           (get8() << 8) |
-           (get8() << 16) |
-           (get8() << 24);
-}
-
-// A max length protocol frame containing just a string (imagine max protocol frame size is 8):
-// FL FM SL SM S0 S1 S2 S3
-// ^     ^     ^
-// Frame |      \
-// Size  |       String bytes, 4 in all, not null terminated
-// (6,0) String
-//       Size (4,0)
-// String max length is TransactionBufferSize - 2 - 2
-// (- frame size bytes - string size bytes)
-std::string ProtocolHandler::getString() {
-    WORD16 stringLen = get16();
-
-    return std::string("");
-}
-
 bool ProtocolHandler::readFrame() {
-    myReadFrameSize = 0;
+    codec.myReadFrameSize = 0;
     // Frame length encoded in the first two bytes (little endian).
     // Minimum frame length is 8 (ie minimum message length of 6 bytes in the to-server
     // direction), maximum 512. Packet size must always be an even number of bytes.
@@ -172,30 +121,30 @@ bool ProtocolHandler::readFrame() {
 
     // Read 8 bytes into transaction buffer; extract frame size from first two bytes.
     // Fail if we fail to read 8 bytes.
-    myReadFrameSize = myIOLink.readShort();
+    codec.myReadFrameSize = myIOLink.readShort();
     // TODO when link abstraction is improved to add timeout reads, and analyse/reset/error
     // rework this to take those into account.
     myFrameCount++;
     if (bDebug) {
-        logDebugF("Read frame size word is %04X (%d)", myReadFrameSize, myReadFrameSize);
+        logDebugF("Read frame size word is %04X (%d)", codec.myReadFrameSize, codec.myReadFrameSize);
     }
-    if (myReadFrameSize < 6 || myReadFrameSize > 510) {
-        logWarnF("Read frame size %04X out of range", myReadFrameSize);
+    if (codec.myReadFrameSize < 6 || codec.myReadFrameSize > 510) {
+        logWarnF("Read frame size %04X out of range", codec.myReadFrameSize);
         myBadFrameCount++;
         return false;
     }
-    if ((myReadFrameSize & 0x01) == 0x01) {
-        logWarnF("Read frame size %04X is odd", myReadFrameSize);
+    if ((codec.myReadFrameSize & 0x01) == 0x01) {
+        logWarnF("Read frame size %04X is odd", codec.myReadFrameSize);
         myBadFrameCount++;
         return false;
     }
     // Fail if frame size > max frame length.
     // Store frameSize at positions 0 and 1 in myTransactionBuffer?
     // Read remaining data.
-    WORD16 bytesRead = myIOLink.readBytes(&myTransactionBuffer[2], myReadFrameSize);
+    WORD16 bytesRead = myIOLink.readBytes(&codec.myTransactionBuffer[2], codec.myReadFrameSize);
     // Fail if we fail to read all of it.
-    if (bytesRead < myReadFrameSize) {
-        logWarnF("Truncated frame read: read %d bytes, expecting %d bytes", bytesRead, myReadFrameSize);
+    if (bytesRead < codec.myReadFrameSize) {
+        logWarnF("Truncated frame read: read %d bytes, expecting %d bytes", bytesRead, codec.myReadFrameSize);
         return false;
         // How to resynchronise? Reset link?
     }
@@ -203,10 +152,10 @@ bool ProtocolHandler::readFrame() {
 }
 
 bool ProtocolHandler::requestResponse() {
-    BYTE8 tag = myTransactionBuffer[2];
+    BYTE8 tag = codec.myTransactionBuffer[2];
     logDebugF("Read frame tag %02X (%s)", tag, tagToName(tag));
-    resetWriteFrame();
-    myReadFrameIndex = 3;
+    codec.resetWriteFrame();
+    codec.myReadFrameIndex = 3;
     switch (tag) {
         case REQ_OPEN: {
             break;
@@ -285,7 +234,7 @@ bool ProtocolHandler::requestResponse() {
             break;
         }
         case REQ_EXIT: {
-            const WORD32 status = get32();
+            const WORD32 status = codec.get32();
             logDebugF("Exit status received as %08X", status);
 
             switch (status) {
@@ -299,7 +248,7 @@ bool ProtocolHandler::requestResponse() {
                     myExitCode = (int)status;
             }
             logDebugF("Exit code set to %04X", myExitCode);
-            put(RES_SUCCESS);
+            codec.put(RES_SUCCESS);
             break;
         }
 
@@ -310,22 +259,22 @@ bool ProtocolHandler::requestResponse() {
             break;
         }
         case REQ_ID: {
-            put(RES_SUCCESS);
-            put((BYTE8) 0x00); // Version: TODO extract real version from productVersion string
+            codec.put(RES_SUCCESS);
+            codec.put((BYTE8) 0x00); // Version: TODO extract real version from productVersion string
 #if defined(PLATFORM_WINDOWS)
-            put((BYTE8) 0X01); // Host: "PC"
-            put((BYTE8) 0X06); // OS: "Windows" (addition: not in iServer docs)
+            codec.put((BYTE8) 0X01); // Host: "PC"
+            codec.put((BYTE8) 0X06); // OS: "Windows" (addition: not in iServer docs)
 #elif defined(PLATFORM_OSX)
-            put((BYTE8) 0X09); // Host: "Mac" (addition: not in iServer docs)
-            put((BYTE8) 0X07); // OS: "macOS" (addition: not in iServer docs)
+            codec.put((BYTE8) 0X09); // Host: "Mac" (addition: not in iServer docs)
+            codec.put((BYTE8) 0X07); // OS: "macOS" (addition: not in iServer docs)
 #elif defined(PLATFORM_LINUX)
-            put((BYTE8) 0X01); // Host: "PC"
-            put((BYTE8) 0X08); // OS: "Linux" (addition: not in iServer docs)
+            codec.put((BYTE8) 0X01); // Host: "PC"
+            codec.put((BYTE8) 0X08); // OS: "Linux" (addition: not in iServer docs)
 #else
-            put((BYTE8) 0X00); // Host: ?
-            put((BYTE8) 0X00); // OS: ?
+            codec.put((BYTE8) 0X00); // Host: ?
+            codec.put((BYTE8) 0X00); // OS: ?
 #endif
-            put((BYTE8) ((BYTE8)myIOLink.getLinkType() & (BYTE8)0xff)); // Board: actually the link type
+            codec.put((BYTE8) ((BYTE8)myIOLink.getLinkType() & (BYTE8)0xff)); // Board: actually the link type
             break;
         }
         case REQ_GETINFO: {
@@ -352,48 +301,27 @@ bool ProtocolHandler::requestResponse() {
         default: {
             logWarnF("Frame tag %02X is unknown", tag);
             myUnimplementedFrameCount++;
-            put(RES_UNIMPLEMENTED);
+            codec.put(RES_UNIMPLEMENTED);
             break;
         }
     }
     return tag == REQ_EXIT;
 }
 
-void ProtocolHandler::resetWriteFrame() {
-    myWriteFrameIndex = 2;
-    // start putting data after the first two size fields
-    // the size fields are set in fillInFrameSize()
-}
-
 bool ProtocolHandler::writeFrame() {
-    if (myWriteFrameIndex == 0) {
+    if (codec.myWriteFrameIndex == 0) {
         logWarn("No write frame has been prepared");
         return false;
     }
-    WORD16 frameSize = fillInFrameSize();
+    WORD16 frameSize = codec.fillInFrameSize();
     if (bDebug) {
-        BYTE8 tag = myTransactionBuffer[2];
+        BYTE8 tag = codec.myTransactionBuffer[2];
         logDebugF("Write frame: size word is %04X (%d) tag %02X (%s)",
                 frameSize, frameSize, tag, tagToName(tag));
     }
 
-    myIOLink.writeBytes(myTransactionBuffer, myWriteFrameIndex);
+    myIOLink.writeBytes(codec.myTransactionBuffer, codec.myWriteFrameIndex);
     return true;
-}
-
-// Wind back to the start to set the 2 length bytes.
-WORD16 ProtocolHandler::fillInFrameSize() {
-    if ((myWriteFrameIndex & (WORD16)0x01) == 0x01) {
-        logDebug("Padding odd length frame with 00");
-        put((BYTE8) 0x00); // increments myWriteFrameIndex
-    }
-
-    WORD16 oldWriteFrameIndex = myWriteFrameIndex;
-    myWriteFrameIndex = 0;
-    WORD16 frameSize = (oldWriteFrameIndex - 2);
-    put(frameSize);
-    myWriteFrameIndex = oldWriteFrameIndex;
-    return frameSize;
 }
 
 WORD64 ProtocolHandler::frameCount() {
