@@ -112,7 +112,6 @@ bool ProtocolHandler::processFrame() {
 }
 
 bool ProtocolHandler::readFrame() {
-    codec.myReadFrameSize = 0;
     // Frame length encoded in the first two bytes (little endian).
     // Minimum frame length is 8 (ie minimum message length of 6 bytes in the to-server
     // direction), maximum 512. Packet size must always be an even number of bytes.
@@ -121,30 +120,30 @@ bool ProtocolHandler::readFrame() {
 
     // Read 8 bytes into transaction buffer; extract frame size from first two bytes.
     // Fail if we fail to read 8 bytes.
-    codec.myReadFrameSize = myIOLink.readShort();
+    codec.setReadFrameSize(myIOLink.readShort());
     // TODO when link abstraction is improved to add timeout reads, and analyse/reset/error
     // rework this to take those into account.
     myFrameCount++;
     if (bDebug) {
-        logDebugF("Read frame size word is %04X (%d)", codec.myReadFrameSize, codec.myReadFrameSize);
+        logDebugF("Read frame size word is %04X (%d)", codec.getReadFrameSize(), codec.getReadFrameSize());
     }
-    if (codec.myReadFrameSize < 6 || codec.myReadFrameSize > 510) {
-        logWarnF("Read frame size %04X out of range", codec.myReadFrameSize);
+    if (codec.readFrameSizeOutOfRange()) {
+        logWarnF("Read frame size %04X out of range", codec.getReadFrameSize());
         myBadFrameCount++;
         return false;
     }
-    if ((codec.myReadFrameSize & 0x01) == 0x01) {
-        logWarnF("Read frame size %04X is odd", codec.myReadFrameSize);
+    if ((codec.getReadFrameSize() & 0x01) == 0x01) {
+        logWarnF("Read frame size %04X is odd", codec.getReadFrameSize());
         myBadFrameCount++;
         return false;
     }
     // Fail if frame size > max frame length.
     // Store frameSize at positions 0 and 1 in myTransactionBuffer?
     // Read remaining data.
-    WORD16 bytesRead = myIOLink.readBytes(&codec.myTransactionBuffer[2], codec.myReadFrameSize);
+    WORD16 bytesRead = myIOLink.readBytes(&codec.myTransactionBuffer[2], codec.getReadFrameSize());
     // Fail if we fail to read all of it.
-    if (bytesRead < codec.myReadFrameSize) {
-        logWarnF("Truncated frame read: read %d bytes, expecting %d bytes", bytesRead, codec.myReadFrameSize);
+    if (bytesRead < codec.getReadFrameSize()) {
+        logWarnF("Truncated frame read: read %d bytes, expecting %d bytes", bytesRead, codec.getReadFrameSize());
         return false;
         // How to resynchronise? Reset link?
     }

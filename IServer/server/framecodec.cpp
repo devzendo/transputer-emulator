@@ -15,6 +15,19 @@
 #include "log.h"
 
 
+WORD16 FrameCodec::getReadFrameSize() { 
+    return myReadFrameSize;
+}
+
+void FrameCodec::setReadFrameSize(const WORD16 size) {
+    myReadFrameSize = size;
+}
+
+bool FrameCodec::readFrameSizeOutOfRange() {
+    return myReadFrameSize < 6 || myReadFrameSize > 510;
+}
+
+
 void FrameCodec::put(const BYTE8 byte8) {
     logDebugF("put BYTE8 %02X @ %04X", byte8, myWriteFrameIndex);
     myTransactionBuffer[myWriteFrameIndex++] = byte8;

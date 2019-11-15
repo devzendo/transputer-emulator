@@ -256,8 +256,6 @@ TEST_F(TestProtocolHandler, OddSizeResponseFrameIsPaddedWithZero)
     EXPECT_EQ((int)response[7], 0x00); // padding
 }
 
-// STRING HANDLING
-
 // UNIMPLEMENTED
 
 TEST_F(TestProtocolHandler, UnimplementedFrame)
@@ -388,6 +386,5 @@ TEST_F(TestProtocolHandler, IdFrame)
 // REQ_FERRSTAT
 // REQ_COMMANDARG
 
-// TODO test put16 indirectly
 // TODO a good 510 byte frame
 // TODO a bad 511 byte frame

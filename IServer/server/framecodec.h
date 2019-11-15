@@ -33,15 +33,20 @@ public:
     WORD16 get16();
     WORD32 get32();
     std::string getString();
+    
+    WORD16 getReadFrameSize();
+    void setReadFrameSize(const WORD16 size);
+    bool readFrameSizeOutOfRange();
 
     void resetWriteFrame();
     WORD16 fillInFrameSize();
 
     BYTE8 myTransactionBuffer[TransactionBufferSize];
     BYTE8 myStringBuffer[StringBufferSize]; // TODO keep this?
-    WORD16 myReadFrameSize; // set if readFrame returns true
     WORD16 myReadFrameIndex;
     WORD16 myWriteFrameIndex;
+private:
+    WORD16 myReadFrameSize; // set if readFrame returns true
 };
 
 #endif //_FRAMECODEC_H
