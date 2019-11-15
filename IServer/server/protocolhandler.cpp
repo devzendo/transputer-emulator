@@ -14,6 +14,7 @@
 //
 //------------------------------------------------------------------------------
 
+#include <string>
 #include "types.h"
 #include "constants.h"
 #include "platform.h"
@@ -144,6 +145,21 @@ WORD32 ProtocolHandler::get32() {
            (get8() << 8) |
            (get8() << 16) |
            (get8() << 24);
+}
+
+// A max length protocol frame containing just a string (imagine max protocol frame size is 8):
+// FL FM SL SM S0 S1 S2 S3
+// ^     ^     ^
+// Frame |      \
+// Size  |       String bytes, 4 in all, not null terminated
+// (6,0) String
+//       Size (4,0)
+// String max length is TransactionBufferSize - 2 - 2
+// (- frame size bytes - string size bytes)
+std::string ProtocolHandler::getString() {
+    WORD16 stringLen = get16();
+
+    return std::string("");
 }
 
 bool ProtocolHandler::readFrame() {

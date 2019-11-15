@@ -17,11 +17,14 @@
 #ifndef _PROTOCOL_HANDLER_H
 #define _PROTOCOL_HANDLER_H
 
+#include <string>
 #include "types.h"
 #include "link.h"
 #include "platform.h"
+#include "framecodec.h"
 
 const int TransactionBufferSize = 1040;
+const int StringBufferSize = TransactionBufferSize - 2 - 2 + 1; // - frame size bytes - string length bytes + \0
 
 class ProtocolHandler {
 public:
@@ -44,10 +47,12 @@ private:
     bool bDebug;
     Link & myIOLink;
     Platform & myPlatform;
+    FrameCodec codec;
     WORD64 myFrameCount;
     WORD64 myBadFrameCount;
     WORD64 myUnimplementedFrameCount;
     BYTE8 myTransactionBuffer[TransactionBufferSize];
+    BYTE8 myStringBuffer[StringBufferSize];
     WORD16 myReadFrameSize; // set if readFrame returns true
     WORD16 myReadFrameIndex;
     WORD16 myWriteFrameIndex;
@@ -57,6 +62,7 @@ private:
     BYTE8 get8();
     WORD16 get16();
     WORD32 get32();
+    std::string getString();
     bool readFrame();
     bool requestResponse();
     void resetWriteFrame();

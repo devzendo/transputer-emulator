@@ -114,7 +114,14 @@ protected:
         return frame;
     }
 
-    std::vector<BYTE8> & appendWord(std::vector<BYTE8> & frame, const WORD32 w) {
+    std::vector<BYTE8> & append16(std::vector<BYTE8> &frame, const WORD16 w) {
+        // Always output as a little-endian word, LSB first MSB last
+        frame.push_back(w & 0x00ff);
+        frame.push_back((w & 0xff00) >> 8);
+        return frame;
+    };
+
+    std::vector<BYTE8> & append32(std::vector<BYTE8> &frame, const WORD32 w) {
         // Always output as a little-endian word, LSB first MSB last
         frame.push_back(w & 0x000000ff);
         frame.push_back((w & 0x0000ff00) >> 8);
@@ -249,6 +256,8 @@ TEST_F(TestProtocolHandler, OddSizeResponseFrameIsPaddedWithZero)
     EXPECT_EQ((int)response[7], 0x00); // padding
 }
 
+// STRING HANDLING
+
 // UNIMPLEMENTED
 
 TEST_F(TestProtocolHandler, UnimplementedFrame)
@@ -263,6 +272,22 @@ TEST_F(TestProtocolHandler, UnimplementedFrame)
 }
 
 // REQ_OPEN
+
+TEST_F(TestProtocolHandler, OpenStringTooLongForStringBuffer)
+{
+    std::vector<BYTE8> openFrame = {REQ_OPEN};
+    // TODO well unfinished
+//    append16(openFrame, TransactionBuffer - 2 - 2);
+//    std::vector<BYTE8> padded = padFrame(openFrame);
+//    EXPECT_EQ(checkGoodFrame(padded), true); // It is an exit frame
+//    std::vector<BYTE8> response = readResponseFrame();
+//    checkResponseFrameTag(response, RES_SUCCESS);
+//    checkResponseFrameSize(response, 2);
+//    EXPECT_EQ(handler->unimplementedFrameCount(), 0L); // it is an implemented tag
+//
+//    EXPECT_EQ(handler->exitCode(), 0);
+}
+
 // REQ_CLOSE
 // REQ_READ
 // REQ_WRITE
@@ -294,7 +319,7 @@ TEST_F(TestProtocolHandler, UnimplementedFrame)
 TEST_F(TestProtocolHandler, ExitFrameSuccess)
 {
     std::vector<BYTE8> exitFrame = {REQ_EXIT};
-    appendWord(exitFrame, RES_EXIT_SUCCESS);
+    append32(exitFrame, RES_EXIT_SUCCESS);
     std::vector<BYTE8> padded = padFrame(exitFrame);
     EXPECT_EQ(checkGoodFrame(padded), true); // It is an exit frame
     std::vector<BYTE8> response = readResponseFrame();
@@ -308,7 +333,7 @@ TEST_F(TestProtocolHandler, ExitFrameSuccess)
 TEST_F(TestProtocolHandler, ExitFrameFailure)
 {
     std::vector<BYTE8> exitFrame = {REQ_EXIT};
-    appendWord(exitFrame, RES_EXIT_FAILURE);
+    append32(exitFrame, RES_EXIT_FAILURE);
     std::vector<BYTE8> padded = padFrame(exitFrame);
     EXPECT_EQ(checkGoodFrame(padded), true); // It is an exit frame
     std::vector<BYTE8> response = readResponseFrame();
@@ -322,7 +347,7 @@ TEST_F(TestProtocolHandler, ExitFrameFailure)
 TEST_F(TestProtocolHandler, ExitFrameCustom)
 {
     std::vector<BYTE8> exitFrame = {REQ_EXIT};
-    appendWord(exitFrame, 0x12345678);
+    append32(exitFrame, 0x12345678);
     std::vector<BYTE8> padded = padFrame(exitFrame);
     EXPECT_EQ(checkGoodFrame(padded), true); // It is an exit frame
     std::vector<BYTE8> response = readResponseFrame();
