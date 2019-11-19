@@ -23,8 +23,7 @@ const int StringBufferSize = TransactionBufferSize - 2 - 2 + 1; // - frame size 
 
 class FrameCodec {
 public:
-    FrameCodec():
-            myReadFrameSize(0), myReadFrameIndex(0), myWriteFrameIndex(0) {};
+    FrameCodec();
 
     void put(const BYTE8 byte8);
     void put(const WORD16 word16);
@@ -33,7 +32,7 @@ public:
     WORD16 get16();
     WORD32 get32();
     std::string getString();
-    
+
     WORD16 getReadFrameSize();
     void setReadFrameSize(const WORD16 size);
     bool readFrameSizeOutOfRange();

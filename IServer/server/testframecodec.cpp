@@ -51,10 +51,59 @@ TEST_F(TestFrameCodec, SetReadFrameSizeRanges)
     codec.setReadFrameSize(511);
     EXPECT_EQ(codec.getReadFrameSize(), 511L);
     EXPECT_EQ(codec.readFrameSizeOutOfRange(), true);
-
-
 }
 
+TEST_F(TestFrameCodec, PutGet8) {
+    codec.put((BYTE8)0xC9);
+    EXPECT_EQ(codec.myWriteFrameIndex, 1L);
+    EXPECT_EQ(codec.myTransactionBuffer[0], 201);
+
+    BYTE8 actual = codec.get8();
+    EXPECT_EQ(actual, 201);
+    EXPECT_EQ(codec.myReadFrameIndex, 1L);
+}
+
+TEST_F(TestFrameCodec, Put16) {
+    codec.put((WORD16)0xC9AF);
+    EXPECT_EQ(codec.myWriteFrameIndex, 2L);
+    EXPECT_EQ(codec.myTransactionBuffer[0], (BYTE8)0xAF);
+    EXPECT_EQ(codec.myTransactionBuffer[1], (BYTE8)0xC9);
+
+    WORD16 actual = codec.get16();
+    EXPECT_EQ(actual, (WORD16)0xC9AF);
+    EXPECT_EQ(codec.myReadFrameIndex, 2L);
+}
+
+TEST_F(TestFrameCodec, Put32) {
+    codec.put((WORD32)0xAB03C9AF);
+    EXPECT_EQ(codec.myWriteFrameIndex, 4L);
+    EXPECT_EQ(codec.myTransactionBuffer[0], (BYTE8)0xAF);
+    EXPECT_EQ(codec.myTransactionBuffer[1], (BYTE8)0xC9);
+    EXPECT_EQ(codec.myTransactionBuffer[2], (BYTE8)0x03);
+    EXPECT_EQ(codec.myTransactionBuffer[3], (BYTE8)0xAB);
+
+    WORD32 actual = codec.get32();
+    EXPECT_EQ(actual, (WORD32)0xAB03C9AF);
+    EXPECT_EQ(codec.myReadFrameIndex, 4L);
+}
 // STRING HANDLING
 
-// TODO test put16 indirectly
+TEST_F(TestFrameCodec, ResetWriteFrame) {
+    EXPECT_EQ(codec.myWriteFrameIndex, 0L);
+    codec.resetWriteFrame();
+    EXPECT_EQ(codec.myWriteFrameIndex, 2L);
+}
+
+TEST_F(TestFrameCodec, FillInFrameSize) {
+    // Initial size
+    EXPECT_EQ(codec.myTransactionBuffer[0], (BYTE8)0x00);
+    EXPECT_EQ(codec.myTransactionBuffer[1], (BYTE8)0x00);
+
+    codec.resetWriteFrame();
+    codec.put((WORD32)0xAB03C9AF);
+    codec.put((WORD16)0xF00D);
+
+    codec.fillInFrameSize();
+    EXPECT_EQ(codec.myTransactionBuffer[0], (BYTE8)0x06);
+    EXPECT_EQ(codec.myTransactionBuffer[1], (BYTE8)0x00);
+}

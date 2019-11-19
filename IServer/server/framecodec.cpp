@@ -11,11 +11,15 @@
 //
 //------------------------------------------------------------------------------
 
+#include <cstring>
 #include "framecodec.h"
 #include "log.h"
 
+FrameCodec::FrameCodec(): myReadFrameSize(0), myReadFrameIndex(0), myWriteFrameIndex(0) {
+    std::memset(myTransactionBuffer, 0, sizeof(myTransactionBuffer));
+}
 
-WORD16 FrameCodec::getReadFrameSize() { 
+WORD16 FrameCodec::getReadFrameSize() {
     return myReadFrameSize;
 }
 
@@ -27,23 +31,23 @@ bool FrameCodec::readFrameSizeOutOfRange() {
     return myReadFrameSize < 6 || myReadFrameSize > 510;
 }
 
-
 void FrameCodec::put(const BYTE8 byte8) {
-    logDebugF("put BYTE8 %02X @ %04X", byte8, myWriteFrameIndex);
+    logDebugF("put @ %04X BYTE8  %02X", myWriteFrameIndex, byte8);
     myTransactionBuffer[myWriteFrameIndex++] = byte8;
 }
 
 void FrameCodec::put(const WORD16 word16) {
-    logDebugF("put WORD16 %04X @ %04X UNFINISHED TEST", word16, myWriteFrameIndex);
+    logDebugF("put @ %04X WORD16 %04X", myWriteFrameIndex, word16);
     myTransactionBuffer[myWriteFrameIndex++] = (BYTE8) (word16 & (BYTE8)0xff);
-
-// TODO how to test this?    myTransactionBuffer[myWriteFrameIndex++] = (BYTE8) (word16 >> (BYTE8)8) & (BYTE8)0xff;
-    myTransactionBuffer[myWriteFrameIndex++] = (BYTE8) 0;  // BAD DATA - NEED TEST TO ESTABLISH ABOVE
+    myTransactionBuffer[myWriteFrameIndex++] = (BYTE8) (word16 >> (BYTE8)8) & (BYTE8)0xff;
 }
 
 void FrameCodec::put(const WORD32 word32) {
-    logDebugF("put WORD32 %08X @ %04X UNIMPLEMENTD", word32, myWriteFrameIndex);
-
+    logDebugF("put @ %04X WORD32 %08X", myWriteFrameIndex, word32);
+    myTransactionBuffer[myWriteFrameIndex++] = (BYTE8) (word32 & (BYTE8)0xff);
+    myTransactionBuffer[myWriteFrameIndex++] = (BYTE8) (word32 >> (BYTE8)8) & (BYTE8)0xff;
+    myTransactionBuffer[myWriteFrameIndex++] = (BYTE8) (word32 >> (BYTE8)16) & (BYTE8)0xff;
+    myTransactionBuffer[myWriteFrameIndex++] = (BYTE8) (word32 >> (BYTE8)24) & (BYTE8)0xff;
 }
 
 BYTE8 FrameCodec::get8() {
