@@ -12,6 +12,7 @@
 //------------------------------------------------------------------------------
 
 #include <cstring>
+#include <stdexcept>
 #include "framecodec.h"
 #include "log.h"
 
@@ -77,10 +78,15 @@ WORD32 FrameCodec::get32() {
 //       Size (4,0)
 // String max length is TransactionBufferSize - 2 - 2
 // (- frame size bytes - string size bytes)
-std::string FrameCodec::getString() {
+std::string FrameCodec::getString() throw (std::exception) {
     WORD16 stringLen = get16();
-
-    return std::string("");
+    if (stringLen > StringBufferSize) {
+        logWarnF("String in frame is %d bytes - exceeding maximum of %d", stringLen, StringBufferSize);
+        throw std::range_error("String in frame exceeds maximum size");
+    }
+    const BYTE8 *buf = const_cast<const BYTE8 *>(myTransactionBuffer + myReadFrameIndex);
+    const char *cbuf = (const char *)buf;
+    return std::string(cbuf, (int)stringLen);
 }
 
 void FrameCodec::resetWriteFrame() {

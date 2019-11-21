@@ -86,7 +86,70 @@ TEST_F(TestFrameCodec, Put32) {
     EXPECT_EQ(actual, (WORD32)0xAB03C9AF);
     EXPECT_EQ(codec.myReadFrameIndex, 4L);
 }
+
 // STRING HANDLING
+TEST_F(TestFrameCodec, GetEmptyString) {
+    codec.put((WORD16) 0);
+    codec.put((BYTE8) 0);
+
+    std::string str = codec.getString();
+    EXPECT_EQ(str, "");
+}
+
+TEST_F(TestFrameCodec, GetOneCharString) {
+    codec.put((WORD16) 1);
+    codec.put((BYTE8) 'A');
+
+    std::string str = codec.getString();
+    EXPECT_EQ(str, "A");
+}
+
+TEST_F(TestFrameCodec, GetSmallString) {
+    codec.put((WORD16) 8);
+    codec.put((BYTE8) 'A');
+    codec.put((BYTE8) 'B');
+    codec.put((BYTE8) 'C');
+    codec.put((BYTE8) 'D');
+    codec.put((BYTE8) 'E');
+    codec.put((BYTE8) 'F');
+    codec.put((BYTE8) 'G');
+    codec.put((BYTE8) 'H');
+    codec.put((BYTE8) 'I'); // won't be retrieved
+
+    std::string str = codec.getString();
+    EXPECT_EQ(str, "ABCDEFGH");
+}
+
+TEST_F(TestFrameCodec, FrameSizeInvariants) {
+    EXPECT_EQ(512, TransactionBufferSize);
+    EXPECT_EQ(508, StringBufferSize);
+}
+
+TEST_F(TestFrameCodec, GetMaxLengthString) {
+    codec.put((WORD16) (TransactionBufferSize - 2)); // Max Frame Size, for illustration of a complete frame
+    codec.put((WORD16) StringBufferSize); // Max String Size
+    for (int i = 0; i < StringBufferSize; i++) {
+        codec.put((BYTE8) 'A');
+    }
+
+    WORD16 frameSize = codec.get16(); // For illustration of a complete frame
+    EXPECT_EQ(frameSize, 510);
+
+    std::string str = codec.getString();
+    EXPECT_EQ(str.size(), 508);
+    for (int i = 0; i < 508; i++) {
+        EXPECT_EQ(str[i], 'A');
+    }
+}
+
+TEST_F(TestFrameCodec, GetStringTooLong) {
+    codec.put((WORD16) (StringBufferSize + 1)); // Max String Size exceeded
+    codec.put((BYTE8) 'A'); // irrelevant
+
+    EXPECT_THROW(codec.getString(), std::range_error);
+}
+
+// FRAME HANDLING
 
 TEST_F(TestFrameCodec, ResetWriteFrame) {
     EXPECT_EQ(codec.myWriteFrameIndex, 0L);

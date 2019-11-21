@@ -17,8 +17,8 @@
 #include <string>
 #include "types.h"
 
-const int TransactionBufferSize = 1040;
-const int StringBufferSize = TransactionBufferSize - 2 - 2 + 1; // - frame size bytes - string length bytes + \0
+const int TransactionBufferSize = 512; // From TDS 2nd ed, p356, sec 16.5.1.
+const int StringBufferSize = TransactionBufferSize - 2 - 2; // - frame size bytes - string length bytes
 
 
 class FrameCodec {
@@ -31,7 +31,7 @@ public:
     BYTE8 get8();
     WORD16 get16();
     WORD32 get32();
-    std::string getString();
+    std::string getString() throw (std::exception);
 
     WORD16 getReadFrameSize();
     void setReadFrameSize(const WORD16 size);
