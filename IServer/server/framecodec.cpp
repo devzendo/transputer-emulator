@@ -86,6 +86,7 @@ std::string FrameCodec::getString() throw (std::exception) {
     }
     const BYTE8 *buf = const_cast<const BYTE8 *>(myTransactionBuffer + myReadFrameIndex);
     const char *cbuf = (const char *)buf;
+    myReadFrameIndex += stringLen;
     return std::string(cbuf, (int)stringLen);
 }
 

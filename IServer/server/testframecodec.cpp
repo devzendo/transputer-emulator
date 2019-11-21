@@ -120,6 +120,39 @@ TEST_F(TestFrameCodec, GetSmallString) {
     EXPECT_EQ(str, "ABCDEFGH");
 }
 
+TEST_F(TestFrameCodec, GetMultipleStrings) {
+    EXPECT_EQ(codec.myReadFrameIndex, 0);
+    EXPECT_EQ(codec.myWriteFrameIndex, 0);
+    codec.put((WORD16) 3); // 0 1
+    codec.put((BYTE8) 'A'); // 2
+    codec.put((BYTE8) 'B'); // 3
+    codec.put((BYTE8) 'C'); // 4
+
+    EXPECT_EQ(codec.myReadFrameIndex, 0);
+    EXPECT_EQ(codec.myWriteFrameIndex, 5);
+    codec.put((WORD16) 3); // 5 6
+    codec.put((BYTE8) 'D'); // 7
+    codec.put((BYTE8) 'E'); // 8
+    codec.put((BYTE8) 'F'); // 9
+
+    EXPECT_EQ(codec.myReadFrameIndex, 0);
+    EXPECT_EQ(codec.myWriteFrameIndex, 10);
+    codec.put((WORD16) 3); // 10 11
+    codec.put((BYTE8) 'G'); // 12
+    codec.put((BYTE8) 'H'); // 13
+    codec.put((BYTE8) 'I'); // 14
+
+    EXPECT_EQ(codec.myReadFrameIndex, 0);
+    EXPECT_EQ(codec.myWriteFrameIndex, 15);
+    EXPECT_EQ(codec.getString(), "ABC");
+    EXPECT_EQ(codec.myReadFrameIndex, 5);
+    EXPECT_EQ(codec.getString(), "DEF");
+    EXPECT_EQ(codec.myReadFrameIndex, 10);
+    EXPECT_EQ(codec.getString(), "GHI");
+    EXPECT_EQ(codec.myReadFrameIndex, 15);
+    EXPECT_EQ(codec.myWriteFrameIndex, 15);
+}
+
 TEST_F(TestFrameCodec, FrameSizeInvariants) {
     EXPECT_EQ(512, TransactionBufferSize);
     EXPECT_EQ(508, StringBufferSize);
