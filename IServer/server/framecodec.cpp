@@ -98,10 +98,8 @@ void FrameCodec::resetWriteFrame() {
 
 // Wind back to the start to set the 2 length bytes.
 void FrameCodec::fillInReadFrameSize() {
-    WORD16 oldWriteFrameIndex = myWriteFrameIndex;
-    myWriteFrameIndex = 0;
-    put(getReadFrameSize());
-    myWriteFrameIndex = oldWriteFrameIndex;
+    myTransactionBuffer[0] = (BYTE8) (getReadFrameSize() & (BYTE8)0xff);
+    myTransactionBuffer[1] = (BYTE8) (getReadFrameSize() >> (BYTE8)8) & (BYTE8)0xff;
 }
 
 // Wind back to the start to set the 2 length bytes.
