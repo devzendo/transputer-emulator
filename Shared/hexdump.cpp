@@ -44,8 +44,8 @@ BYTE8 b;
 			line[61 + x] = isprint((char)b) ? ((char)b) : '.';
 		}
 		logDebug(line);
-		offset += 16;
-		left -= 16;
+		offset += upto16;
+		left -= upto16;
 	}
 }
 
