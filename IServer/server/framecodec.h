@@ -38,6 +38,7 @@ public:
     bool readFrameSizeOutOfRange();
 
     void resetWriteFrame();
+    void fillInReadFrameSize();
     WORD16 fillInFrameSize();
 
     BYTE8 myTransactionBuffer[TransactionBufferSize];

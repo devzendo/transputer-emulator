@@ -97,6 +97,14 @@ void FrameCodec::resetWriteFrame() {
 }
 
 // Wind back to the start to set the 2 length bytes.
+void FrameCodec::fillInReadFrameSize() {
+    WORD16 oldWriteFrameIndex = myWriteFrameIndex;
+    myWriteFrameIndex = 0;
+    put(getReadFrameSize());
+    myWriteFrameIndex = oldWriteFrameIndex;
+}
+
+// Wind back to the start to set the 2 length bytes.
 WORD16 FrameCodec::fillInFrameSize() {
     if ((myWriteFrameIndex & (WORD16)0x01) == 0x01) {
         logDebug("Padding odd length frame with 00");

@@ -203,3 +203,17 @@ TEST_F(TestFrameCodec, FillInFrameSize) {
     EXPECT_EQ(codec.myTransactionBuffer[0], (BYTE8)0x06);
     EXPECT_EQ(codec.myTransactionBuffer[1], (BYTE8)0x00);
 }
+
+TEST_F(TestFrameCodec, FillInReadFrameSize) {
+    // Initial size
+    EXPECT_EQ(codec.myTransactionBuffer[0], (BYTE8)0x00);
+    EXPECT_EQ(codec.myTransactionBuffer[1], (BYTE8)0x00);
+
+    codec.setReadFrameSize(6);
+    codec.resetWriteFrame();
+    codec.put((WORD16)0xF00D); // will be overwritten
+
+    codec.fillInReadFrameSize();
+    EXPECT_EQ(codec.myTransactionBuffer[0], (BYTE8)0x06);
+    EXPECT_EQ(codec.myTransactionBuffer[1], (BYTE8)0x00);
+}
