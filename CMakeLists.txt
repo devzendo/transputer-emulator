@@ -1,8 +1,8 @@
 # set(CMAKE_VERBOSE_MAKEFILE ON)
 cmake_minimum_required(VERSION 3.10.2)
 # Thanks to https://crascit.com/2015/03/28/enabling-cxx11-in-cmake/
-set(CMAKE_CXX_STANDARD 11)
-set(CMAKE_CXX_STANDARD_REQUIRED ON)
+set(CMAKE_CXX_STANDARD 14)
+set(CMAKE_CXX_STANDARD_REQUIRED ON) # Don't fall back to an earlier standard if the one declared isn't available
 set(CMAKE_CXX_EXTENSIONS OFF)
 
 # VERSION is filtered into target/classes/version.cpp by using the maven resources plugin.
