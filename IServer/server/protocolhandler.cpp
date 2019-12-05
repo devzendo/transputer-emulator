@@ -138,7 +138,8 @@ bool ProtocolHandler::readFrame() {
         return false;
     }
     // Fail if frame size > max frame length.
-    // Store frameSize at positions 0 and 1 in myTransactionBuffer?
+    // Store frameSize at positions 0 and 1 in myTransactionBuffer
+    codec.fillInReadFrameSize();
     // Read remaining data.
     WORD16 bytesRead = myIOLink.readBytes(&codec.myTransactionBuffer[2], codec.getReadFrameSize());
     // Fail if we fail to read all of it.
@@ -146,6 +147,10 @@ bool ProtocolHandler::readFrame() {
         logWarnF("Truncated frame read: read %d bytes, expecting %d bytes", bytesRead, codec.getReadFrameSize());
         return false;
         // How to resynchronise? Reset link?
+    }
+    if (bDebug) {
+        auto len = codec.getReadFrameSize() + 2;
+        hexdump(codec.myTransactionBuffer, len);
     }
     return true;
 }
@@ -157,6 +162,7 @@ bool ProtocolHandler::requestResponse() {
     codec.myReadFrameIndex = 3;
     switch (tag) {
         case REQ_OPEN: {
+            reqOpen();
             break;
         }
         case REQ_CLOSE: {
@@ -233,21 +239,7 @@ bool ProtocolHandler::requestResponse() {
             break;
         }
         case REQ_EXIT: {
-            const WORD32 status = codec.get32();
-            logDebugF("Exit status received as %08X", status);
-
-            switch (status) {
-                case RES_EXIT_SUCCESS:
-                    myExitCode = 0;
-                    break;
-                case RES_EXIT_FAILURE:
-                    myExitCode = 1;
-                    break;
-                default:
-                    myExitCode = (int)status;
-            }
-            logDebugF("Exit code set to %04X", myExitCode);
-            codec.put(RES_SUCCESS);
+            reqExit();
             break;
         }
 
@@ -258,22 +250,7 @@ bool ProtocolHandler::requestResponse() {
             break;
         }
         case REQ_ID: {
-            codec.put(RES_SUCCESS);
-            codec.put((BYTE8) 0x00); // Version: TODO extract real version from productVersion string
-#if defined(PLATFORM_WINDOWS)
-            codec.put((BYTE8) 0X01); // Host: "PC"
-            codec.put((BYTE8) 0X06); // OS: "Windows" (addition: not in iServer docs)
-#elif defined(PLATFORM_OSX)
-            codec.put((BYTE8) 0X09); // Host: "Mac" (addition: not in iServer docs)
-            codec.put((BYTE8) 0X07); // OS: "macOS" (addition: not in iServer docs)
-#elif defined(PLATFORM_LINUX)
-            codec.put((BYTE8) 0X01); // Host: "PC"
-            codec.put((BYTE8) 0X08); // OS: "Linux" (addition: not in iServer docs)
-#else
-            codec.put((BYTE8) 0X00); // Host: ?
-            codec.put((BYTE8) 0X00); // OS: ?
-#endif
-            codec.put((BYTE8) ((BYTE8)myIOLink.getLinkType() & (BYTE8)0xff)); // Board: actually the link type
+            reqId();
             break;
         }
         case REQ_GETINFO: {
@@ -317,8 +294,8 @@ bool ProtocolHandler::writeFrame() {
         BYTE8 tag = codec.myTransactionBuffer[2];
         logDebugF("Write frame: size word is %04X (%d) tag %02X (%s)",
                 frameSize, frameSize, tag, tagToName(tag));
+        hexdump(codec.myTransactionBuffer, codec.myWriteFrameIndex);
     }
-
     myIOLink.writeBytes(codec.myTransactionBuffer, codec.myWriteFrameIndex);
     return true;
 }
@@ -337,4 +314,49 @@ WORD64 ProtocolHandler::unimplementedFrameCount() {
 
 int ProtocolHandler::exitCode() {
     return myExitCode;
+}
+
+// Protocol frame handlers ---------------------------------------------------------------------------------------------
+
+void ProtocolHandler::reqOpen() {
+    const std::string filename = codec.getString();
+    const BYTE8 openType = codec.get8();
+    const BYTE8 openMode = codec.get8();
+}
+
+void ProtocolHandler::reqExit() {
+    const WORD32 status = codec.get32();
+    logDebugF("Exit status received as %08X", status);
+
+    switch (status) {
+        case RES_EXIT_SUCCESS:
+            myExitCode = 0;
+            break;
+        case RES_EXIT_FAILURE:
+            myExitCode = 1;
+            break;
+        default:
+            myExitCode = (int)status;
+    }
+    logDebugF("Exit code set to %04X", myExitCode);
+    codec.put(RES_SUCCESS);
+}
+
+void ProtocolHandler::reqId() {
+    codec.put(RES_SUCCESS);
+    codec.put((BYTE8) 0x00); // Version: TODO extract real version from productVersion string
+#if defined(PLATFORM_WINDOWS)
+    codec.put((BYTE8) 0X01); // Host: "PC"
+            codec.put((BYTE8) 0X06); // OS: "Windows" (addition: not in iServer docs)
+#elif defined(PLATFORM_OSX)
+    codec.put((BYTE8) 0X09); // Host: "Mac" (addition: not in iServer docs)
+    codec.put((BYTE8) 0X07); // OS: "macOS" (addition: not in iServer docs)
+#elif defined(PLATFORM_LINUX)
+    codec.put((BYTE8) 0X01); // Host: "PC"
+            codec.put((BYTE8) 0X08); // OS: "Linux" (addition: not in iServer docs)
+#else
+            codec.put((BYTE8) 0X00); // Host: ?
+            codec.put((BYTE8) 0X00); // OS: ?
+#endif
+    codec.put((BYTE8) ((BYTE8)myIOLink.getLinkType() & (BYTE8)0xff)); // Board: actually the link type
 }

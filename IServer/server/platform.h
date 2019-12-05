@@ -15,6 +15,9 @@
 #define _PLATFORM_H
 
 #include <exception>
+#include <ios>
+#include <iostream>
+#include <fstream>
 
 #include "platformdetection.h"
 #include "types.h"
@@ -40,6 +43,10 @@ public:
     int const myMillisecond; // millisecond, (0 .. 999)
 };
 
+const int MAX_FILES = 128;
+const int FILE_STDIN = 0;
+const int FILE_STDOUT = 1;
+const int FILE_STDERR = 2;
 class Platform {
 public:
     Platform();
@@ -55,6 +62,8 @@ public:
     virtual UTCTime getUTCTime() = 0;
 protected:
     bool bDebug;
+    std::iostream myFiles[MAX_FILES];
+    int myNextAvailableFile;
 };
 
 #endif // _PLATFORM_H

@@ -114,6 +114,11 @@ protected:
         return frame;
     }
 
+    std::vector<BYTE8> & append8(std::vector<BYTE8> &frame, const BYTE8 b) {
+        frame.push_back(b);
+        return frame;
+    };
+
     std::vector<BYTE8> & append16(std::vector<BYTE8> &frame, const WORD16 w) {
         // Always output as a little-endian word, LSB first MSB last
         frame.push_back(w & 0x00ff);
@@ -127,6 +132,16 @@ protected:
         frame.push_back((w & 0x0000ff00) >> 8);
         frame.push_back((w & 0x00ff0000) >> 16);
         frame.push_back((w & 0xff000000) >> 24);
+        return frame;
+    };
+
+    std::vector<BYTE8> & appendString(std::vector<BYTE8> &frame, const std::string &str) {
+        append16(frame, str.length());
+        auto it=str.begin();
+        auto end=str.end();
+        for (; it != end; it++) {
+            frame.push_back(*it);
+        }
         return frame;
     };
 };
@@ -271,19 +286,23 @@ TEST_F(TestProtocolHandler, UnimplementedFrame)
 
 // REQ_OPEN
 
-TEST_F(TestProtocolHandler, OpenStringTooLongForStringBuffer)
+TEST_F(TestProtocolHandler, OpenOpensAFileAndReturnsAStream)
 {
     std::vector<BYTE8> openFrame = {REQ_OPEN};
-    // TODO well unfinished
-//    append16(openFrame, TransactionBuffer - 2 - 2);
-//    std::vector<BYTE8> padded = padFrame(openFrame);
-//    EXPECT_EQ(checkGoodFrame(padded), true); // It is an exit frame
-//    std::vector<BYTE8> response = readResponseFrame();
-//    checkResponseFrameTag(response, RES_SUCCESS);
-//    checkResponseFrameSize(response, 2);
-//    EXPECT_EQ(handler->unimplementedFrameCount(), 0L); // it is an implemented tag
-//
-//    EXPECT_EQ(handler->exitCode(), 0);
+    appendString(openFrame, "testfile.txt");
+    append8(openFrame, REQ_OPEN_TYPE_TEXT);
+    append8(openFrame, REQ_OPEN_MODE_INPUT);
+    std::vector<BYTE8> padded = padFrame(openFrame);
+    EXPECT_FALSE(checkGoodFrame(padded)); // It is an exit frame
+    EXPECT_EQ(handler->unimplementedFrameCount(), 0L); // it is an implemented tag
+
+    std::vector<BYTE8> response = readResponseFrame();
+    checkResponseFrameTag(response, RES_SUCCESS);
+    checkResponseFrameSize(response, 4);
+    EXPECT_EQ((int)response[3], 0x03); // First available stream id after 0,1,2 (stdout, stdin, stderr)
+    EXPECT_EQ((int)response[4], 0x00);
+    EXPECT_EQ((int)response[5], 0x00);
+    EXPECT_EQ((int)response[6], 0x00);
 }
 
 // REQ_CLOSE

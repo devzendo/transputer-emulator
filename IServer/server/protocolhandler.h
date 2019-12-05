@@ -52,6 +52,10 @@ private:
     bool requestResponse();
     bool writeFrame();
     int myExitCode;
+    // Frame handling routines
+    void reqOpen();
+    void reqExit();
+    void reqId();
 
 };
 
