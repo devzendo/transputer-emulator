@@ -47,6 +47,46 @@ const int MAX_FILES = 128;
 const int FILE_STDIN = 0;
 const int FILE_STDOUT = 1;
 const int FILE_STDERR = 2;
+
+class Stream {
+public:
+    Stream(const Stream&) = delete;
+
+    virtual bool is_open() = 0;
+    virtual void close() = 0;
+};
+
+class FileStream: public Stream {
+public:
+    bool is_open() override {
+        return fstream.is_open();
+    };
+
+    void close() override {
+        fstream.close();
+    };
+
+private:
+    std::fstream fstream;
+
+};
+
+class ConsoleStream: public Stream {
+public:
+    explicit ConsoleStream(std::streambuf *buf): iostream(buf) {
+    }
+
+    bool is_open() override {
+        return true;
+    };
+
+    void close() override {
+        // no-op
+    };
+private:
+    std::iostream iostream;
+};
+
 class Platform {
 public:
     Platform();
@@ -62,7 +102,7 @@ public:
     virtual UTCTime getUTCTime() = 0;
 protected:
     bool bDebug;
-    std::iostream myFiles[MAX_FILES];
+    Stream myFiles[MAX_FILES];
     int myNextAvailableFile;
 };
 

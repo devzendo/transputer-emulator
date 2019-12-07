@@ -20,82 +20,47 @@
 #include "log.h"
 
 namespace {
-    static void initStdin(std::iostream &stdinStream) {
+    static Stream initStdin() {
         std::streambuf *buf = std::cin.rdbuf();
-        stdinStream.rdbuf(buf);
+        ConsoleStream stdinStream(buf);
+        return stdinStream;
     }
-    static void initStdout(std::iostream &stdoutStream) {
+    static Stream initStdout() {
         std::streambuf *buf = std::cout.rdbuf();
-        stdoutStream.rdbuf(buf);
+        ConsoleStream stdoutStream(buf);
+        return stdoutStream;
     }
-    static void initStderr(std::iostream &stderrStream) {
+    static Stream initStderr() {
         std::streambuf *buf = std::cerr.rdbuf();
-        stderrStream.rdbuf(buf);
+        ConsoleStream stderrStream(buf);
+        return stderrStream;
     }
 }
 
 Platform::Platform() {
     bDebug = false;
-    myFiles = new std::iostream[MAX_FILES];
-    for (auto &file: myFiles) {
-        file = std::iostream();
-    }
-    // Initialise standard in, out and error
-    initStdin(myFiles[FILE_STDIN]);
-    initStdout(myFiles[FILE_STDOUT]);
-    initStderr(myFiles[FILE_STDERR]);
-    myNextAvailableFile = 3;
-}
 
-void ios(std::ios &i) {
-    std::streambuf *sb = std::cout.rdbuf();
-    i.is_open();
-    i.close();
-    i.rdbuf(sb);
-}
-void iostream(std::iostream &i) {
-    std::streambuf *sb = std::cout.rdbuf();
-    i.is_open();
-    i.close();
-    i.rdbuf(sb);
-}
-void istream(std::istream &i) {
-    std::streambuf *sb = std::cout.rdbuf();
-    i.is_open();
-    i.close();
-    i.rdbuf(sb);
-}
-void ostream(std::ostream &i) {
-    std::streambuf *sb = std::cout.rdbuf();
-    i.is_open();
-    i.close();
-    i.rdbuf(sb);
-}
-void ifstream(std::ifstream &i) {
-    std::streambuf *sb = std::cout.rdbuf();
-    i.is_open();
-    i.close();
-    i.rdbuf(sb);
-}
-void ofstream(std::ofstream &i) {
-    std::streambuf *sb = std::cout.rdbuf();
-    i.is_open();
-    i.close();
-    i.rdbuf(sb);
-}
-void fstream(std::fstream &i) {
-    std::streambuf *sb = std::cout.rdbuf();
-    i.is_open();
-    i.close();
-    i.rdbuf(sb);
+    // Initialise standard in, out and error
+    logDebug("Initialising stdin, stdout and stderr streams");
+    myFiles[FILE_STDIN] = initStdin();
+    myFiles[FILE_STDOUT] = initStdout();
+    myFiles[FILE_STDERR] = initStderr();
+
+    // Now initialise all others to be unopened
+    logDebug("Initialising file streams");
+    for (int i=FILE_STDERR + 1; i < MAX_FILES; i++) {
+        myFiles[i] = FileStream();
+    }
+
+    myNextAvailableFile = FILE_STDERR + 1;
 }
 
 Platform::~Platform(void) {
     logDebug("Destroying base platform");
-    // Close all open files
+    // Close all open streams
     for (int i=0; i < MAX_FILES; i++) {
         if (myFiles[i].is_open()) {
-            logDebugF("Closing open file #%d", i);
+            logDebugF("Closing open streams #%d", i);
             myFiles[i].close();
         }
     }
