@@ -37,26 +37,35 @@ void POSIXPlatform::initialise(void) throw (std::exception) {
     timeout.tv_usec = 0;
     // TODO initialise cooked input so it returns without waiting for EOL
     // initialise links
-    if (tcgetattr(stdinfd, &term) == -1) {
-        sprintf(msgbuf, "Could not get stdin terminal attributes: %s",
-                  strerror(errno));
-        logFatal(msgbuf);
-        throw std::runtime_error(msgbuf);
+    if (isatty(stdinfd)) { // It's not a TTY in tests, where the following tcget/setattr fails.
+        logDebugF("Setting stdin (fd %d) terminal attributes as it is a TTY", stdinfd);
+        if (tcgetattr(stdinfd, &term) == -1) {
+            sprintf(msgbuf, "Could not get stdin (fd %d) terminal attributes: %s",
+                      stdinfd, strerror(errno));
+            logFatal(msgbuf);
+            throw std::runtime_error(msgbuf);
+        }
+        tcgetattr(stdinfd, &origterm);
+        term.c_lflag = term.c_lflag & (~ICANON);
+        if (tcsetattr(stdinfd, TCSANOW, &term) == -1) {
+            sprintf(msgbuf, "Could not set stdin (fd %d) terminal attributes: %s",
+                      stdinfd, strerror(errno));
+            logFatal(msgbuf);
+            throw std::runtime_error(msgbuf);
+        }
+    } else {
+        logDebugF("Not setting stdin (fd %d) terminal attributes as it is not a TTY", stdinfd);
     }
-    tcgetattr(stdinfd, &origterm);
-    term.c_lflag = term.c_lflag & (~ICANON);
-    if (tcsetattr(stdinfd, TCSANOW, &term) == -1) {
-        sprintf(msgbuf, "Could not set stdin terminal attributes: %s",
-                  strerror(errno));
-        logFatal(msgbuf);
-        throw std::runtime_error(msgbuf);
-    }
-
 }
 
 POSIXPlatform::~POSIXPlatform() {
     logDebug("Destroying POSIX platform");
-    tcsetattr(stdinfd, TCSANOW, &origterm);
+    if (isatty(stdinfd)) {
+        logDebugF("Resetting stdin (fd %d) terminal attributes as it is a TTY", stdinfd);
+        tcsetattr(stdinfd, TCSANOW, &origterm);
+    } else {
+        logDebugF("Not resetting stdin (fd %d) terminal attributes as it is not a TTY", stdinfd);
+    }
 }
 
 bool POSIXPlatform::isConsoleCharAvailable() {
