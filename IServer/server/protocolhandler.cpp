@@ -347,16 +347,16 @@ void ProtocolHandler::reqId() {
     codec.put((BYTE8) 0x00); // Version: TODO extract real version from productVersion string
 #if defined(PLATFORM_WINDOWS)
     codec.put((BYTE8) 0X01); // Host: "PC"
-            codec.put((BYTE8) 0X06); // OS: "Windows" (addition: not in iServer docs)
+    codec.put((BYTE8) 0X06); // OS: "Windows" (addition: not in iServer docs)
 #elif defined(PLATFORM_OSX)
     codec.put((BYTE8) 0X09); // Host: "Mac" (addition: not in iServer docs)
     codec.put((BYTE8) 0X07); // OS: "macOS" (addition: not in iServer docs)
 #elif defined(PLATFORM_LINUX)
     codec.put((BYTE8) 0X01); // Host: "PC"
-            codec.put((BYTE8) 0X08); // OS: "Linux" (addition: not in iServer docs)
+    codec.put((BYTE8) 0X08); // OS: "Linux" (addition: not in iServer docs)
 #else
-            codec.put((BYTE8) 0X00); // Host: ?
-            codec.put((BYTE8) 0X00); // OS: ?
+    codec.put((BYTE8) 0X00); // Host: ?
+    codec.put((BYTE8) 0X00); // OS: ?
 #endif
     codec.put((BYTE8) ((BYTE8)myIOLink.getLinkType() & (BYTE8)0xff)); // Board: actually the link type
 }

@@ -398,8 +398,18 @@ TEST_F(TestProtocolHandler, IdFrame)
     checkResponseFrameSize(response, 6);
     checkResponseFrameTag(response, RES_SUCCESS);
     EXPECT_EQ((int)response[3], 0x00); // version TODO extract real version from productVersion
+#if defined(PLATFORM_OSX)
     EXPECT_EQ((int)response[4], 0x09); // host
     EXPECT_EQ((int)response[5], 0x07); // os
+#elif defined(PLATFORM_LINUX)
+    EXPECT_EQ((int)response[4], 0x01); // host
+    EXPECT_EQ((int)response[5], 0x08); // os
+#elif defined(PLATFORM_WINDOWS)
+    EXPECT_EQ((int)response[4], 0x01); // host
+    EXPECT_EQ((int)response[5], 0x06); // os
+#else
+    FAIL() << "Platform not supported";
+#endif
     EXPECT_EQ((int)response[6], LinkType_Stub); // board a.k.a. link type
 }
 
