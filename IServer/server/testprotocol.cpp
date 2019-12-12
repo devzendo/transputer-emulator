@@ -11,7 +11,7 @@
 //
 //------------------------------------------------------------------------------
 
-#include <stdio.h>
+#include <cstdio>
 #include "log.h"
 #include "platform.h"
 #include "protocolhandler.h"
@@ -286,27 +286,29 @@ TEST_F(TestProtocolHandler, UnimplementedFrame)
 
 // REQ_OPEN
 
-TEST_F(TestProtocolHandler, OpenOpensAFileAndReturnsAStream)
-{
-    std::vector<BYTE8> openFrame = {REQ_OPEN};
-    appendString(openFrame, "testfile.txt");
-    append8(openFrame, REQ_OPEN_TYPE_TEXT);
-    append8(openFrame, REQ_OPEN_MODE_INPUT);
-    std::vector<BYTE8> padded = padFrame(openFrame);
-    EXPECT_FALSE(checkGoodFrame(padded)); // It is an exit frame
-    EXPECT_EQ(handler->unimplementedFrameCount(), 0L); // it is an implemented tag
-
-    std::vector<BYTE8> response = readResponseFrame();
-    checkResponseFrameTag(response, RES_SUCCESS);
-    checkResponseFrameSize(response, 4);
-    EXPECT_EQ((int)response[3], 0x03); // First available stream id after 0,1,2 (stdout, stdin, stderr)
-    EXPECT_EQ((int)response[4], 0x00);
-    EXPECT_EQ((int)response[5], 0x00);
-    EXPECT_EQ((int)response[6], 0x00);
-}
+// TODO come back to this... after puts/gets to stdout/stderr/stdin
+//TEST_F(TestProtocolHandler, OpenOpensAFileAndReturnsAStream)
+//{
+//    std::vector<BYTE8> openFrame = {REQ_OPEN};
+//    appendString(openFrame, "testfile.txt");
+//    append8(openFrame, REQ_OPEN_TYPE_TEXT);
+//    append8(openFrame, REQ_OPEN_MODE_INPUT);
+//    std::vector<BYTE8> padded = padFrame(openFrame);
+//    EXPECT_FALSE(checkGoodFrame(padded)); // It is an exit frame
+//    EXPECT_EQ(handler->unimplementedFrameCount(), 0L); // it is an implemented tag
+//
+//    std::vector<BYTE8> response = readResponseFrame();
+//    checkResponseFrameTag(response, RES_SUCCESS);
+//    checkResponseFrameSize(response, 4);
+//    EXPECT_EQ((int)response[3], 0x03); // First available stream id after 0,1,2 (stdout, stdin, stderr)
+//    EXPECT_EQ((int)response[4], 0x00);
+//    EXPECT_EQ((int)response[5], 0x00);
+//    EXPECT_EQ((int)response[6], 0x00);
+//}
 
 // REQ_CLOSE
 // REQ_READ
+
 // REQ_WRITE
 // REQ_GETS
 // REQ_PUTS

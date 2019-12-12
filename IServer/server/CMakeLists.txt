@@ -20,3 +20,7 @@ add_test(NAME testprotocol COMMAND testprotocol)
 add_executable(testframecodec testframecodec.cpp framecodec.cpp framecodec.h)
 target_link_libraries(testframecodec gtest gmock_main)
 add_test(NAME testframecodec COMMAND testframecodec)
+
+add_executable(testplatform testplatform.cpp platform.cpp platform.h platformfactory.cpp platformfactory.h "${platform_sources}")
+target_link_libraries(testplatform gtest gmock_main)
+add_test(NAME testplatform COMMAND testplatform)

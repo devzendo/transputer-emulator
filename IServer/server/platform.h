@@ -50,10 +50,12 @@ const int FILE_STDERR = 2;
 
 class Stream {
 public:
-    Stream(const Stream&) = delete;
-
     virtual bool is_open() = 0;
     virtual void close() = 0;
+    virtual void write(WORD16 size, BYTE8 *buffer) = 0;
+    virtual void read(WORD16 size, BYTE8 *buffer) = 0;
+    bool isReadable;
+    bool isWritable;
 };
 
 class FileStream: public Stream {
@@ -66,9 +68,16 @@ public:
         fstream.close();
     };
 
+    void write(WORD16 size, BYTE8 *buffer) override {
+        fstream.write(reinterpret_cast<const char *>(buffer), size);
+    }
+
+    void read(WORD16 size, BYTE8 *buffer) override {
+        fstream.read(reinterpret_cast<char *>(buffer), size);
+    }
+
 private:
     std::fstream fstream;
-
 };
 
 class ConsoleStream: public Stream {
@@ -83,9 +92,24 @@ public:
     void close() override {
         // no-op
     };
+
+    void write(WORD16 size, BYTE8 *buffer) override {
+        iostream.write(reinterpret_cast<const char *>(buffer), size);
+    }
+
+    void read(WORD16 size, BYTE8 *buffer) override {
+        iostream.read(reinterpret_cast<char *>(buffer), size);
+    }
+
+    // For use by tests...
+    void _setStreamBuf(std::streambuf *buffer);
+
 private:
     std::iostream iostream;
 };
+
+// TODO change this to std::unique_ptr<Stream>
+typedef Stream * StreamPtr;
 
 class Platform {
 public:
@@ -100,9 +124,16 @@ public:
 
     virtual WORD32 getTimeMillis() = 0;
     virtual UTCTime getUTCTime() = 0;
+
+    void writeStream(int streamId, WORD16 size, BYTE8* buffer) throw (std::exception);
+    void readStream(int streamId, WORD16 size, BYTE8* buffer) throw (std::exception);
+
+    // For use by tests...
+    void _setStreamBuf(int streamId, std::streambuf *buffer);
+
 protected:
     bool bDebug;
-    Stream myFiles[MAX_FILES];
+    StreamPtr myFiles[MAX_FILES];
     int myNextAvailableFile;
 };
 

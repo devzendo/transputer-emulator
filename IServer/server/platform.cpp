@@ -20,21 +20,31 @@
 #include "log.h"
 
 namespace {
-    static Stream initStdin() {
+    Stream *initStdin() {
         std::streambuf *buf = std::cin.rdbuf();
-        ConsoleStream stdinStream(buf);
+        auto *stdinStream = new ConsoleStream(buf);
+        stdinStream->isWritable = false;
+        stdinStream->isReadable = true;
         return stdinStream;
     }
-    static Stream initStdout() {
+    Stream *initStdout() {
         std::streambuf *buf = std::cout.rdbuf();
-        ConsoleStream stdoutStream(buf);
+        auto *stdoutStream = new ConsoleStream(buf);
+        stdoutStream->isWritable = true;
+        stdoutStream->isReadable = false;
         return stdoutStream;
     }
-    static Stream initStderr() {
+    Stream *initStderr() {
         std::streambuf *buf = std::cerr.rdbuf();
-        ConsoleStream stderrStream(buf);
+        auto *stderrStream = new ConsoleStream(buf);
+        stderrStream->isWritable = true;
+        stderrStream->isReadable = false;
         return stderrStream;
     }
+}
+
+void ConsoleStream::_setStreamBuf(std::streambuf *buffer) {
+    iostream.rdbuf(buffer);
 }
 
 Platform::Platform() {
@@ -49,23 +59,68 @@ Platform::Platform() {
     // Now initialise all others to be unopened
     logDebug("Initialising file streams");
     for (int i=FILE_STDERR + 1; i < MAX_FILES; i++) {
-        myFiles[i] = FileStream();
+        myFiles[i] = nullptr;
     }
 
     myNextAvailableFile = FILE_STDERR + 1;
 }
 
-Platform::~Platform(void) {
+Platform::~Platform() {
     logDebug("Destroying base platform");
+
     // Close all open streams
     for (int i=0; i < MAX_FILES; i++) {
-        if (myFiles[i].is_open()) {
-            logDebugF("Closing open streams #%d", i);
-            myFiles[i].close();
+        if (myFiles[i] != nullptr) {
+            logDebugF("Stream #%d has been allocated", i);
+            if (myFiles[i]->is_open()) {
+                logDebugF("Closing open streams #%d", i);
+                myFiles[i]->close();
+            }
         }
     }
 }
 
 void Platform::setDebug(bool newDebug) {
     bDebug = newDebug;
+}
+
+void Platform::writeStream(int streamId, WORD16 size, BYTE8 *buffer) throw (std::exception) {
+    if (streamId < 0 || streamId >= MAX_FILES) {
+        logWarnF("Attempt to write to out-of-range stream id #%d", streamId);
+        throw std::range_error("Stream id out of range");
+    }
+    StreamPtr pStream = myFiles[streamId];
+    if (pStream == nullptr) {
+        logWarnF("Attempt to write to unopen stream #%d", streamId);
+        throw std::invalid_argument("Stream id not open");
+    }
+    if (! pStream->isWritable) {
+        logWarnF("Attempt to write to non-writable stream #%d", streamId);
+        throw std::runtime_error("Stream not writable");
+    }
+    pStream->write(size, buffer);
+}
+
+void Platform::readStream(int streamId, WORD16 size, BYTE8 *buffer) throw (std::exception) {
+    if (streamId < 0 || streamId >= MAX_FILES) {
+        logWarnF("Attempt to read from out-of-range stream id #%d", streamId);
+        throw std::range_error("Stream id out of range");
+    }
+    StreamPtr pStream = myFiles[streamId];
+    if (pStream == nullptr) {
+        logWarnF("Attempt to read from unopen stream #%d", streamId);
+        throw std::invalid_argument("Stream id not open");
+    }
+    if (! pStream->isReadable) {
+        logWarnF("Attempt to read from non-readable stream #%d", streamId);
+        throw std::runtime_error("Stream not readable");
+    }
+    pStream->read(size, buffer);
+}
+
+// For use by tests...
+void Platform::_setStreamBuf(const int streamId, std::streambuf *buffer) {
+    StreamPtr pStream = myFiles[streamId];
+    ConsoleStream * pConsoleStream = dynamic_cast<ConsoleStream *>(pStream);
+    pConsoleStream->_setStreamBuf(buffer);
 }
