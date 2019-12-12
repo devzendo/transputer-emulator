@@ -12,6 +12,7 @@
 //------------------------------------------------------------------------------
 
 #include <exception>
+#include <cctype>
 
 #include "stublink.h"
 #include "log.h"
