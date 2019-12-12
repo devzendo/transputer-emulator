@@ -184,6 +184,7 @@ TEST_F(TestProtocolHandler, OddFrame7IsOdd)
     checkBadFrame(badFrame);
 }
 
+// TODO this test may cause debug assertion dialogs on Windows.. iscprint?!
 TEST_F(TestProtocolHandler, MaxFrame510IsGood)
 {
     std::vector<BYTE8> maxFrame;
