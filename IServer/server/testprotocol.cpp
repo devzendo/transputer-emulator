@@ -156,27 +156,32 @@ TEST_F(TestProtocolHandler, InitialFrameCounts)
 
 TEST_F(TestProtocolHandler, ShortFrame0IsShort)
 {
-    checkBadFrame((std::vector<BYTE8>) {});
+    auto badFrame = std::vector<BYTE8> {};
+    checkBadFrame(badFrame);
 }
 
 TEST_F(TestProtocolHandler, ShortFrame1IsShort)
 {
-    checkBadFrame((std::vector<BYTE8>) {0});
+    auto badFrame = std::vector<BYTE8> {0};
+    checkBadFrame(badFrame);
 }
 
 TEST_F(TestProtocolHandler, ShortFrame4IsShort)
 {
-    checkBadFrame((std::vector<BYTE8>) {0, 0, 0, 0});
+    auto badFrame = std::vector<BYTE8> {0, 0, 0, 0};
+    checkBadFrame(badFrame);
 }
 
 TEST_F(TestProtocolHandler, ShortFrame5IsOdd)
 {
-    checkBadFrame((std::vector<BYTE8>) {0, 0, 0, 0, 0});
+    auto badFrame = std::vector<BYTE8> {0, 0, 0, 0, 0};
+    checkBadFrame(badFrame);
 }
 
 TEST_F(TestProtocolHandler, OddFrame7IsOdd)
 {
-    checkBadFrame((std::vector<BYTE8>) {0, 0, 0, 0, 0, 0, 0});
+    auto badFrame = std::vector<BYTE8> {0, 0, 0, 0, 0, 0, 0};
+    checkBadFrame(badFrame);
 }
 
 TEST_F(TestProtocolHandler, MaxFrame510IsGood)
