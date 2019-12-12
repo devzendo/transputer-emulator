@@ -30,6 +30,7 @@ public:
     BYTE readByte(void) throw (std::exception);
     void writeByte(BYTE b) throw (std::exception);
     void resetLink(void) throw (std::exception);
+    int getLinkType(void);
 private:
     void connect(void) throw (std::exception);
     bool myConnected = false;

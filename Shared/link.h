@@ -27,7 +27,8 @@
 const int LinkType_FIFO = 0;
 const int LinkType_Socket = 1;
 const int LinkType_SharedMemory = 2;
-const int LinkType_Stub = 3; // for testing
+const int LinkType_NamedPipe = 3;
+const int LinkType_Stub = 4; // for testing
 
 class Link {
 public:

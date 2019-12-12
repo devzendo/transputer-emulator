@@ -217,3 +217,6 @@ void NamedPipeLink::resetLink(void) throw (std::exception) {
     logDebugF("[resetLink] Reset link %d by %s", myLinkNo, bServer ? "server" : "cpu client");
 }
 
+int NamedPipeLink::getLinkType() {
+    return LinkType_NamedPipe;
+}
