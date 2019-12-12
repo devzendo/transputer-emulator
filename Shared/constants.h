@@ -14,12 +14,9 @@
 #ifndef _CONSTANTS_H
 #define _CONSTANTS_H
 
+#include <algorithm>
 #include "types.h"
 #include "platformdetection.h"
-
-#ifndef min
-#define min(a,b) ((a) < (b) ? (a) : (b))
-#endif
 
 // For storing bool values in WORD32s
 const int BOOL_TRUE = 1;
