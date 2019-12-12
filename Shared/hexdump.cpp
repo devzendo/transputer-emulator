@@ -41,7 +41,15 @@ BYTE8 b;
 			b = buf[offset + x];
 			line[11 + (3 * x)] = hexdigs[(b & 0xf0) >> 4];
 			line[12 + (3 * x)] = hexdigs[b & 0x0f];
-			line[61 + x] = isprint((char)b) ? ((char)b) : '.';
+			/* Debug Assertion Failed! - Expression: c >= -1 && <= 255
+			This problem occurs when certain ctype macros are called in a Debug build configuration.
+            Specifically, a call to __chvalidator() asserts a valid ascii value check and throws an error in the case of a signed char value between -128 and -2.
+            Non-Debug build behavior unknown under these conditions.
+            A simple unsigned char cast will resolve this issue, and is the recommended fix per Microsoft through their connect website.
+            https://connect.microsoft.com/VisualStudio/feedback/details/932876/calling-isdigit-with-a-signed-char-1-results-in-a-assert-failure-in-debug-compiles
+            Thanks to Uleat, at https://github.com/EQEmu/Server/issues/396
+            */
+			line[61 + x] = isprint((unsigned char)b) ? ((char)b) : '.';
 		}
 		logDebug(line);
 		offset += upto16;
