@@ -149,10 +149,8 @@ bool ProtocolHandler::readFrame() {
         // How to resynchronise? Reset link?
     }
     if (bDebug) {
-        logDebug("----- Frame Dump -----");
         auto len = codec.getReadFrameSize() + 2;
         hexdump(codec.myTransactionBuffer, len);
-        logDebug("----- Frame Dump -----");
     }
     return true;
 }
