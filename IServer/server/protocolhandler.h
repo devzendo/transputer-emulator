@@ -54,9 +54,9 @@ private:
     int myExitCode;
     // Frame handling routines
     void reqOpen();
+    void reqWrite();
     void reqExit();
     void reqId();
-
 };
 
 #endif // _PROTOCOL_HANDLER_H

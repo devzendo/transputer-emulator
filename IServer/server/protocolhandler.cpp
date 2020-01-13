@@ -26,7 +26,7 @@
 #include "../isproto.h"
 
 namespace {
-    static const char* tagToName(const BYTE8 tag) {
+    const char* tagToName(const BYTE8 tag) {
         switch(tag) {
             case REQ_OPEN: return "Open";
             case REQ_CLOSE: return "Close";
@@ -85,8 +85,7 @@ namespace {
     }
 }
 
-ProtocolHandler::~ProtocolHandler() {
-}
+ProtocolHandler::~ProtocolHandler() = default;
 
 void ProtocolHandler::setDebug(bool newDebug) {
     bDebug = newDebug;
@@ -172,6 +171,7 @@ bool ProtocolHandler::requestResponse() {
             break;
         }
         case REQ_WRITE: {
+            reqWrite();
             break;
         }
         case REQ_GETS: {
@@ -322,6 +322,23 @@ void ProtocolHandler::reqOpen() {
     const std::string filename = codec.getString();
     const BYTE8 openType = codec.get8();
     const BYTE8 openMode = codec.get8();
+}
+
+void ProtocolHandler::reqWrite() {
+    const WORD32 streamId = codec.get32();
+    const std::string data = codec.getString(); // can be binary, this is fine..
+    try {
+        myPlatform.writeStream(streamId, data.size(), (BYTE8 *) data.data());
+
+    } catch (const std::range_error &e) {
+        logWarn(e.what());
+        codec.put(RES_BADID);
+        codec.put((WORD16) 0);
+    } catch (const std::invalid_argument &e) {
+        logWarn(e.what());
+        codec.put(RES_BADID);
+        codec.put((WORD16) 0);
+    }
 }
 
 void ProtocolHandler::reqExit() {

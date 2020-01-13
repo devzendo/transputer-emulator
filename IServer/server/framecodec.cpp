@@ -18,6 +18,7 @@
 
 FrameCodec::FrameCodec(): myReadFrameSize(0), myReadFrameIndex(0), myWriteFrameIndex(0) {
     std::memset(myTransactionBuffer, 0, sizeof(myTransactionBuffer));
+    std::memset(myStringBuffer, 0, sizeof(myStringBuffer));
 }
 
 WORD16 FrameCodec::getReadFrameSize() {
@@ -57,13 +58,13 @@ BYTE8 FrameCodec::get8() {
 
 WORD16 FrameCodec::get16() {
     // Input a little-endian short, LSB first MSB last
-    return (get8()) |
+    return  get8() |
            (get8() << 8);
 }
 
 WORD32 FrameCodec::get32() {
     // Input a little-endian word, LSB first MSB last
-    return (get8()) |
+    return  get8() |
            (get8() << 8) |
            (get8() << 16) |
            (get8() << 24);
@@ -78,13 +79,13 @@ WORD32 FrameCodec::get32() {
 //       Size (4,0)
 // String max length is TransactionBufferSize - 2 - 2
 // (- frame size bytes - string size bytes)
-std::string FrameCodec::getString() throw (std::exception) {
+std::string FrameCodec::getString() noexcept(false) {
     WORD16 stringLen = get16();
     if (stringLen > StringBufferSize) {
         logWarnF("String in frame is %d bytes - exceeding maximum of %d", stringLen, StringBufferSize);
         throw std::range_error("String in frame exceeds maximum size");
     }
-    const BYTE8 *buf = const_cast<const BYTE8 *>(myTransactionBuffer + myReadFrameIndex);
+    const auto *buf = const_cast<const BYTE8 *>(myTransactionBuffer + myReadFrameIndex);
     const char *cbuf = (const char *)buf;
     myReadFrameIndex += stringLen;
     return std::string(cbuf, (int)stringLen);

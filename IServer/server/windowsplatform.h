@@ -19,18 +19,18 @@
 #include "types.h"
 #include "platform.h"
 
-class WindowsPlatform : public Platform {
+class WindowsPlatform final : public Platform {
 public:
     WindowsPlatform();
-    void initialise(void) throw (std::exception);
-    ~WindowsPlatform(void);
+    void initialise() noexcept(false) override;
+    ~WindowsPlatform() override;
 
-    bool isConsoleCharAvailable();
-    BYTE8 getConsoleChar();
-    void putConsoleChar(BYTE8 const ch);
+    bool isConsoleCharAvailable() override;
+    BYTE8 getConsoleChar() override;
+    void putConsoleChar(const ch) override;
 
-    WORD32 getTimeMillis();
-    UTCTime getUTCTime();
+    WORD32 getTimeMillis() override;
+    UTCTime getUTCTime() override;
 private:
 };
 

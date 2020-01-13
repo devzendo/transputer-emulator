@@ -15,7 +15,6 @@
 
 #include "types.h"
 #include "constants.h"
-#include "platformdetection.h"
 #include "platform.h"
 #include "log.h"
 
@@ -44,12 +43,14 @@ namespace {
 }
 
 void ConsoleStream::_setStreamBuf(std::streambuf *buffer) {
+    logDebugF("Setting the ConsoleStream's iostream with rdbuf with %d chars available", buffer->in_avail());
     iostream.rdbuf(buffer);
 }
 
 Platform::Platform() {
     bDebug = false;
 
+    logDebug("Constructing platform");
     // Initialise standard in, out and error
     logDebug("Initialising stdin, stdout and stderr streams");
     myFiles[FILE_STDIN] = initStdin();
@@ -66,7 +67,7 @@ Platform::Platform() {
 }
 
 Platform::~Platform() {
-    logDebug("Destroying base platform");
+    logDebug("Destroying platform");
 
     // Close all open streams
     for (int i=0; i < MAX_FILES; i++) {
@@ -84,7 +85,8 @@ void Platform::setDebug(bool newDebug) {
     bDebug = newDebug;
 }
 
-void Platform::writeStream(int streamId, WORD16 size, BYTE8 *buffer) throw (std::exception) {
+
+void Platform::writeStream(int streamId, WORD16 size, BYTE8 *buffer) noexcept(false) {
     if (streamId < 0 || streamId >= MAX_FILES) {
         logWarnF("Attempt to write to out-of-range stream id #%d", streamId);
         throw std::range_error("Stream id out of range");
@@ -98,10 +100,11 @@ void Platform::writeStream(int streamId, WORD16 size, BYTE8 *buffer) throw (std:
         logWarnF("Attempt to write to non-writable stream #%d", streamId);
         throw std::runtime_error("Stream not writable");
     }
+    // TODO enforce last io op must be write
     pStream->write(size, buffer);
 }
 
-void Platform::readStream(int streamId, WORD16 size, BYTE8 *buffer) throw (std::exception) {
+void Platform::readStream(int streamId, WORD16 size, BYTE8 *buffer) noexcept(false) {
     if (streamId < 0 || streamId >= MAX_FILES) {
         logWarnF("Attempt to read from out-of-range stream id #%d", streamId);
         throw std::range_error("Stream id out of range");
@@ -115,12 +118,22 @@ void Platform::readStream(int streamId, WORD16 size, BYTE8 *buffer) throw (std::
         logWarnF("Attempt to read from non-readable stream #%d", streamId);
         throw std::runtime_error("Stream not readable");
     }
+    // TODO enforce last io op must be read
     pStream->read(size, buffer);
 }
 
 // For use by tests...
 void Platform::_setStreamBuf(const int streamId, std::streambuf *buffer) {
+    logDebugF("Setting stream buffer for stream id #%d", streamId);
     StreamPtr pStream = myFiles[streamId];
-    ConsoleStream * pConsoleStream = dynamic_cast<ConsoleStream *>(pStream);
+    if (pStream == nullptr) {
+        logWarnF("Attempt to set stream buffer from unopen stream #%d", streamId);
+        throw std::invalid_argument("Stream id not open");
+    }
+    if (!pStream->is_console()) {
+        logWarnF("Cannot set stream buffer for a file stream stream #%d", streamId);
+        throw std::runtime_error("Stream buffer cannot be set for file stream");
+    }
+    auto * pConsoleStream = dynamic_cast<ConsoleStream *>(pStream);
     pConsoleStream->_setStreamBuf(buffer);
 }

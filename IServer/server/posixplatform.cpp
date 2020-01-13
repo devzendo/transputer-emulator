@@ -25,9 +25,10 @@
 
 POSIXPlatform::POSIXPlatform() : Platform() {
     logDebug("Constructing POSIX platform");
+    stdinfd = 0;
 }
 
-void POSIXPlatform::initialise(void) throw (std::exception) {
+void POSIXPlatform::initialise() noexcept(false) {
     static char msgbuf[255];
 
     logDebug("Initialising POSIX platform");
@@ -70,6 +71,7 @@ POSIXPlatform::~POSIXPlatform() {
 
 bool POSIXPlatform::isConsoleCharAvailable() {
     BYTE8 ready = 0;
+    fd_set stdinfdset;
     for (;;) {
         FD_ZERO(&stdinfdset);
         FD_SET(stdinfd, &stdinfdset);

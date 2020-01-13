@@ -19,8 +19,8 @@
 
 class TestPlatform : public ::testing::Test {
 protected:
-    PlatformFactory *platformFactory;
-    Platform *platform;
+    PlatformFactory *platformFactory = nullptr;
+    Platform *platform = nullptr;
     BYTE8 *sampleBuf = (unsigned char *) "12345";
 
     void SetUp() override {
@@ -50,6 +50,26 @@ TEST_F(TestPlatform, WriteStreamToPositiveOutOfRangeStreamId)
 TEST_F(TestPlatform, WriteStreamToUnallocatedStreamId)
 {
     EXPECT_THROW(platform->writeStream(3, 5, sampleBuf), std::invalid_argument);
+}
+
+TEST_F(TestPlatform, iostreamRedirectTest)
+{
+    // Initially we read from stdin..
+    std::streambuf *buf = std::cin.rdbuf();
+    std::iostream iostream(buf);
+
+    // Then we redirect from a string...
+    std::stringstream stringstream("ABCD");
+    std::streambuf *redirectBuffer = stringstream.rdbuf();
+    iostream.rdbuf(redirectBuffer);
+
+    // And when we read, we read the string..
+    BYTE8 readBuffer[8];
+    iostream.read(reinterpret_cast<char *>(readBuffer), 4);
+    EXPECT_EQ(readBuffer[0], 'A');
+    EXPECT_EQ(readBuffer[1], 'B');
+    EXPECT_EQ(readBuffer[2], 'C');
+    EXPECT_EQ(readBuffer[3], 'D');
 }
 
 TEST_F(TestPlatform, StdinCanBeReadFrom)

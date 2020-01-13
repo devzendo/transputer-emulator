@@ -18,37 +18,81 @@
 #include "stublink.h"
 #include "../isproto.h"
 #include "gtest/gtest.h"
-#include "gmock/gmock.h"
 
-class StubPlatform : public Platform {
+class StubPlatform final : public Platform {
 public:
     StubPlatform();
-    void initialise(void) throw (std::exception);
-    ~StubPlatform(void);
-};
-StubPlatform::StubPlatform(): Platform() {}
-void StubPlatform::initialise(void) throw(std::exception) {}
-StubPlatform::~StubPlatform() = default;
+    void initialise() noexcept(false) override;
+    ~StubPlatform() override;
 
-class MockPlatform: public StubPlatform {
-    MOCK_METHOD0(isConsoleCharAvailable, bool());
-    MOCK_METHOD0(getConsoleChar, BYTE8());
-    MOCK_METHOD1(putConsoleChar, void(BYTE8));
-    MOCK_METHOD0(getTimeMillis, WORD32());
-    MOCK_METHOD0(getUTCTime, UTCTime());
+    // From keyboard..
+    bool isConsoleCharAvailable() override;
+    BYTE8 getConsoleChar() override;
+    void putKeyboardChar(BYTE8 ch); // for tests
+
+    // To screen..
+    void putConsoleChar(BYTE8 ch) override;
+    std::vector<BYTE8> getScreenChars(); // for tests
+
+    WORD32 getTimeMillis() override;
+    void setTimeMillis(WORD32 timeMillis); // for tests
+    UTCTime getUTCTime() override;
+    void setUTCTime(UTCTime utcTime); // for tests
+private:
+    std::vector<BYTE8> myKeyboardChars;
+    std::vector<BYTE8> myScreenChars;
+    WORD32 myTimeMillis;
+    UTCTime myUTCTime;
 };
+StubPlatform::StubPlatform(): Platform() {
+    myTimeMillis = 0L;
+}
+void StubPlatform::initialise() noexcept(false) {}
+StubPlatform::~StubPlatform() = default;
+// From keyboard..
+bool StubPlatform::isConsoleCharAvailable() {
+    return !myKeyboardChars.empty();
+}
+BYTE8 StubPlatform::getConsoleChar() {
+    return myKeyboardChars.front();
+}
+void StubPlatform::putKeyboardChar(const BYTE8 ch) {
+    myKeyboardChars.push_back(ch);
+}
+
+// To screen..
+void StubPlatform::putConsoleChar(const BYTE8 ch) {
+    myScreenChars.push_back(ch);
+}
+std::vector<BYTE8> StubPlatform::getScreenChars() {
+    return myScreenChars;
+}
+
+WORD32 StubPlatform::getTimeMillis() {
+    return myTimeMillis;
+}
+void StubPlatform::setTimeMillis(const WORD32 timeMillis) {
+    myTimeMillis = timeMillis;
+}
+UTCTime StubPlatform::getUTCTime() {
+    return myUTCTime;
+}
+void StubPlatform::setUTCTime(const UTCTime utcTime) {
+    myUTCTime = utcTime;
+}
+
 
 class TestProtocolHandler : public ::testing::Test {
 protected:
     StubLink stubLink = StubLink(0, false); // false: we are a client of the server we're testing
-    MockPlatform mockPlatform;
+    StubPlatform stubPlatform;
     ProtocolHandler * handler;
 
     const std::vector<BYTE8> paddedEmptyFrame = std::vector<BYTE8> {0,0,0,0,0,0};
 
     void SetUp() override {
         setLogLevel(LOGLEVEL_DEBUG);
-        handler = new ProtocolHandler(stubLink, mockPlatform);
+        handler = new ProtocolHandler(stubLink, stubPlatform);
         handler->setDebug(true);
     }
 
@@ -71,6 +115,9 @@ protected:
         EXPECT_EQ(handler->badFrameCount(), 1L);
     }
 
+    // Precondition: goodFrame is a valid frame
+    // Sends a frame, checks that it's valid and has been processed not rejected.
+    // Return: true iff the frame sent is an exit frame.
     bool checkGoodFrame(const std::vector<BYTE8> & goodFrame) {
         bool isExit = sendFrame(goodFrame);
         EXPECT_EQ(handler->frameCount(), 1L);
@@ -78,6 +125,7 @@ protected:
         return isExit;
     }
 
+    // Return: true iff the frame sent is an exit frame.
     bool sendFrame(const std::vector<BYTE8> & frame) {
         setReadableIserverMessage(frame);
         bool isExit = handler->processFrame();
@@ -299,7 +347,8 @@ TEST_F(TestProtocolHandler, UnimplementedFrame)
 //    append8(openFrame, REQ_OPEN_TYPE_TEXT);
 //    append8(openFrame, REQ_OPEN_MODE_INPUT);
 //    std::vector<BYTE8> padded = padFrame(openFrame);
-//    EXPECT_FALSE(checkGoodFrame(padded)); // It is an exit frame
+//    bool wasSensedAsExitFrame = checkGoodFrame(padded);
+//    EXPECT_FALSE(wasSensedAsExitFrame);
 //    EXPECT_EQ(handler->unimplementedFrameCount(), 0L); // it is an implemented tag
 //
 //    std::vector<BYTE8> response = readResponseFrame();
@@ -315,6 +364,79 @@ TEST_F(TestProtocolHandler, UnimplementedFrame)
 // REQ_READ
 
 // REQ_WRITE
+TEST_F(TestProtocolHandler, WriteToUnopenFileIsUnsuccessful)
+{
+    std::vector<BYTE8> openFrame = {REQ_WRITE};
+    append32(openFrame, 3); // This stream isn't open.
+    appendString(openFrame, "XXXX");
+    std::vector<BYTE8> padded = padFrame(openFrame);
+    bool wasSensedAsExitFrame = checkGoodFrame(padded);
+    EXPECT_FALSE(wasSensedAsExitFrame);
+    EXPECT_EQ(handler->unimplementedFrameCount(), 0L); // it is an implemented tag
+
+    std::vector<BYTE8> response = readResponseFrame();
+    checkResponseFrameTag(response, RES_BADID);
+    checkResponseFrameSize(response, 4); // RES_BADID + 0 + 0 + 0-pad
+    EXPECT_EQ((int)response[3], 0x00);
+    EXPECT_EQ((int)response[4], 0x00);
+}
+
+TEST_F(TestProtocolHandler, WriteToNegativeOutOfRangeFileIsUnsuccessful)
+{
+    std::vector<BYTE8> openFrame = {REQ_WRITE};
+    append32(openFrame, -1); // negative out of range
+    appendString(openFrame, "XXXX");
+    std::vector<BYTE8> padded = padFrame(openFrame);
+    bool wasSensedAsExitFrame = checkGoodFrame(padded);
+    EXPECT_FALSE(wasSensedAsExitFrame);
+    EXPECT_EQ(handler->unimplementedFrameCount(), 0L); // it is an implemented tag
+
+    std::vector<BYTE8> response = readResponseFrame();
+    checkResponseFrameTag(response, RES_BADID);
+    checkResponseFrameSize(response, 4); // RES_BADID + 0 + 0 + 0-pad
+    EXPECT_EQ((int)response[3], 0x00);
+    EXPECT_EQ((int)response[4], 0x00);
+}
+
+TEST_F(TestProtocolHandler, WriteToPositiveOutOfRangeFileIsUnsuccessful)
+{
+    std::vector<BYTE8> openFrame = {REQ_WRITE};
+    append32(openFrame, MAX_FILES); // positive out of range
+    appendString(openFrame, "XXXX");
+    std::vector<BYTE8> padded = padFrame(openFrame);
+    bool wasSensedAsExitFrame = checkGoodFrame(padded);
+    EXPECT_FALSE(wasSensedAsExitFrame);
+    EXPECT_EQ(handler->unimplementedFrameCount(), 0L); // it is an implemented tag
+
+    std::vector<BYTE8> response = readResponseFrame();
+    checkResponseFrameTag(response, RES_BADID);
+    checkResponseFrameSize(response, 4); // RES_BADID + 0 + 0 + 0-pad
+    EXPECT_EQ((int)response[3], 0x00);
+    EXPECT_EQ((int)response[4], 0x00);
+}
+
+TEST_F(TestProtocolHandler, WriteOk)
+{
+// TODO fix this possibly after google test/mock upgrade
+//    EXPECT_CALL(mockPlatform, writeStream(FILE_STDOUT, 4, "ABCD"))
+//            .Times(1));
+//
+//    std::vector<BYTE8> openFrame = {REQ_WRITE};
+//    append32(openFrame, FILE_STDOUT);
+//    appendString(openFrame, "ABCD");
+//    std::vector<BYTE8> padded = padFrame(openFrame);
+//    bool wasSensedAsExitFrame = checkGoodFrame(padded);
+//    EXPECT_FALSE(wasSensedAsExitFrame);
+//    EXPECT_EQ(handler->unimplementedFrameCount(), 0L); // it is an implemented tag
+//
+//    std::vector<BYTE8> response = readResponseFrame();
+//    checkResponseFrameTag(response, RES_SUCCESS);
+//    checkResponseFrameSize(response, 4); // RES_SUCCESS + 0 + 0 + 0-pad
+//    EXPECT_EQ((int)response[3], 0x00);
+//    EXPECT_EQ((int)response[4], 0x00);
+
+}
+
 // REQ_GETS
 // REQ_PUTS
 // REQ_FLUSH

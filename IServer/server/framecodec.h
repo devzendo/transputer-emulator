@@ -25,16 +25,16 @@ class FrameCodec {
 public:
     FrameCodec();
 
-    void put(const BYTE8 byte8);
-    void put(const WORD16 word16);
-    void put(const WORD32 word32);
+    void put(BYTE8 byte8);
+    void put(WORD16 word16);
+    void put(WORD32 word32);
     BYTE8 get8();
     WORD16 get16();
     WORD32 get32();
-    std::string getString() throw (std::exception);
+    std::string getString() noexcept(false);
 
     WORD16 getReadFrameSize();
-    void setReadFrameSize(const WORD16 size);
+    void setReadFrameSize(WORD16 size);
     bool readFrameSizeOutOfRange();
 
     void resetWriteFrame();

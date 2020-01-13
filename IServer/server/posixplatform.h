@@ -24,23 +24,22 @@
 #include "types.h"
 #include "platform.h"
 
-class POSIXPlatform : public Platform {
+class POSIXPlatform final : public Platform {
 public:
     POSIXPlatform();
-    void initialise(void) throw (std::exception);
-    ~POSIXPlatform(void);
+    void initialise() noexcept(false) override;
+    ~POSIXPlatform() override;
 
-    bool isConsoleCharAvailable();
-    BYTE8 getConsoleChar();
-    void putConsoleChar(const BYTE8 ch);
+    bool isConsoleCharAvailable() override;
+    BYTE8 getConsoleChar() override;
+    void putConsoleChar(BYTE8 ch) override;
 
-    WORD32 getTimeMillis();
-    UTCTime getUTCTime();
+    WORD32 getTimeMillis() override;
+    UTCTime getUTCTime() override;
 private:
     // For console keyboard handling
     int stdinfd;
     struct timeval timeout;
-    fd_set stdinfdset;
     termios term, origterm;
 };
 
