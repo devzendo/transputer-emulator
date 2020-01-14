@@ -3,14 +3,14 @@ transputer-emulator
 This is a portable, open source emulator of the 32-bit Inmos T414/T800/T801/T805 Transputer family, and a host/file
 I/O Server that interfaces it to a host OS, providing boot/debug/IO facilities.
 
-It runs on Apple macOS (El Capitan+), Windows 10, CentOS 7.6, Ubuntu 16.04/18.04 and Raspbian Stretch.
+It runs on Apple macOS (From El Capitan to Mojave), Windows 10, CentOS 7.6, Ubuntu 16.04/18.04 and Raspbian Stretch.
 
 It is part of the [Parachute Project](https://devzendo.github.io/parachute).
 
 It is written in C++14 - the Raspbian Stretch distribution provides Clang 3.5.0, which does not support
 more recent C++ standards.
 
-(C) 2005-2019 Matt J. Gumbley
+(C) 2005-2020 Matt J. Gumbley
 matt.gumbley@devzendo.org
 @mattgumbley @devzendo
 http://devzendo.github.io/parachute
@@ -341,7 +341,7 @@ This installation location is defined in the operating-system-specific profile s
 License
 -------
 This code is released under the Apache 2.0 License: http://www.apache.org/licenses/LICENSE-2.0.html.
-(C) 2005-2019 Matt Gumbley, DevZendo.org
+(C) 2005-2020 Matt Gumbley, DevZendo.org
 
 
 Acknowledgements
