@@ -364,7 +364,7 @@ TEST_F(TestProtocolHandler, UnimplementedFrame)
 // REQ_READ
 
 // REQ_WRITE
-TEST_F(TestProtocolHandler, WriteToUnopenFileIsUnsuccessful)
+TEST_F(TestProtocolHandler, WriteHandling)
 {
     std::vector<BYTE8> openFrame = {REQ_WRITE};
     append32(openFrame, 3); // This stream isn't open.
@@ -373,6 +373,15 @@ TEST_F(TestProtocolHandler, WriteToUnopenFileIsUnsuccessful)
     bool wasSensedAsExitFrame = checkGoodFrame(padded);
     EXPECT_FALSE(wasSensedAsExitFrame);
     EXPECT_EQ(handler->unimplementedFrameCount(), 0L); // it is an implemented tag
+}
+
+TEST_F(TestProtocolHandler, WriteToUnopenFileIsUnsuccessful)
+{
+    std::vector<BYTE8> openFrame = {REQ_WRITE};
+    append32(openFrame, 3); // This stream isn't open.
+    appendString(openFrame, "XXXX");
+    std::vector<BYTE8> padded = padFrame(openFrame);
+    sendFrame(padded);
 
     std::vector<BYTE8> response = readResponseFrame();
     checkResponseFrameTag(response, RES_BADID);
@@ -387,9 +396,7 @@ TEST_F(TestProtocolHandler, WriteToNegativeOutOfRangeFileIsUnsuccessful)
     append32(openFrame, -1); // negative out of range
     appendString(openFrame, "XXXX");
     std::vector<BYTE8> padded = padFrame(openFrame);
-    bool wasSensedAsExitFrame = checkGoodFrame(padded);
-    EXPECT_FALSE(wasSensedAsExitFrame);
-    EXPECT_EQ(handler->unimplementedFrameCount(), 0L); // it is an implemented tag
+    sendFrame(padded);
 
     std::vector<BYTE8> response = readResponseFrame();
     checkResponseFrameTag(response, RES_BADID);
@@ -404,9 +411,7 @@ TEST_F(TestProtocolHandler, WriteToPositiveOutOfRangeFileIsUnsuccessful)
     append32(openFrame, MAX_FILES); // positive out of range
     appendString(openFrame, "XXXX");
     std::vector<BYTE8> padded = padFrame(openFrame);
-    bool wasSensedAsExitFrame = checkGoodFrame(padded);
-    EXPECT_FALSE(wasSensedAsExitFrame);
-    EXPECT_EQ(handler->unimplementedFrameCount(), 0L); // it is an implemented tag
+    sendFrame(padded);
 
     std::vector<BYTE8> response = readResponseFrame();
     checkResponseFrameTag(response, RES_BADID);
@@ -417,24 +422,27 @@ TEST_F(TestProtocolHandler, WriteToPositiveOutOfRangeFileIsUnsuccessful)
 
 TEST_F(TestProtocolHandler, WriteOk)
 {
-// TODO fix this possibly after google test/mock upgrade
-//    EXPECT_CALL(mockPlatform, writeStream(FILE_STDOUT, 4, "ABCD"))
-//            .Times(1));
-//
-//    std::vector<BYTE8> openFrame = {REQ_WRITE};
-//    append32(openFrame, FILE_STDOUT);
-//    appendString(openFrame, "ABCD");
-//    std::vector<BYTE8> padded = padFrame(openFrame);
-//    bool wasSensedAsExitFrame = checkGoodFrame(padded);
-//    EXPECT_FALSE(wasSensedAsExitFrame);
-//    EXPECT_EQ(handler->unimplementedFrameCount(), 0L); // it is an implemented tag
-//
-//    std::vector<BYTE8> response = readResponseFrame();
-//    checkResponseFrameTag(response, RES_SUCCESS);
-//    checkResponseFrameSize(response, 4); // RES_SUCCESS + 0 + 0 + 0-pad
-//    EXPECT_EQ((int)response[3], 0x00);
-//    EXPECT_EQ((int)response[4], 0x00);
+    // Redirect stdout stream to a stringstream... the REQ_WRITE will write there...
+    std::stringstream stringstream;
+    std::streambuf *buffer = stringstream.rdbuf();
+    const int outputStreamId = 1;
+    stubPlatform._setStreamBuf(outputStreamId, buffer);
 
+    // Now REQ_WRITE...
+    std::vector<BYTE8> openFrame = {REQ_WRITE};
+    append32(openFrame, FILE_STDOUT);
+    appendString(openFrame, "ABCD");
+    std::vector<BYTE8> padded = padFrame(openFrame);
+    sendFrame(padded);
+
+    std::vector<BYTE8> response = readResponseFrame();
+    checkResponseFrameTag(response, RES_SUCCESS);
+    checkResponseFrameSize(response, 4); // RES_SUCCESS + 0 + 0 + 0-pad
+    EXPECT_EQ((int)response[3], 0x04);
+    EXPECT_EQ((int)response[4], 0x00);
+
+    // Expect redirected data...
+    EXPECT_EQ(stringstream.str(), "ABCD");
 }
 
 // REQ_GETS

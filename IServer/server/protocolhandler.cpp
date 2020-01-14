@@ -328,8 +328,15 @@ void ProtocolHandler::reqWrite() {
     const WORD32 streamId = codec.get32();
     const std::string data = codec.getString(); // can be binary, this is fine..
     try {
-        myPlatform.writeStream(streamId, data.size(), (BYTE8 *) data.data());
-
+        // TODO last op must not have been a read
+        WORD16 size = data.size();
+        logDebugF("Writing %d bytes to stream #%d", size, streamId);
+        myPlatform.writeStream(streamId, size, (BYTE8 *) data.data());
+        // TODO get number of bytes written for the response & send back
+        WORD16 wrote = size;
+        logDebugF("Wrote %d bytes to stream #%d", wrote, streamId);
+        codec.put(RES_SUCCESS);
+        codec.put((WORD16) wrote);
     } catch (const std::range_error &e) {
         logWarn(e.what());
         codec.put(RES_BADID);
