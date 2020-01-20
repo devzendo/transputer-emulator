@@ -66,6 +66,7 @@ enum InputOutputOperation { IO_READ, IO_WRITE, IO_NONE };
 class Stream {
 public:
     explicit Stream(int _streamId);
+    virtual ~Stream() = default;
     virtual bool is_console() = 0;
     virtual bool is_open() = 0;
     virtual void close() = 0;
@@ -85,6 +86,8 @@ class FileStream: public Stream {
 public:
     explicit FileStream(int streamId): Stream(streamId) {
     }
+
+    ~FileStream() override = default;
 
     bool is_console() override {
         return false;
@@ -111,6 +114,8 @@ public:
     explicit ConsoleStream(int streamId, std::streambuf *buf) : Stream(streamId), iostream(buf) {
     }
 
+    ~ConsoleStream() override = default;
+
     bool is_console() override {
         return true;
     }
@@ -134,8 +139,7 @@ private:
     std::iostream iostream;
 };
 
-// TODO change this to std::unique_ptr<Stream>
-typedef Stream * StreamPtr;
+typedef std::unique_ptr<Stream> StreamPtr;
 
 class Platform {
 public:
@@ -160,7 +164,7 @@ public:
 
 protected:
     bool bDebug;
-    StreamPtr myFiles[MAX_FILES]{};
+    StreamPtr myFiles[MAX_FILES];
     int myNextAvailableFile;
 };
 

@@ -19,26 +19,26 @@
 #include "log.h"
 
 namespace {
-    Stream *initStdin() {
+    StreamPtr initStdin() {
         std::streambuf *buf = std::cin.rdbuf();
         auto *stdinStream = new ConsoleStream(FILE_STDIN, buf);
         stdinStream->isWritable = false;
         stdinStream->isReadable = true;
-        return stdinStream;
+        return StreamPtr(stdinStream);
     }
-    Stream *initStdout() {
+    StreamPtr initStdout() {
         std::streambuf *buf = std::cout.rdbuf();
         auto *stdoutStream = new ConsoleStream(FILE_STDOUT, buf);
         stdoutStream->isWritable = true;
         stdoutStream->isReadable = false;
-        return stdoutStream;
+        return StreamPtr(stdoutStream);
     }
-    Stream *initStderr() {
+    StreamPtr initStderr() {
         std::streambuf *buf = std::cerr.rdbuf();
         auto *stderrStream = new ConsoleStream(FILE_STDERR, buf);
         stderrStream->isWritable = true;
         stderrStream->isReadable = false;
-        return stderrStream;
+        return StreamPtr(stderrStream);
     }
 }
 
@@ -124,7 +124,7 @@ WORD16 Platform::writeStream(int streamId, WORD16 size, BYTE8 *buffer) noexcept(
         logWarnF("Attempt to write to out-of-range stream id #%d", streamId);
         throw std::range_error("Stream id out of range");
     }
-    StreamPtr pStream = myFiles[streamId];
+    StreamPtr & pStream = myFiles[streamId];
     if (pStream == nullptr) {
         logWarnF("Attempt to write to unopen stream #%d", streamId);
         throw std::invalid_argument("Stream id not open");
@@ -143,7 +143,7 @@ WORD16 Platform::readStream(int streamId, WORD16 size, BYTE8 *buffer) noexcept(f
         logWarnF("Attempt to read from out-of-range stream id #%d", streamId);
         throw std::range_error("Stream id out of range");
     }
-    StreamPtr pStream = myFiles[streamId];
+    StreamPtr & pStream = myFiles[streamId];
     if (pStream == nullptr) {
         logWarnF("Attempt to read from unopen stream #%d", streamId);
         throw std::invalid_argument("Stream id not open");
@@ -159,7 +159,7 @@ WORD16 Platform::readStream(int streamId, WORD16 size, BYTE8 *buffer) noexcept(f
 // For use by tests...
 void Platform::_setStreamBuf(const int streamId, std::streambuf *buffer) {
     logDebugF("Setting stream buffer for stream id #%d", streamId);
-    StreamPtr pStream = myFiles[streamId];
+    StreamPtr & pStream = myFiles[streamId];
     if (pStream == nullptr) {
         logWarnF("Attempt to set stream buffer from unopen stream #%d", streamId);
         throw std::invalid_argument("Stream id not open");
@@ -168,6 +168,6 @@ void Platform::_setStreamBuf(const int streamId, std::streambuf *buffer) {
         logWarnF("Cannot set stream buffer for a file stream stream #%d", streamId);
         throw std::runtime_error("Stream buffer cannot be set for file stream");
     }
-    auto * pConsoleStream = dynamic_cast<ConsoleStream *>(pStream);
+    auto * pConsoleStream = dynamic_cast<ConsoleStream *>(pStream.get());
     pConsoleStream->_setStreamBuf(buffer);
 }
