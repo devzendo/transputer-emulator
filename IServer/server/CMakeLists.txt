@@ -13,7 +13,7 @@ endif(UNIX)
 
 add_executable(iserver iserver.cpp platform.cpp platform.h platformfactory.h platformfactory.cpp framecodec.cpp framecodec.h protocolhandler.cpp protocolhandler.h "${platform_sources}")
 
-add_executable(testprotocol testprotocol.cpp framecodec.cpp framecodec.h protocolhandler.cpp protocolhandler.h ../../Shared/link.cpp platform.cpp)
+add_executable(testprotocol testprotocol.cpp framecodec.cpp framecodec.h protocolhandler.cpp protocolhandler.h memstreambuf.h ../../Shared/link.cpp platform.cpp)
 target_link_libraries(testprotocol gtest gmock_main)
 add_test(NAME testprotocol COMMAND testprotocol)
 
@@ -21,6 +21,6 @@ add_executable(testframecodec testframecodec.cpp framecodec.cpp framecodec.h)
 target_link_libraries(testframecodec gtest gmock_main)
 add_test(NAME testframecodec COMMAND testframecodec)
 
-add_executable(testplatform testplatform.cpp platform.cpp platform.h platformfactory.cpp platformfactory.h "${platform_sources}")
+add_executable(testplatform testplatform.cpp platform.cpp platform.h platformfactory.cpp platformfactory.h memstreambuf.h "${platform_sources}")
 target_link_libraries(testplatform gtest gmock_main)
 add_test(NAME testplatform COMMAND testplatform)

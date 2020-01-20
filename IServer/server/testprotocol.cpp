@@ -18,6 +18,7 @@
 #include "stublink.h"
 #include "../isproto.h"
 #include "gtest/gtest.h"
+#include "memstreambuf.h"
 
 class StubPlatform final : public Platform {
 public:
@@ -362,6 +363,7 @@ TEST_F(TestProtocolHandler, UnimplementedFrame)
 
 // REQ_CLOSE
 // REQ_READ
+// TODO create a file of 10 bytes, and try to read 11, ensure we see the 10 byte length of read returned
 
 // REQ_WRITE
 TEST_F(TestProtocolHandler, WriteHandling)
@@ -443,6 +445,40 @@ TEST_F(TestProtocolHandler, WriteOk)
 
     // Expect redirected data...
     EXPECT_EQ(stringstream.str(), "ABCD");
+}
+
+TEST_F(TestProtocolHandler, WriteTruncated)
+{
+    // Redirect stdout stream to a membuf... the REQ_WRITE will write there...
+    uint8_t buf[] = { 0x00, 0x01, 0x02, 0x03 };
+    uint8_t overflow[] = { 0xDE, 0xAD, 0xCA, 0xFE };
+    membuf mbuf(buf, 3);
+
+    const int outputStreamId = 1;
+    stubPlatform._setStreamBuf(outputStreamId, &mbuf);
+
+    // Now REQ_WRITE...
+    std::vector<BYTE8> openFrame = {REQ_WRITE};
+    append32(openFrame, FILE_STDOUT);
+    appendString(openFrame, "ABCD");
+    std::vector<BYTE8> padded = padFrame(openFrame);
+    sendFrame(padded);
+
+    std::vector<BYTE8> response = readResponseFrame();
+    checkResponseFrameTag(response, RES_SUCCESS);
+    checkResponseFrameSize(response, 4); // RES_SUCCESS + 0 + 0 + 0-pad
+    EXPECT_EQ((int)response[3], 0x03);
+    EXPECT_EQ((int)response[4], 0x00);
+
+    // Expect redirected data...
+    EXPECT_EQ(buf[0], 'A');
+    EXPECT_EQ(buf[1], 'B');
+    EXPECT_EQ(buf[2], 'C');
+    EXPECT_EQ(buf[3], 0x03);
+    EXPECT_EQ(overflow[0], 0xDE);
+    EXPECT_EQ(overflow[1], 0xAD);
+    EXPECT_EQ(overflow[2], 0xCA);
+    EXPECT_EQ(overflow[3], 0xFE);
 }
 
 // REQ_GETS

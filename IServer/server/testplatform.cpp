@@ -14,8 +14,9 @@
 #include "log.h"
 #include "platform.h"
 #include "platformfactory.h"
+#include "memstreambuf.h"
+
 #include "gtest/gtest.h"
-#include "gmock/gmock.h"
 
 class TestPlatform : public ::testing::Test {
 protected:
@@ -142,4 +143,42 @@ TEST_F(TestPlatform, StdoutStreamCannotBeReadFrom)
 TEST_F(TestPlatform, StderrStreamCannotBeReadFrom)
 {
     EXPECT_THROW(platform->readStream(2, 5, sampleBuf), std::runtime_error);
+}
+
+TEST_F(TestPlatform, StreamWriteTruncated)
+{
+    // Redirect stdout stream to a membuf... the writeStream will write there...
+    uint8_t buf[] = { 0x00, 0x01, 0x02, 0x03 };
+    membuf mbuf(buf, 3);
+
+    const int outputStreamId = 1;
+    platform->_setStreamBuf(outputStreamId, &mbuf);
+
+    std::vector<BYTE8> shortFrame = {65, 66, 67, 68};
+
+    auto wrote = platform->writeStream(outputStreamId, shortFrame.size(), shortFrame.data());
+    EXPECT_EQ(buf[0], 'A');
+    EXPECT_EQ(buf[1], 'B');
+    EXPECT_EQ(buf[2], 'C');
+    EXPECT_EQ(buf[3], 0x03);
+    EXPECT_EQ(wrote, 3);
+}
+
+TEST_F(TestPlatform, StreamReadTruncated)
+{
+    // Redirect stdin stream from a membuf... the readStream will read from there...
+    uint8_t buf[] = { 'A', 'B', 'C', 'D' };
+    membuf mbuf(buf, 3);
+
+    const int inputStreamId = 0;
+    platform->_setStreamBuf(inputStreamId, &mbuf);
+
+    std::vector<BYTE8> readBuffer = {4, 3, 2, 1};
+
+    auto read = platform->readStream(inputStreamId, readBuffer.size(), readBuffer.data());
+    EXPECT_EQ(readBuffer[0], 'A');
+    EXPECT_EQ(readBuffer[1], 'B');
+    EXPECT_EQ(readBuffer[2], 'C');
+    EXPECT_EQ(readBuffer[3], 0x01);
+    EXPECT_EQ(read, 3);
 }

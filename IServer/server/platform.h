@@ -18,6 +18,7 @@
 #include <ios>
 #include <iostream>
 #include <fstream>
+#include <log.h>
 
 #include "platformdetection.h"
 #include "types.h"
@@ -64,11 +65,17 @@ enum InputOutputOperation { IO_READ, IO_WRITE, IO_NONE };
 
 class Stream {
 public:
+    explicit Stream(int _streamId);
     virtual bool is_console() = 0;
     virtual bool is_open() = 0;
     virtual void close() = 0;
-    virtual void write(WORD16 size, BYTE8 *buffer) = 0;
-    virtual void read(WORD16 size, BYTE8 *buffer) = 0;
+    virtual std::iostream & getIOStream() = 0;
+
+    // The WORD16s used for size parameters come from the protocol definition of REQ_READ, REQ_WRITE.
+    WORD16 write(WORD16 size, BYTE8 *buffer);
+    WORD16 read(WORD16 size, BYTE8 *buffer);
+
+    int streamId;
     bool isReadable = false;
     bool isWritable = false;
     InputOutputOperation lastIOOperation = IO_NONE;
@@ -76,6 +83,9 @@ public:
 
 class FileStream: public Stream {
 public:
+    explicit FileStream(int streamId): Stream(streamId) {
+    }
+
     bool is_console() override {
         return false;
     }
@@ -88,12 +98,8 @@ public:
         fstream.close();
     };
 
-    void write(WORD16 size, BYTE8 *buffer) override {
-        fstream.write(reinterpret_cast<const char *>(buffer), size);
-    }
-
-    void read(WORD16 size, BYTE8 *buffer) override {
-        fstream.read(reinterpret_cast<char *>(buffer), size);
+    std::iostream & getIOStream() override {
+        return fstream;
     }
 
 private:
@@ -102,7 +108,7 @@ private:
 
 class ConsoleStream: public Stream {
 public:
-    explicit ConsoleStream(std::streambuf *buf): iostream(buf) {
+    explicit ConsoleStream(int streamId, std::streambuf *buf) : Stream(streamId), iostream(buf) {
     }
 
     bool is_console() override {
@@ -117,12 +123,8 @@ public:
         // no-op
     };
 
-    void write(WORD16 size, BYTE8 *buffer) override {
-        iostream.write(reinterpret_cast<const char *>(buffer), size);
-    }
-
-    void read(WORD16 size, BYTE8 *buffer) override {
-        iostream.read(reinterpret_cast<char *>(buffer), size);
+    std::iostream & getIOStream() override {
+        return iostream;
     }
 
     // For use by tests...
@@ -149,8 +151,9 @@ public:
     virtual WORD32 getTimeMillis() = 0;
     virtual UTCTime getUTCTime() = 0;
 
-    void writeStream(int streamId, WORD16 size, BYTE8* buffer) noexcept(false);
-    void readStream(int streamId, WORD16 size, BYTE8* buffer) noexcept(false);
+    // The WORD16s used for size parameters come from the protocol definition of REQ_READ, REQ_WRITE.
+    WORD16 writeStream(int streamId, WORD16 size, BYTE8* buffer) noexcept(false);
+    WORD16 readStream(int streamId, WORD16 size, BYTE8* buffer) noexcept(false);
 
     // For use by tests...
     void _setStreamBuf(int streamId, std::streambuf *buffer);

@@ -24,7 +24,8 @@ Project started around 19/08/2005, with a long hiatus.
 
 In active development:
 * Converting the NodeServer to be IServer compatible. Similarly, "Hello World".
-
+** TODO:
+** REQ_WRITE/REQ_READ needs to validate that the last op was of the right type.
 
 Roadmap
 -------

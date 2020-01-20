@@ -21,25 +21,58 @@
 namespace {
     Stream *initStdin() {
         std::streambuf *buf = std::cin.rdbuf();
-        auto *stdinStream = new ConsoleStream(buf);
+        auto *stdinStream = new ConsoleStream(FILE_STDIN, buf);
         stdinStream->isWritable = false;
         stdinStream->isReadable = true;
         return stdinStream;
     }
     Stream *initStdout() {
         std::streambuf *buf = std::cout.rdbuf();
-        auto *stdoutStream = new ConsoleStream(buf);
+        auto *stdoutStream = new ConsoleStream(FILE_STDOUT, buf);
         stdoutStream->isWritable = true;
         stdoutStream->isReadable = false;
         return stdoutStream;
     }
     Stream *initStderr() {
         std::streambuf *buf = std::cerr.rdbuf();
-        auto *stderrStream = new ConsoleStream(buf);
+        auto *stderrStream = new ConsoleStream(FILE_STDERR, buf);
         stderrStream->isWritable = true;
         stderrStream->isReadable = false;
         return stderrStream;
     }
+}
+
+Stream::Stream(const int _streamId) {
+    streamId = _streamId;
+}
+
+WORD16 Stream::write(WORD16 size, BYTE8 *buffer) {
+    std::iostream & stream = getIOStream();
+    WORD16 written = stream.rdbuf()->sputn(reinterpret_cast<const char *>(buffer), size);
+    // Amazingly, you can't find out how many bytes you've actually written using
+    // stream.write(reinterpret_cast<const char *>(buffer), size);
+    // There's an approach using tellp() to find out how much we actually wrote, shown at
+    // https://stackoverflow.com/questions/14238572/how-many-bytes-actually-written-by-ostreamwrite
+    // .. but I couldn't get it to work. So, here I'm getting at the underlying stream buffer and writing to it
+    // with sputn, which _does_ give you the amount written - which is what the underlying library does, without
+    // throwing the amount away. Sheesh, C++!
+    if (written != size) {
+        logWarnF("Failed to write %d bytes from stream #%d, wrote %d bytes instead", size, streamId, written);
+        stream.setstate(std::ios::badbit);
+    }
+    return written;
+}
+
+// The WORD16s used for size parameters come from the protocol definition of REQ_READ, REQ_WRITE.
+WORD16 Stream::read(WORD16 size, BYTE8 *buffer) {
+    std::iostream & stream = getIOStream();
+    // See comment above in write(..) about using the rdbuf
+    WORD16 read = stream.rdbuf()->sgetn(reinterpret_cast<char *>(buffer), size);
+    if (read != size) {
+        logWarnF("Failed to read %d bytes from stream #%d, read %d bytes instead", size, streamId, read);
+        stream.setstate(std::ios::badbit);
+    }
+    return read;
 }
 
 void ConsoleStream::_setStreamBuf(std::streambuf *buffer) {
@@ -86,7 +119,7 @@ void Platform::setDebug(bool newDebug) {
 }
 
 
-void Platform::writeStream(int streamId, WORD16 size, BYTE8 *buffer) noexcept(false) {
+WORD16 Platform::writeStream(int streamId, WORD16 size, BYTE8 *buffer) noexcept(false) {
     if (streamId < 0 || streamId >= MAX_FILES) {
         logWarnF("Attempt to write to out-of-range stream id #%d", streamId);
         throw std::range_error("Stream id out of range");
@@ -100,11 +133,12 @@ void Platform::writeStream(int streamId, WORD16 size, BYTE8 *buffer) noexcept(fa
         logWarnF("Attempt to write to non-writable stream #%d", streamId);
         throw std::runtime_error("Stream not writable");
     }
-    // TODO enforce last io op must be write
-    pStream->write(size, buffer);
+    // TODO enforce last io op must be write - can't do this until we have open, and read.
+    // Needs to be validated at the platform level first, then adapted to the protocol handler.
+    return pStream->write(size, buffer);
 }
 
-void Platform::readStream(int streamId, WORD16 size, BYTE8 *buffer) noexcept(false) {
+WORD16 Platform::readStream(int streamId, WORD16 size, BYTE8 *buffer) noexcept(false) {
     if (streamId < 0 || streamId >= MAX_FILES) {
         logWarnF("Attempt to read from out-of-range stream id #%d", streamId);
         throw std::range_error("Stream id out of range");
@@ -119,7 +153,7 @@ void Platform::readStream(int streamId, WORD16 size, BYTE8 *buffer) noexcept(fal
         throw std::runtime_error("Stream not readable");
     }
     // TODO enforce last io op must be read
-    pStream->read(size, buffer);
+    return pStream->read(size, buffer);
 }
 
 // For use by tests...
