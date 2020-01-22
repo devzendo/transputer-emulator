@@ -49,10 +49,10 @@
 
 // Generic protocol request format on the wire is:
 // +-----------------+
-// | WORD16 lenLsb   | Least significant byte of the 16-bit frame length.
-// | WORD16 lenMsb   | Most significant byte of the 16-bit frame length.
+// | BYTE8 lenLsb    | Least significant byte of the 16-bit frame length.
+// | BYTE8 lenMsb    | Most significant byte of the 16-bit frame length.
 // +-----------------+
-// | BYTE8 tag       | Indicates the type of protocol message that follows. See REQ_xxx..
+// | BYTE8 reqType   | Indicates the type of protocol message that follows. See REQ_xxx..
 // +-----------------+
 // | BYTE8 ........  | data pertinent to the message type, an undifferentiated
 // |                 | byte stream.
@@ -71,10 +71,10 @@
 
 // Generic protocol response format on the wire is:
 // +-----------------+
-// | WORD32 lsbSize  | Least significant byte of the size of the rest of the frame (always even)
-// | WORD32 msbSize  | Most significant byte of the size of the rest of the frame (always even)
+// | BYTE8 lsbSize   | Least significant byte of the size of the rest of the frame (always even)
+// | BYTE8 msbSize   | Most significant byte of the size of the rest of the frame (always even)
 // +-----------------+
-// | WORD32 resType  | one of the response type identifiers e.g. RES_SUCCESS
+// | BYTE8 resType   | one of the response type identifiers e.g. RES_SUCCESS
 // +-----------------+
 // | rest of data..  | the contents of this 'rest of data' is described for each
 // | if any..        | specific response frame, below.
@@ -155,7 +155,7 @@ const BYTE8 RES_RECTOOBIG = 143;
 // Note: 'success' causes the IServer to exit with a success exit code (0); 'failure' exits it with
 // a failure exit code (1). Other values are used directly as the IServer exit code.
 //
-// Response data for REQ_EXIT:
+// Response data for REQ_OPEN:
 // +----------------------+
 // | BYTE8 result         | RES_SUCCESS
 // +----------------------+
@@ -173,6 +173,49 @@ const BYTE8 REQ_OPEN_MODE_EXISTING_UPDATE = 4;
 const BYTE8 REQ_OPEN_MODE_NEW_UPDATE = 5;
 const BYTE8 REQ_OPEN_MODE_APPEND_UPDATE = 6;
 
+
+// REQ_READ
+// Reads 'count' bytes of data from stream 'streamId'. Input stops when the specified number of bytes are read, or the
+// end of stream is reached, or an error occurs. If 'count' is less than one, then no input is performed. The stream
+// is left positioned immediately after the data read. If an error occurs then the stream position is undefined.
+//
+// Request:
+// +----------------------+
+// | BYTE8 REQ_READ       |
+// +----------------------+
+// | WORD32 streamid      | A stream identifier for this open file
+// | WORD16 count         | Length of data to read
+// +----------------------+
+//
+// Response data for REQ_READ:
+// +----------------------+
+// | BYTE8 result         | RES_SUCCESS on success; RES_BADID if stream not open, or out of range.
+// +----------------------+
+// | WORD16 count         | Length of data read, which may be less than requested. Use REQ_FEOF/REQ_FERROR to check.
+// | BYTE8[] data         | A number of bytes read - see String definition, above - can be binary, not just ASCII.
+// +----------------------+
+
+// REQ_WRITE
+// Writes 'count' bytes of binary data to stream 'streamId', which should be open for output. If 'count' is less than
+// zero then no output is performed. The position of the stream is advanced by the number of bytes actually written.
+// If an error occurs then the stream position is undefined.
+//
+// Request:
+// +----------------------+
+// | BYTE8 REQ_WRITE      |
+// +----------------------+
+// | WORD32 streamid      | A stream identifier for this open file
+// | WORD16 count         | Length of data to write
+// | BYTE8[] data         | A number of bytes to write - see String definition, above - can be binary, not just ASCII.
+// +----------------------+
+//
+// Response data for REQ_WRITE:
+// +----------------------+
+// | BYTE8 result         | RES_SUCCESS on success; RES_BADID if stream not open, or out of range.
+// +----------------------+
+// | WORD16 count         | Length of data written, which may be less than requested. Use REQ_FEOF/REQ_FERROR to check.
+// | BYTE8[] data         | A number of bytes read - see String definition, above - can be binary, not just ASCII.
+// +----------------------+
 
 // REQ_EXIT
 // Request:

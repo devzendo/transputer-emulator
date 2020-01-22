@@ -96,6 +96,7 @@ private:
     std::iostream iostream;
 };
 
+// TODO use make_unique here...
 namespace {
     StreamPtr initStdin() {
         std::streambuf *buf = std::cin.rdbuf();

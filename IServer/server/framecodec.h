@@ -40,6 +40,8 @@ public:
     void resetWriteFrame();
     void fillInReadFrameSize();
     WORD16 fillInFrameSize();
+    BYTE8 *writeOffset(WORD16 offset);
+    void advance(WORD16 amount);
 
     BYTE8 myTransactionBuffer[TransactionBufferSize];
     BYTE8 myStringBuffer[StringBufferSize]; // TODO keep this?

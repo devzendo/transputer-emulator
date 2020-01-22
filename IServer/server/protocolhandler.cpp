@@ -168,6 +168,7 @@ bool ProtocolHandler::requestResponse() {
             break;
         }
         case REQ_READ: {
+            reqRead();
             break;
         }
         case REQ_WRITE: {
@@ -322,11 +323,48 @@ void ProtocolHandler::reqOpen() {
     const std::string filename = codec.getString();
     const BYTE8 openType = codec.get8();
     const BYTE8 openMode = codec.get8();
+    // TODO to be continued...
+}
+
+void ProtocolHandler::reqRead() {
+    const WORD32 streamId = codec.get32();
+    const WORD16 size = codec.get16();
+    // TODO if length < 1 nothing happens....
+    try {
+        // TODO last op must not have been a write
+        logDebugF("Reading %d bytes from stream #%d", size, streamId);
+        // Read directly into the transaction buffer, but don't know whether this'll succeed, nor how much will
+        // actually be read, so can't fill those in yet... don't want to copy data around...
+        // Note that use of writeOffset does NOT change the writeFrameIndex.
+        BYTE8 *dataBuffer = (BYTE8 *) codec.writeOffset(5);
+        WORD16 read = myPlatform.readStream(streamId, size, dataBuffer);
+        // Offsets into the transaction buffer...
+        // 0 frame size lsb
+        // 1 frame size msb
+        // 2 RES_SUCCESS
+        // 3 read size lsb
+        // 4 read size msb
+        // 5 data... where the above call to readStream has stored it without moving the index from offset 2
+        logDebugF("Read %d bytes from stream #%d", read, streamId);
+        codec.put(RES_SUCCESS); // direct read into writeOffset(5) above didn't change writeFrameIndex
+        codec.put((WORD16) read);
+        // The codec needs to know how much data was read into writeOffset(5) above so it can fill in the frame size.
+        codec.advance(read);
+    } catch (const std::range_error &e) {
+        logWarn(e.what());
+        codec.put(RES_BADID);
+        codec.put((WORD16) 0);
+    } catch (const std::invalid_argument &e) {
+        logWarn(e.what());
+        codec.put(RES_BADID);
+        codec.put((WORD16) 0);
+    }
 }
 
 void ProtocolHandler::reqWrite() {
     const WORD32 streamId = codec.get32();
     const std::string data = codec.getString(); // can be binary, this is fine.. Size limited to WORD16.
+    // TODO if length 0 nothing happens....
     try {
         // TODO last op must not have been a read
         WORD16 size = data.size();

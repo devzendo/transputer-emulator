@@ -14,7 +14,6 @@
 #include "log.h"
 #include "framecodec.h"
 #include "gtest/gtest.h"
-#include "gmock/gmock.h"
 
 class TestFrameCodec : public ::testing::Test {
 protected:
@@ -188,6 +187,27 @@ TEST_F(TestFrameCodec, ResetWriteFrame) {
     EXPECT_EQ(codec.myWriteFrameIndex, 0L);
     codec.resetWriteFrame();
     EXPECT_EQ(codec.myWriteFrameIndex, 2L);
+}
+
+TEST_F(TestFrameCodec, WriteOffset) {
+    BYTE8* initialWriteOffset = codec.writeOffset(0); // whatever it might be
+    codec.put((BYTE8) 0x00);
+    EXPECT_EQ(codec.writeOffset(0), initialWriteOffset); // put hasn't changed it
+    EXPECT_EQ(codec.writeOffset(1), initialWriteOffset + 1); // it's all relative to the start of the write buffer
+    EXPECT_EQ(codec.writeOffset(2), initialWriteOffset + 2); // it's all relative to the start of the write buffer
+}
+
+TEST_F(TestFrameCodec, Advance) {
+    for (int i=0; i <= 0x0f; i++) {
+        codec.put((BYTE8) (i + (i << 4))); // 00 11 22 33 44 55 .. ff
+    }
+    codec.resetWriteFrame(); // offset is now 2
+
+    codec.advance(6); // offset is now 8
+    codec.put((BYTE8) 0x00);
+    EXPECT_EQ(codec.myTransactionBuffer[7], (BYTE8)0x77);
+    EXPECT_EQ(codec.myTransactionBuffer[8], (BYTE8)0x00);
+    EXPECT_EQ(codec.myTransactionBuffer[9], (BYTE8)0x99);
 }
 
 TEST_F(TestFrameCodec, FillInFrameSize) {

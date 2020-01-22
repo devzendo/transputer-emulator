@@ -117,3 +117,13 @@ WORD16 FrameCodec::fillInFrameSize() {
     myWriteFrameIndex = oldWriteFrameIndex;
     return frameSize;
 }
+
+// Obtain the address of a particular offset into the transaction buffer.
+BYTE8 *FrameCodec::writeOffset(const WORD16 offset) {
+    return myTransactionBuffer + offset;
+}
+
+// Increase the write frame index by a number of bytes.
+void FrameCodec::advance(const WORD16 amount) {
+    myWriteFrameIndex += amount;
+}

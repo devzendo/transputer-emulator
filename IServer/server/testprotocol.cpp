@@ -363,7 +363,118 @@ TEST_F(TestProtocolHandler, UnimplementedFrame)
 
 // REQ_CLOSE
 // REQ_READ
-// TODO create a file of 10 bytes, and try to read 11, ensure we see the 10 byte length of read returned
+TEST_F(TestProtocolHandler, ReadHandling)
+{
+    std::vector<BYTE8> openFrame = {REQ_READ};
+    append32(openFrame, 3); // This stream isn't open.
+    appendString(openFrame, "XXXX");
+    std::vector<BYTE8> padded = padFrame(openFrame);
+    bool wasSensedAsExitFrame = checkGoodFrame(padded);
+    EXPECT_FALSE(wasSensedAsExitFrame);
+    EXPECT_EQ(handler->unimplementedFrameCount(), 0L); // it is an implemented tag
+}
+
+TEST_F(TestProtocolHandler, ReadFromUnopenFileIsUnsuccessful)
+{
+    std::vector<BYTE8> openFrame = {REQ_READ};
+    append32(openFrame, 3); // This stream isn't open.
+    appendString(openFrame, "XXXX");
+    std::vector<BYTE8> padded = padFrame(openFrame);
+    sendFrame(padded);
+
+    std::vector<BYTE8> response = readResponseFrame();
+    checkResponseFrameTag(response, RES_BADID);
+    checkResponseFrameSize(response, 4); // RES_BADID + 0 + 0 + 0-pad
+    EXPECT_EQ((int)response[3], 0x00);
+    EXPECT_EQ((int)response[4], 0x00);
+}
+
+TEST_F(TestProtocolHandler, ReadFromNegativeOutOfRangeFileIsUnsuccessful)
+{
+    std::vector<BYTE8> openFrame = {REQ_READ};
+    append32(openFrame, -1); // negative out of range
+    appendString(openFrame, "XXXX");
+    std::vector<BYTE8> padded = padFrame(openFrame);
+    sendFrame(padded);
+
+    std::vector<BYTE8> response = readResponseFrame();
+    checkResponseFrameTag(response, RES_BADID);
+    checkResponseFrameSize(response, 4); // RES_BADID + 0 + 0 + 0-pad
+    EXPECT_EQ((int)response[3], 0x00);
+    EXPECT_EQ((int)response[4], 0x00);
+}
+
+TEST_F(TestProtocolHandler, ReadFromPositiveOutOfRangeFileIsUnsuccessful)
+{
+    std::vector<BYTE8> openFrame = {REQ_READ};
+    append32(openFrame, MAX_FILES); // positive out of range
+    appendString(openFrame, "XXXX");
+    std::vector<BYTE8> padded = padFrame(openFrame);
+    sendFrame(padded);
+
+    std::vector<BYTE8> response = readResponseFrame();
+    checkResponseFrameTag(response, RES_BADID);
+    checkResponseFrameSize(response, 4); // RES_BADID + 0 + 0 + 0-pad
+    EXPECT_EQ((int)response[3], 0x00);
+    EXPECT_EQ((int)response[4], 0x00);
+}
+
+TEST_F(TestProtocolHandler, ReadOk)
+{
+    // Redirect stdin stream to a stringstream... the REQ_READ will read from there...
+    std::stringstream stringstream("ABCD");
+    std::streambuf *buffer = stringstream.rdbuf();
+    const int inputStreamId = 0;
+    stubPlatform._setStreamBuf(inputStreamId, buffer);
+
+    // Now REQ_READ...
+    std::vector<BYTE8> openFrame = {REQ_READ};
+    // WOZERE get the protocol right for a read
+    append32(openFrame, FILE_STDIN);
+    append16(openFrame, 4);
+    std::vector<BYTE8> padded = padFrame(openFrame);
+    sendFrame(padded);
+
+    std::vector<BYTE8> response = readResponseFrame();
+    checkResponseFrameTag(response, RES_SUCCESS);
+    checkResponseFrameSize(response, 8); // RES_SUCCESS + 4 + 0 + ABCD + 0-pad
+    EXPECT_EQ((int)response[3], 0x04);
+    EXPECT_EQ((int)response[4], 0x00);
+
+    // Expect redirected data...
+    EXPECT_EQ((int)response[5], 'A');
+    EXPECT_EQ((int)response[6], 'B');
+    EXPECT_EQ((int)response[7], 'C');
+    EXPECT_EQ((int)response[8], 'D');
+}
+
+TEST_F(TestProtocolHandler, ReadTruncated)
+{
+    // Redirect stdin stream from a membuf... the REQ_READ will read from there, but only the first 3 bytes...
+    uint8_t buf[] = { 'A', 'B', 'C', 'D' };
+    membuf mbuf(buf, 3);
+    const int inputStreamId = 0;
+    stubPlatform._setStreamBuf(inputStreamId, &mbuf);
+
+    // Now REQ_READ...
+    std::vector<BYTE8> openFrame = {REQ_READ};
+    append32(openFrame, FILE_STDIN);
+    append16(openFrame, 4); // what we want and what we get won't be the same
+    std::vector<BYTE8> padded = padFrame(openFrame);
+    sendFrame(padded);
+
+    std::vector<BYTE8> response = readResponseFrame();
+    checkResponseFrameTag(response, RES_SUCCESS);
+    checkResponseFrameSize(response, 6); // RES_SUCCESS + 3 + 0 + ABC (even: => no 0-pad)
+    EXPECT_EQ((int)response[3], 0x03);
+    EXPECT_EQ((int)response[4], 0x00);
+
+    // Expect redirected data...
+    EXPECT_EQ((int)response[5], 'A');
+    EXPECT_EQ((int)response[6], 'B');
+    EXPECT_EQ((int)response[7], 'C');
+    EXPECT_EQ((int)response[8], 0x00); // only read 3 bytes
+}
 
 // REQ_WRITE
 TEST_F(TestProtocolHandler, WriteHandling)
