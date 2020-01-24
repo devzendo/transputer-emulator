@@ -5,7 +5,7 @@
 // License     : Apache License v2.0 - see LICENSE.txt for more details
 // Created     : 19/08/2005
 //
-// (C) 2005-2019 Matt J. Gumbley
+// (C) 2005-2020 Matt J. Gumbley
 // matt.gumbley@devzendo.org
 // http://devzendo.github.io/parachute
 //
@@ -51,7 +51,7 @@ static char msgbuf[MSGBUF_MAX];
 
 void usage() {
 	logInfoF("Parachute v%s IServer - Protocol v%d " __DATE__, projectVersion, NS_PROTOCOL_VERSION);
-	logInfo(" (C) 2005-2019 Matt J. Gumbley");
+	logInfo(" (C) 2005-2020 Matt J. Gumbley");
 	logInfo("  http://devzendo.github.io/parachute");
 	logInfo("Usage:");
 	logInfoF("%s: [options] [bootfile]", progName);

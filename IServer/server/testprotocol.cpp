@@ -5,7 +5,7 @@
 // License     : Apache License v2.0 - see LICENSE.txt for more details
 // Created     : 12/08/2019
 //
-// (C) 2005-2019 Matt J. Gumbley
+// (C) 2005-2020 Matt J. Gumbley
 // matt.gumbley@devzendo.org
 // http://devzendo.github.io/parachute
 //
@@ -464,6 +464,7 @@ TEST_F(TestProtocolHandler, ReadTruncated)
     sendFrame(padded);
 
     std::vector<BYTE8> response = readResponseFrame();
+    EXPECT_EQ(response.size(), 8);
     checkResponseFrameTag(response, RES_SUCCESS);
     checkResponseFrameSize(response, 6); // RES_SUCCESS + 3 + 0 + ABC (even: => no 0-pad)
     EXPECT_EQ((int)response[3], 0x03);
@@ -473,7 +474,6 @@ TEST_F(TestProtocolHandler, ReadTruncated)
     EXPECT_EQ((int)response[5], 'A');
     EXPECT_EQ((int)response[6], 'B');
     EXPECT_EQ((int)response[7], 'C');
-    EXPECT_EQ((int)response[8], 0x00); // only read 3 bytes
 }
 
 // REQ_WRITE

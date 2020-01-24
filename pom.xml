@@ -11,7 +11,7 @@
     <name>Transputer Emulator</name>
     <description>This is an emulator of the 32-bit Inmos T414/T800/T801/T805 Transputer family, and a Node Server that
         interfaces it to a host OS, providing boot/debug/IO facilities.
-        (Apache License v2) 2005-2019 Matt Gumbley, DevZendo.org
+        (Apache License v2) 2005-2020 Matt Gumbley, DevZendo.org
     </description>
     <url>https://devzendo.github.io/parachute</url>
 
