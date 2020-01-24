@@ -18,6 +18,8 @@
 #include <ios>
 #include <iostream>
 #include <fstream>
+#include <memory>
+
 #include <log.h>
 
 #include "platformdetection.h"
@@ -62,7 +64,6 @@ const int FILE_STDOUT = 1;
 const int FILE_STDERR = 2;
 
 class Stream;
-typedef std::unique_ptr<Stream> StreamPtr;
 
 class Platform {
 public:
@@ -87,7 +88,7 @@ public:
 
 protected:
     bool bDebug;
-    StreamPtr myFiles[MAX_FILES];
+    std::unique_ptr<Stream> myFiles[MAX_FILES];
     int myNextAvailableFile;
 };
 
