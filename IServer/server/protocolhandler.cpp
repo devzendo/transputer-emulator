@@ -364,13 +364,13 @@ void ProtocolHandler::reqRead() {
 void ProtocolHandler::reqWrite() {
     const WORD32 streamId = codec.get32();
     const std::string data = codec.getString(); // can be binary, this is fine.. Size limited to WORD16.
-    // TODO if length 0 nothing happens....
     try {
         // TODO last op must not have been a read
         WORD16 size = data.size();
         logDebugF("Writing %d bytes to stream #%d", size, streamId);
-        WORD16 wrote = myPlatform.writeStream(streamId, size, (BYTE8 *) data.data());
+        WORD16 wrote = (size > 0) ? myPlatform.writeStream(streamId, size, (BYTE8 *) data.data()) : 0;
         logDebugF("Wrote %d bytes to stream #%d", wrote, streamId);
+        // TODO if streamId == 1 or 2, flush (test after open done, so we can correctly sense presence/absence of flush call on platform
         codec.put(RES_SUCCESS);
         codec.put((WORD16) wrote);
     } catch (const std::range_error &e) {

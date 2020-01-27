@@ -26,6 +26,7 @@ In active development:
 * Converting the NodeServer to be IServer compatible. Similarly, "Hello World".
 ** TODO:
 ** REQ_WRITE/REQ_READ needs to validate that the last op was of the right type.
+** REQ_WRITE should flush automatically on write to stdout/stderr.
 
 Roadmap
 -------

@@ -592,6 +592,29 @@ TEST_F(TestProtocolHandler, WriteTruncated)
     EXPECT_EQ(overflow[3], 0xFE);
 }
 
+TEST_F(TestProtocolHandler, WriteZero)
+{
+    writesensingbuf wsbuf;
+    const int outputStreamId = 1;
+    stubPlatform._setStreamBuf(outputStreamId, &wsbuf);
+
+    // Now REQ_WRITE...
+    std::vector<BYTE8> openFrame = {REQ_WRITE};
+    append32(openFrame, FILE_STDOUT);
+    append16(openFrame, 0); // no data to write
+    std::vector<BYTE8> padded = padFrame(openFrame);
+    sendFrame(padded);
+
+    std::vector<BYTE8> response = readResponseFrame();
+    checkResponseFrameTag(response, RES_SUCCESS);
+    checkResponseFrameSize(response, 4); // RES_SUCCESS + 0 + 0 + 0-pad
+    EXPECT_EQ((int)response[3], 0x00);
+    EXPECT_EQ((int)response[4], 0x00);
+
+    // Expect no data to have been written to the write sensing buffer.
+    EXPECT_EQ(wsbuf.written, false);
+}
+
 // REQ_GETS
 // REQ_PUTS
 // REQ_FLUSH

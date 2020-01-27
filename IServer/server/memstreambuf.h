@@ -15,6 +15,7 @@
 #define _MEMSTREAMBUF_H
 
 #include <iostream>
+#include "log.h"
 
 class membuf : public std::basic_streambuf<char> {
 public:
@@ -24,7 +25,29 @@ public:
     }
 };
 
-class memistream : public std::istream {
+class writesensingbuf : public std::basic_streambuf<char> {
+public:
+    bool written = false;
+    char buf = '\0';
+
+    writesensingbuf() {
+        setg((char*)&buf, (char*)&buf, (char*)&buf + 1);
+        setp((char*)&buf, (char*)&buf + 1);
+    }
+
+    void writtenTo() {
+        written = true;
+        logWarn("Write sensing buffer was written to");
+    }
+
+    std::streamsize xsputn(const char* __s, std::streamsize __n) override {
+        writtenTo();
+        return traits_type::eof();
+    }
+};
+
+
+    class memistream : public std::istream {
 public:
     memistream(const uint8_t *p, size_t l) :
             std::istream(&_buffer),
