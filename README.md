@@ -260,6 +260,11 @@ The distribution currently builds under the following systems:
 * Ubuntu Linux 16.04.4 LTS Intel x86-64
 * Ubuntu Linux 18.04.2 LTS Intel x86-64
 
+Dependencies:
+* Google Test and Google Mock
+* gsl-lite (C++ Guidelines Support Library from https://github.com/gsl-lite/gsl-lite#as-cmake-package)
+* .. all taken care of by CMake External Project.
+
 Prerequisites:
 - All Operating Systems:
   - Mercurial (to download the source). I use SourceTree on macOS and Windows, TortoiseHg on Windows, and hg on Linux.
