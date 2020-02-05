@@ -11,6 +11,10 @@
 //
 //------------------------------------------------------------------------------
 
+#if defined(PLATFORM_WINDOWS)
+#include <io.h> // for _open
+#endif
+#include <fcntl.h>
 #include "gtest/gtest.h"
 #include "misc.h"
 
@@ -25,7 +29,7 @@ TEST(TempMisc, ThrowFormattedExceptionImplicitly) {
         }
         catch (const std::runtime_error &e)  {
             // and this tests that it has the correct message
-            EXPECT_STREQ( "foo13, bar3.1415", e.what() );
+            EXPECT_STREQ("foo13, bar3.1415", e.what());
             throw;
         }
     }, std::runtime_error);
@@ -40,7 +44,30 @@ TEST(TempMisc, ThrowFormattedExceptionExplicitly)
         }
         catch (const std::runtime_error &e)  {
             // and this tests that it has the correct message
-            EXPECT_STREQ( "foo13, bar3.1415", e.what() );
+            EXPECT_STREQ("foo13, bar3.1415", e.what());
+            throw;
+        }
+    }, std::runtime_error);
+}
+
+TEST(TempMisc, ThrowLastError)
+{
+    // this tests _that_ the expected exception is thrown
+    EXPECT_THROW({
+        // Cause an error
+#if defined(PLATFORM_WINDOWS)
+        EXPECT_EQ(-1, _open("does-not-exist.txt", _O_RDONLY, _S_IREAD));
+#endif
+#if defined(PLATFORM_OSX) || defined(PLATFORM_LINUX)
+        EXPECT_EQ(-1, open("does-not-exist.txt", O_RDONLY));
+#endif
+
+        try {
+            throwLastError("File problem: ");
+        }
+        catch (const std::runtime_error &e)  {
+            // and this tests that it has the correct message
+            EXPECT_STREQ( "File problem: No such file or directory", e.what());
             throw;
         }
     }, std::runtime_error);

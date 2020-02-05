@@ -18,10 +18,11 @@
 #include "platformdetection.h"
 
 #if defined(PLATFORM_WINDOWS)
-std::string GetLastErrorStdStr();
+extern std::string GetLastErrorStdStr();
 #endif
 
-
+// Throw a runtime error with a prefix string, followed by the last error text (from strerror or GetLastErrorStdStr())
+extern void throwLastError(const std::string &prefix /* "It failed with: " */);
 
 // Thanks to Torsten, from https://stackoverflow.com/questions/12261915/how-to-throw-stdexceptions-with-variable-messages
 #include <stdexcept>
