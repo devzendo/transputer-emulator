@@ -62,7 +62,7 @@ set( GSL_LITE_URL https://github.com/gsl-lite/gsl-lite.git )
 
 include( ExternalProject )
 find_package( Git REQUIRED )
-set_directory_properties( PROPERTIES EP_PREFIX ${CMAKE_BINARY_DIR}/3rd_party )
+set_directory_properties( PROPERTIES EP_PREFIX ${CMAKE_BINARY_DIR}/gsl-lite-download )
 ExternalProject_Add(
         gsl-extern
         GIT_REPOSITORY ${GSL_LITE_URL}
