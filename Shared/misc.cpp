@@ -61,12 +61,14 @@ std::string GetLastErrorStdStr()
 #endif
 
 void throwLastError(const std::string &prefix) {
+    throw std::runtime_error(Formatter() << prefix << getLastError());
+}
+
+std::string getLastError() {
 #if defined(PLATFORM_WINDOWS)
-    std::string systemError = GetLastErrorStdStr();
+    return GetLastErrorStdStr();
 #endif
 #if defined(PLATFORM_OSX) || defined(PLATFORM_LINUX)
-    std::string systemError = std::string(strerror(errno));
+    return std::string(strerror(errno));
 #endif
-
-    throw std::runtime_error(Formatter() << prefix << systemError);
 }

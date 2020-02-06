@@ -73,3 +73,14 @@ TEST(TempMisc, ThrowLastError)
     }, std::runtime_error);
 }
 
+TEST(TempMisc, GetLastError)
+{
+#if defined(PLATFORM_WINDOWS)
+    EXPECT_EQ(-1, _open("does-not-exist.txt", _O_RDONLY, _S_IREAD));
+#endif
+#if defined(PLATFORM_OSX) || defined(PLATFORM_LINUX)
+    EXPECT_EQ(-1, open("does-not-exist.txt", O_RDONLY));
+#endif
+
+    EXPECT_EQ( "No such file or directory", getLastError());
+}
