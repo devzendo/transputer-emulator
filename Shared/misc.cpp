@@ -72,3 +72,21 @@ std::string getLastError() {
     return std::string(strerror(errno));
 #endif
 }
+
+
+std::string stripTrailing(const char toStrip, const std::string &from) {
+    std::string ret(from);
+    while (!ret.empty() && ret.back() == toStrip) {
+        ret.pop_back();
+    }
+    return ret;
+}
+
+
+std::string stripLeading(const char toStrip, const std::string &from) {
+    std::string ret(from);
+    while (!ret.empty() && ret.front() == toStrip) {
+        ret.erase(0, 1);
+    }
+    return ret;
+}

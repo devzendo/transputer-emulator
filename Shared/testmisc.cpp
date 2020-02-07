@@ -21,7 +21,7 @@
 const char* foo = "foo";
 double myData = 3.1415;
 
-TEST(TempMisc, ThrowFormattedExceptionImplicitly) {
+TEST(TestMisc, ThrowFormattedExceptionImplicitly) {
     // this tests _that_ the expected exception is thrown
     EXPECT_THROW({
         try {
@@ -35,7 +35,7 @@ TEST(TempMisc, ThrowFormattedExceptionImplicitly) {
     }, std::runtime_error);
 }
 
-TEST(TempMisc, ThrowFormattedExceptionExplicitly)
+TEST(TestMisc, ThrowFormattedExceptionExplicitly)
 {
     // this tests _that_ the expected exception is thrown
     EXPECT_THROW({
@@ -50,7 +50,7 @@ TEST(TempMisc, ThrowFormattedExceptionExplicitly)
     }, std::runtime_error);
 }
 
-TEST(TempMisc, ThrowLastError)
+TEST(TestMisc, ThrowLastError)
 {
     // this tests _that_ the expected exception is thrown
     EXPECT_THROW({
@@ -73,7 +73,7 @@ TEST(TempMisc, ThrowLastError)
     }, std::runtime_error);
 }
 
-TEST(TempMisc, GetLastError)
+TEST(TestMisc, GetLastError)
 {
 #if defined(PLATFORM_WINDOWS)
     EXPECT_EQ(-1, _open("does-not-exist.txt", _O_RDONLY, _S_IREAD));
@@ -83,4 +83,24 @@ TEST(TempMisc, GetLastError)
 #endif
 
     EXPECT_EQ( "No such file or directory", getLastError());
+}
+
+TEST(TestMisc, StripTrailing)
+{
+    EXPECT_EQ("", stripTrailing('x', ""));
+    EXPECT_EQ("  ", stripTrailing('x', "  "));
+    EXPECT_EQ("  ", stripTrailing('x', "  x"));
+    EXPECT_EQ("  ", stripTrailing('x', "  xx"));
+    EXPECT_EQ("x  ", stripTrailing('x', "x  xx"));
+    EXPECT_EQ("", stripTrailing('x', "x"));
+}
+
+TEST(TestMisc, StripLeading)
+{
+    EXPECT_EQ("", stripLeading('x', ""));
+    EXPECT_EQ("  ", stripLeading('x', "  "));
+    EXPECT_EQ("  ", stripLeading('x', "x  "));
+    EXPECT_EQ("  ", stripLeading('x', "xx  "));
+    EXPECT_EQ("  x", stripLeading('x', "xx  x"));
+    EXPECT_EQ("", stripLeading('x', "x"));
 }

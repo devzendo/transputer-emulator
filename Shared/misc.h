@@ -67,5 +67,11 @@ private:
 };
 
 
+// Strip all occurrences of a character from the end of a string
+extern std::string stripTrailing(char toStrip, const std::string &from);
+
+// String all occurrences of a character from the start of a string
+extern std::string stripLeading(char toStrip, const std::string &from);
+
 #endif // _MISC_H
 
