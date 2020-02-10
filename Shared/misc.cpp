@@ -75,18 +75,28 @@ std::string getLastError() {
 
 
 std::string stripTrailing(const char toStrip, const std::string &from) {
-    std::string ret(from);
-    while (!ret.empty() && ret.back() == toStrip) {
-        ret.pop_back();
+    if (from.empty() || from.back() != toStrip) {
+        return from;
     }
-    return ret;
+    else {
+        std::string ret(from);
+        while (!ret.empty() && ret.back() == toStrip) {
+            ret.pop_back();
+        }
+        return ret;
+    }
 }
 
 
 std::string stripLeading(const char toStrip, const std::string &from) {
-    std::string ret(from);
-    while (!ret.empty() && ret.front() == toStrip) {
-        ret.erase(0, 1);
+    if (from.empty() || from.front() != toStrip) {
+        return from;
     }
-    return ret;
+    else {
+        std::string ret(from);
+        while (!ret.empty() && ret.front() == toStrip) {
+            ret.erase(0, 1);
+        }
+        return ret;
+    }
 }

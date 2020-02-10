@@ -67,10 +67,12 @@ private:
 };
 
 
-// Strip all occurrences of a character from the end of a string
+// Strip all occurrences of a character from the end of a string.
+// Return the original string if it's empty or needs no stripping, otherwise, returns a stripped version.
 extern std::string stripTrailing(char toStrip, const std::string &from);
 
 // String all occurrences of a character from the start of a string
+// Return the original string if it's empty or needs no stripping, otherwise, returns a stripped version.
 extern std::string stripLeading(char toStrip, const std::string &from);
 
 #endif // _MISC_H
