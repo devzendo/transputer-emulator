@@ -21,8 +21,9 @@
 #include "log.h"
 #include "gsl/gsl-lite.hpp"
 #include "misc.h"
+#include "testtempfiles.h"
 
-class FilesystemTest : public ::testing::Test {
+class FilesystemTest : public TestTempFiles, public ::testing::Test {
 protected:
 
     void SetUp() override {
@@ -36,26 +37,11 @@ protected:
 
     void TearDown() override {
         logDebug("TearDown start");
-
-        for (std::string fullPath : fullPathsOfFilesToRemoval) {
-            logDebugF("TearDown removing '%s'", fullPath.c_str());
-            if (unlink(fullPath.c_str()) == -1) {
-                logErrorF("Could not delete temporary file '%s' used in test: %s", fullPath.c_str(), getLastError().c_str());
-            }
-        }
+        removeTempFiles();
         logFlush();
     }
 
-    void createTempFile(const std::string &tempFile, const std::string &contents = "test file") {
-        std::fstream fstream(tempFile, std::fstream::out | std::fstream::trunc);
-        fstream << contents;
-        fstream.flush();
-        fstream.close();
-        fullPathsOfFilesToRemoval.push_back(tempFile);
-    }
-
     std::string tempDir;
-    std::vector<std::string> fullPathsOfFilesToRemoval;
 };
 
 
