@@ -12,6 +12,9 @@
 //------------------------------------------------------------------------------
 
 #include <unistd.h>
+#include <cstdlib>
+#include <fstream>
+
 #include "gtest/gtest.h"
 #include "platformdetection.h"
 #include "filesystem.h"
@@ -42,6 +45,15 @@ protected:
         }
         logFlush();
     }
+
+    void createTempFile(const std::string &tempFile, const std::string &contents = "test file") {
+        std::fstream fstream(tempFile, std::fstream::out | std::fstream::trunc);
+        fstream << contents;
+        fstream.flush();
+        fstream.close();
+        fullPathsOfFilesToRemoval.push_back(tempFile);
+    }
+
     std::string tempDir;
     std::vector<std::string> fullPathsOfFilesToRemoval;
 };
@@ -211,15 +223,74 @@ TEST_F(FilesystemTest, PathJoinIncludesASeparatorEvenIfLhsContainsOneAndRhsConta
 
 #if defined(PLATFORM_OSX) || defined(PLATFORM_LINUX)
 
-TEST_F(FilesystemTest, ThrowsIfTMPDIRBad)
+TEST_F(FilesystemTest, ThrowsIfTMPDIRNonExistent)
 {
-    auto tmpdir = std::getenv("TMPDIR");
-//    try {
-//
-//    }
+    // Get TMPDIR and ensure it's reset after we set it to something nonexistent...
+    std::string tmpdir = std::getenv("TMPDIR");
+    auto _ = gsl::finally([tmpdir] {
+        logInfoF("Resetting TMPDIR to %s", tmpdir.c_str());
+        if (setenv("TMPDIR", tmpdir.c_str(), 1) != 0) {
+            logErrorF("Could not reset TMPDIR after test: %s", getLastError().c_str());
+            // finally is noexcept, can't fail
+        };
+    });
+    
+    std::string nonExistentDir = pathJoin(tmpdir, "nonexistentdir");
+    logInfoF("Setting TMPDIR to %s", nonExistentDir.c_str());
+    if (setenv("TMPDIR", nonExistentDir.c_str(), 1) != 0) {
+        logErrorF("Could not set TMPDIR to %s: %s", nonExistentDir.c_str(), getLastError().c_str());
+        FAIL();
+    };
 
-    //const std::string &dir = tempdir();
-    //logInfoF("The temp directory is [%s]", dir.c_str());
+    // this tests _that_ the expected exception is thrown
+    EXPECT_THROW({
+         try {
+            logInfoF("The temp dir is %s", tempdir().c_str()); // doesn't print
+         }
+         catch (const std::runtime_error &e)  {
+             // and this tests that it has the correct message
+             const std::string &expectedMessage =
+                     "Could not obtain file status of temp directory " + nonExistentDir + ": No such file or directory";
+             EXPECT_STREQ(expectedMessage.c_str(), e.what());
+             throw;
+         }
+     }, std::runtime_error);
+}
+
+TEST_F(FilesystemTest, ThrowsIfTMPDIRNotADirectory)
+{
+    // Get TMPDIR and ensure it's reset after we set it to something nonexistent...
+    std::string tmpdir = std::getenv("TMPDIR");
+    auto _ = gsl::finally([tmpdir] {
+        logInfoF("Resetting TMPDIR to %s", tmpdir.c_str());
+        if (setenv("TMPDIR", tmpdir.c_str(), 1) != 0) {
+            logErrorF("Could not reset TMPDIR after test: %s", getLastError().c_str());
+            // finally is noexcept, can't fail
+        };
+    });
+
+    std::string fileNotDirectory = pathJoin(tmpdir, "filenotdirectory");
+    createTempFile(fileNotDirectory);
+
+    logInfoF("Setting TMPDIR to %s", fileNotDirectory.c_str());
+    if (setenv("TMPDIR", fileNotDirectory.c_str(), 1) != 0) {
+        logErrorF("Could not set TMPDIR to %s: %s", fileNotDirectory.c_str(), getLastError().c_str());
+        FAIL();
+    };
+
+    // this tests _that_ the expected exception is thrown
+    EXPECT_THROW({
+         try {
+             logInfoF("The temp dir is %s", tempdir().c_str()); // doesn't print
+         }
+         catch (const std::runtime_error &e)  {
+             // and this tests that it has the correct message
+             const std::string &expectedMessage =
+                     "The 'temp directory' " + fileNotDirectory + " is not a directory";
+             EXPECT_STREQ(expectedMessage.c_str(), e.what());
+             throw;
+         }
+     }, std::runtime_error);
 }
 
 #endif
