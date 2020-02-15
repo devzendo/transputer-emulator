@@ -40,14 +40,21 @@ Second release:
 * IServer is unfinished; it implements the following frame types:
   * Id (Version)
   * Exit
+  * Open
+  * Read
+  * Write
+  * Close
+* Note that the IServer's file handling does not yet prevent directory traversal vulnerabilities. To be corrected.
 * Converting older C code (that's not very portable) to C++14 (that hopefully is more portable).
 * Upgrade macOS build from El Capitan to Mojave.
 
 Third release:
 * Capable of running eForth.
+* Note that the IServer's file handling does not yet prevent directory traversal vulnerabilities. To be corrected.
 
 Fourth release:
 * More IServer implementation.
+* Prevent directory-traversal vulnerabilities in IServer's file handling - limit operations to under its root directory.
 * Complete Integer functionality.
 
 Fifth release:
