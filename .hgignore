@@ -6,6 +6,8 @@ syntax: glob
 **/*.*~
 **/*.swp
 cmake-build-debug
+Testing/
+Reference/
 syntax: regexp
 ^target$
 
