@@ -16,9 +16,12 @@
 #include "platform.h"
 #include "protocolhandler.h"
 #include "stublink.h"
+#include "filesystem.h"
 #include "../isproto.h"
+
 #include "gtest/gtest.h"
 #include "memstreambuf.h"
+#include "testtempfiles.h"
 
 class StubPlatform final : public Platform {
 public:
@@ -83,17 +86,19 @@ void StubPlatform::setUTCTime(const UTCTime utcTime) {
 }
 
 
-class TestProtocolHandler : public ::testing::Test {
+class TestProtocolHandler : public TestTempFiles, public ::testing::Test {
 protected:
     StubLink stubLink = StubLink(0, false); // false: we are a client of the server we're testing
     StubPlatform stubPlatform;
     ProtocolHandler * handler;
+    std::string tempDir;
 
     const std::vector<BYTE8> paddedEmptyFrame = std::vector<BYTE8> {0,0,0,0,0,0};
 
     void SetUp() override {
         setLogLevel(LOGLEVEL_DEBUG);
-        handler = new ProtocolHandler(stubLink, stubPlatform);
+        tempDir = tempdir();
+        handler = new ProtocolHandler(stubLink, stubPlatform, tempDir);
         handler->setDebug(true);
     }
 
@@ -340,26 +345,29 @@ TEST_F(TestProtocolHandler, UnimplementedFrame)
 
 // REQ_OPEN
 
-// TODO come back to this... after puts/gets to stdout/stderr/stdin
-//TEST_F(TestProtocolHandler, OpenOpensAFileAndReturnsAStream)
-//{
-//    std::vector<BYTE8> openFrame = {REQ_OPEN};
-//    appendString(openFrame, "testfile.txt");
-//    append8(openFrame, REQ_OPEN_TYPE_TEXT);
-//    append8(openFrame, REQ_OPEN_MODE_INPUT);
-//    std::vector<BYTE8> padded = padFrame(openFrame);
-//    bool wasSensedAsExitFrame = checkGoodFrame(padded);
-//    EXPECT_FALSE(wasSensedAsExitFrame);
-//    EXPECT_EQ(handler->unimplementedFrameCount(), 0L); // it is an implemented tag
-//
-//    std::vector<BYTE8> response = readResponseFrame();
-//    checkResponseFrameTag(response, RES_SUCCESS);
-//    checkResponseFrameSize(response, 4);
-//    EXPECT_EQ((int)response[3], 0x03); // First available stream id after 0,1,2 (stdout, stdin, stderr)
-//    EXPECT_EQ((int)response[4], 0x00);
-//    EXPECT_EQ((int)response[5], 0x00);
-//    EXPECT_EQ((int)response[6], 0x00);
-//}
+TEST_F(TestProtocolHandler, OpenOpensAFileAndReturnsAStream)
+{
+    std::string testFileName = "testfile.txt";
+    std::string testFilePath = pathJoin(tempdir(), testFileName);
+    createTempFile(testFilePath, "ABCD");
+
+    std::vector<BYTE8> openFrame = {REQ_OPEN};
+    appendString(openFrame, testFileName);
+    append8(openFrame, REQ_OPEN_TYPE_TEXT);
+    append8(openFrame, REQ_OPEN_MODE_INPUT);
+    std::vector<BYTE8> padded = padFrame(openFrame);
+    bool wasSensedAsExitFrame = checkGoodFrame(padded);
+    EXPECT_FALSE(wasSensedAsExitFrame);
+    EXPECT_EQ(handler->unimplementedFrameCount(), 0L); // it is an implemented tag
+
+    std::vector<BYTE8> response = readResponseFrame();
+    checkResponseFrameTag(response, RES_SUCCESS);
+    checkResponseFrameSize(response, 4);
+    EXPECT_EQ((int)response[3], 0x03); // First available stream id after 0,1,2 (stdout, stdin, stderr)
+    EXPECT_EQ((int)response[4], 0x00);
+    EXPECT_EQ((int)response[5], 0x00);
+    EXPECT_EQ((int)response[6], 0x00);
+}
 
 // REQ_CLOSE
 // REQ_READ

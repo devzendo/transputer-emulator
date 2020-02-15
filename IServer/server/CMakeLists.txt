@@ -14,7 +14,7 @@ endif(UNIX)
 add_executable(iserver iserver.cpp platform.cpp platform.h platformfactory.h platformfactory.cpp framecodec.cpp framecodec.h protocolhandler.cpp protocolhandler.h "${platform_sources}")
 
 add_executable(testprotocol testprotocol.cpp framecodec.cpp framecodec.h protocolhandler.cpp protocolhandler.h memstreambuf.h ../../Shared/link.cpp platform.cpp)
-target_link_libraries(testprotocol gtest gmock_main)
+target_link_libraries(testprotocol testshared gtest gmock_main)
 add_test(NAME testprotocol COMMAND testprotocol)
 
 add_executable(testframecodec testframecodec.cpp framecodec.cpp framecodec.h)

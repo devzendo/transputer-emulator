@@ -25,8 +25,8 @@
 
 class ProtocolHandler {
 public:
-    ProtocolHandler(Link & ioLink, Platform & platform):
-        myIOLink(ioLink), myPlatform(platform), bDebug(false),
+    ProtocolHandler(Link & ioLink, Platform & platform, const std::string &rootDirectory):
+        myIOLink(ioLink), myPlatform(platform), myRootDirectory(rootDirectory), bDebug(false),
         myFrameCount(0L), myBadFrameCount(0L), myUnimplementedFrameCount(0L),
         myExitCode(0) {};
     ~ProtocolHandler();
@@ -44,6 +44,7 @@ private:
     bool bDebug;
     Link & myIOLink;
     Platform & myPlatform;
+    const std::string &myRootDirectory;
     FrameCodec codec;
     WORD64 myFrameCount;
     WORD64 myBadFrameCount;

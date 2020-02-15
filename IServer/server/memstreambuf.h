@@ -35,19 +35,32 @@ public:
         setp((char*)&buf, (char*)&buf + 1);
     }
 
-    void writtenTo() {
+    std::streamsize xsputn(const char* __s, std::streamsize __n) override {
         written = true;
         logWarn("Write sensing buffer was written to");
-    }
-
-    std::streamsize xsputn(const char* __s, std::streamsize __n) override {
-        writtenTo();
         return traits_type::eof();
     }
 };
 
+class flushsensingbuf : public std::basic_streambuf<char> {
+public:
+    bool flushed = false;
+    char buf = '\0';
 
-    class memistream : public std::istream {
+    flushsensingbuf() {
+        setg((char*)&buf, (char*)&buf, (char*)&buf + 1);
+        setp((char*)&buf, (char*)&buf + 1);
+    }
+
+    int sync() override {
+        flushed = true;
+        logWarn("Flush sensing buffer was flushed");
+        return 0;
+    }
+};
+
+
+class memistream : public std::istream {
 public:
     memistream(const uint8_t *p, size_t l) :
             std::istream(&_buffer),

@@ -15,6 +15,7 @@
 //------------------------------------------------------------------------------
 
 #include <string>
+#include <filesystem.h>
 #include "types.h"
 #include "constants.h"
 #include "platform.h"
@@ -79,6 +80,30 @@ namespace {
             case RES_BADPARAMS: return "BadParams";
             case RES_NOTERM: return "NoTerm";
             case RES_RECTOOBIG: return "RecTooBig";
+
+            default: return "Unknown";
+        }
+    }
+
+    const char *openTypeName(const BYTE8 openType) {
+        switch (openType) {
+            case REQ_OPEN_TYPE_BINARY: return "Binary";
+            case REQ_OPEN_TYPE_TEXT: return "Text";
+            case REQ_OPEN_TYPE_VARIABLE: return "Variable";
+            case REQ_OPEN_TYPE_FIXED: return "Fixed";
+
+            default: return "Unknown";
+        }
+    }
+
+    const char *openModeName(const BYTE8 openMode) {
+        switch (openMode) {
+            case REQ_OPEN_MODE_INPUT: return "Input";
+            case REQ_OPEN_MODE_OUTPUT: return "Output";
+            case REQ_OPEN_MODE_APPEND: return "Append";
+            case REQ_OPEN_MODE_EXISTING_UPDATE: return "Existing Update";
+            case REQ_OPEN_MODE_NEW_UPDATE: return "New Update";
+            case REQ_OPEN_MODE_APPEND_UPDATE: return "Append Update";
 
             default: return "Unknown";
         }
@@ -323,6 +348,20 @@ void ProtocolHandler::reqOpen() {
     const std::string filename = codec.getString();
     const BYTE8 openType = codec.get8();
     const BYTE8 openMode = codec.get8();
+    logInfoF("Opening file '%s' with type %s and mode %s", filename.c_str(), openTypeName(openType), openModeName(openMode));
+    // TODO filename is not validated against directory-traversal attacks
+    const std::string filePath = pathJoin(myRootDirectory, filename);
+    switch (openType) {
+        case REQ_OPEN_TYPE_BINARY:
+        case REQ_OPEN_TYPE_TEXT:
+        case REQ_OPEN_TYPE_VARIABLE:
+        case REQ_OPEN_TYPE_FIXED:
+            break;
+        default:
+            logWarnF("Unknown open type %02X", openType);
+            codec.put(RES_ERROR);
+            codec.put((WORD16) 0);
+    }
     // TODO to be continued...
 }
 

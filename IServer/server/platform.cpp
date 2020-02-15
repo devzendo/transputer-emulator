@@ -141,6 +141,10 @@ WORD16 Stream::write(WORD16 size, BYTE8 *buffer) {
     if (written != size) {
         logWarnF("Failed to write %d bytes from stream #%d, wrote %d bytes instead", size, streamId, written);
         stream.setstate(std::ios::badbit);
+    } else {
+        if (streamId == 1 || streamId == 2) {
+            stream.flush();
+        }
     }
     return written;
 }

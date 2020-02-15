@@ -182,3 +182,40 @@ TEST_F(TestPlatform, StreamReadTruncated)
     EXPECT_EQ(readBuffer[3], 0x01);
     EXPECT_EQ(read, 3);
 }
+
+TEST_F(TestPlatform, StreamWriteToStdoutFlushed) {
+    flushsensingbuf fsbuf;
+
+    const int outputStreamId = 1;
+    platform->_setStreamBuf(outputStreamId, &fsbuf);
+
+    std::vector<BYTE8> shortFrame = {65};
+
+    auto wrote = platform->writeStream(outputStreamId, shortFrame.size(), shortFrame.data());
+    EXPECT_EQ(fsbuf.flushed, true);
+}
+
+TEST_F(TestPlatform, StreamWriteToStderrFlushed) {
+    flushsensingbuf fsbuf;
+
+    const int outputStreamId = 2;
+    platform->_setStreamBuf(outputStreamId, &fsbuf);
+
+    std::vector<BYTE8> shortFrame = {65};
+
+    auto wrote = platform->writeStream(outputStreamId, shortFrame.size(), shortFrame.data());
+    EXPECT_EQ(fsbuf.flushed, true);
+}
+
+TEST_F(TestPlatform, StreamWriteToNonStdOutErrNotFlushed) {
+    flushsensingbuf fsbuf;
+
+    // TODO USE RES_OPEN TO OPEN A FILE HERE
+    const int outputStreamId = 3;
+    platform->_setStreamBuf(outputStreamId, &fsbuf);
+
+    std::vector<BYTE8> shortFrame = {65};
+
+    auto wrote = platform->writeStream(outputStreamId, shortFrame.size(), shortFrame.data());
+    EXPECT_EQ(fsbuf.flushed, false);
+}
