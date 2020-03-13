@@ -102,6 +102,10 @@ protected:
         handler->setDebug(true);
     }
 
+    void TearDown() override {
+        removeTempFiles();
+    }
+
     void setReadableIserverMessage(const std::vector<BYTE8> & frame) {
         unsigned long frameSize = frame.size();
         BYTE8 msLength = frameSize / 256;
