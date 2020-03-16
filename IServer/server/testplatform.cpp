@@ -16,7 +16,9 @@
 #include "platformfactory.h"
 #include "memstreambuf.h"
 #include "filesystem.h"
+
 #include "testtempfiles.h"
+#include "testexception.h"
 
 #include "gtest/gtest.h"
 
@@ -239,6 +241,31 @@ TEST_F(TestPlatform, FileOpenStreamForRead) {
     EXPECT_EQ(read, 4);
 }
 
-// TODO test for 'no free streams' on open
-// TODO test that writing to a read-only stream throws (the writable flag)
+TEST_F(TestPlatform, NoFreeStreams) {
+    std::string testFileName = "testfile.txt";
+    std::string testFilePath = pathJoin(tempdir(), testFileName);
+    createTempFile(testFilePath, "");
+    // Exhaust all the streams opening the test file...
+    for (int i=3; i < MAX_FILES; i++) {
+        const int fileStreamId = platform->openFileStream(testFilePath, std::ios_base::in);
+        EXPECT_EQ(fileStreamId, i); // just to be sure..
+    }
+
+    EXPECT_THROW_WITH_MESSAGE({
+        platform->openFileStream(testFilePath, std::ios_base::in);
+    }, std::runtime_error, "No streams available to open " + testFilePath);
+}
+
+TEST_F(TestPlatform, CannotWriteToAFileOpenedForReading) {
+    std::string testFileName = "testfile.txt";
+    std::string testFilePath = pathJoin(tempdir(), testFileName);
+    createTempFile(testFilePath, "ABCD");
+    const int fileStreamId = platform->openFileStream(testFilePath, std::ios_base::in);
+
+    std::vector<BYTE8> writeBuffer = {4, 3, 2, 1};
+    EXPECT_THROW_WITH_MESSAGE({
+        platform->writeStream(fileStreamId, writeBuffer.size(), writeBuffer.data());
+    }, std::runtime_error, "Stream not writable");
+}
+
 // TODO test that reading from a write-only stream throws (the readable flag)
