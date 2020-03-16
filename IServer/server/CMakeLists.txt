@@ -22,5 +22,5 @@ target_link_libraries(testframecodec gtest gmock_main)
 add_test(NAME testframecodec COMMAND testframecodec)
 
 add_executable(testplatform testplatform.cpp platform.cpp platform.h platformfactory.cpp platformfactory.h memstreambuf.h "${platform_sources}")
-target_link_libraries(testplatform gtest gmock_main)
+target_link_libraries(testplatform testshared gtest gmock_main)
 add_test(NAME testplatform COMMAND testplatform)

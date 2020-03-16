@@ -15,10 +15,12 @@
 #include "platform.h"
 #include "platformfactory.h"
 #include "memstreambuf.h"
+#include "filesystem.h"
+#include "testtempfiles.h"
 
 #include "gtest/gtest.h"
 
-class TestPlatform : public ::testing::Test {
+class TestPlatform : public TestTempFiles, public ::testing::Test {
 protected:
     PlatformFactory *platformFactory = nullptr;
     Platform *platform = nullptr;
@@ -35,6 +37,7 @@ protected:
     void TearDown() override {
         delete platform;
         delete platformFactory;
+        removeTempFiles();
     }
 };
 
@@ -219,3 +222,23 @@ TEST_F(TestPlatform, StreamWriteToNonStdOutErrNotFlushed) {
     auto wrote = platform->writeStream(outputStreamId, shortFrame.size(), shortFrame.data());
     EXPECT_EQ(fsbuf.flushed, false);
 }
+
+TEST_F(TestPlatform, FileOpenStreamForRead) {
+    std::string testFileName = "testfile.txt";
+    std::string testFilePath = pathJoin(tempdir(), testFileName);
+    createTempFile(testFilePath, "ABCD");
+    const int fileStreamId = platform->openFileStream(testFilePath, std::ios_base::in);
+
+    std::vector<BYTE8> readBuffer = {4, 3, 2, 1}; // this'll get overwritten
+
+    auto read = platform->readStream(fileStreamId, readBuffer.size(), readBuffer.data());
+    EXPECT_EQ(readBuffer[0], 'A');
+    EXPECT_EQ(readBuffer[1], 'B');
+    EXPECT_EQ(readBuffer[2], 'C');
+    EXPECT_EQ(readBuffer[3], 'D');
+    EXPECT_EQ(read, 4);
+}
+
+// TODO test for 'no free streams' on open
+// TODO test that writing to a read-only stream throws (the writable flag)
+// TODO test that reading from a write-only stream throws (the readable flag)
