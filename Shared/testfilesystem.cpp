@@ -16,12 +16,15 @@
 #include <fstream>
 
 #include "gtest/gtest.h"
+
 #include "platformdetection.h"
 #include "filesystem.h"
 #include "log.h"
 #include "gsl/gsl-lite.hpp"
 #include "misc.h"
+
 #include "testtempfiles.h"
+#include "testexception.h"
 
 class FilesystemTest : public TestTempFiles, public ::testing::Test {
 protected:
@@ -228,19 +231,10 @@ TEST_F(FilesystemTest, ThrowsIfTMPDIRNonExistent)
         FAIL();
     };
 
-    // this tests _that_ the expected exception is thrown
-    EXPECT_THROW({
-         try {
+    EXPECT_THROW_WITH_MESSAGE({
             logInfoF("The temp dir is %s", tempdir().c_str()); // doesn't print
-         }
-         catch (const std::runtime_error &e)  {
-             // and this tests that it has the correct message
-             const std::string &expectedMessage =
-                     "Could not obtain file status of temp directory " + nonExistentDir + ": No such file or directory";
-             EXPECT_STREQ(expectedMessage.c_str(), e.what());
-             throw;
-         }
-     }, std::runtime_error);
+        }, std::runtime_error,
+        "Could not obtain file status of temp directory " + nonExistentDir + ": No such file or directory");
 }
 
 TEST_F(FilesystemTest, ThrowsIfTMPDIRNotADirectory)
@@ -264,19 +258,10 @@ TEST_F(FilesystemTest, ThrowsIfTMPDIRNotADirectory)
         FAIL();
     };
 
-    // this tests _that_ the expected exception is thrown
-    EXPECT_THROW({
-         try {
+    EXPECT_THROW_WITH_MESSAGE({
              logInfoF("The temp dir is %s", tempdir().c_str()); // doesn't print
-         }
-         catch (const std::runtime_error &e)  {
-             // and this tests that it has the correct message
-             const std::string &expectedMessage =
-                     "The 'temp directory' " + fileNotDirectory + " is not a directory";
-             EXPECT_STREQ(expectedMessage.c_str(), e.what());
-             throw;
-         }
-     }, std::runtime_error);
+         }, std::runtime_error,
+         "The 'temp directory' " + fileNotDirectory + " is not a directory");
 }
 
 #endif
