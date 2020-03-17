@@ -83,7 +83,8 @@ public:
     WORD16 writeStream(int streamId, WORD16 size, BYTE8* buffer) noexcept(false);
     WORD16 readStream(int streamId, WORD16 size, BYTE8* buffer) noexcept(false);
 
-    WORD16 openFileStream(const std::string & filePath, const std::ios_base::openmode mode);
+    WORD16 openFileStream(std::string & filePath, std::ios_base::openmode mode);
+    void closeFileStream(int streamId);
 
     // For use by tests...
     void _setStreamBuf(int streamId, std::streambuf *buffer);

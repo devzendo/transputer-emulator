@@ -46,7 +46,7 @@ public:
         fstream.open(filePath, mode);
         logInfoF("Opened file %s", filePath.c_str()); // TODO does this get here if the file open fails?
         isReadable = ((mode & std::ios_base::in) != 0);
-//     TODO   isWritable = ((mode & std::ios_base::out) != 0);
+        isWritable = ((mode & std::ios_base::out) != 0);
     }
 
     ~FileStream() override {
@@ -254,16 +254,17 @@ WORD16 Platform::openFileStream(const std::string & filePath, const std::ios_bas
             break;
         }
     }
-    // TODO test for 'no streams available'
     if (streamId == MAX_FILES) {
         throw std::runtime_error(Formatter() << "No streams available to open " << filePath );
     }
     std::unique_ptr<FileStream> pStream { std::make_unique<FileStream>(streamId, filePath, mode) };
-    // TODO set isWritable/isReadable based on mode - or should this be in the ctor for FileStream?
-//    pStream->isWritable = true;
-//    pStream->isReadable = false;
     myFiles[streamId] = std::move(pStream);
     return streamId;
+}
+
+void Platform::closeFileStream(const int streamId) {
+    std::unique_ptr<Stream> & pStream = myFiles[streamId];
+    pStream->close();
 }
 
 // For use by tests...

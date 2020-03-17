@@ -196,7 +196,7 @@ TEST_F(TestPlatform, StreamWriteToStdoutFlushed) {
 
     std::vector<BYTE8> shortFrame = {65};
 
-    auto wrote = platform->writeStream(outputStreamId, shortFrame.size(), shortFrame.data());
+    platform->writeStream(outputStreamId, shortFrame.size(), shortFrame.data());
     EXPECT_EQ(fsbuf.flushed, true);
 }
 
@@ -208,7 +208,7 @@ TEST_F(TestPlatform, StreamWriteToStderrFlushed) {
 
     std::vector<BYTE8> shortFrame = {65};
 
-    auto wrote = platform->writeStream(outputStreamId, shortFrame.size(), shortFrame.data());
+    platform->writeStream(outputStreamId, shortFrame.size(), shortFrame.data());
     EXPECT_EQ(fsbuf.flushed, true);
 }
 
@@ -221,7 +221,7 @@ TEST_F(TestPlatform, StreamWriteToNonStdOutErrNotFlushed) {
 
     std::vector<BYTE8> shortFrame = {65};
 
-    auto wrote = platform->writeStream(outputStreamId, shortFrame.size(), shortFrame.data());
+    platform->writeStream(outputStreamId, shortFrame.size(), shortFrame.data());
     EXPECT_EQ(fsbuf.flushed, false);
 }
 
@@ -239,6 +239,23 @@ TEST_F(TestPlatform, FileOpenStreamForRead) {
     EXPECT_EQ(readBuffer[2], 'C');
     EXPECT_EQ(readBuffer[3], 'D');
     EXPECT_EQ(read, 4);
+}
+
+TEST_F(TestPlatform, FileOpenStreamForWrite) {
+    std::string testFileName = "testfile.txt";
+    std::string testFilePath = pathJoin(tempdir(), testFileName);
+    createTempFile(testFilePath, ""); // first it's empty
+    const int fileStreamId = platform->openFileStream(testFilePath, std::ios_base::out);
+
+    std::vector<BYTE8> writeBuffer = {'A', 'B', 'C', 'D'};
+
+    auto read = platform->writeStream(fileStreamId, writeBuffer.size(), writeBuffer.data());
+    // Files aren't flushed by default.. so close it.
+    platform->closeFileStream(fileStreamId);
+
+    EXPECT_EQ(read, 4);
+
+    EXPECT_EQ("ABCD", readFileContents(testFilePath));
 }
 
 TEST_F(TestPlatform, NoFreeStreams) {
@@ -268,4 +285,17 @@ TEST_F(TestPlatform, CannotWriteToAFileOpenedForReading) {
     }, std::runtime_error, "Stream not writable");
 }
 
-// TODO test that reading from a write-only stream throws (the readable flag)
+TEST_F(TestPlatform, CannotReadFromAFileOpenedForWriting) {
+    std::string testFileName = "testfile.txt";
+    std::string testFilePath = pathJoin(tempdir(), testFileName);
+    createTempFile(testFilePath, "ABCD");
+    const int fileStreamId = platform->openFileStream(testFilePath, std::ios_base::out);
+
+    std::vector<BYTE8> readBuffer = {4, 3, 2, 1};
+    EXPECT_THROW_WITH_MESSAGE({
+        platform->readStream(fileStreamId, readBuffer.size(), readBuffer.data());
+    }, std::runtime_error, "Stream not readable");
+}
+
+// TODO close unopened stream
+// TODO close stream id out of range
