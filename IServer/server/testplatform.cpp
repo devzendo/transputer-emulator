@@ -27,6 +27,8 @@ protected:
     PlatformFactory *platformFactory = nullptr;
     Platform *platform = nullptr;
     BYTE8 *sampleBuf = (unsigned char *) "12345";
+    std::string testFileName = "testfile.txt";
+    std::string testFilePath = pathJoin(tempdir(), testFileName);
 
     void SetUp() override {
         setLogLevel(LOGLEVEL_DEBUG);
@@ -226,8 +228,6 @@ TEST_F(TestPlatform, StreamWriteToNonStdOutErrNotFlushed) {
 }
 
 TEST_F(TestPlatform, FileOpenStreamForRead) {
-    std::string testFileName = "testfile.txt";
-    std::string testFilePath = pathJoin(tempdir(), testFileName);
     createTempFile(testFilePath, "ABCD");
     const int fileStreamId = platform->openFileStream(testFilePath, std::ios_base::in);
 
@@ -242,8 +242,6 @@ TEST_F(TestPlatform, FileOpenStreamForRead) {
 }
 
 TEST_F(TestPlatform, FileOpenStreamForWrite) {
-    std::string testFileName = "testfile.txt";
-    std::string testFilePath = pathJoin(tempdir(), testFileName);
     createTempFile(testFilePath, ""); // first it's empty
     const int fileStreamId = platform->openFileStream(testFilePath, std::ios_base::out);
 
@@ -259,8 +257,6 @@ TEST_F(TestPlatform, FileOpenStreamForWrite) {
 }
 
 TEST_F(TestPlatform, NoFreeStreams) {
-    std::string testFileName = "testfile.txt";
-    std::string testFilePath = pathJoin(tempdir(), testFileName);
     createTempFile(testFilePath, "");
     // Exhaust all the streams opening the test file...
     for (int i=3; i < MAX_FILES; i++) {
@@ -274,8 +270,6 @@ TEST_F(TestPlatform, NoFreeStreams) {
 }
 
 TEST_F(TestPlatform, CannotWriteToAFileOpenedForReading) {
-    std::string testFileName = "testfile.txt";
-    std::string testFilePath = pathJoin(tempdir(), testFileName);
     createTempFile(testFilePath, "ABCD");
     const int fileStreamId = platform->openFileStream(testFilePath, std::ios_base::in);
 
@@ -286,8 +280,6 @@ TEST_F(TestPlatform, CannotWriteToAFileOpenedForReading) {
 }
 
 TEST_F(TestPlatform, CannotReadFromAFileOpenedForWriting) {
-    std::string testFileName = "testfile.txt";
-    std::string testFilePath = pathJoin(tempdir(), testFileName);
     createTempFile(testFilePath, "ABCD");
     const int fileStreamId = platform->openFileStream(testFilePath, std::ios_base::out);
 
