@@ -33,3 +33,10 @@ void TestTempFiles::createTempFile(const std::string &tempFile, const std::strin
     fstream.close();
     createdTempFiles.push_back(tempFile);
 }
+
+std::string TestTempFiles::readFileContents(const std::string &file) {
+    std::ifstream fstream(file, std::fstream::in);
+    std::stringstream buffer;
+    buffer << fstream.rdbuf();
+    return buffer.str();
+}
