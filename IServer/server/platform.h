@@ -88,6 +88,7 @@ public:
 
     // For use by tests...
     void _setStreamBuf(int streamId, std::streambuf *buffer);
+    void _setFileBuf(int streamId, std::filebuf &buffer);
 
 protected:
     bool bDebug;

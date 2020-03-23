@@ -42,12 +42,12 @@ public:
     }
 };
 
-class flushsensingbuf : public std::basic_streambuf<char> {
+class flushsensingstreambuf : public std::basic_streambuf<char> {
 public:
     bool flushed = false;
     char buf = '\0';
 
-    flushsensingbuf() {
+    flushsensingstreambuf() {
         setg((char*)&buf, (char*)&buf, (char*)&buf + 1);
         setp((char*)&buf, (char*)&buf + 1);
     }
@@ -59,6 +59,22 @@ public:
     }
 };
 
+class flushsensingfilebuf : public std::basic_filebuf<char> {
+public:
+    bool flushed = false;
+    char buf = '\0';
+
+    flushsensingfilebuf() {
+        setg((char*)&buf, (char*)&buf, (char*)&buf + 1);
+        setp((char*)&buf, (char*)&buf + 1);
+    }
+
+    int sync() override {
+        flushed = true;
+        logWarn("Flush sensing buffer was flushed");
+        return 0;
+    }
+};
 
 class memistream : public std::istream {
 public:

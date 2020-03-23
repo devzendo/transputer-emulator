@@ -191,7 +191,7 @@ TEST_F(TestPlatform, StreamReadTruncated)
 }
 
 TEST_F(TestPlatform, StreamWriteToStdoutFlushed) {
-    flushsensingbuf fsbuf;
+    flushsensingstreambuf fsbuf;
 
     const int outputStreamId = 1;
     platform->_setStreamBuf(outputStreamId, &fsbuf);
@@ -203,7 +203,7 @@ TEST_F(TestPlatform, StreamWriteToStdoutFlushed) {
 }
 
 TEST_F(TestPlatform, StreamWriteToStderrFlushed) {
-    flushsensingbuf fsbuf;
+    flushsensingstreambuf fsbuf;
 
     const int outputStreamId = 2;
     platform->_setStreamBuf(outputStreamId, &fsbuf);
@@ -215,11 +215,12 @@ TEST_F(TestPlatform, StreamWriteToStderrFlushed) {
 }
 
 TEST_F(TestPlatform, StreamWriteToNonStdOutErrNotFlushed) {
-    flushsensingbuf fsbuf;
+    flushsensingfilebuf fsbuf;
 
-    // TODO USE RES_OPEN TO OPEN A FILE HERE
-    const int outputStreamId = 3;
-    platform->_setStreamBuf(outputStreamId, &fsbuf);
+    createTempFile(testFilePath, "");
+    const int outputStreamId = platform->openFileStream(testFilePath, std::ios_base::out);
+    EXPECT_EQ(outputStreamId, 3);
+    platform->_setFileBuf(outputStreamId, fsbuf);
 
     std::vector<BYTE8> shortFrame = {65};
 

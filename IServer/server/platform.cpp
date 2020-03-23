@@ -69,6 +69,9 @@ public:
         return fstream;
     }
 
+    // For use by tests...
+    void _setFileBuf(std::filebuf &buffer);
+
 private:
     std::fstream fstream;
 };
@@ -171,6 +174,11 @@ void ConsoleStream::_setStreamBuf(std::streambuf *buffer) {
     iostream.rdbuf(buffer);
 }
 
+void FileStream::_setFileBuf(std::filebuf &buffer) {
+    logDebugF("Setting the FileStream's fstream with rdbuf/swap with %d chars available", buffer.in_avail());
+    fstream.rdbuf()->swap(buffer);
+}
+
 Platform::Platform() {
     bDebug = false;
 
@@ -268,6 +276,7 @@ void Platform::closeFileStream(const int streamId) {
 }
 
 // For use by tests...
+
 void Platform::_setStreamBuf(const int streamId, std::streambuf *buffer) {
     logDebugF("Setting stream buffer for stream id #%d", streamId);
     std::unique_ptr<Stream> & pStream = myFiles[streamId];
@@ -275,10 +284,27 @@ void Platform::_setStreamBuf(const int streamId, std::streambuf *buffer) {
         logWarnF("Attempt to set stream buffer from unopen stream #%d", streamId);
         throw std::invalid_argument("Stream id not open");
     }
-    if (!pStream->is_console()) {
-        logWarnF("Cannot set stream buffer for a file stream stream #%d", streamId);
+    if (pStream->is_console()) {
+        auto * pConsoleStream = dynamic_cast<ConsoleStream *>(pStream.get());
+        pConsoleStream->_setStreamBuf(buffer);
+    } else {
+        logWarnF("Cannot set stream buffer for a FileStream stream #%d", streamId);
         throw std::runtime_error("Stream buffer cannot be set for file stream");
     }
-    auto * pConsoleStream = dynamic_cast<ConsoleStream *>(pStream.get());
-    pConsoleStream->_setStreamBuf(buffer);
+}
+
+void Platform::_setFileBuf(const int streamId, std::filebuf &buffer) {
+    logDebugF("Setting file buffer for stream id #%d", streamId);
+    std::unique_ptr<Stream> & pStream = myFiles[streamId];
+    if (pStream == nullptr) {
+        logWarnF("Attempt to set file buffer from unopen stream #%d", streamId);
+        throw std::invalid_argument("Stream id not open");
+    }
+    if (pStream->is_console()) {
+        logWarnF("Cannot set file buffer for a ConsoleStream stream #%d", streamId);
+        throw std::runtime_error("File buffer cannot be set for console stream");
+    } else {
+        auto * pFileStream = dynamic_cast<FileStream *>(pStream.get());
+        pFileStream->_setFileBuf(buffer);
+    }
 }
