@@ -351,18 +351,58 @@ void ProtocolHandler::reqOpen() {
     logInfoF("Opening file '%s' with type %s and mode %s", filename.c_str(), openTypeName(openType), openModeName(openMode));
     // TODO filename is not validated against directory-traversal attacks
     const std::string filePath = pathJoin(myRootDirectory, filename);
+    std::ios::openmode iosOpenMode = 0;
+    bool error = false;
     switch (openType) {
         case REQ_OPEN_TYPE_BINARY:
+            // TDD iosOpenMode |= std::ios_base::binary;
+            break;
         case REQ_OPEN_TYPE_TEXT:
+            // Text by virtue of it not having binary bit set.
+            break;
+        // Unsure what to do for these types, so log and continue...
         case REQ_OPEN_TYPE_VARIABLE:
+            logInfoF("Opening %s for type VARIABLE", filePath.c_str());
+            break;
         case REQ_OPEN_TYPE_FIXED:
+            logInfoF("Opening %s for type FIXED", filePath.c_str());
             break;
         default:
             logWarnF("Unknown open type %02X", openType);
-            codec.put(RES_ERROR);
-            codec.put((WORD16) 0);
+            error = true;
     }
-    // TODO to be continued...
+    // Thanks to https://stackoverflow.com/questions/10359702/c-filehandling-difference-between-iosapp-and-iosate
+    // app - seek to end before each write (the write position is 'sticky' - all writes are at the end, no matter
+    // where you seek
+    // ate - open and seek to end immediately after opening.
+    switch (openMode) {
+        case REQ_OPEN_MODE_INPUT:
+            iosOpenMode |= std::ios_base::in;
+            break;
+        case REQ_OPEN_MODE_OUTPUT:
+            // TDD iosOpenMode |= (std::ios_base::out | std::ios_base::trunc);
+            break;
+        case REQ_OPEN_MODE_APPEND:
+            // TDD iosOpenMode |= (std::ios_base::out | std::ios_base::ate);
+            break;
+        case REQ_OPEN_MODE_EXISTING_UPDATE:
+        case REQ_OPEN_MODE_NEW_UPDATE:
+        case REQ_OPEN_MODE_APPEND_UPDATE:
+            iosOpenMode |= std::ios_base::out;
+            break;
+        default:
+            logWarnF("Unknown open mode %02X", openMode);
+            error = true;
+    }
+    if (error) {
+        codec.put(RES_ERROR);
+        codec.put((WORD16) 0);
+    } else {
+        auto streamId = myPlatform.openFileStream(filePath, iosOpenMode);
+        logInfoF("Opened file '%s' as stream #%d", filePath.c_str(), streamId);
+        codec.put(RES_SUCCESS);
+        codec.put((WORD32) streamId);
+    }
 }
 
 void ProtocolHandler::reqRead() {

@@ -366,7 +366,7 @@ TEST_F(TestProtocolHandler, OpenOpensAFileAndReturnsAStream)
 
     std::vector<BYTE8> response = readResponseFrame();
     checkResponseFrameTag(response, RES_SUCCESS);
-    checkResponseFrameSize(response, 4);
+    checkResponseFrameSize(response, 6);
     EXPECT_EQ((int)response[3], 0x03); // First available stream id after 0,1,2 (stdout, stdin, stderr)
     EXPECT_EQ((int)response[4], 0x00);
     EXPECT_EQ((int)response[5], 0x00);
