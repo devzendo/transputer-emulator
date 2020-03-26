@@ -189,9 +189,9 @@ bool ProtocolHandler::requestResponse() {
             reqOpen();
             break;
         }
-        case REQ_CLOSE: {
-            break;
-        }
+//        case REQ_CLOSE: {
+//            break;
+//        }
         case REQ_READ: {
             reqRead();
             break;
@@ -200,108 +200,108 @@ bool ProtocolHandler::requestResponse() {
             reqWrite();
             break;
         }
-        case REQ_GETS: {
-            break;
-        }
-        case REQ_PUTS: {
-            break;
-        }
-        case REQ_FLUSH: {
-            break;
-        }
-        case REQ_SEEK: {
-            break;
-        }
-        case REQ_TELL: {
-            break;
-        }
-        case REQ_EOF: {
-            break;
-        }
-        case REQ_FERROR: {
-            break;
-        }
-        case REQ_REMOVE: {
-            break;
-        }
-        case REQ_RENAME: {
-            break;
-        }
-        case REQ_GETBLOCK: {
-            break;
-        }
-        case REQ_PUTBLOCK: {
-            break;
-        }
-        case REQ_ISATTY: {
-            break;
-        }
-        case REQ_OPENREC: {
-            break;
-        }
-        case REQ_GETREC: {
-            break;
-        }
-        case REQ_PUTREC: {
-            break;
-        }
-        case REQ_PUTEOF: {
-            break;
-        }
-        case REQ_GETKEY: {
-            break;
-        }
-        case REQ_POLLKEY: {
-            break;
-        }
+//        case REQ_GETS: {
+//            break;
+//        }
+//        case REQ_PUTS: {
+//            break;
+//        }
+//        case REQ_FLUSH: {
+//            break;
+//        }
+//        case REQ_SEEK: {
+//            break;
+//        }
+//        case REQ_TELL: {
+//            break;
+//        }
+//        case REQ_EOF: {
+//            break;
+//        }
+//        case REQ_FERROR: {
+//            break;
+//        }
+//        case REQ_REMOVE: {
+//            break;
+//        }
+//        case REQ_RENAME: {
+//            break;
+//        }
+//        case REQ_GETBLOCK: {
+//            break;
+//        }
+//        case REQ_PUTBLOCK: {
+//            break;
+//        }
+//        case REQ_ISATTY: {
+//            break;
+//        }
+//        case REQ_OPENREC: {
+//            break;
+//        }
+//        case REQ_GETREC: {
+//            break;
+//        }
+//        case REQ_PUTREC: {
+//            break;
+//        }
+//        case REQ_PUTEOF: {
+//            break;
+//        }
+//        case REQ_GETKEY: {
+//            break;
+//        }
+//        case REQ_POLLKEY: {
+//            break;
+//        }
 
-        case REQ_GETENV: {
-            break;
-        }
-        case REQ_TIME: {
-            break;
-        }
-        case REQ_SYSTEM: {
-            break;
-        }
+//        case REQ_GETENV: {
+//            break;
+//        }
+//        case REQ_TIME: {
+//            break;
+//        }
+//        case REQ_SYSTEM: {
+//            break;
+//        }
         case REQ_EXIT: {
             reqExit();
             break;
         }
 
-        case REQ_COMMAND: {
-            break;
-        }
-        case REQ_CORE: {
-            break;
-        }
+//        case REQ_COMMAND: {
+//            break;
+//        }
+//        case REQ_CORE: {
+//            break;
+//        }
         case REQ_ID: {
             reqId();
             break;
         }
-        case REQ_GETINFO: {
-            break;
-        }
-
-        case REQ_MSDOS: {
-            break;
-        }
-
-        case REQ_FILEEXISTS: {
-            break;
-        }
-        case REQ_TRANSLATE: {
-            break;
-        }
-        case REQ_FERRSTAT: {
-            break;
-        }
-        case REQ_COMMANDARG: {
-            break;
-        }
+//        case REQ_GETINFO: {
+//            break;
+//        }
+//
+//        case REQ_MSDOS: {
+//            break;
+//        }
+//
+//        case REQ_FILEEXISTS: {
+//            break;
+//        }
+//        case REQ_TRANSLATE: {
+//            break;
+//        }
+//        case REQ_FERRSTAT: {
+//            break;
+//        }
+//        case REQ_COMMANDARG: {
+//            break;
+//        }
 
         default: {
-            logWarnF("Frame tag %02X is unknown", tag);
+            logWarnF("Frame tag %02X (%s) is unknown", tag, tagToName(tag));
             myUnimplementedFrameCount++;
             codec.put(RES_UNIMPLEMENTED);
             break;
