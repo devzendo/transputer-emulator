@@ -47,6 +47,7 @@ public:
         logInfoF("Opened file %s", filePath.c_str()); // TODO does this get here if the file open fails?
         isReadable = ((mode & std::ios_base::in) != 0);
         isWritable = ((mode & std::ios_base::out) != 0);
+        logInfoF("isReadable: %s, isWritable: %s", isReadable ? "true" : "false", isWritable ? "true" : "false");
     }
 
     ~FileStream() override {
