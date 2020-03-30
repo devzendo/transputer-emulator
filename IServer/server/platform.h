@@ -84,7 +84,7 @@ public:
     WORD16 readStream(int streamId, WORD16 size, BYTE8* buffer) noexcept(false);
 
     WORD16 openFileStream(const std::string & filePath, std::ios_base::openmode mode);
-    void closeFileStream(int streamId);
+    bool closeStream(int streamId); // true => close succeeded
 
     // For use by tests...
     void _setStreamBuf(int streamId, std::streambuf *buffer);

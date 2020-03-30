@@ -271,9 +271,19 @@ WORD16 Platform::openFileStream(const std::string & filePath, const std::ios_bas
     return streamId;
 }
 
-void Platform::closeFileStream(const int streamId) {
+bool Platform::closeStream(const int streamId) {
+    if (streamId < 0 || streamId >= MAX_FILES) {
+        logWarnF("Attempt to close out-of-range stream id #%d", streamId);
+        throw std::range_error("Stream id out of range");
+    }
     std::unique_ptr<Stream> & pStream = myFiles[streamId];
+    if (pStream == nullptr) {
+        logWarnF("Attempt to close unopen stream #%d", streamId);
+        throw std::invalid_argument("Stream id not open");
+    }
     pStream->close();
+    std::iostream &iostream = pStream->getIOStream();
+    return !iostream.fail();
 }
 
 // For use by tests...

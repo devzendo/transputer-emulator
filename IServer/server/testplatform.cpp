@@ -250,7 +250,7 @@ TEST_F(TestPlatform, FileOpenStreamForWrite) {
 
     auto read = platform->writeStream(fileStreamId, writeBuffer.size(), writeBuffer.data());
     // Files aren't flushed by default.. so close it.
-    platform->closeFileStream(fileStreamId);
+    platform->closeStream(fileStreamId);
 
     EXPECT_EQ(read, 4);
 
@@ -290,5 +290,36 @@ TEST_F(TestPlatform, CannotReadFromAFileOpenedForWriting) {
     }, std::runtime_error, "Stream not readable");
 }
 
-// TODO close unopened stream
-// TODO close stream id out of range
+
+TEST_F(TestPlatform, CloseUnopenedStream) {
+    EXPECT_THROW_WITH_MESSAGE({
+          platform->closeStream(3);
+    }, std::invalid_argument, "Stream id not open");
+}
+
+TEST_F(TestPlatform, CloseStreamIdOutOfRange) {
+    EXPECT_THROW_WITH_MESSAGE({
+          platform->closeStream(-3);
+    }, std::range_error, "Stream id out of range");
+
+}
+
+TEST_F(TestPlatform, CloseSucceeds) {
+    createTempFile(testFilePath, "");
+    const int fileStreamId = platform->openFileStream(testFilePath, std::ios_base::out);
+
+    EXPECT_EQ(platform->closeStream(fileStreamId), true);
+}
+
+TEST_F(TestPlatform, CloseFails) {
+    createTempFile(testFilePath, "");
+    const int fileStreamId = platform->openFileStream(testFilePath, std::ios_base::out);
+
+    // How to get fstream close to fail for a real failure-to-close?
+    // Set a streams basic_filebuf to a freshly constructed one, then its __file_ will be 0 so
+    // close() returns 0, so fstream close() sets failbit
+    std::basic_filebuf<char> emptiness;
+    platform->_setFileBuf(fileStreamId, emptiness);
+    EXPECT_EQ(platform->closeStream(fileStreamId), false);
+}
+
