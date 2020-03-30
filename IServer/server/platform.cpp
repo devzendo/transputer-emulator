@@ -283,7 +283,9 @@ bool Platform::closeStream(const int streamId) {
     }
     pStream->close();
     std::iostream &iostream = pStream->getIOStream();
-    return !iostream.fail();
+    bool closeOk = !iostream.fail();
+    myFiles[streamId].reset();
+    return closeOk;
 }
 
 // For use by tests...

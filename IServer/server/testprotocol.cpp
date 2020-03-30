@@ -12,6 +12,7 @@
 //------------------------------------------------------------------------------
 
 #include <cstdio>
+#include <fstream>
 #include "log.h"
 #include "platform.h"
 #include "protocolhandler.h"
@@ -221,6 +222,14 @@ protected:
               (frame[offset+3] << 24);
     }
 
+    // Get the stream Id from a successful open
+    WORD32 getStreamId() {
+        std::vector<BYTE8> openResponse = this->readResponseFrame();
+        this->checkResponseFrameTag(openResponse, RES_SUCCESS);
+        this->checkResponseFrameSize(openResponse, 6);
+        WORD32 streamId = this->get32(openResponse, 3);
+        return streamId;
+    }
 };
 
 // FRAME HANDLING
@@ -439,7 +448,7 @@ TEST_F(TestProtocolHandler, OpenOutputOpensAFileAndReturnsAStreamThatCanBeWritte
 }
 
 // Binary files only make a distinction on Windows; text and binary processing is identical on OSX/Linux
-//#if defined(PLATFORM_WINDOWS)
+#if defined(PLATFORM_WINDOWS)
 TEST_F(TestProtocolHandler, OpenTextTranslatesLineFeedToCarriageReturnLineFeedOnWindows)
 {
     std::string testFileName = "testfile.txt";
@@ -481,7 +490,7 @@ TEST_F(TestProtocolHandler, OpenTextTranslatesLineFeedToCarriageReturnLineFeedOn
     // Text mode should expand the written \n to \r\n on Windows
     EXPECT_EQ(readFileContents(testFilePath), "A\r\nB");
 }
-//#endif
+#endif
 
 // TODO binary files
 // TODO REQ_OPEN_MODE_INPUT:
@@ -539,11 +548,8 @@ TEST_F(TestProtocolHandler, CloseFailsIfNeverOpened) {
     checkResponseFrameSize(closeResponse, 2); // RES_BADID + 0-pad
 }
 
-TEST_F(TestProtocolHandler, CloseFailsIfUnderlyingCloseFails) {
-    // How to get fstream close to fail for a real failure-to-close?
-    // Set a streams basic_filebuf to a freshly constructed one, then its __file_ will be 0 so
-    // close() returns 0, so fstream close() sets failbit
-    // streamId 3 has not been opened, it should fail
+TEST_F(TestProtocolHandler, CloseFailsIfUnderlyingCloseFails)
+{
     std::string testFileName = "testfile.txt";
     std::string testFilePath = pathJoin(tempdir(), testFileName);
 
@@ -553,22 +559,22 @@ TEST_F(TestProtocolHandler, CloseFailsIfUnderlyingCloseFails) {
     append8(openFrame, REQ_OPEN_MODE_OUTPUT);
     sendFrame(padFrame(openFrame));
 
-    std::vector<BYTE8> openResponse = readResponseFrame();
-    checkResponseFrameTag(openResponse, RES_SUCCESS);
-    checkResponseFrameSize(openResponse, 6);
-    WORD32 streamId = get32(openResponse, 3);
+    WORD32 streamId = this->getStreamId();
     EXPECT_EQ(streamId, 3); // First available stream id after 0,1,2 (stdout, stdin, stderr)
 
+    // How to get fstream close to fail for a real failure-to-close?
+    // Set a streams basic_filebuf to a freshly constructed one, then its __file_ will be 0 so
+    // close() returns 0, so fstream close() sets failbit
+    std::basic_filebuf<char> emptiness;
+    stubPlatform._setFileBuf((int) streamId, emptiness);
 
-
-    WORD32 streamId = 3;
     std::vector<BYTE8> closeFrame = {REQ_CLOSE};
     append32(closeFrame, streamId);
     sendFrame(padFrame(closeFrame));
 
     std::vector<BYTE8> closeResponse = readResponseFrame();
-    checkResponseFrameTag(closeResponse, RES_BADID);
-    checkResponseFrameSize(closeResponse, 2); // RES_BADID + 0-pad
+    checkResponseFrameTag(closeResponse, RES_ERROR);
+    checkResponseFrameSize(closeResponse, 2); // RES_ERROR + 0-pad
 }
 
 

@@ -55,6 +55,7 @@ private:
     int myExitCode;
     // Frame handling routines
     void reqOpen();
+    void reqClose();
     void reqRead();
     void reqWrite();
     void reqExit();

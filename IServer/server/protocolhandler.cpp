@@ -189,9 +189,10 @@ bool ProtocolHandler::requestResponse() {
             reqOpen();
             break;
         }
-//        case REQ_CLOSE: {
-//            break;
-//        }
+        case REQ_CLOSE: {
+            reqClose();
+            break;
+        }
         case REQ_READ: {
             reqRead();
             break;
@@ -355,7 +356,7 @@ void ProtocolHandler::reqOpen() {
     bool error = false;
     switch (openType) {
         case REQ_OPEN_TYPE_BINARY:
-            // TDD iosOpenMode |= std::ios_base::binary;
+            iosOpenMode |= std::ios_base::binary;
             break;
         case REQ_OPEN_TYPE_TEXT:
             // Text by virtue of it not having binary bit set.
@@ -380,7 +381,7 @@ void ProtocolHandler::reqOpen() {
             iosOpenMode |= std::ios_base::in;
             break;
         case REQ_OPEN_MODE_OUTPUT:
-            // TDD iosOpenMode |= (std::ios_base::out | std::ios_base::trunc);
+            iosOpenMode |= (std::ios_base::out | std::ios_base::trunc);
             break;
         case REQ_OPEN_MODE_APPEND:
             // TDD iosOpenMode |= (std::ios_base::out | std::ios_base::ate);
@@ -402,6 +403,25 @@ void ProtocolHandler::reqOpen() {
         logInfoF("Opened file '%s' as stream #%d", filePath.c_str(), streamId);
         codec.put(RES_SUCCESS);
         codec.put((WORD32) streamId);
+    }
+}
+
+void ProtocolHandler::reqClose() {
+    const WORD32 streamId = codec.get32();
+    try {
+        logDebugF("Closing stream #%d", streamId);
+        bool closed = myPlatform.closeStream((int) streamId);
+        if (closed) {
+            codec.put(RES_SUCCESS);
+        } else {
+            codec.put(RES_ERROR);
+        }
+    } catch (const std::range_error &e) {
+        logWarn(e.what());
+        codec.put(RES_BADID);
+    } catch (const std::invalid_argument &e) {
+        logWarn(e.what());
+        codec.put(RES_BADID);
     }
 }
 
