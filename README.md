@@ -26,7 +26,6 @@ In active development:
 * Converting the NodeServer to be IServer compatible. Similarly, "Hello World".
 ** TODO:
 ** REQ_WRITE/REQ_READ needs to validate that the last op was of the right type.
-** REQ_WRITE should flush automatically on write to stdout/stderr.
 
 Roadmap
 -------
@@ -119,7 +118,7 @@ Correctness
 
 Build/Releases
 ==============
-* Upgrade to C++11 or more recent
+* Upgrade to C++14
 
 Bugs
 ====
@@ -274,7 +273,6 @@ Dependencies:
 
 Prerequisites:
 - All Operating Systems:
-  - Mercurial (to download the source). I use SourceTree on macOS and Windows, TortoiseHg on Windows, and hg on Linux.
   - Git (for CMake to download GoogleTest). Command line tool needs to be on the PATH.
   - Python (2.x or 3.x is fine) (required by the GoogleTest build)
   - Java 8 JDK (for Maven).
@@ -288,7 +286,7 @@ Prerequisites:
   - CMake 3.15.5 (from MacPorts) and 3.14.3 (from CLion)
   - GNU Make. I use 4.2.1.
   - clang (e.g. via XCode Developer tools, or MacPorts). Apple LLVM version 11.0.0 (clang-1100.0.33.8) on
-  - untested on more recent versions of macOS
+  - Untested on more recent versions of macOS
 - Windows 10 Home:
   - Microsoft Visual Studio Build Tools 2017, v 15.9.28307.423
     (cl 19.16.27027.1 for x64)
@@ -318,7 +316,7 @@ Building
 To build, cd to the top level directory (where this README.md is) and do:
 mvn clean compile -P build
 
-This creates the shared library code that contains the project version, in
+This downloads all dependencies, and creates the shared library code that contains the project version, in
 the target/classes directory, then does: 
 cd cmake-build-debug; cmake .. (ie regenerate the cmake cache)
 cmake --build cmake-build-debug --target all -- -j 4
