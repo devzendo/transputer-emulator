@@ -11,6 +11,7 @@
 //
 //------------------------------------------------------------------------------
 
+#include "platformdetection.h"
 #if defined(PLATFORM_WINDOWS)
 #include <io.h> // for _open
 #endif
