@@ -11,13 +11,19 @@
 //
 //------------------------------------------------------------------------------
 
-#include <unistd.h>
+#include "platformdetection.h"
+#if defined(PLATFORM_WINDOWS)
+#include <io.h> // for _unlink
+#endif
+#if defined(PLATFORM_OSX) || defined(PLATFORM_LINUX)
+#include <unistd.h> // for unlink
+#endif
+
 #include <cstdlib>
 #include <fstream>
 
 #include "gtest/gtest.h"
 
-#include "platformdetection.h"
 #include "filesystem.h"
 #include "log.h"
 #include "gsl/gsl-lite.hpp"
