@@ -11,7 +11,13 @@
 //
 //------------------------------------------------------------------------------
 
-#include <unistd.h>
+#include "platformdetection.h"
+#if defined(PLATFORM_WINDOWS)
+#include <io.h> // for _unlink
+#endif
+#if defined(PLATFORM_OSX) || defined(PLATFORM_LINUX)
+#include <unistd.h> // for unlink
+#endif
 #include <fstream>
 #include "testtempfiles.h"
 #include "log.h"
@@ -20,7 +26,7 @@
 void TestTempFiles::removeTempFiles() {
     for (const std::string& fullPath : createdTempFiles) {
         logDebugF("removeTempFiles removing '%s'", fullPath.c_str());
-        if (unlink(fullPath.c_str()) == -1) {
+        if (platform_unlink(fullPath.c_str()) == -1) {
             logErrorF("Could not delete temporary file '%s' used in test: %s", fullPath.c_str(), getLastError().c_str());
         }
     }

@@ -72,12 +72,14 @@
 #define platform_read read
 #define platform_write write
 #define platform_close close
+#define platform_unlink unlink
 #endif
 #if defined(PLATFORM_WINDOWS)
 #define platform_open _open
 #define platform_read _read
 #define platform_write _write
 #define platform_close _close
+#define platform_unlink _unlink
 #endif
 
 #endif // _PLATFORMDETECTION_H
