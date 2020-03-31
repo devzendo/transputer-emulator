@@ -577,6 +577,39 @@ TEST_F(TestProtocolHandler, CloseFailsIfUnderlyingCloseFails)
     checkResponseFrameSize(closeResponse, 2); // RES_ERROR + 0-pad
 }
 
+TEST_F(TestProtocolHandler, CloseNullifiesStreamsSoTheyCanBeReallocated) {
+    std::string testFileName = "testfile.txt";
+    std::string testFilePath = pathJoin(tempdir(), testFileName);
+
+    std::vector<BYTE8> firstOpenFrame = {REQ_OPEN};
+    appendString(firstOpenFrame, testFileName);
+    append8(firstOpenFrame, REQ_OPEN_TYPE_TEXT);
+    append8(firstOpenFrame, REQ_OPEN_MODE_OUTPUT);
+    sendFrame(padFrame(firstOpenFrame));
+
+    std::vector<BYTE8> firstOpenResponse = readResponseFrame();
+    WORD32 firstStreamId = get32(firstOpenResponse, 3);
+    EXPECT_EQ(firstStreamId, 3); // First available stream id after 0,1,2 (stdout, stdin, stderr)
+
+    // close streamId 3
+    std::vector<BYTE8> closeFrame = {REQ_CLOSE};
+    append32(closeFrame, firstStreamId);
+    sendFrame(padFrame(closeFrame));
+
+    std::vector<BYTE8> closeResponse = readResponseFrame();
+    checkResponseFrameTag(closeResponse, RES_SUCCESS);
+
+    // Reopen file, should get streamId 3 again
+    std::vector<BYTE8> secondOpenFrame = {REQ_OPEN};
+    appendString(secondOpenFrame, testFileName);
+    append8(secondOpenFrame, REQ_OPEN_TYPE_TEXT);
+    append8(secondOpenFrame, REQ_OPEN_MODE_OUTPUT);
+    sendFrame(padFrame(secondOpenFrame));
+
+    std::vector<BYTE8> secondOpenResponse = readResponseFrame();
+    WORD32 secondStreamId = get32(secondOpenResponse, 3);
+    EXPECT_EQ(secondStreamId, firstStreamId); // Same as before
+}
 
 // Note: You could send a REQ_CLOSE to close stdin/out/err but ConsoleStream's close() is a no-op currently.
 
