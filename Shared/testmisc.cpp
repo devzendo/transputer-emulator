@@ -50,26 +50,35 @@ TEST(TestMisc, ThrowFormattedExceptionExplicitly)
     }, std::runtime_error);
 }
 
+void causeAnError() {
+    // Cause an error
+#if defined(PLATFORM_WINDOWS)
+    EXPECT_EQ(-1, _open("does-not-exist.txt", _O_RDONLY, _S_IREAD));
+#endif
+#if defined(PLATFORM_OSX) || defined(PLATFORM_LINUX)
+    EXPECT_EQ(-1, open("does-not-exist.txt", O_RDONLY));
+#endif
+
+    try {
+        throwLastError("File problem: ");
+    }
+    catch (const std::runtime_error &e)  {
+        // and this tests that it has the correct message
+#if defined(PLATFORM_OSX) || defined(PLATFORM_LINUX)
+        EXPECT_STREQ( "File problem: No such file or directory", e.what());
+#endif
+#if defined(PLATFORM_WINDOWS)
+        EXPECT_STREQ( "File problem: The system cannot find the file specified.\r\n", e.what());
+#endif
+        throw;
+    }
+}
+
 TEST(TestMisc, ThrowLastError)
 {
     // this tests _that_ the expected exception is thrown
     EXPECT_THROW({
-        // Cause an error
-#if defined(PLATFORM_WINDOWS)
-        EXPECT_EQ(-1, _open("does-not-exist.txt", _O_RDONLY, _S_IREAD));
-#endif
-#if defined(PLATFORM_OSX) || defined(PLATFORM_LINUX)
-        EXPECT_EQ(-1, open("does-not-exist.txt", O_RDONLY));
-#endif
-
-        try {
-            throwLastError("File problem: ");
-        }
-        catch (const std::runtime_error &e)  {
-            // and this tests that it has the correct message
-            EXPECT_STREQ( "File problem: No such file or directory", e.what());
-            throw;
-        }
+        causeAnError();
     }, std::runtime_error);
 }
 
