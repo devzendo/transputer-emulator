@@ -27,7 +27,7 @@ public:
 
     bool isConsoleCharAvailable() override;
     BYTE8 getConsoleChar() override;
-    void putConsoleChar(const ch) override;
+    void putConsoleChar(BYTE8 ch) override;
 
     WORD32 getTimeMillis() override;
     UTCTime getUTCTime() override;
