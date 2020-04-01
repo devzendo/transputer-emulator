@@ -299,6 +299,8 @@ Prerequisites:
   - CMake is installed in C:\Program Files\CMake
   - Maven is installed in C:\Program Files\apache-maven-3.6.0
   - (these locations are noted in the pom.xml).
+  - Note if you're using CLion, set your Visual Studio Toolchain architecture to amd64. Otherwise you'll get errors
+    saying your compiler can't create a simple executable.
 - Ubuntu 16.04:
   - Clang etc.:
     apt-get install build-essential clang-6.0 make clang
