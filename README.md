@@ -266,19 +266,22 @@ The distribution currently builds under the following systems:
 * Ubuntu Linux 16.04.4 LTS Intel x86-64
 * Ubuntu Linux 18.04.2 LTS Intel x86-64
 
-Dependencies:
+C++ Dependencies:
 * Google Test and Google Mock
 * gsl-lite (C++ Guidelines Support Library from https://github.com/gsl-lite/gsl-lite#as-cmake-package)
 * .. all taken care of by CMake External Project.
 
 Prerequisites:
 - All Operating Systems:
-  - Git (for CMake to download GoogleTest). Command line tool needs to be on the PATH.
-  - Python (2.x or 3.x is fine) (required by the GoogleTest build)
+  - Git (to clone the transputer-emulator repository, and for CMake to download GoogleTest). Command line tool git needs
+    to be on the PATH.
+  - Python (prefer 3.x but 2.x is fine; required by the GoogleTest build). Command line interpreter python needs to be
+    on the PATH.
   - Java 8 JDK (for Maven).
   - Apache Maven. I use 3.6.0. (You can build without it, it's just doing some preprocessing, running cmake in various
-    stages, and is used for packaging and overall build control.)
-  - CMake. I use 3.10.3.
+    stages, and is used for packaging and overall build control. It's just much easier with it.) Command line tool mvn
+    needs to be on the PATH.
+  - CMake. I use 3.10.3. Command line tool cmake needs to be on the PATH.
   - If you want to build the client-examples programs, you'll need the
     <a href="https://bitbucket.org/devzendo/transputer-macro-assembler">DevZendo.org Transputer Macro Assembler</a>
     installed and on your PATH.
@@ -289,7 +292,10 @@ Prerequisites:
   - Untested on more recent versions of macOS
 - Windows 10 Home:
   - Microsoft Visual Studio Build Tools 2017, v 15.9.28307.423
-    (cl 19.16.27027.1 for x64)
+    (cl 19.16.27027.1 for x64) Note this doesn't need the full Visual Studio, these are just the command line tools.
+    The command line tools must be set up in your command line environment. In my shell, I run:
+    "C:\Program Files (x86)\Microsoft Visual Studio\2017\BuildTools\VC\Auxiliary\Build\vcvarsall.bat" x86_amd64
+    prior to running other commands.
   - CMake is installed in C:\Program Files\CMake
   - Maven is installed in C:\Program Files\apache-maven-3.6.0
   - (these locations are noted in the pom.xml).
@@ -314,15 +320,20 @@ The typical install location is:
 Building
 ========
 To build, cd to the top level directory (where this README.md is) and do:
+On windows: vcvarsall.bat as shown above
 mvn clean compile -P build
 
-This downloads all dependencies, and creates the shared library code that contains the project version, in
-the target/classes directory, then does: 
-cd cmake-build-debug; cmake .. (ie regenerate the cmake cache)
-cmake --build cmake-build-debug --target all -- -j 4
+This will:
+ * download all dependencies and plugins (quite a few of these), 
+ * create the version number header (the version is controlled by the maven pom.xml)
+ * creates the shared library code that contains the project version, in the target/classes directory, then
+ * run this for you: 
+   * cd cmake-build-debug; cmake .. (ie regenerate the cmake cache)
+   * cmake --build cmake-build-debug --target all -- -j 4
 
-This build will build the entire system: T800 emulator and iserver, client libraries, etc. This doesn't install it on
-your system - see below.
+This build will build the entire system: T800 emulator and iserver, client libraries, etc. 
+
+This doesn't install it on your system - see below.
 
 Cleaning the Build Tree
 =======================
