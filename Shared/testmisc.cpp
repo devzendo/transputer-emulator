@@ -87,12 +87,12 @@ TEST(TestMisc, GetLastError)
 {
 #if defined(PLATFORM_WINDOWS)
     EXPECT_EQ(-1, _open("does-not-exist.txt", _O_RDONLY, _S_IREAD));
+    EXPECT_EQ( "The system cannot find the file specified.\r\n", getLastError());
 #endif
 #if defined(PLATFORM_OSX) || defined(PLATFORM_LINUX)
     EXPECT_EQ(-1, open("does-not-exist.txt", O_RDONLY));
-#endif
-
     EXPECT_EQ( "No such file or directory", getLastError());
+#endif
 }
 
 TEST(TestMisc, StripTrailing)
