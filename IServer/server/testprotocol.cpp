@@ -449,6 +449,22 @@ TEST_F(TestProtocolHandler, OpenOutputOpensAFileAndReturnsAStreamThatCanBeWritte
 
 // Binary files only make a distinction on Windows; text and binary processing is identical on OSX/Linux
 #if defined(PLATFORM_WINDOWS)
+
+TEST_F(TestProtocolHandler, CPlusPlusTextHandlingOnWindows)
+{
+    std::string testFileName = "testfile.txt";
+    std::string testFilePath = pathJoin(tempdir(), testFileName);
+    std::ios::openmode iosOpenMode = 0;
+    iosOpenMode |= (std::ios_base::out | std::ios_base::trunc);
+    std::fstream fs(testFilePath, iosOpenMode);
+    fs << "hello\nworld\n";
+    fs.flush();
+    fs.close();
+
+    EXPECT_EQ(readFileContents(testFilePath), "hello\r\nworld\r\n");
+
+}
+
 TEST_F(TestProtocolHandler, OpenTextTranslatesLineFeedToCarriageReturnLineFeedOnWindows)
 {
     std::string testFileName = "testfile.txt";
