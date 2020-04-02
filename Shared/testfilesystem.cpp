@@ -211,7 +211,7 @@ TEST_F(FilesystemTest, PathJoinIncludesASeparatorEvenIfLhsContainsOneAndRhsConta
     EXPECT_EQ(joined, "abc/def/ghi/jkl");
 #endif
 #if defined(PLATFORM_WINDOWS)
-    const std::string &joined = pathJoin("abc\\def", "ghi\\def");
+    const std::string &joined = pathJoin("abc\\def", "ghi\\jkl");
     EXPECT_EQ(joined, "abc\\def\\ghi\\jkl");
 #endif
 }
