@@ -32,16 +32,18 @@ void TestTempFiles::removeTempFiles() {
     }
 }
 
+// We create files in binary so we can be assured there will be no translation shenanigans between platforms.
 void TestTempFiles::createTempFile(const std::string &tempFile, const std::string &contents) {
-    std::fstream fstream(tempFile, std::fstream::out | std::fstream::trunc);
+    std::fstream fstream(tempFile, std::fstream::out | std::fstream::binary | std::fstream::trunc);
     fstream << contents;
     fstream.flush();
     fstream.close();
     createdTempFiles.push_back(tempFile);
 }
 
+// We open files in binary so we can be assured there will be no translation shenanigans between platforms.
 std::string TestTempFiles::readFileContents(const std::string &file) {
-    std::ifstream fstream(file, std::fstream::in);
+    std::ifstream fstream(file, std::fstream::in | std::fstream::binary);
     std::stringstream buffer;
     buffer << fstream.rdbuf();
     return buffer.str();
