@@ -44,10 +44,15 @@ class FileStream: public Stream {
 public:
     explicit FileStream(int streamId, const std::string & filePath, const std::ios_base::openmode mode): Stream(streamId) {
         fstream.open(filePath, mode);
-        logInfoF("Opened file %s", filePath.c_str()); // TODO does this get here if the file open fails?
+        logInfoF("Opened file %s with mode %d", filePath.c_str(), mode); // TODO does this get here if the file open fails?
         isReadable = ((mode & std::ios_base::in) != 0);
         isWritable = ((mode & std::ios_base::out) != 0);
-        logInfoF("isReadable: %s, isWritable: %s", isReadable ? "true" : "false", isWritable ? "true" : "false");
+        bool isBinary = ((mode & std::ios_base::binary) != 0);
+
+        logInfoF("isReadable: %s, isWritable: %s, isBinary: %s",
+                isReadable ? "true" : "false",
+                isWritable ? "true" : "false",
+                isBinary ? "true" : "false");
     }
 
     ~FileStream() override {

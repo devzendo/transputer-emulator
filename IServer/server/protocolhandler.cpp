@@ -363,10 +363,10 @@ void ProtocolHandler::reqOpen() {
             break;
         // Unsure what to do for these types, so log and continue...
         case REQ_OPEN_TYPE_VARIABLE:
-            logInfoF("Opening %s for type VARIABLE", filePath.c_str());
+            logWarnF("Opening %s for type VARIABLE", filePath.c_str());
             break;
         case REQ_OPEN_TYPE_FIXED:
-            logInfoF("Opening %s for type FIXED", filePath.c_str());
+            logWarnF("Opening %s for type FIXED", filePath.c_str());
             break;
         default:
             logWarnF("Unknown open type %02X", openType);
