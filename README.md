@@ -46,7 +46,13 @@ Second release:
 * Note that the IServer's file handling does not yet prevent directory traversal vulnerabilities. To be corrected.
 * Converting older C code (that's not very portable) to C++14 (that hopefully is more portable).
 * Upgrade macOS build from El Capitan to Mojave.
-
+* eForth requires the following facilities of IServer (it currently accesses a UART; these routines must be changed
+  to use IServer protocol on Link 0):
+  * URD: Read and wait (odd return system)
+  * ?RX: Return input character and indication of whether there is any input available
+  * TX!: Send output character
+  * !IO: Initialise UART
+  
 Third release:
 * Capable of running eForth.
 * Note that the IServer's file handling does not yet prevent directory traversal vulnerabilities. To be corrected.
