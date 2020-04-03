@@ -28,3 +28,7 @@ add_test(NAME testfilesystem COMMAND testfilesystem)
 add_executable(testmisc testmisc.cpp)
 target_link_libraries(testmisc parachutedev gtest gmock_main)
 add_test(NAME testmisc COMMAND testmisc)
+
+add_executable(testcharacterisation testcharacterisation.cpp)
+target_link_libraries(testcharacterisation testshared gtest gmock_main)
+add_test(NAME testcharacterisation COMMAND testcharacterisation)

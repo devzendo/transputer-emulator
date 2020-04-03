@@ -447,28 +447,10 @@ TEST_F(TestProtocolHandler, OpenOutputOpensAFileAndReturnsAStreamThatCanBeWritte
     EXPECT_EQ(readFileContents(testFilePath), "ABCD");
 }
 
-// Binary files only make a distinction on Windows; text and binary processing is identical on OSX/Linux
-
-std::string writeHelloWorldWithNewlines() {
-    std::string testFileName = "testfile.txt";
-    std::string testFilePath = pathJoin(tempdir(), testFileName);
-    std::ios::openmode iosOpenMode = (std::ios_base::out | std::ios_base::trunc);
-    std::fstream fs(testFilePath, iosOpenMode);
-    fs << "hello\nworld\n";
-    fs.flush();
-    fs.close();
-
-    return testFilePath;
-}
+// Text files only make a distinction on Windows; text and binary processing is identical on OSX/Linux
+// Also see tests in testcharacterisation.cpp
 
 #if defined(PLATFORM_WINDOWS)
-
-TEST_F(TestProtocolHandler, CharacteriseCPlusPlusTextHandlingOnWindows)
-{
-    std::string testFilePath = writeHelloWorldWithNewlines();
-
-    EXPECT_EQ(readFileContents(testFilePath), "hello\r\nworld\r\n");
-}
 
 TEST_F(TestProtocolHandler, OpenTextTranslatesLineFeedToCarriageReturnLineFeedOnWindows)
 {
@@ -511,15 +493,6 @@ TEST_F(TestProtocolHandler, OpenTextTranslatesLineFeedToCarriageReturnLineFeedOn
     // Text mode should expand the written \n to \r\n on Windows
     EXPECT_EQ(readFileContents(testFilePath), "A\r\nB");
 }
-#endif
-
-#if defined(PLATFORM_OSX) || defined(PLATFORM_LINUX)
-TEST_F(TestProtocolHandler, CharacteriseCPlusPlusTextHandlingOnNonWindows)
-{
-    std::string testFilePath = writeHelloWorldWithNewlines();
-    EXPECT_EQ(readFileContents(testFilePath), "hello\nworld\n");
-}
-
 #endif
 
 // TODO binary files
