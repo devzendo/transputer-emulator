@@ -22,19 +22,20 @@
 
 
 class TestCharacterisation : public TestTempFiles, public ::testing::Test {
+public:
+    std::string writeHelloWorldWithNewlines() {
+        std::string testFileName = createRandomTempFileName();
+        std::string testFilePath = pathJoin(tempdir(), testFileName);
+        std::ios::openmode iosOpenMode = (std::ios_base::out | std::ios_base::trunc);
+        std::fstream fs(testFilePath, iosOpenMode);
+        fs << "hello\nworld\n";
+        fs.flush();
+        fs.close();
+
+        return testFilePath;
+    }
 };
 
-std::string writeHelloWorldWithNewlines() {
-    std::string testFileName = "testfile.txt";
-    std::string testFilePath = pathJoin(tempdir(), testFileName);
-    std::ios::openmode iosOpenMode = (std::ios_base::out | std::ios_base::trunc);
-    std::fstream fs(testFilePath, iosOpenMode);
-    fs << "hello\nworld\n";
-    fs.flush();
-    fs.close();
-
-    return testFilePath;
-}
 
 #if defined(PLATFORM_WINDOWS)
 TEST_F(TestCharacterisation, CharacteriseCPlusPlusTextHandlingOnWindows)
