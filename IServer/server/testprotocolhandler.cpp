@@ -507,7 +507,7 @@ TEST_F(TestProtocolHandler, OpenTextTranslatesLineFeedToCarriageReturnLineFeedOn
 #endif
 
 #if defined(PLATFORM_OSX) || defined(PLATFORM_LINUX)
-TEST_F(TestProtocolHandler, OpenTextTranslatesLineFeedToCarriageReturnLineFeedOnNonWindows)
+TEST_F(TestProtocolHandler, OpenTextDoesNotTranslateLineFeedToCarriageReturnLineFeedOnNonWindows)
 {
     std::string writtenString = "A\nB";
 
