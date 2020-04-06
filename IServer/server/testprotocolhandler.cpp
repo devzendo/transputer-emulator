@@ -12,6 +12,7 @@
 //------------------------------------------------------------------------------
 
 #include <fstream>
+#include <hexdump.h>
 #include "log.h"
 #include "platform.h"
 #include "protocolhandler.h"
@@ -502,7 +503,10 @@ TEST_F(TestProtocolHandler, OpenTextTranslatesLineFeedToCarriageReturnLineFeedOn
 
     std::string testFilePath = openTextOutputTranslation(writtenString, expectedWrittenBytes, readString);
 
-    EXPECT_EQ(readFileContents(testFilePath), readString);
+    const std::string &contents = readFileContents(testFilePath);
+    logDebug("The read data is:");
+    hexdump((unsigned char *) contents.c_str(), contents.size());
+    EXPECT_EQ(contents, readString);
 }
 #endif
 
@@ -518,7 +522,10 @@ TEST_F(TestProtocolHandler, OpenTextDoesNotTranslateLineFeedToCarriageReturnLine
 
     std::string testFilePath = openTextOutputTranslation(writtenString, expectedWrittenBytes, readString);
 
-    EXPECT_EQ(readFileContents(testFilePath), readString);
+    const std::string &contents = readFileContents(testFilePath);
+    logDebug("The read data is:");
+    hexdump((unsigned char *) contents.c_str(), contents.size());
+    EXPECT_EQ(contents, readString);
 }
 #endif
 
