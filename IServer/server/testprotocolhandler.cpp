@@ -11,7 +11,6 @@
 //
 //------------------------------------------------------------------------------
 
-#include <cstdio>
 #include <fstream>
 #include "log.h"
 #include "platform.h"
