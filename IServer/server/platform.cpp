@@ -238,9 +238,12 @@ WORD16 Platform::writeStream(int streamId, WORD16 size, BYTE8 *buffer) noexcept(
         logWarnF("Attempt to write to non-writable stream #%d", streamId);
         throw std::runtime_error("Stream not writable");
     }
+    logDebugF("Writing %d bytes to stream #%d", size, streamId);
     // TODO enforce last io op must be write - can't do this until we have open, and read.
     // Needs to be validated at the platform level first, then adapted to the protocol handler.
-    return pStream->write(size, buffer);
+    WORD16 written = pStream->write(size, buffer);
+    logDebugF("Wrote %d bytes to stream #%d", written, streamId);
+    return written;
 }
 
 WORD16 Platform::readStream(int streamId, WORD16 size, BYTE8 *buffer) noexcept(false) {
@@ -258,7 +261,10 @@ WORD16 Platform::readStream(int streamId, WORD16 size, BYTE8 *buffer) noexcept(f
         throw std::runtime_error("Stream not readable");
     }
     // TODO enforce last io op must be read
-    return pStream->read(size, buffer);
+    logDebugF("Reading %d bytes to stream #%d", size, streamId);
+    WORD16 read = pStream->read(size, buffer);
+    logDebugF("Read %d bytes to stream #%d", read, streamId);
+    return read;
 }
 
 WORD16 Platform::openFileStream(const std::string & filePath, const std::ios_base::openmode mode) {
@@ -286,9 +292,11 @@ bool Platform::closeStream(const int streamId) {
         logWarnF("Attempt to close unopen stream #%d", streamId);
         throw std::invalid_argument("Stream id not open");
     }
+    logDebugF("Closing stream #%d", streamId);
     pStream->close();
     std::iostream &iostream = pStream->getIOStream();
     bool closeOk = !iostream.fail();
+    logDebugF("Stream #%d %s", streamId, (closeOk ? "closed" : "failed to close correctly"));
     myFiles[streamId].reset();
     return closeOk;
 }

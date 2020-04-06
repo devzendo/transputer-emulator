@@ -248,12 +248,11 @@ TEST_F(TestPlatform, FileOpenStreamForWrite) {
 
     std::vector<BYTE8> writeBuffer = {'A', 'B', 'C', 'D'};
 
-    auto read = platform->writeStream(fileStreamId, writeBuffer.size(), writeBuffer.data());
+    auto written = platform->writeStream(fileStreamId, writeBuffer.size(), writeBuffer.data());
     // Files aren't flushed by default.. so close it.
     platform->closeStream(fileStreamId);
 
-    EXPECT_EQ(read, 4);
-
+    EXPECT_EQ(written, 4);
     EXPECT_EQ("ABCD", readFileContents(testFilePath));
 }
 
