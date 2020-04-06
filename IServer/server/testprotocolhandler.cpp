@@ -229,6 +229,47 @@ protected:
         WORD32 streamId = this->get32(openResponse, 3);
         return streamId;
     }
+
+    // Common test code for testing \n translation in 'open text for output' tests
+    std::string openTextOutputTranslation(const std::string &writtenString, const WORD16 expectedWrittenBytes, const std::string &readString) {
+        std::string testFileName = createRandomTempFileName();
+        std::string testFilePath = pathJoin(tempdir(), testFileName);
+
+        std::vector<BYTE8> openFrame = {REQ_OPEN};
+        appendString(openFrame, testFileName);
+        append8(openFrame, REQ_OPEN_TYPE_TEXT);
+        append8(openFrame, REQ_OPEN_MODE_OUTPUT);
+        sendFrame(padFrame(openFrame));
+
+        std::vector<BYTE8> openResponse = readResponseFrame();
+        checkResponseFrameTag(openResponse, RES_SUCCESS);
+        checkResponseFrameSize(openResponse, 6);
+        WORD32 streamId = get32(openResponse, 3);
+        EXPECT_EQ(streamId, 3); // First available stream id after 0,1,2 (stdout, stdin, stderr)
+
+        // write A\nB to streamId 3
+        std::vector<BYTE8> writeFrame = {REQ_WRITE};
+        append32(writeFrame, streamId);
+        appendString(writeFrame, writtenString);
+        sendFrame(padFrame(writeFrame));
+
+        std::vector<BYTE8> writeResponse = readResponseFrame();
+        checkResponseFrameTag(writeResponse, RES_SUCCESS);
+        checkResponseFrameSize(writeResponse, 4); // RES_SUCCESS + 0 + 0 + 0-pad
+        WORD16 written = get16(writeResponse, 3);
+        EXPECT_EQ(written, expectedWrittenBytes);
+
+        // close streamId 3
+        std::vector<BYTE8> closeFrame = {REQ_CLOSE};
+        append32(closeFrame, streamId);
+        sendFrame(padFrame(closeFrame));
+
+        std::vector<BYTE8> closeResponse = readResponseFrame();
+        checkResponseFrameTag(closeResponse, RES_SUCCESS);
+        checkResponseFrameSize(closeResponse, 2); // RES_SUCCESS + 0-pad
+
+        return testFilePath;
+    }
 };
 
 // FRAME HANDLING
@@ -450,47 +491,34 @@ TEST_F(TestProtocolHandler, OpenOutputOpensAFileAndReturnsAStreamThatCanBeWritte
 // Also see tests in testcharacterisation.cpp
 
 #if defined(PLATFORM_WINDOWS)
-
 TEST_F(TestProtocolHandler, OpenTextTranslatesLineFeedToCarriageReturnLineFeedOnWindows)
 {
-    std::string testFileName = createRandomTempFileName();
-    std::string testFilePath = pathJoin(tempdir(), testFileName);
+    std::string writtenString = "A\nB";
 
-    std::vector<BYTE8> openFrame = {REQ_OPEN};
-    appendString(openFrame, testFileName);
-    append8(openFrame, REQ_OPEN_TYPE_TEXT);
-    append8(openFrame, REQ_OPEN_MODE_OUTPUT);
-    sendFrame(padFrame(openFrame));
-
-    std::vector<BYTE8> openResponse = readResponseFrame();
-    checkResponseFrameTag(openResponse, RES_SUCCESS);
-    checkResponseFrameSize(openResponse, 6);
-    WORD32 streamId = get32(openResponse, 3);
-    EXPECT_EQ(streamId, 3); // First available stream id after 0,1,2 (stdout, stdin, stderr)
-
-    // write A\nB to streamId 3
-    std::vector<BYTE8> writeFrame = {REQ_WRITE};
-    append32(writeFrame, streamId);
-    appendString(writeFrame, "A\nB");
-    sendFrame(padFrame(writeFrame));
-
-    std::vector<BYTE8> writeResponse = readResponseFrame();
-    checkResponseFrameTag(writeResponse, RES_SUCCESS);
-    checkResponseFrameSize(writeResponse, 4); // RES_SUCCESS + 0 + 0 + 0-pad
-    WORD16 written = get16(writeResponse, 3);
-    EXPECT_EQ(written, 4); // A\nB is expanded to A\r\nB
-
-    // close streamId 3
-    std::vector<BYTE8> closeFrame = {REQ_CLOSE};
-    append32(closeFrame, streamId);
-    sendFrame(padFrame(closeFrame));
-
-    std::vector<BYTE8> closeResponse = readResponseFrame();
-    checkResponseFrameTag(closeResponse, RES_SUCCESS);
-    checkResponseFrameSize(closeResponse, 2); // RES_SUCCESS + 0-pad
-
+    // A\nB is expanded to A\r\nB
+    WORD16 expectedWrittenBytes = 4;
     // Text mode should expand the written \n to \r\n on Windows
-    EXPECT_EQ(readFileContents(testFilePath), "A\r\nB");
+    std::string readString = "A\r\nB";
+
+    std::string testFilePath = openTextOutputTranslation(writtenString, expectedWrittenBytes, readString);
+
+    EXPECT_EQ(readFileContents(testFilePath), readString);
+}
+#endif
+
+#if defined(PLATFORM_OSX) || defined(PLATFORM_LINUX)
+TEST_F(TestProtocolHandler, OpenTextTranslatesLineFeedToCarriageReturnLineFeedOnNonWindows)
+{
+    std::string writtenString = "A\nB";
+
+    // A\nB is kept as is
+    WORD16 expectedWrittenBytes = 3;
+    // Text mode should not expand the written \n to \r\n on Non-Windows
+    std::string readString = "A\nB";
+
+    std::string testFilePath = openTextOutputTranslation(writtenString, expectedWrittenBytes, readString);
+
+    EXPECT_EQ(readFileContents(testFilePath), readString);
 }
 #endif
 
