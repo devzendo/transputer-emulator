@@ -378,7 +378,7 @@ TEST_F(TestProtocolHandler, UnimplementedFrame)
 
 TEST_F(TestProtocolHandler, OpenInputOpensAFileAndReturnsAStream)
 {
-    std::string testFileName = "testfile.txt";
+    std::string testFileName = createRandomTempFileName();
     std::string testFilePath = pathJoin(tempdir(), testFileName);
     createTempFile(testFilePath, "ABCD");
 
@@ -402,7 +402,7 @@ TEST_F(TestProtocolHandler, OpenInputOpensAFileAndReturnsAStream)
 
 TEST_F(TestProtocolHandler, OpenOutputOpensAFileAndReturnsAStreamThatCanBeWrittenTo)
 {
-    std::string testFileName = "testfile.txt";
+    std::string testFileName = createRandomTempFileName();
     std::string testFilePath = pathJoin(tempdir(), testFileName);
 
     // Open
@@ -453,7 +453,7 @@ TEST_F(TestProtocolHandler, OpenOutputOpensAFileAndReturnsAStreamThatCanBeWritte
 
 TEST_F(TestProtocolHandler, OpenTextTranslatesLineFeedToCarriageReturnLineFeedOnWindows)
 {
-    std::string testFileName = "testfile.txt";
+    std::string testFileName = createRandomTempFileName();
     std::string testFilePath = pathJoin(tempdir(), testFileName);
 
     std::vector<BYTE8> openFrame = {REQ_OPEN};
@@ -504,7 +504,7 @@ TEST_F(TestProtocolHandler, OpenTextTranslatesLineFeedToCarriageReturnLineFeedOn
 
 // REQ_CLOSE
 TEST_F(TestProtocolHandler, CloseOpenFileClosesWithSuccessThenFailsIfAlreadyClosed) {
-    std::string testFileName = "testfile.txt";
+    std::string testFileName = createRandomTempFileName();
     std::string testFilePath = pathJoin(tempdir(), testFileName);
 
     std::vector<BYTE8> openFrame = {REQ_OPEN};
@@ -552,7 +552,7 @@ TEST_F(TestProtocolHandler, CloseFailsIfNeverOpened) {
 
 TEST_F(TestProtocolHandler, CloseFailsIfUnderlyingCloseFails)
 {
-    std::string testFileName = "testfile.txt";
+    std::string testFileName = createRandomTempFileName();
     std::string testFilePath = pathJoin(tempdir(), testFileName);
 
     std::vector<BYTE8> openFrame = {REQ_OPEN};
@@ -580,7 +580,7 @@ TEST_F(TestProtocolHandler, CloseFailsIfUnderlyingCloseFails)
 }
 
 TEST_F(TestProtocolHandler, CloseNullifiesStreamsSoTheyCanBeReallocated) {
-    std::string testFileName = "testfile.txt";
+    std::string testFileName = createRandomTempFileName();
     std::string testFilePath = pathJoin(tempdir(), testFileName);
 
     std::vector<BYTE8> firstOpenFrame = {REQ_OPEN};

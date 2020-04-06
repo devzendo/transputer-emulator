@@ -27,8 +27,7 @@ protected:
     PlatformFactory *platformFactory = nullptr;
     Platform *platform = nullptr;
     BYTE8 *sampleBuf = (unsigned char *) "12345";
-    std::string testFileName = "testfile.txt";
-    std::string testFilePath = pathJoin(tempdir(), testFileName);
+    std::string testFilePath = createRandomTempFilePath();
 
     void SetUp() override {
         setLogLevel(LOGLEVEL_DEBUG);
