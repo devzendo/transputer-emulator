@@ -1,6 +1,6 @@
 //------------------------------------------------------------------------------
 //
-// File        : testprotocol.cpp
+// File        : testprotocolhandler.cpp
 // Description : Tests the deserialisation of the IServer protocol
 // License     : Apache License v2.0 - see LICENSE.txt for more details
 // Created     : 12/08/2019
