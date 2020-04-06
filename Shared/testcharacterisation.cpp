@@ -39,8 +39,7 @@ public:
 TEST_F(TestCharacterisation, CharacteriseCPlusPlusTextHandlingOnWindows)
 {
     std::string testFilePath = writeHelloWorldWithNewlines();
-
-    EXPECT_EQ(TestTempFiles::readFileContents(testFilePath), "hello\r\nworld\r\n");
+    EXPECT_EQ(readFileContents(testFilePath), "hello\r\nworld\r\n");
 }
 #endif
 
