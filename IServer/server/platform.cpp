@@ -148,12 +148,16 @@ WORD16 Stream::write(WORD16 size, BYTE8 *buffer) {
 
     // Original that gets the written length but doesn't honour text translation:
     // WORD16 written = stream.rdbuf()->sputn(reinterpret_cast<const char *>(buffer), size);
-    //
-    // Still doesn't honour text translation:
-    // stream.write(reinterpret_cast<const char *>(buffer), size);
-    
-    stream << buffer;
-    WORD16 written = size; // LIAR!! C++ stream abstraction is pants...
+
+    // WOZERE test is expecting written to be expanded
+    size_t before = stream.tellp();
+    stream.write(reinterpret_cast<const char *>(buffer), size);
+    WORD16 written = 0;
+    if (stream.rdstate() != 0) {
+        size_t after = stream.tellp();
+        written = after - before;
+    }
+//    WORD16 written = size; // LIAR!! C++ stream abstraction is pants...
 
     // Amazingly, you can't find out how many bytes you've actually written using
     // stream.write(reinterpret_cast<const char *>(buffer), size);
@@ -164,7 +168,7 @@ WORD16 Stream::write(WORD16 size, BYTE8 *buffer) {
     // throwing the amount away. Sheesh, C++!
     if (written != size) {
         logWarnF("Failed to write %d bytes from stream #%d, wrote %d bytes instead", size, streamId, written);
-        stream.setstate(std::ios::badbit);
+//        stream.setstate(std::ios::badbit);
     } else {
         if (streamId == 1 || streamId == 2) {
             stream.flush();
