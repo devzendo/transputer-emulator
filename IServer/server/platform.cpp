@@ -153,7 +153,7 @@ WORD16 Stream::write(WORD16 size, BYTE8 *buffer) {
     size_t before = stream.tellp();
     stream.write(reinterpret_cast<const char *>(buffer), size);
     WORD16 written = 0;
-    if (stream.rdstate() != 0) {
+    if (stream.rdstate() == 0) {
         stream.flush();
         size_t after = stream.tellp();
         written = after - before;
