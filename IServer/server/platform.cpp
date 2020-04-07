@@ -144,7 +144,11 @@ Stream::Stream(const int _streamId) {
 
 WORD16 Stream::write(WORD16 size, BYTE8 *buffer) {
     std::iostream & stream = getIOStream();
-    WORD16 written = stream.rdbuf()->sputn(reinterpret_cast<const char *>(buffer), size);
+    // WOZERE I bet this isn't honouring text translation on Windows...
+
+    //WORD16 written = stream.rdbuf()->sputn(reinterpret_cast<const char *>(buffer), size);
+    stream.write(reinterpret_cast<const char *>(buffer), size);
+    WORD16 written = size; // LIAR!! C++ stream abstraction is pants...
     // Amazingly, you can't find out how many bytes you've actually written using
     // stream.write(reinterpret_cast<const char *>(buffer), size);
     // There's an approach using tellp() to find out how much we actually wrote, shown at

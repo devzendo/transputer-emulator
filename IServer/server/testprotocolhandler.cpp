@@ -527,6 +527,8 @@ TEST_F(TestProtocolHandler, OpenTextDoesNotTranslateLineFeedToCarriageReturnLine
     hexdump((unsigned char *) contents.c_str(), contents.size());
     EXPECT_EQ(contents, readString);
 }
+// TODO write a file with A\r\nB on Windows, open text and read, should get A\nB ? Add characterisation.
+// TODO same for non-Windows
 #endif
 
 // TODO binary files
