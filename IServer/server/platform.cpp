@@ -147,18 +147,31 @@ WORD16 Stream::write(WORD16 size, BYTE8 *buffer) {
     // WOZERE I bet this isn't honouring text translation on Windows...
 
     // Original that gets the written length but doesn't honour text translation:
-    // WORD16 written = stream.rdbuf()->sputn(reinterpret_cast<const char *>(buffer), size);
+    WORD16 written = stream.rdbuf()->sputn(reinterpret_cast<const char *>(buffer), size);
+    // stream.rdbuf()->sputn(buffer, size) allows the buffer being replaced in tests for flushing and truncated writes.
+    // but strangely does not honour text translation on windows.
+    // stream.write(buffer, size) honours text translation but does not allow the buffer to be replaced in tests - but
+    // the implementation of write on macos just calls rdbuf()->sputn(buffer, size). Presumably it's different on
+    // Windows.
+    //
+    // The 'tellp() around' hack is awful and is not reliable on failure.
+    //
+    // So I have two choices:
+    // 1) Allow buffers to be replaced in tests but lose text translation.
+    // 2) Just use write, allowing text translation, but losing ability to replace buffers in testing (can't sense
+    // flushing and truncated writes), and losing ability to sense how much data was actually written (because the
+    // iostream abstraction introduces lossage).
 
-    // WOZERE test is expecting written to be expanded
-    size_t before = stream.tellp();
-    stream.write(reinterpret_cast<const char *>(buffer), size);
-    WORD16 written = 0;
-    if (stream.rdstate() == 0) {
-        stream.flush();
-        size_t after = stream.tellp();
-        written = after - before;
-    }
-//    WORD16 written = size; // LIAR!! C++ stream abstraction is pants...
+    // Can't reliably get written length, or sense flush/truncated writes, but get text translation..
+//    size_t before = stream.tellp();
+//    stream.write(reinterpret_cast<const char *>(buffer), size);
+//    logDebugF("The stream rdstate is %d", stream.rdstate());
+//    if (stream.rdstate() != 0) {
+//        logDebug("after write, rdstate indicates error");
+//        stream.clear();
+//    }
+//    size_t after = stream.tellp();
+//    WORD16 written = after - before;
 
     // Amazingly, you can't find out how many bytes you've actually written using
     // stream.write(reinterpret_cast<const char *>(buffer), size);
@@ -169,7 +182,6 @@ WORD16 Stream::write(WORD16 size, BYTE8 *buffer) {
     // throwing the amount away. Sheesh, C++!
     if (written != size) {
         logWarnF("Failed to write %d bytes from stream #%d, wrote %d bytes instead", size, streamId, written);
-//        stream.setstate(std::ios::badbit);
     } else {
         if (streamId == 1 || streamId == 2) {
             stream.flush();
