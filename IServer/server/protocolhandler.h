@@ -58,6 +58,7 @@ private:
     void reqClose();
     void reqRead();
     void reqWrite();
+    void reqGetKey();
     void reqExit();
     void reqId();
 };

@@ -249,9 +249,10 @@ bool ProtocolHandler::requestResponse() {
 //        case REQ_PUTEOF: {
 //            break;
 //        }
-//        case REQ_GETKEY: {
-//            break;
-//        }
+        case REQ_GETKEY: {
+            reqGetKey();
+            break;
+        }
 //        case REQ_POLLKEY: {
 //            break;
 //        }
@@ -472,6 +473,36 @@ void ProtocolHandler::reqWrite() {
         // TODO if streamId == 1 or 2, flush (test after open done, so we can correctly sense presence/absence of flush call on platform
         codec.put(RES_SUCCESS);
         codec.put((WORD16) wrote);
+    } catch (const std::range_error &e) {
+        logWarn(e.what());
+        codec.put(RES_BADID);
+        codec.put((WORD16) 0);
+    } catch (const std::invalid_argument &e) {
+        logWarn(e.what());
+        codec.put(RES_BADID);
+        codec.put((WORD16) 0);
+    }
+}
+
+void ProtocolHandler::reqGetKey() {
+    const WORD32 streamId = FILE_STDIN;
+    const WORD16 size = 1;
+    try {
+        logDebug("Get key from stream #1");
+        // Read directly into the transaction buffer, but don't know whether this'll succeed, nor how much will
+        // actually be read, so can't fill those in yet... don't want to copy data around...
+        // Note that use of writeOffset does NOT change the writeFrameIndex.
+        BYTE8 *dataBuffer = (BYTE8 *) codec.writeOffset(3);
+        WORD16 read = myPlatform.readStream(streamId, size, dataBuffer);
+        // Offsets into the transaction buffer...
+        // 0 frame size lsb
+        // 1 frame size msb
+        // 2 RES_SUCCESS
+        // 3 key - where the above call to readStream has stored it without moving the index from offset 2
+        logDebugF("Read %d bytes from stream #%d", read, streamId);
+        codec.put(RES_SUCCESS); // direct read into writeOffset(3) above didn't change writeFrameIndex
+        // The codec needs to know how much data was read into writeOffset(3) above so it can fill in the frame size.
+        codec.advance(read);
     } catch (const std::range_error &e) {
         logWarn(e.what());
         codec.put(RES_BADID);

@@ -26,6 +26,7 @@ In active development:
 * Converting the NodeServer to be IServer compatible. Similarly, "Hello World".
 ** TODO:
 ** REQ_WRITE/REQ_READ needs to validate that the last op was of the right type.
+** Translation of line feeds when dealing with text files (on Windows) is broken.
 
 Roadmap
 -------
@@ -42,6 +43,7 @@ Second release:
   * Open
   * Read
   * Write
+  * Get Key
   * Close
 * Note that the IServer's file handling does not yet prevent directory traversal vulnerabilities. To be corrected.
 * Converting older C code (that's not very portable) to C++14 (that hopefully is more portable).

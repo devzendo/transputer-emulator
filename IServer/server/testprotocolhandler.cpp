@@ -922,6 +922,29 @@ TEST_F(TestProtocolHandler, WriteZero)
 // REQ_PUTREC
 // REQ_PUTEOF
 // REQ_GETKEY
+
+TEST_F(TestProtocolHandler, GetKey)
+{
+    // Redirect stdin stream from a membuf... the REQ_GETKEY will read from there, a single byte.
+    uint8_t buf[] = { 'A' };
+    membuf mbuf(buf, 1);
+    const int inputStreamId = 0;
+    stubPlatform._setStreamBuf(inputStreamId, &mbuf);
+
+    // Now REQ_GETKEY...
+    std::vector<BYTE8> getKeyFrame = {REQ_GETKEY};
+    std::vector<BYTE8> padded = padFrame(getKeyFrame);
+    bool wasSensedAsExitFrame = checkGoodFrame(padded);
+    EXPECT_FALSE(wasSensedAsExitFrame);
+    EXPECT_EQ(handler->unimplementedFrameCount(), 0L); // it is an implemented tag
+
+    std::vector<BYTE8> response = readResponseFrame();
+    EXPECT_EQ(response.size(), 4);
+    checkResponseFrameTag(response, RES_SUCCESS);
+    checkResponseFrameSize(response, 2); // RES_SUCCESS + A (no padding)
+    EXPECT_EQ((int)response[3], 0x41);
+}
+
 // REQ_POLLKEY
 
 // REQ_GETENV
