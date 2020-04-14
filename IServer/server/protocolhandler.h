@@ -59,6 +59,7 @@ private:
     void reqRead();
     void reqWrite();
     void reqGetKey();
+    void reqPollKey();
     void reqExit();
     void reqId();
 };

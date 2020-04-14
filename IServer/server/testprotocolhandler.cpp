@@ -947,6 +947,42 @@ TEST_F(TestProtocolHandler, GetKey)
 
 // REQ_POLLKEY
 
+TEST_F(TestProtocolHandler, PollKeyNothingAvailable)
+{
+    // Do not 'press any keys'
+
+    // Now REQ_POLLKEY...
+    std::vector<BYTE8> pollKeyFrame = {REQ_POLLKEY};
+    std::vector<BYTE8> padded = padFrame(pollKeyFrame);
+    bool wasSensedAsExitFrame = checkGoodFrame(padded);
+    EXPECT_FALSE(wasSensedAsExitFrame);
+    EXPECT_EQ(handler->unimplementedFrameCount(), 0L); // it is an implemented tag
+
+    std::vector<BYTE8> response = readResponseFrame();
+    EXPECT_EQ(response.size(), 4);
+    checkResponseFrameTag(response, RES_ERROR);
+    checkResponseFrameSize(response, 2); // RES_ERROR + padding
+}
+
+TEST_F(TestProtocolHandler, PollKeySomethingAvailable)
+{
+    // Press A key..
+    stubPlatform.putKeyboardChar('A');
+
+    // Now REQ_POLLKEY...
+    std::vector<BYTE8> pollKeyFrame = {REQ_POLLKEY};
+    std::vector<BYTE8> padded = padFrame(pollKeyFrame);
+    bool wasSensedAsExitFrame = checkGoodFrame(padded);
+    EXPECT_FALSE(wasSensedAsExitFrame);
+    EXPECT_EQ(handler->unimplementedFrameCount(), 0L); // it is an implemented tag
+
+    std::vector<BYTE8> response = readResponseFrame();
+    EXPECT_EQ(response.size(), 4);
+    checkResponseFrameTag(response, RES_SUCCESS);
+    checkResponseFrameSize(response, 2); // RES_SUCCESS + A (no padding)
+    EXPECT_EQ((int)response[3], 0x41);
+}
+
 // REQ_GETENV
 // REQ_TIME
 // REQ_SYSTEM

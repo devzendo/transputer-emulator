@@ -11,6 +11,8 @@
 //
 //------------------------------------------------------------------------------
 
+#define WIN32_LEAN_AND_MEAN 1
+#include <conio.h>
 #include <exception>
 #include <stdexcept>
 // Thank you https://stackoverflow.com/questions/49001326/convert-the-linux-open-read-write-close-functions-to-work-on-windows
@@ -33,17 +35,15 @@ WindowsPlatform::~WindowsPlatform() {
 }
 
 bool WindowsPlatform::isConsoleCharAvailable() {
-    return false;
+    return _kbhit();
 }
 
 BYTE8 WindowsPlatform::getConsoleChar() {
-    return 0;
+    return _getch();
 }
 
 void WindowsPlatform::putConsoleChar(BYTE8 const ch) {
-    // TODO is there a setvbuf for windows??
-    // TODO might be better to setvbuf on stdout, and undo this on terminate. Write there?
-    fputc(ch, stderr);
+    _putch(ch);
 }
 
 

@@ -253,9 +253,10 @@ bool ProtocolHandler::requestResponse() {
             reqGetKey();
             break;
         }
-//        case REQ_POLLKEY: {
-//            break;
-//        }
+        case REQ_POLLKEY: {
+            reqPollKey();
+            break;
+        }
 
 //        case REQ_GETENV: {
 //            break;
@@ -503,6 +504,35 @@ void ProtocolHandler::reqGetKey() {
         codec.put(RES_SUCCESS); // direct read into writeOffset(3) above didn't change writeFrameIndex
         // The codec needs to know how much data was read into writeOffset(3) above so it can fill in the frame size.
         codec.advance(read);
+    } catch (const std::range_error &e) {
+        logWarn(e.what());
+        codec.put(RES_BADID);
+        codec.put((WORD16) 0);
+    } catch (const std::invalid_argument &e) {
+        logWarn(e.what());
+        codec.put(RES_BADID);
+        codec.put((WORD16) 0);
+    }
+}
+
+void ProtocolHandler::reqPollKey() {
+    const WORD32 streamId = FILE_STDIN;
+    const WORD16 size = 1;
+    try {
+        logDebug("Poll key from stream #1");
+        if (myPlatform.isConsoleCharAvailable()) {
+            // Offsets into the transaction buffer...
+            // 0 frame size lsb
+            // 1 frame size msb
+            // 2 RES_SUCCESS
+            // 3 key - where the above call to readStream has stored it without moving the index from offset 2
+            codec.put(RES_SUCCESS);
+            unsigned char consoleChar = myPlatform.getConsoleChar();
+            logDebugF("Read console char 0x%x", consoleChar);
+            codec.put(consoleChar);
+        } else {
+            codec.put(RES_ERROR);
+        }
     } catch (const std::range_error &e) {
         logWarn(e.what());
         codec.put(RES_BADID);

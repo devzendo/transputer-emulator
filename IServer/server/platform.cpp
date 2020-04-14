@@ -288,9 +288,9 @@ WORD16 Platform::readStream(int streamId, WORD16 size, BYTE8 *buffer) noexcept(f
         throw std::runtime_error("Stream not readable");
     }
     // TODO enforce last io op must be read
-    logDebugF("Reading %d bytes to stream #%d", size, streamId);
+    logDebugF("Reading %d bytes from stream #%d", size, streamId);
     WORD16 read = pStream->read(size, buffer);
-    logDebugF("Read %d bytes to stream #%d", read, streamId);
+    logDebugF("Read %d bytes from stream #%d", read, streamId);
     return read;
 }
 

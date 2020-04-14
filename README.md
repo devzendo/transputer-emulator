@@ -44,6 +44,7 @@ Second release:
   * Read
   * Write
   * Get Key
+  * Poll Key
   * Close
 * Note that the IServer's file handling does not yet prevent directory traversal vulnerabilities. To be corrected.
 * Converting older C code (that's not very portable) to C++14 (that hopefully is more portable).

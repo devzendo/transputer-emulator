@@ -115,6 +115,7 @@ WORD16 FrameCodec::fillInFrameSize() {
     WORD16 frameSize = (oldWriteFrameIndex - 2);
     put(frameSize);
     myWriteFrameIndex = oldWriteFrameIndex;
+    // TODO enforce minimum frame size of 6 (8 including the two frame size bytes) and maximum of 510 (512 incl size)
     return frameSize;
 }
 
