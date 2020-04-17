@@ -18,6 +18,7 @@ endif(UNIX)
 
 project(transputer-emulator)
 
+
 ########################################################################################################################
 # Build googletest & googlemock
 # Thanks to https://crascit.com/2015/07/25/cmake-gtest/
@@ -55,7 +56,7 @@ enable_testing()
 ########################################################################################################################
 # Build gsl-lite
 # Thanks to 'As external Git project' at https://github.com/gsl-lite/gsl-lite#as-external-git-project
-project( use-gsl-lite LANGUAGES CXX )
+# project( use-gsl-lite LANGUAGES CXX )
 
 # Set default ExternalProject root directory and add gsl-lite:
 set( GSL_LITE_URL https://github.com/gsl-lite/gsl-lite.git )
