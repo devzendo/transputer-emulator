@@ -29,9 +29,9 @@
     </licenses>
 
     <scm>
-        <url>https://github.com/devzendo/transputer-emulator/.git</url>
-        <connection>scm:git:https://github.com/devzendo/transputer-emulator/.git</connection>
-        <developerConnection>scm:git:git@github.com:devzendo/transputer-emulator/.git</developerConnection>
+        <url>https://github.com/devzendo/transputer-emulator.git</url>
+        <connection>scm:git:https://github.com/devzendo/transputer-emulator.git</connection>
+        <developerConnection>scm:git:git@github.com:devzendo/transputer-emulator.git</developerConnection>
     </scm>
 
     <developers>
