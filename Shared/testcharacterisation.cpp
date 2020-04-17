@@ -16,7 +16,7 @@
 #include "platformdetection.h"
 
 #include "gtest/gtest.h"
-#include "testtempfiles.h"
+#include "tempfilesfixture.h"
 
 
 class TestCharacterisation : public TestTempFiles, public ::testing::Test {

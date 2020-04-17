@@ -29,7 +29,7 @@
 #include "gsl/gsl-lite.hpp"
 #include "misc.h"
 
-#include "testtempfiles.h"
+#include "tempfilesfixture.h"
 #include "testexception.h"
 
 class FilesystemTest : public TestTempFiles, public ::testing::Test {

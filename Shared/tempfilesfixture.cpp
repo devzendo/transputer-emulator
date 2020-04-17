@@ -1,6 +1,6 @@
 //------------------------------------------------------------------------------
 //
-// File        : testtempfiles.cpp
+// File        : tempfilesfixture.cpp
 // Description : Mixin class for tests to handle temporary files
 // License     : Apache License v2.0 - see LICENSE.txt for more details
 // Created     : 12/02/2020
@@ -21,7 +21,7 @@
 #include <random>
 #include <chrono>
 #include <fstream>
-#include "testtempfiles.h"
+#include "tempfilesfixture.h"
 #include "log.h"
 #include "misc.h"
 #include "filesystem.h"

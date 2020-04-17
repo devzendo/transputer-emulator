@@ -17,7 +17,7 @@
 #include "memstreambuf.h"
 #include "filesystem.h"
 
-#include "testtempfiles.h"
+#include "tempfilesfixture.h"
 #include "testexception.h"
 
 #include "gtest/gtest.h"

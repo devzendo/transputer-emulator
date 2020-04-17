@@ -22,7 +22,7 @@
 
 #include "gtest/gtest.h"
 #include "memstreambuf.h"
-#include "testtempfiles.h"
+#include "tempfilesfixture.h"
 
 class StubPlatform final : public Platform {
 public:

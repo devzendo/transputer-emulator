@@ -1,6 +1,6 @@
 //------------------------------------------------------------------------------
 //
-// File        : testtempfiles.h
+// File        : tempfilesfixture.h
 // Description : Mixin class for tests to handle temporary files
 // License     : Apache License v2.0 - see LICENSE.txt for more details
 // Created     : 12/02/2020
@@ -11,8 +11,8 @@
 //
 //------------------------------------------------------------------------------
 
-#ifndef _TESTTEMPFILES_H
-#define _TESTTEMPFILES_H
+#ifndef _TEMPFILESFIXTURE_H
+#define _TEMPFILESFIXTURE_H
 
 #include <string>
 #include <vector>
@@ -30,4 +30,4 @@ private:
     std::vector<std::string> createdTempFiles;
 };
 
-#endif // _TESTTEMPFILES_H
+#endif // _TEMPFILESFIXTURE_H
