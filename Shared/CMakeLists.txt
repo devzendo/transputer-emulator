@@ -10,7 +10,7 @@ add_library(parachutedev STATIC log.h log.cpp misc.h misc.cpp hexdump.h hexdump.
         stublink.cpp stublink.h
         filesystem.cpp filesystem.h)
 
-add_library(testshared STATIC tempfilesfixture.h tempfilesfixture.cpp testexception.h)
+add_library(testshared STATIC tempfilesfixture.h tempfilesfixture.cpp exceptionfixture.h)
 target_link_libraries(testshared parachutedev)
 
 add_executable(testtypes testtypes.cpp)

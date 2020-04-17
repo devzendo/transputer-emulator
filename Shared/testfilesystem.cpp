@@ -30,7 +30,7 @@
 #include "misc.h"
 
 #include "tempfilesfixture.h"
-#include "testexception.h"
+#include "exceptionfixture.h"
 
 class FilesystemTest : public TestTempFiles, public ::testing::Test {
 protected:

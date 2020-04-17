@@ -18,7 +18,7 @@
 #include "filesystem.h"
 
 #include "tempfilesfixture.h"
-#include "testexception.h"
+#include "exceptionfixture.h"
 
 #include "gtest/gtest.h"
 

@@ -1,6 +1,6 @@
 //------------------------------------------------------------------------------
 //
-// File        : testexception.h
+// File        : exceptionfixture.h
 // Description : Exception helper routines
 // License     : Apache License v2.0 - see LICENSE.txt for more details
 // Created     : 16/03/2020
@@ -11,8 +11,8 @@
 //
 //------------------------------------------------------------------------------
 
-#ifndef _TESTEXCEPTION_H
-#define _TESTEXCEPTION_H
+#ifndef _EXCEPTIONFIXTURE_H
+#define _EXCEPTIONFIXTURE_H
 
 #include "gtest/gtest.h"
 
@@ -27,4 +27,4 @@
     , etype)
 
 
-#endif // _TESTEXCEPTION_H
+#endif // _EXCEPTIONFIXTURE_H
