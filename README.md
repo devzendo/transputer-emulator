@@ -27,6 +27,7 @@ In active development:
 ** TODO:
 ** REQ_WRITE/REQ_READ needs to validate that the last op was of the right type.
 ** Translation of line feeds when dealing with text files (on Windows) is broken.
+** Switch to release mode, from debug. (CMake, Maven variables)
 
 Roadmap
 -------
