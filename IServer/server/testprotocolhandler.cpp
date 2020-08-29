@@ -12,6 +12,7 @@
 //------------------------------------------------------------------------------
 
 #include <fstream>
+
 #include <hexdump.h>
 #include "log.h"
 #include "platform.h"
@@ -111,7 +112,6 @@ protected:
         unsigned long frameSize = frame.size();
         BYTE8 msLength = frameSize / 256;
         BYTE8 lsLength = frameSize - (256 * msLength);
-        std::cout << "frame length is " << frameSize << " ms length " << (int)msLength << " ls length " << (int)lsLength << std::endl;
         std::vector<BYTE8> frameVector;
         frameVector.push_back(lsLength);
         frameVector.push_back(msLength);
@@ -141,6 +141,11 @@ protected:
         setReadableIserverMessage(frame);
         bool isExit = handler->processFrame();
         return isExit;
+    }
+
+    // Return: true iff the frame sent is an exit frame.
+    bool padAndSendFrame(std::vector<BYTE8> & unpaddedFrame) {
+        return sendFrame(padFrame(unpaddedFrame));
     }
 
     void checkResponseFrameTag(const std::vector<BYTE8> &frame, const BYTE8 expectedResponseFrameTag) {
@@ -442,6 +447,23 @@ TEST_F(TestProtocolHandler, OpenInputOpensAFileAndReturnsAStream)
     EXPECT_EQ((int)response[6], 0x00);
 }
 
+TEST_F(TestProtocolHandler, OpenInputFailsWhenFileDoesNotExist)
+{
+    std::string nonExistantTestFilePath = pathJoin(tempdir(), createRandomTempFileName());
+
+    std::vector<BYTE8> openFrame = {REQ_OPEN};
+    appendString(openFrame, nonExistantTestFilePath);
+    append8(openFrame, REQ_OPEN_TYPE_TEXT);
+    append8(openFrame, REQ_OPEN_MODE_INPUT);
+    padAndSendFrame(openFrame);
+
+    std::vector<BYTE8> response = readResponseFrame();
+    checkResponseFrameTag(response, RES_ERROR);
+    checkResponseFrameSize(response, 4);
+    EXPECT_EQ((int)response[3], 0x00);
+    EXPECT_EQ((int)response[4], 0x00);
+}
+
 TEST_F(TestProtocolHandler, OpenOutputOpensAFileAndReturnsAStreamThatCanBeWrittenTo)
 {
     std::string testFileName = createRandomTempFileName();
@@ -486,6 +508,64 @@ TEST_F(TestProtocolHandler, OpenOutputOpensAFileAndReturnsAStreamThatCanBeWritte
 
     // read file and check it contains ABCD
     EXPECT_EQ(readFileContents(testFilePath), "ABCD");
+}
+
+TEST_F(TestProtocolHandler, OpenOutputCannotBeReadFrom)
+{
+    const std::pair<std::string, std::string> &testFilePathAndName = createRandomTempFilePathContaining();
+    const std::string &testFileName = testFilePathAndName.second;
+
+    // Open
+    std::vector<BYTE8> openFrame = {REQ_OPEN};
+    appendString(openFrame, testFileName);
+    append8(openFrame, REQ_OPEN_TYPE_BINARY);
+    append8(openFrame, REQ_OPEN_MODE_OUTPUT);
+    sendFrame(padFrame(openFrame));
+
+    std::vector<BYTE8> openResponse = readResponseFrame();
+    checkResponseFrameTag(openResponse, RES_SUCCESS);
+    WORD32 streamId = get32(openResponse, 3);
+
+    // Read will fail
+    std::vector<BYTE8> readFrame = {REQ_READ};
+    append32(readFrame, streamId);
+    append16(readFrame, 4);
+    sendFrame(padFrame(readFrame));
+
+    std::vector<BYTE8> readResponse = readResponseFrame();
+    checkResponseFrameTag(readResponse, RES_BADID);
+    checkResponseFrameSize(readResponse, 4); // RES_BADID + 0 + 0 + 0-pad
+    WORD16 read = get16(readResponse, 3);
+    EXPECT_EQ(read, 0);
+}
+
+TEST_F(TestProtocolHandler, OpenInputCannotBeWrittenTo)
+{
+    const std::pair<std::string, std::string> &testFilePathAndName = createRandomTempFilePathContaining("ABCD");
+    const std::string &testFileName = testFilePathAndName.second;
+
+    // Open
+    std::vector<BYTE8> openFrame = {REQ_OPEN};
+    appendString(openFrame, testFileName);
+    append8(openFrame, REQ_OPEN_TYPE_BINARY);
+    append8(openFrame, REQ_OPEN_MODE_INPUT);
+    sendFrame(padFrame(openFrame));
+
+    std::vector<BYTE8> openResponse = readResponseFrame();
+    checkResponseFrameTag(openResponse, RES_SUCCESS);
+    WORD32 streamId = get32(openResponse, 3);
+
+    // Write will fail
+    std::vector<BYTE8> writeFrame = {REQ_WRITE};
+    append32(writeFrame, streamId);
+    append16(writeFrame, 4);
+    sendFrame(padFrame(writeFrame));
+
+    std::vector<BYTE8> writeResponse = readResponseFrame();
+    checkResponseFrameTag(writeResponse, RES_BADID);
+    checkResponseFrameSize(writeResponse, 4); // RES_BADID + 0 + 0 + 0-pad
+    WORD16 written = get16(writeResponse, 3);
+    EXPECT_EQ(written, 0);
 }
 
 // Text files only make a distinction on Windows; text and binary processing is identical on OSX/Linux
@@ -719,7 +799,6 @@ TEST_F(TestProtocolHandler, ReadOk)
 
     // Now REQ_READ...
     std::vector<BYTE8> readFrame = {REQ_READ};
-    // WOZERE get the protocol right for a read
     append32(readFrame, FILE_STDIN);
     append16(readFrame, 4);
     std::vector<BYTE8> padded = padFrame(readFrame);
@@ -732,6 +811,43 @@ TEST_F(TestProtocolHandler, ReadOk)
     EXPECT_EQ((int)response[4], 0x00);
 
     // Expect redirected data...
+    EXPECT_EQ((int)response[5], 'A');
+    EXPECT_EQ((int)response[6], 'B');
+    EXPECT_EQ((int)response[7], 'C');
+    EXPECT_EQ((int)response[8], 'D');
+}
+
+// The read before write and write before read tests (one of them) was failing to read from a file (a real
+// file, not a STDIN stream buffer hack. So, write this test to test that the real world works.
+TEST_F(TestProtocolHandler, ReadOkFromRealFile)
+{
+    const std::pair<std::string, std::string> &testFilePathAndName = createRandomTempFilePathContaining("ABCD");
+    const std::string &testFileName = testFilePathAndName.second;
+
+    // Open (relative to the protocol handler's root dir, i.e. in tests, the tempdir())
+    std::vector<BYTE8> openFrame = {REQ_OPEN};
+    appendString(openFrame, testFileName);
+    append8(openFrame, REQ_OPEN_TYPE_BINARY);
+    append8(openFrame, REQ_OPEN_MODE_INPUT);
+    padAndSendFrame(openFrame);
+
+    const std::vector<BYTE8> &openResponse = readResponseFrame();
+    checkResponseFrameTag(openResponse, RES_SUCCESS);
+    WORD32 streamId = get32(openResponse, 3);
+
+    // Now REQ_READ...
+    std::vector<BYTE8> readFrame = {REQ_READ};
+    append32(readFrame, streamId);
+    append16(readFrame, 4);
+    padAndSendFrame(readFrame);
+
+    std::vector<BYTE8> response = readResponseFrame();
+    checkResponseFrameTag(response, RES_SUCCESS);
+    checkResponseFrameSize(response, 8); // RES_SUCCESS + 4 + 0 + ABCD + 0-pad
+    EXPECT_EQ((int)response[3], 0x04);
+    EXPECT_EQ((int)response[4], 0x00);
+
+    // Expect data from file...
     EXPECT_EQ((int)response[5], 'A');
     EXPECT_EQ((int)response[6], 'B');
     EXPECT_EQ((int)response[7], 'C');
@@ -764,6 +880,46 @@ TEST_F(TestProtocolHandler, ReadTruncated)
     EXPECT_EQ((int)response[5], 'A');
     EXPECT_EQ((int)response[6], 'B');
     EXPECT_EQ((int)response[7], 'C');
+}
+
+TEST_F(TestProtocolHandler, ReadAfterWriteFails)
+{
+    const std::pair<std::string, std::string> &testFilePathAndName = createRandomTempFilePathContaining();
+    const std::string &testFileName = testFilePathAndName.second;
+
+    // Open
+    std::vector<BYTE8> openFrame = {REQ_OPEN};
+    appendString(openFrame, testFileName);
+    append8(openFrame, REQ_OPEN_TYPE_BINARY);
+    append8(openFrame, REQ_OPEN_MODE_NEW_UPDATE);
+    padAndSendFrame(openFrame);
+
+    const std::vector<BYTE8> &openResponse = readResponseFrame();
+    checkResponseFrameTag(openResponse, RES_SUCCESS);
+    WORD32 streamId = get32(openResponse, 3);
+
+    // Write to file...
+    logInfo("Writing to file");
+    std::vector<BYTE8> writeFrame = {REQ_WRITE};
+    append32(writeFrame, streamId);
+    appendString(writeFrame, "ZZXX");
+    padAndSendFrame(writeFrame);
+
+    checkResponseFrameTag(readResponseFrame(), RES_SUCCESS);
+    // Internally, the lastop has been set to WRITE - cannot be directly sensed.
+
+    // Now Read from file, should fail as last IO operation was write.
+    logInfo("Reading from file");
+    std::vector<BYTE8> readFrame = {REQ_READ};
+    append32(readFrame, streamId);
+    append16(readFrame, 4);
+    padAndSendFrame(readFrame);
+
+    std::vector<BYTE8> readResponse = readResponseFrame();
+    checkResponseFrameTag(readResponse, RES_NOPOSN);
+    checkResponseFrameSize(readResponse, 4); // RES_NOPOSN + 0 + 0 + 0-pad
+    EXPECT_EQ((int)readResponse[3], 0x00);
+    EXPECT_EQ((int)readResponse[4], 0x00);
 }
 
 // REQ_WRITE
@@ -848,6 +1004,48 @@ TEST_F(TestProtocolHandler, WriteOk)
     EXPECT_EQ(stringstream.str(), "ABCD");
 }
 
+TEST_F(TestProtocolHandler, WriteOkToRealFile)
+{
+    const std::pair<std::string, std::string> &testFilePathAndName = createRandomTempFilePathContaining();
+    const std::string &testFilePath = testFilePathAndName.first;
+    const std::string &testFileName = testFilePathAndName.second;
+
+    // Open
+    std::vector<BYTE8> openFrame = {REQ_OPEN};
+    appendString(openFrame, testFileName);
+    append8(openFrame, REQ_OPEN_TYPE_BINARY);
+    append8(openFrame, REQ_OPEN_MODE_OUTPUT);
+    padAndSendFrame(openFrame);
+
+    const std::vector<unsigned char> &openResponse = readResponseFrame();
+    checkResponseFrameTag(openResponse, RES_SUCCESS);
+    WORD32 streamId = get32(openResponse, 3);
+
+    // Now REQ_WRITE...
+    std::vector<BYTE8> writeFrame = {REQ_WRITE};
+    append32(writeFrame, streamId);
+    appendString(writeFrame, "ABCD");
+    padAndSendFrame(writeFrame);
+
+    std::vector<BYTE8> writeResponse = readResponseFrame();
+    checkResponseFrameTag(writeResponse, RES_SUCCESS);
+    checkResponseFrameSize(writeResponse, 4); // RES_SUCCESS + 0 + 0 + 0-pad
+    EXPECT_EQ((int)writeResponse[3], 0x04);
+    EXPECT_EQ((int)writeResponse[4], 0x00);
+
+    // Close
+    std::vector<BYTE8> closeFrame = {REQ_CLOSE};
+    append32(closeFrame, streamId);
+    sendFrame(padFrame(closeFrame));
+
+    std::vector<BYTE8> closeResponse = readResponseFrame();
+    checkResponseFrameTag(closeResponse, RES_SUCCESS);
+    checkResponseFrameSize(closeResponse, 2); // RES_SUCCESS + 0-pad
+
+    // Expect redirected data...
+    EXPECT_EQ(readFileContents(testFilePath), "ABCD");
+}
+
 TEST_F(TestProtocolHandler, WriteTruncated)
 {
     // Redirect stdout stream to a membuf... the REQ_WRITE will write there...
@@ -903,6 +1101,49 @@ TEST_F(TestProtocolHandler, WriteZero)
 
     // Expect no data to have been written to the write sensing buffer.
     EXPECT_EQ(wsbuf.written, false);
+}
+// TODO remove/inline unnecessary intermediate tests. Assert one thing per test (where possible)
+
+TEST_F(TestProtocolHandler, WriteAfterReadFails)
+{
+    const std::pair<std::string, std::string> &testFilePathAndName = createRandomTempFilePathContaining("12345678");
+    const std::string &testFileName = testFilePathAndName.second;
+
+    // Open
+    std::vector<BYTE8> openFrame = {REQ_OPEN};
+    appendString(openFrame, testFileName);
+    append8(openFrame, REQ_OPEN_TYPE_BINARY);
+    append8(openFrame, REQ_OPEN_MODE_NEW_UPDATE);
+    padAndSendFrame(openFrame);
+
+    const std::vector<unsigned char> &openResponse = readResponseFrame();
+    checkResponseFrameTag(openResponse, RES_SUCCESS);
+    WORD32 streamId = get32(openResponse, 3);
+
+    // Read from file...
+    logInfo("Reading from file");
+    std::vector<BYTE8> readFrame = {REQ_READ};
+    append32(readFrame, streamId);
+    append16(readFrame, 4);
+    padAndSendFrame(readFrame);
+
+    std::vector<BYTE8> readResponse = readResponseFrame();
+    checkResponseFrameTag(readResponse, RES_SUCCESS);
+    // WOZERE this says success but reads 0 bytes - why?
+    // Internally, the lastop has been set to IO_READ - cannot be directly sensed.
+
+    // Now Write to file, should fail as last IO operation was read.
+    logInfo("Writing to file");
+    std::vector<BYTE8> writeFrame = {REQ_WRITE};
+    append32(writeFrame, streamId);
+    appendString(writeFrame, "ABCD");
+    padAndSendFrame(writeFrame);
+
+    std::vector<BYTE8> writeResponse = readResponseFrame();
+    checkResponseFrameTag(writeResponse, RES_NOPOSN);
+    checkResponseFrameSize(writeResponse, 4); // RES_NOPOSN + 0 + 0 + 0-pad
+    EXPECT_EQ((int)writeResponse[3], 0x00);
+    EXPECT_EQ((int)writeResponse[4], 0x00);
 }
 
 // REQ_GETS

@@ -64,6 +64,7 @@ std::string TestTempFiles::createRandomTempFileName() {
     return ss.str();
 }
 
+// Returns a path to a randomly named file under the temp dir.
 std::string TestTempFiles::createRandomTempFilePath() {
     return pathJoin(tempdir(), createRandomTempFileName());
 }
@@ -72,6 +73,15 @@ std::string TestTempFiles::createRandomTempFile(const std::string &contents) {
     std::string randomTempFilePath = createRandomTempFilePath();
     createTempFile(randomTempFilePath, contents);
     return randomTempFilePath;
+}
+
+// Returns the path and the name of a randomly named file under the temp dir, populated with contents.
+std::pair<std::string, std::string> TestTempFiles::createRandomTempFilePathContaining(const std::string &contents) {
+    const std::string &testFileName = createRandomTempFileName();
+    const std::string &tempDir = tempdir();
+    const std::string &testFilePath = pathJoin(tempDir, testFileName);
+    createTempFile(testFilePath, contents);
+    return std::pair<std::string, std::string>(testFilePath, testFileName);
 }
 
 // We open files in binary so we can be assured there will be no translation shenanigans between platforms.

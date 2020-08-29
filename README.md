@@ -25,8 +25,6 @@ Project started around 19/08/2005, with a long hiatus.
 In active development:
 * Converting the NodeServer to be IServer compatible. Similarly, "Hello World".
 ** TODO:
-** REQ_WRITE/REQ_READ needs to validate that the last op was of the right type.
-** Translation of line feeds when dealing with text files (on Windows) is broken.
 ** Switch to release mode, from debug. (CMake, Maven variables)
 
 Roadmap
@@ -47,7 +45,8 @@ Second release:
   * Get Key
   * Poll Key
   * Close
-* Note that the IServer's file handling does not yet prevent directory traversal vulnerabilities. To be corrected.
+* Note that the IServer's file handling does not yet prevent directory traversal vulnerabilities. Also line feed
+  handling on Windows is broken. To be corrected.
 * Converting older C code (that's not very portable) to C++14 (that hopefully is more portable).
 * Upgrade macOS build from El Capitan to Mojave.
 * eForth requires the following facilities of IServer (it currently accesses a UART; these routines must be changed
@@ -59,11 +58,13 @@ Second release:
   
 Third release:
 * Capable of running eForth.
-* Note that the IServer's file handling does not yet prevent directory traversal vulnerabilities. To be corrected.
+* Note that the IServer's file handling does not yet prevent directory traversal vulnerabilities. Also line feed
+  handling on Windows is broken. To be corrected.
 
 Fourth release:
 * More IServer implementation.
 * Prevent directory-traversal vulnerabilities in IServer's file handling - limit operations to under its root directory.
+* Correct IServer translation of line feeds when dealing with text files (on Windows).
 * Complete Integer functionality.
 
 Fifth release:

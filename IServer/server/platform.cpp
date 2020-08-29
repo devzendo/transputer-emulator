@@ -14,12 +14,13 @@
 #include <exception>
 #include <memory>
 #include <misc.h>
+#include <fstream>
+#include <iostream>
 
 #include "types.h"
 #include "platform.h"
 #include "log.h"
 
-enum InputOutputOperation { IO_READ, IO_WRITE, IO_NONE };
 
 class Stream {
 public:
@@ -43,8 +44,16 @@ public:
 class FileStream: public Stream {
 public:
     explicit FileStream(int streamId, const std::string & filePath, const std::ios_base::openmode mode): Stream(streamId) {
+        // From https://stackoverflow.com/questions/17337602/how-to-get-error-message-when-ifstream-open-fails
+        // Thanks to ɲeuroburɳ for their answer on error handling.
         fstream.open(filePath, mode);
+        if (!fstream) {
+            const std::string message = "Failed to open " + filePath;
+            logError(message.c_str());
+            throw std::system_error(errno, std::system_category(), message);
+        }
         logInfoF("Opened file %s with mode %d", filePath.c_str(), mode); // TODO does this get here if the file open fails?
+        logDebugF("After open, is_open is %s", fstream.is_open() ? "open" : "closed");
         isReadable = ((mode & std::ios_base::in) != 0);
         isWritable = ((mode & std::ios_base::out) != 0);
         bool isBinary = ((mode & std::ios_base::binary) != 0);
@@ -68,6 +77,7 @@ public:
     };
 
     void close() override {
+        logDebugF("Closing file stream #%d", streamId);
         fstream.close();
     };
 
@@ -85,6 +95,7 @@ private:
 class ConsoleStream: public Stream {
 public:
     explicit ConsoleStream(int streamId, std::streambuf *buf) : Stream(streamId), iostream(buf) {
+        logInfoF("Opened console stream #%d", streamId);
     }
 
     ~ConsoleStream() override {
@@ -146,6 +157,10 @@ WORD16 Stream::write(WORD16 size, BYTE8 *buffer) {
     std::iostream & stream = getIOStream();
     // WOZERE I bet this isn't honouring text translation on Windows...
 
+    // "Use the C++ iostream abstraction from the standard library", they said. "It's quality reusable code", they said.
+    // But when you write to a stream, you can't determine how many bytes are read. Quality, indeed.
+    // So, you can do this...
+
     // Original that gets the written length but doesn't honour text translation:
     WORD16 written = stream.rdbuf()->sputn(reinterpret_cast<const char *>(buffer), size);
     // stream.rdbuf()->sputn(buffer, size) allows the buffer being replaced in tests for flushing and truncated writes.
@@ -195,6 +210,12 @@ WORD16 Stream::read(WORD16 size, BYTE8 *buffer) {
     std::iostream & stream = getIOStream();
     // See comment above in write(..) about using the rdbuf
     WORD16 read = stream.rdbuf()->sgetn(reinterpret_cast<char *>(buffer), size);
+
+    // But for read, there's gcount() which returns the count of characters read by the last unformatted input
+    // operation. There's no similar method for write, sadly.
+    // stream.read(reinterpret_cast<char *>(buffer), size);
+    // WORD16 read = stream.gcount();
+
     if (read != size) {
         logWarnF("Failed to read %d bytes from stream #%d, read %d bytes instead", size, streamId, read);
         stream.setstate(std::ios::badbit);
@@ -261,14 +282,19 @@ WORD16 Platform::writeStream(int streamId, WORD16 size, BYTE8 *buffer) noexcept(
         logWarnF("Attempt to write to unopen stream #%d", streamId);
         throw std::invalid_argument("Stream id not open");
     }
+    logInfoF("writeStream - is open? %s", pStream->is_open() ? "open" : "closed");
     if (! pStream->isWritable) {
         logWarnF("Attempt to write to non-writable stream #%d", streamId);
         throw std::runtime_error("Stream not writable");
     }
+    if (pStream->lastIOOperation == IO_READ) {
+        logWarnF("Attempt to write to previously read stream #%d", streamId);
+        throw std::domain_error("Previously read stream not writable");
+    }
     logDebugF("Writing %d bytes to stream #%d", size, streamId);
-    // TODO enforce last io op must be write - can't do this until we have open, and read.
     // Needs to be validated at the platform level first, then adapted to the protocol handler.
     WORD16 written = pStream->write(size, buffer);
+    pStream->lastIOOperation = IO_WRITE;
     logDebugF("Wrote %d bytes to stream #%d", written, streamId);
     return written;
 }
@@ -287,9 +313,13 @@ WORD16 Platform::readStream(int streamId, WORD16 size, BYTE8 *buffer) noexcept(f
         logWarnF("Attempt to read from non-readable stream #%d", streamId);
         throw std::runtime_error("Stream not readable");
     }
-    // TODO enforce last io op must be read
+    if (pStream->lastIOOperation == IO_WRITE) {
+        logWarnF("Attempt to read from previously written stream #%d", streamId);
+        throw std::domain_error("Previously written stream not readable");
+    }
     logDebugF("Reading %d bytes from stream #%d", size, streamId);
     WORD16 read = pStream->read(size, buffer);
+    pStream->lastIOOperation = IO_READ;
     logDebugF("Read %d bytes from stream #%d", read, streamId);
     return read;
 }
@@ -360,4 +390,14 @@ void Platform::_setFileBuf(const int streamId, std::filebuf &buffer) {
         auto * pFileStream = dynamic_cast<FileStream *>(pStream.get());
         pFileStream->_setFileBuf(buffer);
     }
+}
+
+void Platform::_setLastIOOperation(const int streamId, const InputOutputOperation op) {
+    logDebugF("Setting last IO operation stream id #%d to %d", streamId, op);
+    std::unique_ptr<Stream> & pStream = myFiles[streamId];
+    if (pStream == nullptr) {
+        logWarnF("Attempt to set last IO operation of unopen stream #%d", streamId);
+        throw std::invalid_argument("Stream id not open");
+    }
+    pStream->lastIOOperation = op;
 }

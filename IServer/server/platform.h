@@ -63,6 +63,8 @@ const int FILE_STDIN = 0;
 const int FILE_STDOUT = 1;
 const int FILE_STDERR = 2;
 
+enum InputOutputOperation { IO_READ, IO_WRITE, IO_NONE };
+
 class Stream;
 
 class Platform {
@@ -89,6 +91,7 @@ public:
     // For use by tests...
     void _setStreamBuf(int streamId, std::streambuf *buffer);
     void _setFileBuf(int streamId, std::filebuf &buffer);
+    void _setLastIOOperation(int streamId, InputOutputOperation op);
 
 protected:
     bool bDebug;

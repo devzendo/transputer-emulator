@@ -255,6 +255,14 @@ TEST_F(TestPlatform, FileOpenStreamForWrite) {
     EXPECT_EQ("ABCD", readFileContents(testFilePath));
 }
 
+TEST_F(TestPlatform, FileOpenStreamFailure) {
+    const std::string nonExistantTempFile = createRandomTempFilePath();
+
+    EXPECT_THROW_WITH_MESSAGE({
+        platform->openFileStream(nonExistantTempFile, std::ios_base::in);
+    }, std::system_error, "Failed to open " + nonExistantTempFile + ": No such file or directory");
+}
+
 TEST_F(TestPlatform, NoFreeStreams) {
     createTempFile(testFilePath, "");
     // Exhaust all the streams opening the test file...
@@ -278,6 +286,37 @@ TEST_F(TestPlatform, CannotWriteToAFileOpenedForReading) {
     }, std::runtime_error, "Stream not writable");
 }
 
+TEST_F(TestPlatform, CannotWriteToAFileThatWasReadFrom) {
+    createTempFile(testFilePath, "QWFPG");
+    const int fileStreamId = platform->openFileStream(testFilePath, std::ios_base::out | std::ios_base::in);
+    platform->_setLastIOOperation(fileStreamId, IO_READ);
+
+    std::vector<BYTE8> writeBuffer = {4, 3, 2, 1};
+    EXPECT_THROW_WITH_MESSAGE({
+          platform->writeStream(fileStreamId, writeBuffer.size(), writeBuffer.data());
+    }, std::domain_error, "Previously read stream not writable");
+}
+
+TEST_F(TestPlatform, CannotWriteToAFileThatWasReadFromSinceReadingSetsLastIOOperationToIO_READ) {
+    createTempFile(testFilePath, "ABCDEFGH");
+    const int fileStreamId = platform->openFileStream(testFilePath, std::ios_base::out | std::ios_base::in);
+    // Last IO operation is IO_NONE
+
+    std::vector<BYTE8> readBuffer = {4, 3, 2, 1};
+    auto const read = platform->readStream(fileStreamId, readBuffer.size(), readBuffer.data());
+    EXPECT_EQ(readBuffer[0], 'A');
+    EXPECT_EQ(readBuffer[1], 'B');
+    EXPECT_EQ(readBuffer[2], 'C');
+    EXPECT_EQ(readBuffer[3], 'D');
+    EXPECT_EQ(read, 4);
+    // Last IO operation is IO_READ
+
+    std::vector<BYTE8> writeBuffer = {4, 3, 2, 1};
+    EXPECT_THROW_WITH_MESSAGE({
+                                  platform->writeStream(fileStreamId, writeBuffer.size(), writeBuffer.data());
+                              }, std::domain_error, "Previously read stream not writable");
+}
+
 TEST_F(TestPlatform, CannotReadFromAFileOpenedForWriting) {
     createTempFile(testFilePath, "ABCD");
     const int fileStreamId = platform->openFileStream(testFilePath, std::ios_base::out);
@@ -288,6 +327,32 @@ TEST_F(TestPlatform, CannotReadFromAFileOpenedForWriting) {
     }, std::runtime_error, "Stream not readable");
 }
 
+TEST_F(TestPlatform, CannotReadFromAFileThatWasWrittenTo) {
+    createTempFile(testFilePath);
+    const int fileStreamId = platform->openFileStream(testFilePath, std::ios_base::out | std::ios_base::in);
+    platform->_setLastIOOperation(fileStreamId, IO_WRITE);
+
+    std::vector<BYTE8> readBuffer = {4, 3, 2, 1};
+    EXPECT_THROW_WITH_MESSAGE({
+        platform->readStream(fileStreamId, readBuffer.size(), readBuffer.data());
+    }, std::domain_error, "Previously written stream not readable");
+}
+
+TEST_F(TestPlatform, CannotReadFromAFileThatWasWrittenToSinceWritingSetsLastIOOperationToIO_WRITE) {
+    createTempFile(testFilePath, "");
+    const int fileStreamId = platform->openFileStream(testFilePath, std::ios_base::out | std::ios_base::in);
+    // Last IO operation is IO_NONE
+
+    std::vector<BYTE8> writeBuffer = {4, 3, 2, 1};
+    auto const written = platform->writeStream(fileStreamId, writeBuffer.size(), writeBuffer.data());
+    EXPECT_EQ(written, 4);
+    // Last IO operation is IO_WRITE
+
+    std::vector<BYTE8> readBuffer = {4, 3, 2, 1};
+    EXPECT_THROW_WITH_MESSAGE({
+                                  platform->readStream(fileStreamId, readBuffer.size(), readBuffer.data());
+                              }, std::domain_error, "Previously written stream not readable");
+}
 
 TEST_F(TestPlatform, CloseUnopenedStream) {
     EXPECT_THROW_WITH_MESSAGE({

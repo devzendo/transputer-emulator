@@ -354,6 +354,7 @@ void ProtocolHandler::reqOpen() {
     logInfoF("Opening file '%s' with type %s and mode %s", filename.c_str(), openTypeName(openType), openModeName(openMode));
     // TODO filename is not validated against directory-traversal attacks
     const std::string filePath = pathJoin(myRootDirectory, filename);
+    logInfoF("Fully-qualified path is '%s", filePath.c_str());
     std::ios::openmode iosOpenMode = 0;
     bool error = false;
     switch (openType) {
@@ -391,7 +392,8 @@ void ProtocolHandler::reqOpen() {
         case REQ_OPEN_MODE_EXISTING_UPDATE:
         case REQ_OPEN_MODE_NEW_UPDATE:
         case REQ_OPEN_MODE_APPEND_UPDATE:
-            iosOpenMode |= std::ios_base::out;
+            // TODO need to write tests for UPDATE modes being both readable and writeable
+            iosOpenMode |= std::ios_base::in | std::ios_base::out;
             break;
         default:
             logWarnF("Unknown open mode %02X", openMode);
@@ -401,10 +403,16 @@ void ProtocolHandler::reqOpen() {
         codec.put(RES_ERROR);
         codec.put((WORD16) 0);
     } else {
-        auto streamId = myPlatform.openFileStream(filePath, iosOpenMode);
-        logInfoF("Opened file '%s' as stream #%d", filePath.c_str(), streamId);
-        codec.put(RES_SUCCESS);
-        codec.put((WORD32) streamId);
+        try {
+            auto streamId = myPlatform.openFileStream(filePath, iosOpenMode);
+            logInfoF("Opened file '%s' as stream #%d", filePath.c_str(), streamId);
+            codec.put(RES_SUCCESS);
+            codec.put((WORD32) streamId);
+        } catch (const std::runtime_error &e) {
+            logWarn(e.what());
+            codec.put(RES_ERROR);
+            codec.put((WORD16) 0);
+        }
     }
 }
 
@@ -432,7 +440,6 @@ void ProtocolHandler::reqRead() {
     const WORD16 size = codec.get16();
     // TODO if length < 1 nothing happens....
     try {
-        // TODO last op must not have been a write
         logDebugF("Reading %d bytes from stream #%d", size, streamId);
         // Read directly into the transaction buffer, but don't know whether this'll succeed, nor how much will
         // actually be read, so can't fill those in yet... don't want to copy data around...
@@ -451,6 +458,14 @@ void ProtocolHandler::reqRead() {
         codec.put((WORD16) read);
         // The codec needs to know how much data was read into writeOffset(5) above so it can fill in the frame size.
         codec.advance(read);
+    } catch (const std::runtime_error &e) { // File must be open for reading
+        logWarn(e.what());
+        codec.put(RES_BADID);
+        codec.put((WORD16) 0);
+    } catch (const std::domain_error &e) { // Last op must be read
+        logWarn(e.what());
+        codec.put(RES_NOPOSN);
+        codec.put((WORD16) 0);
     } catch (const std::range_error &e) {
         logWarn(e.what());
         codec.put(RES_BADID);
@@ -466,7 +481,6 @@ void ProtocolHandler::reqWrite() {
     const WORD32 streamId = codec.get32();
     const std::string data = codec.getString(); // can be binary, this is fine.. Size limited to WORD16.
     try {
-        // TODO last op must not have been a read
         WORD16 size = data.size();
         logDebugF("Writing %d bytes to stream #%d", size, streamId);
         WORD16 wrote = (size > 0) ? myPlatform.writeStream(streamId, size, (BYTE8 *) data.data()) : 0;
@@ -474,6 +488,14 @@ void ProtocolHandler::reqWrite() {
         // TODO if streamId == 1 or 2, flush (test after open done, so we can correctly sense presence/absence of flush call on platform
         codec.put(RES_SUCCESS);
         codec.put((WORD16) wrote);
+    } catch (const std::runtime_error &e) { // File must be open for writing
+        logWarn(e.what());
+        codec.put(RES_BADID);
+        codec.put((WORD16) 0);
+    } catch (const std::domain_error &e) { // Last op must be write
+        logWarn(e.what());
+        codec.put(RES_NOPOSN);
+        codec.put((WORD16) 0);
     } catch (const std::range_error &e) {
         logWarn(e.what());
         codec.put(RES_BADID);

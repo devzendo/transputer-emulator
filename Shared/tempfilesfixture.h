@@ -25,6 +25,7 @@ public:
     std::string createRandomTempFileName();
     std::string createRandomTempFilePath();
     std::string createRandomTempFile(const std::string &contents = "");
+    std::pair<std::string, std::string> createRandomTempFilePathContaining(const std::string &contents = "");
     std::string readFileContents(const std::string &file);
 private:
     std::vector<std::string> createdTempFiles;
