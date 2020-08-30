@@ -16,17 +16,26 @@
 #include <cstring>
 #include <cctype>
 #include <ctime>
+#include <cstdio>
 #include <system_error>
 using namespace std;
 
 #include "platformdetection.h"
 #if defined(PLATFORM_OSX) || defined(PLATFORM_LINUX)
 #include <csignal>
+#include <unistd.h>
+#define GetCurrentDir getcwd
+#endif
+#if defined(PLATFORM_WINDOWS)
+#include <direct.h>
+#define GetCurrentDir _getcwd
 #endif
 
+#include "filesystem.h"
 #include "log.h"
 #include "link.h"
 #include "linkfactory.h"
+#include "misc.h"
 #include "platform.h"
 #include "platformfactory.h"
 #include "hexdump.h"
@@ -34,6 +43,7 @@ using namespace std;
 #include "version.h"
 
 // global variables
+static char currentPath[FILENAME_MAX];
 static char *progName;
 static char *bootFile;
 static bool debugPlatform;
@@ -46,6 +56,7 @@ static Platform *myPlatform;
 static PlatformFactory *platformFactory;
 static Link *myLink;
 static LinkFactory *linkFactory;
+static std::string myRootDirectory;
 const int MSGBUF_MAX = CONSOLE_PUT_CSTR_BUF_LIMIT;
 static char msgbuf[MSGBUF_MAX];
 
@@ -71,6 +82,7 @@ void usage() {
 	logInfo("  -L<N><T> Sets link type. N is 0..3 and T is F, S, M for");
 	logInfo("        FIFO, Socket or shared Memory. Default is FIFO.");
 	logInfo("        (only FIFO implemented yet)");
+	logInfo("  -r<directory> Sets the root directory served by the IServer. Current directory if not given.");
 }
 
 bool processCommandLine(int argc, char *argv[]) {
@@ -132,6 +144,10 @@ bool processCommandLine(int argc, char *argv[]) {
 							return 0;
 					}
 					break;
+			    case 'r':
+			        char *thisArg=argv[i];
+			        myRootDirectory = thisArg + 2;
+			        break;
 			}
 		} else {
 			bootFile = argv[i];
@@ -385,6 +401,30 @@ int main(int argc, char *argv[]) {
 		exit(1);
 	}
 
+	// Thanks to computinglife in https://stackoverflow.com/questions/143174/how-do-i-get-the-directory-that-a-program-is-running-from
+    if (!GetCurrentDir(currentPath, sizeof(currentPath))) {
+        logFatalF("Could not get current working directory: %s", getLastError().c_str());
+        cleanup();
+        exit(1);
+    }
+    currentPath[sizeof(currentPath) - 1] = '\0'; /* not really required */
+    if (myRootDirectory.empty()) {
+        myRootDirectory = currentPath;
+    }
+    logDebugF("Root directory is '%s'", myRootDirectory.c_str());
+    try {
+        if (!pathIsDir(myRootDirectory)) {
+            logFatalF("Root directory '%s' is not a directory", myRootDirectory.c_str());
+            cleanup();
+            exit(1);
+        }
+        logDebugF("Root directory '%s' is a directory.", myRootDirectory.c_str());
+    } catch (exception &e) {
+        logFatalF("Could not check root directory for existence: %s", e.what());
+        cleanup();
+        exit(1);
+    }
+
     platformFactory = new PlatformFactory(debugPlatform);
 	myPlatform = platformFactory->createPlatform();
     try {
@@ -430,7 +470,7 @@ int main(int argc, char *argv[]) {
 		monitorBootLink();
 	} else {
 	    /*
-	    ProtocolHandler * myProtocolHandler = new ProtocolHandler(myLink, myPlatform);
+	    ProtocolHandler * myProtocolHandler = new ProtocolHandler(myLink, myPlatform, myRootDirectory);
 	    myProtocolHandler->setDebug(debugProtocol);
 	    while (!finished) {
 	        finished = myProtocolHandler->processFrame();
