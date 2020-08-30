@@ -38,6 +38,7 @@ using namespace std;
 #include "misc.h"
 #include "platform.h"
 #include "platformfactory.h"
+#include "protocolhandler.h"
 #include "hexdump.h"
 #include "isproto.h"
 #include "version.h"
@@ -57,11 +58,9 @@ static PlatformFactory *platformFactory;
 static Link *myLink;
 static LinkFactory *linkFactory;
 static std::string myRootDirectory;
-const int MSGBUF_MAX = CONSOLE_PUT_CSTR_BUF_LIMIT;
-static char msgbuf[MSGBUF_MAX];
 
 void usage() {
-	logInfoF("Parachute v%s IServer - Protocol v%d " __DATE__, projectVersion, NS_PROTOCOL_VERSION);
+	logInfoF("Parachute v%s IServer" __DATE__, projectVersion);
 	logInfo(" (C) 2005-2020 Matt J. Gumbley");
 	logInfo("  http://devzendo.github.io/parachute");
 	logInfo("Usage:");
@@ -155,141 +154,6 @@ bool processCommandLine(int argc, char *argv[]) {
 	}
 	//logDebug("End of cmd line processing");
 	return 1;
-}
-
-char *printableString(BYTE8 *orig, BYTE8 len) {
-	for (int i = 0; i < len; i++) {
-		msgbuf[i] = isprint(orig[i]) ? orig[i] : '.';
-	}
-	return msgbuf;
-}
-
-// Handle a single request over the link.
-// Called repeatedly until we see a SERVER_EXIT request or the link fails.
-// TODO: can we recover from a link failure?
-void handleIServerProtocol(void) {
-	try {
-		// Read the message type identifier
-		WORD32 msgType = myLink->readWord();
-		if (debugLinkRaw) {
-			logDebugF("Message id word is %08X", msgType);
-		}
-		
-		switch (msgType) {
-			case SERVER_GET_VERSION:
-				if (debugLink) {
-					logDebug("SERVER_GET_VERSION");
-				}
-				myLink->writeWord(NS_PROTOCOL_VERSION);
-				break;
-			case SERVER_EXIT:
-				if (debugLink) {
-					logDebug("SERVER_EXIT");
-				}
-				logInfo("Server is now exiting");
-				finished = true;
-				break;
-			case CONSOLE_PUT_CHAR: {
-					BYTE8 ch = myLink->readByte();
-					if (debugLink) {
-						logDebugF("CONSOLE_PUT_CHAR %02X '%c'", ch, isprint(ch) ? ch : '.');
-					}
-				myPlatform->putConsoleChar(ch);
-				}
-				break;
-			case CONSOLE_PUT_PSTR: {
-					BYTE8 len = myLink->readByte();
-					for (int i = 0; i < len; i++) {
-						msgbuf[i] = myLink->readByte();
-					}
-					if (debugLink) {
-						logDebugF("CONSOLE_PUT_PSTR len %02X", len);
-					}
-					for (int i = 0; i < len; i++) {
-					    // TODO optimise this with a putString
-						myPlatform->putConsoleChar(msgbuf[i]);
-					}
-				}
-				break;
-			case CONSOLE_PUT_CSTR: {
-					WORD32 len = 0;
-					for (WORD32 i = 0; true; i++) {
-						BYTE8 b = myLink->readByte();
-						if (i < MSGBUF_MAX) {
-							msgbuf[i] = b;
-						}
-						if (b == 0) {
-							len = i < MSGBUF_MAX ? i : MSGBUF_MAX;
-							break;
-						}
-					}
-					if (debugLink) {
-						logDebugF("CONSOLE_PUT_CSTR len %08X", len);
-					}
-					for (WORD32 j = 0; j < len; j++) {
-                        // TODO optimise this with a putString
-						myPlatform->putConsoleChar(msgbuf[j]);
-					}
-				}
-				break;
-			case CONSOLE_PUT_AVAILABLE:
-				if (debugLink) {
-					logDebug("CONSOLE_PUT_AVAILABLE");
-				}
-				myLink->writeByte(1); // TODO fix when we have a framebuffer
-				break;
-			case CONSOLE_GET_AVAILABLE: {
-					if (debugLink) {
-						logDebug("CONSOLE_GET_AVAILABLE");
-					}
-					bool ready = myPlatform->isConsoleCharAvailable();
-					myLink->writeByte(ready ? 1 : 0);
-				}
-				break;
-			case CONSOLE_GET_CHAR: {
-					if (debugLink) {
-						logDebug("CONSOLE_GET_CHAR");
-					}
-					BYTE8 inChar = myPlatform->getConsoleChar();
-					myLink->writeByte(inChar); // TODO fix when we have a framebuffer
-				}
-				break;
-			case TIME_GET_MILLIS: {
-					if (debugLink) {
-						logDebug("TIME_GET_MILLIS");
-					}
-					WORD32 millis = myPlatform->getTimeMillis();
-					myLink->writeWord(millis);
-				}
-				break;
-			case TIME_GET_UTC: {
-					if (debugLink) {
-						logDebug("TIME_GET_UTC");
-					}
-					UTCTime time = myPlatform->getUTCTime();
-					myLink->writeWord(time.myDayOfMonth);
-					myLink->writeWord(time.myMonthOfYear);
-					myLink->writeWord(time.myYear);
-					myLink->writeWord(time.myHour);
-					myLink->writeWord(time.myMinute);
-					myLink->writeWord(time.mySecond);
-					myLink->writeWord(time.myMillisecond);
-				}
-				break;
-			default:
-				if ((msgType & NSS_LITLOAD) == NSS_LITLOAD) {
-					int line = msgType & 0xffff;
-					// deprecated this to a debug for now - should be warn
-					logDebugF("LIT_LOAD_FATAL at line 0x%04X = %d", line, line);
-				} else {
-					logWarnF("Unknown iserver protocol message type identifier %08X", msgType);
-				}
-				break;
-		}
-	} catch (exception e) {
-		logFatalF("I/O failure on link 0: %s", e.what());
-		finished = true;
-	}
 }
 
 void monitorBootLink(void) {
@@ -469,17 +333,12 @@ int main(int argc, char *argv[]) {
 	if (monitorLink) {
 		monitorBootLink();
 	} else {
-	    /*
-	    ProtocolHandler * myProtocolHandler = new ProtocolHandler(myLink, myPlatform, myRootDirectory);
+	    ProtocolHandler * myProtocolHandler = new ProtocolHandler(*myLink, *myPlatform, myRootDirectory);
 	    myProtocolHandler->setDebug(debugProtocol);
 	    while (!finished) {
 	        finished = myProtocolHandler->processFrame();
 	    }
 	    exitCode = myProtocolHandler->exitCode();
-	    */
-		while (!finished) {
-            handleIServerProtocol();
-		}
 	}
 
 	try {

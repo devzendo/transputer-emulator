@@ -1102,6 +1102,7 @@ TEST_F(TestProtocolHandler, WriteZero)
     // Expect no data to have been written to the write sensing buffer.
     EXPECT_EQ(wsbuf.written, false);
 }
+
 // TODO remove/inline unnecessary intermediate tests. Assert one thing per test (where possible)
 
 TEST_F(TestProtocolHandler, WriteAfterReadFails)
