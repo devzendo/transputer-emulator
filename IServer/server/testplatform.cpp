@@ -258,9 +258,17 @@ TEST_F(TestPlatform, FileOpenStreamForWrite) {
 TEST_F(TestPlatform, FileOpenStreamFailure) {
     const std::string nonExistantTempFile = createRandomTempFilePath();
 
+#if defined(PLATFORM_WINDOWS)
+    EXPECT_THROW_WITH_MESSAGE({
+        platform->openFileStream(nonExistantTempFile, std::ios_base::in);
+    }, std::system_error, "Failed to open " + nonExistantTempFile + ": The system cannot find the file specified.\r\n");
+#endif
+#if defined(PLATFORM_OSX) || defined(PLATFORM_LINUX)
     EXPECT_THROW_WITH_MESSAGE({
         platform->openFileStream(nonExistantTempFile, std::ios_base::in);
     }, std::system_error, "Failed to open " + nonExistantTempFile + ": No such file or directory");
+#endif
+
 }
 
 TEST_F(TestPlatform, NoFreeStreams) {
