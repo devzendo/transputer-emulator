@@ -57,7 +57,8 @@ enable_testing()
 # Build gsl-lite
 # Thanks to 'As external Git project' at https://github.com/gsl-lite/gsl-lite#as-external-git-project
 # project( use-gsl-lite LANGUAGES CXX )
-
+# Using commit 503b14b 15 Aug 2020 since that's the last commit before our last successful build - and the head as of
+# Sep 2021 gives a compile failure.
 # Set default ExternalProject root directory and add gsl-lite:
 set( GSL_LITE_URL https://github.com/gsl-lite/gsl-lite.git )
 
@@ -67,6 +68,7 @@ set_directory_properties( PROPERTIES EP_PREFIX ${CMAKE_BINARY_DIR}/gsl-lite-down
 ExternalProject_Add(
         gsl-extern
         GIT_REPOSITORY ${GSL_LITE_URL}
+        GIT_TAG 503b14b
         TIMEOUT 10
         UPDATE_COMMAND ${GIT_EXECUTABLE} pull
         CONFIGURE_COMMAND ""
