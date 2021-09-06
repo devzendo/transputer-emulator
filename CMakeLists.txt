@@ -57,8 +57,7 @@ enable_testing()
 # Build gsl-lite
 # Thanks to 'As external Git project' at https://github.com/gsl-lite/gsl-lite#as-external-git-project
 # project( use-gsl-lite LANGUAGES CXX )
-# Using commit 503b14b 15 Aug 2020 since that's the last commit before our last successful build - and the head as of
-# Sep 2021 gives a compile failure.
+# Using commit 503b14b 15 Aug 2020 since that's the last commit before our last successful build.
 # Set default ExternalProject root directory and add gsl-lite:
 set( GSL_LITE_URL https://github.com/gsl-lite/gsl-lite.git )
 

@@ -301,6 +301,13 @@ Prerequisites:
   - GNU Make. I use 4.2.1.
   - clang (e.g. via XCode Developer tools, or MacPorts). Apple LLVM version 11.0.0 (clang-1100.0.33.8) on
   - Untested on more recent versions of macOS
+  - If you see messages like this in a build failure:
+    "Ignoring CMAKE_OSX_SYSROOT value:
+    /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.15.sdk
+    because the directory does not exist."
+    Then this is due to recent XCode removing the version directory - as root, do:
+    cd /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs
+    ln -s MacOSX.sdk MacOSX10.15.sdk
 - Windows 10 Home:
   - Microsoft Visual Studio Build Tools 2017, v 15.9.28307.423
     (cl 19.16.27027.1 for x64) Note this doesn't need the full Visual Studio, these are just the command line tools.
