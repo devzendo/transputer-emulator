@@ -1,5 +1,7 @@
-transputer-emulator
-===================
+# transputer-emulator
+
+## What is this?
+
 This is a portable, open source emulator of the 32-bit Inmos T414/T800/T801/T805 Transputer family, and a host/file
 I/O Server that interfaces it to a host OS, providing boot/debug/IO facilities.
 
@@ -10,26 +12,13 @@ It is part of the [Parachute Project](https://devzendo.github.io/parachute).
 It is written in C++14 - the Raspbian Stretch distribution provides Clang 3.5.0, which does not support
 more recent C++ standards.
 
-(C) 2005-2022 Matt J. Gumbley
-matt.gumbley@devzendo.org
-Mastodon: @M0CUV@mastodon.radio
-Twitter: (abandoned) @mattgumbley @devzendo
-http://devzendo.github.io/parachute
 
-
-Status
-------
+## Project Status
 First release 0.0.1 Midsummer 2019 (13 June 2019) as part of Parachute 0.0.1.
 
 Project started around 19/08/2005, with a long hiatus. Another hiatus from Sep 2021 to Dec 2022.
 
-* TODO:
-** Converting the NodeServer to be IServer compatible. Similarly, "Hello World".
-** Switch to release mode, from debug. (CMake, Maven variables).
-** Upgrade macOS build to Catalina.
-* 
-Roadmap
--------
+## Roadmap
 First release:
 * Ported to macOS (El Capitan +), Linux (Ubuntu 16.04, Ubuntu 18.04, CentOS 7.6, Raspbian Stretch), Windows 10.
 * A Cross Platform system that can run "Hello World" (via my NodeServer (custom protocol) implementation).
@@ -72,8 +61,7 @@ Fifth release:
 * Complete Floating Point functionality.
 * Complete IServer implementation.
 
-Release Notes
--------------
+# Release Notes
 0.0.2 Second Release (work in progress)
 * Converting the NodeServer to be IServer compatible. Similarly, "Hello World".
 * Release for macOS is upgraded from El Capitan to Mojave. Untested on Catalina.
@@ -102,17 +90,14 @@ Release Notes
   j label
   
 
-Remaining Work
---------------
+# Remaining Work
 ....
 
-IServer
-=======
+## IServer
 * IServer client library in tmasm assembler
 * Iserver needs to support terminal I/O facilities (no echo key reads, sensing available readable keys) for eForth
 
-Functionality
-=============
+## Functionality
 * j and cj - resolve the operand into an address that would be jumped to, display it
 * Emulate multiple Transputers on 1-N physical cores
 * Link topology management
@@ -122,31 +107,25 @@ Functionality
 * Add memory-mapped frame buffer via SDL
 * Add mouse interface for same
 
-Correctness
-===========
+## Correctness
 * Remove potential buffer overflows in cpu.cpp (what were these?)
 * Refactoring: make use of isLegalMemory within memory.cpp
 * Unfinished: resetch when given a link not a memory channel
 
-Build/Releases
-==============
+## Build/Releases
 * Upgrade to C++14
 
-Bugs
-====
+## Bugs
 * None known.
 
-Example Code
-============
+## Example Code
 * Rework example code with IServer protocol library.
 
-Documentation
-=============
+## Documentation
 * Write some!
 
 
-Completeness
-------------
+# Completeness
 Although the emulator recognises all T414/T800/T801/T805 instructions, not all are currently implemented.
 The greatest omission is floating point - this is an integer T805 at the moment!
 
@@ -159,8 +138,7 @@ See the sections 'Implemented Instructions' and 'Unimplemented Instructions' bel
 It is my intention to eventually implement the complete instruction set. My focus is on the common integer instructions,
 those that support communications, process management, diagnostics, and then the floating point instructions.
 
-Implemented Instructions
-========================
+## Implemented Instructions
 Direct:
 adc, ajw, call, cj, eqc, j, ldc, ldl, ldlp, ldnl, ldnlp, nfix, opr, pfix, stl,
 stnl.
@@ -181,12 +159,10 @@ break, clrj0break, lddevid, ldmemstartval, pop, setj0break, testj0break.
 Nonstandard emulator:
 emuquery, marker, terminate, toggledisasm, togglemonitor
 
-Unfinished Instructions
-=======================
+## Unfinished Instructions
 fpchkerr, fptesterr, resetch, taltwt.
 
-Unimplemented Instructions
-==========================
+## Unimplemented Instructions
 fpuexpdec32, fpadd, fpb32tor64, fpchki32, fpdiv, fpdup, fpeq, fpgt,
 fpi32tor32, fpi32tor64, fpint, fpldnladddb, fpldnladdsn, fpldnldb, fpldnldbi,
 fpldnlmuldb, fpldnlmulsn, fpldnlsn, fpldnlsni, fpldzerodb, fpldzerosn, fpmul,
@@ -211,8 +187,7 @@ T810: checkaddr, delay, dislinkinth, dislinkintl, distimesl, enlinkinth, enlinki
 entimesl, fpmacc, fpxprod, ldhw, macc, pause, sthw, xprod
 
 
-Using the Emulator
-------------------
+# Using the Emulator
 Full documentation to follow.. but in the meantime...
 
 Basically, given a binary boot file, then in two terminal sessions:
@@ -254,8 +229,7 @@ Ctrl-C <<- you'll have to interrupt it.
 $
 
 
-Source directory structure
---------------------------
+# Source directory structure
 The source is split into the following directories:
 
 Shared - utility code that is common to many parts of the system.
@@ -268,8 +242,7 @@ application; it's an assembly language include file.
 Emulator - the T414/T800/T801/T805 emulator.
 
 
-Building and Installing
------------------------
+# Building and Installing
 The distribution currently builds under the following systems:
 * Apple macOS 'Mojave' 10.14 (untested on more recent versions)
 * Windows 10 64-bit (untested on earlier versions e.g. XP, 7, 8, 8.1)
@@ -338,8 +311,7 @@ The typical install location is:
 - macOS/Linux: /opt/parachute
 - Windows: C:\parachute
 
-Building
-========
+## Building
 To build, cd to the top level directory (where this README.md is) and do:
 On windows: vcvarsall.bat as shown above
 mvn clean compile -P build
@@ -356,15 +328,13 @@ This build will build the entire system: T800 emulator and iserver, client libra
 
 This doesn't install it on your system - see below.
 
-Cleaning the Build Tree
-=======================
+## Cleaning the Build Tree
 To clean:
 mvn clean
 This effectively does:
 rm -rf cmake-build-debug
 
-Installing the Built Code
-=========================
+## Installing the Built Code
 To install into the default install location, you'll need to have permission to create it and
 write files there. 
 e.g. on macOS/Linux:
@@ -382,14 +352,8 @@ mvn prepare-package
 This installation location is defined in the operating-system-specific profile sections of the pom.xml.
 
 
-License
--------
-This code is released under the Apache 2.0 License: http://www.apache.org/licenses/LICENSE-2.0.html.
-(C) 2005-2020 Matt Gumbley, DevZendo.org
 
-
-Acknowledgements
-----------------
+# Acknowledgements
 This project would not have been possible without the hard work and inspiration of many individuals.
 
 Notably, thanks to:
@@ -408,8 +372,7 @@ Yury Shevchuk and Roman Pozlevich for the gcc-t800 port, ttools and libxputer pa
 an earlier version of the project, for bootstrap code, object and executable file format and loader.
 
 
-Bibliography
-------------
+# Bibliography
 [CWG] "Transputer Instruction Set - A Compiler Writer's Guide"
  http://www.transputer.net/iset/pdf/tis-acwg.pdf
 
@@ -436,3 +399,18 @@ Bibliography
 
 "Transputer Development System, second edition"
   http://transputer.net/prog/72-trn-011-01/tds2nd.pdf
+
+
+# License, Copyright & Contact info
+This code is released under the Apache 2.0 License: http://www.apache.org/licenses/LICENSE-2.0.html.
+
+(C) 2005-2022 Matt J. Gumbley
+
+matt.gumbley@devzendo.org
+
+Mastodon: @M0CUV@mastodon.radio
+
+Twitter: (abandoned) @mattgumbley @devzendo
+
+http://devzendo.github.io/parachute
+
