@@ -3,16 +3,17 @@ transputer-emulator
 This is a portable, open source emulator of the 32-bit Inmos T414/T800/T801/T805 Transputer family, and a host/file
 I/O Server that interfaces it to a host OS, providing boot/debug/IO facilities.
 
-It runs on Apple macOS (From El Capitan to Mojave), Windows 10, CentOS 7.6, Ubuntu 16.04/18.04 and Raspbian Stretch.
+It runs on Apple macOS (From El Capitan to Catalina), Windows 10, CentOS 7.6, Ubuntu 16.04/18.04 and Raspbian Stretch.
 
 It is part of the [Parachute Project](https://devzendo.github.io/parachute).
 
 It is written in C++14 - the Raspbian Stretch distribution provides Clang 3.5.0, which does not support
 more recent C++ standards.
 
-(C) 2005-2020 Matt J. Gumbley
+(C) 2005-2022 Matt J. Gumbley
 matt.gumbley@devzendo.org
-@mattgumbley @devzendo
+Mastodon: @M0CUV@mastodon.radio
+Twitter: (abandoned) @mattgumbley @devzendo
 http://devzendo.github.io/parachute
 
 
@@ -20,20 +21,20 @@ Status
 ------
 First release 0.0.1 Midsummer 2019 (13 June 2019) as part of Parachute 0.0.1.
 
-Project started around 19/08/2005, with a long hiatus.
+Project started around 19/08/2005, with a long hiatus. Another hiatus from Sep 2021 to Dec 2022.
 
-In active development:
-* Converting the NodeServer to be IServer compatible. Similarly, "Hello World".
-** TODO:
-** Switch to release mode, from debug. (CMake, Maven variables)
-
+* TODO:
+** Converting the NodeServer to be IServer compatible. Similarly, "Hello World".
+** Switch to release mode, from debug. (CMake, Maven variables).
+** Upgrade macOS build to Catalina.
+* 
 Roadmap
 -------
 First release:
 * Ported to macOS (El Capitan +), Linux (Ubuntu 16.04, Ubuntu 18.04, CentOS 7.6, Raspbian Stretch), Windows 10.
 * A Cross Platform system that can run "Hello World" (via my NodeServer (custom protocol) implementation).
 
-Second release:
+Second release (work in progress):
 * Convert the NodeServer to be IServer compatible, implementing all frame types needed by "Hello World" and
   eForth. Similarly, convert "Hello World" to be IServer compatible.
 * IServer is unfinished; it implements the following frame types:
@@ -48,7 +49,7 @@ Second release:
 * Note that the IServer's file handling does not yet prevent directory traversal vulnerabilities. Also line feed
   handling on Windows is broken. To be corrected.
 * Converting older C code (that's not very portable) to C++14 (that hopefully is more portable).
-* Upgrade macOS build from El Capitan to Mojave.
+* Upgrade macOS build from El Capitan to Catalina (and beyond).
 * eForth requires the following facilities of IServer (it currently accesses a UART; these routines must be changed
   to use IServer protocol on Link 0):
   * URD: Read and wait (odd return system)
