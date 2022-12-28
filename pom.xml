@@ -11,7 +11,7 @@
     <name>Transputer Emulator</name>
     <description>This is an emulator of the 32-bit Inmos T414/T800/T801/T805 Transputer family, and a Node Server that
         interfaces it to a host OS, providing boot/debug/IO facilities.
-        (Apache License v2) 2005-2020 Matt Gumbley, DevZendo.org
+        (Apache License v2) 2005-2022 Matt Gumbley, DevZendo.org
     </description>
     <url>https://devzendo.github.io/parachute</url>
 
@@ -76,12 +76,15 @@
         <!-- There are two main profiles, build and deploy.
 
              build is used on each Jenkins node to compile, link and assemble the OS-specific archive. Jenkins runs
-             this profile across all OS-varying nodes, then archives the artifact.
+             this profile across all OS-varying nodes, then archives the artifact. This is used by all the
+             'transputer-emulator-fast-<platform>' Jenkins project.
+
 
              deploy is used on the Jenkins master. The master Jenkins job runs the build profile across all nodes as
              above, and then copies all artifacts from all nodes (using the Copy Artifact Plugin) to the target folder.
              Then the build helper plugin attaches these externally generated archive artifacts to the project,
-             they are then signed, and uploaded to nexus.
+             they are then signed, and uploaded to nexus. This is used by the 'transputer-emulator-nodes' Jenkins
+             project.
 
              This funk is since the behaviour of the nexus staging plugin differs in snapshot and release mode: all
              snapshots are deployed to the same repo, but each release is deployed to its own - and I haven't managed
