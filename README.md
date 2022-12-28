@@ -386,7 +386,7 @@ an earlier version of the project, for bootstrap code, object and executable fil
   http://www.transputer.net/tn/61/tn61.pdf
 
 [TTH] "The Transputer Handbook", Ian Graham, Gavin King
- Not available online.
+  http://www.transputer.net/iset/isbn-013929134-2/tthb.pdf
 
 "IMS T805 32-bit floating point transputer"
  http://www.transputer.net/ibooks/dsheets/t805.pdf
