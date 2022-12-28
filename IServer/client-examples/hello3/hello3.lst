@@ -1,10 +1,10 @@
-DevZendo.org Macro Assembler 0.0.2-SNAPSHOT                                                                      20/12/2022 20:33:05
+DevZendo.org Macro Assembler 0.0.2-SNAPSHOT                                                                      20/12/2022 20:33:23
 Transputer Hello World                                                                                                    Page 1 - 6
                       TITLE Transputer Hello World
                       
                       PAGE 60,132
                       
-                      ; Second version without macros. Uses the old NodeServer Protocol.
+                      ; Third version without macros. Uses the IServer protocol.
                       
                       .TRANSPUTER
  = 80000070           MemStart    EQU 0x80000070
@@ -58,7 +58,7 @@ Transputer Hello World                                                          
  800000AC E0          stnl    0                   ; store NotProcess.p to Link 3 input channel
  800000AD 24 F2       mint                        ; load A with NotProcess.p
  800000AF 67 20 20 20 ldc     0x80000018          ; load address of Link 2 input channel
-DevZendo.org Macro Assembler 0.0.2-SNAPSHOT                                                                      20/12/2022 20:33:05
+DevZendo.org Macro Assembler 0.0.2-SNAPSHOT                                                                      20/12/2022 20:33:23
 Transputer Hello World                                                                                                    Page 2 - 6
  800000B3 20 20 21 48
  800000B7 E0          stnl    0                   ; store NotProcess.p to Link 2 input channel
@@ -118,7 +118,7 @@ Transputer Hello World                                                          
                       ; W 4 [80000160]=00000001
                       ; W 4 [80000164]=80000000
                       
-DevZendo.org Macro Assembler 0.0.2-SNAPSHOT                                                                      20/12/2022 20:33:05
+DevZendo.org Macro Assembler 0.0.2-SNAPSHOT                                                                      20/12/2022 20:33:23
 Transputer Hello World                                                                                                    Page 3 - 6
  80000110             FIN:
  80000110 2C F2       terminate
@@ -178,7 +178,7 @@ Transputer Hello World                                                          
  8000011D 21 A5       cj      _PPS_END
                       
                       ; (a,b,c=useless)
-DevZendo.org Macro Assembler 0.0.2-SNAPSHOT                                                                      20/12/2022 20:33:05
+DevZendo.org Macro Assembler 0.0.2-SNAPSHOT                                                                      20/12/2022 20:33:23
 Transputer Hello World                                                                                                    Page 4 - 6
                       
                       ; Output CONSOLE_PUT_PSTR word
@@ -238,7 +238,7 @@ Transputer Hello World                                                          
  8000013D 81          adc     1
                       ; (a=string address+1, b=length, c=length [undefined])
  8000013E F0          rev
-DevZendo.org Macro Assembler 0.0.2-SNAPSHOT                                                                      20/12/2022 20:33:05
+DevZendo.org Macro Assembler 0.0.2-SNAPSHOT                                                                      20/12/2022 20:33:23
 Transputer Hello World                                                                                                    Page 5 - 6
                       ; (a=length, b=string address+1, c=length [undefined])
  8000013F 81          adc     1
@@ -298,7 +298,7 @@ Transputer Hello World                                                          
 
 
 
-DevZendo.org Macro Assembler 0.0.2-SNAPSHOT                                                                      20/12/2022 20:33:05
+DevZendo.org Macro Assembler 0.0.2-SNAPSHOT                                                                      20/12/2022 20:33:23
 Transputer Hello World                                                                                                    Page 6 - 6
 Symbol Table - by Name
 CONSOLE_PUT_PSTR     00000101

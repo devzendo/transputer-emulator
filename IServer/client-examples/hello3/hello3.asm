@@ -2,7 +2,7 @@ TITLE Transputer Hello World
 
 PAGE 60,132
 
-; Second version without macros. Uses the old NodeServer Protocol.
+; Third version without macros. Uses the IServer protocol.
 
 	.TRANSPUTER
 	MemStart    EQU 0x80000070
