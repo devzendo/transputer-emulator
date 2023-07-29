@@ -17,6 +17,7 @@ more recent C++ standards.
 First release 0.0.1 Midsummer 2019 (13 June 2019) as part of Parachute 0.0.1.
 
 Project started around 19/08/2005, with a long hiatus. Another hiatus from Sep 2021 to Dec 2022.
+Another hiatus from Dec 2022 to Jul 2023.
 
 ## Roadmap
 First release:
@@ -347,7 +348,7 @@ e.g. on Windows:
 In File Explorer, create C:\parachute and set it writable by your user account, however you do this.
 
 Then to copy the built software there:
-mvn prepare-package 
+mvn -P local-install prepare-package 
 
 This installation location is defined in the operating-system-specific profile sections of the pom.xml.
 
@@ -404,7 +405,7 @@ an earlier version of the project, for bootstrap code, object and executable fil
 # License, Copyright & Contact info
 This code is released under the Apache 2.0 License: http://www.apache.org/licenses/LICENSE-2.0.html.
 
-(C) 2005-2022 Matt J. Gumbley
+(C) 2005-2023 Matt J. Gumbley
 
 matt.gumbley@devzendo.org
 
