@@ -1148,7 +1148,216 @@ TEST_F(TestProtocolHandler, WriteAfterReadFails)
 }
 
 // REQ_GETS
+
 // REQ_PUTS
+TEST_F(TestProtocolHandler, PutsHandling)
+{
+    std::vector<BYTE8> putsFrame = {REQ_PUTS};
+    append32(putsFrame, 3); // This stream isn't open.
+    appendString(putsFrame, "XXXX");
+    std::vector<BYTE8> padded = padFrame(putsFrame);
+    bool wasSensedAsExitFrame = checkGoodFrame(padded);
+    EXPECT_FALSE(wasSensedAsExitFrame);
+    EXPECT_EQ(handler->unimplementedFrameCount(), 0L); // it is an implemented tag
+}
+
+TEST_F(TestProtocolHandler, PutsToUnopenFileIsUnsuccessful)
+{
+    std::vector<BYTE8> putsFrame = {REQ_PUTS};
+    append32(putsFrame, 3); // This stream isn't open.
+    appendString(putsFrame, "XXXX");
+    std::vector<BYTE8> padded = padFrame(putsFrame);
+    sendFrame(padded);
+
+    std::vector<BYTE8> response = readResponseFrame();
+    checkResponseFrameTag(response, RES_BADID);
+    checkResponseFrameSize(response, 4); // RES_BADID + 0 + 0 + 0-pad
+    EXPECT_EQ((int)response[3], 0x00);
+    EXPECT_EQ((int)response[4], 0x00);
+}
+
+TEST_F(TestProtocolHandler, PutsToNegativeOutOfRangeFileIsUnsuccessful)
+{
+    std::vector<BYTE8> putsFrame = {REQ_PUTS};
+    append32(putsFrame, -1); // negative out of range
+    appendString(putsFrame, "XXXX");
+    std::vector<BYTE8> padded = padFrame(putsFrame);
+    sendFrame(padded);
+
+    std::vector<BYTE8> response = readResponseFrame();
+    checkResponseFrameTag(response, RES_BADID);
+    checkResponseFrameSize(response, 4); // RES_BADID + 0 + 0 + 0-pad
+    EXPECT_EQ((int)response[3], 0x00);
+    EXPECT_EQ((int)response[4], 0x00);
+}
+
+TEST_F(TestProtocolHandler, PutsToPositiveOutOfRangeFileIsUnsuccessful)
+{
+    std::vector<BYTE8> putsFrame = {REQ_PUTS};
+    append32(putsFrame, MAX_FILES); // positive out of range
+    appendString(putsFrame, "XXXX");
+    std::vector<BYTE8> padded = padFrame(putsFrame);
+    sendFrame(padded);
+
+    std::vector<BYTE8> response = readResponseFrame();
+    checkResponseFrameTag(response, RES_BADID);
+    checkResponseFrameSize(response, 4); // RES_BADID + 0 + 0 + 0-pad
+    EXPECT_EQ((int)response[3], 0x00);
+    EXPECT_EQ((int)response[4], 0x00);
+}
+
+TEST_F(TestProtocolHandler, PutsOk)
+{
+    // Redirect stdout stream to a stringstream... the REQ_PUTS will write there...
+    std::stringstream stringstream;
+    std::streambuf *buffer = stringstream.rdbuf();
+    const int outputStreamId = 1;
+    stubPlatform._setStreamBuf(outputStreamId, buffer);
+
+    // Now REQ_PUTS...
+    std::vector<BYTE8> putsFrame = {REQ_PUTS};
+    append32(putsFrame, FILE_STDOUT);
+    appendString(putsFrame, "ABCD");
+    std::vector<BYTE8> padded = padFrame(putsFrame);
+    sendFrame(padded);
+
+    std::vector<BYTE8> response = readResponseFrame();
+    checkResponseFrameTag(response, RES_SUCCESS);
+    checkResponseFrameSize(response, 2); // RES_SUCCESS + 0-pad
+
+    // Expect redirected data...
+#if defined(PLATFORM_WINDOWS)
+    EXPECT_EQ(stringstream.str(), "ABCD\r\n");
+#endif
+#if defined(PLATFORM_OSX) || defined(PLATFORM_LINUX)
+    EXPECT_EQ(stringstream.str(), "ABCD\n");
+#endif
+}
+
+TEST_F(TestProtocolHandler, PutsOkToRealFile)
+{
+    const std::pair<std::string, std::string> &testFilePathAndName = createRandomTempFilePathContaining();
+    const std::string &testFilePath = testFilePathAndName.first;
+    const std::string &testFileName = testFilePathAndName.second;
+
+    // Open
+    std::vector<BYTE8> openFrame = {REQ_OPEN};
+    appendString(openFrame, testFileName);
+    append8(openFrame, REQ_OPEN_TYPE_BINARY);
+    append8(openFrame, REQ_OPEN_MODE_OUTPUT);
+    padAndSendFrame(openFrame);
+
+    const std::vector<unsigned char> &openResponse = readResponseFrame();
+    checkResponseFrameTag(openResponse, RES_SUCCESS);
+    WORD32 streamId = get32(openResponse, 3);
+
+    // Now REQ_PUTS...
+    std::vector<BYTE8> putsFrame = {REQ_PUTS};
+    append32(putsFrame, streamId);
+    appendString(putsFrame, "ABCD");
+    padAndSendFrame(putsFrame);
+
+    std::vector<BYTE8> writeResponse = readResponseFrame();
+    checkResponseFrameTag(writeResponse, RES_SUCCESS);
+    checkResponseFrameSize(writeResponse, 2); // RES_SUCCESS + 0-pad
+
+    // Close
+    std::vector<BYTE8> closeFrame = {REQ_CLOSE};
+    append32(closeFrame, streamId);
+    sendFrame(padFrame(closeFrame));
+
+    std::vector<BYTE8> closeResponse = readResponseFrame();
+    checkResponseFrameTag(closeResponse, RES_SUCCESS);
+    checkResponseFrameSize(closeResponse, 2); // RES_SUCCESS + 0-pad
+
+    // Expect redirected data...
+#if defined(PLATFORM_WINDOWS)
+    EXPECT_EQ(readFileContents(testFilePath), "ABCD\r\n");
+#endif
+#if defined(PLATFORM_OSX) || defined(PLATFORM_LINUX)
+    EXPECT_EQ(readFileContents(testFilePath), "ABCD\n");
+#endif
+}
+
+TEST_F(TestProtocolHandler, PutsTruncated)
+{
+    // Redirect stdout stream to a membuf... the REQ_PUTS will write there...
+    uint8_t buf[] = { 0x00, 0x01, 0x02, 0x03 };
+    uint8_t overflow[] = { 0xDE, 0xAD, 0xCA, 0xFE };
+    membuf mbuf(buf, 3);
+
+    const int outputStreamId = 1;
+    stubPlatform._setStreamBuf(outputStreamId, &mbuf);
+
+    // Now REQ_WRITE...
+    std::vector<BYTE8> putsFrame = {REQ_PUTS};
+    append32(putsFrame, FILE_STDOUT);
+    appendString(putsFrame, "AB");
+    std::vector<BYTE8> padded = padFrame(putsFrame);
+    sendFrame(padded);
+
+    std::vector<BYTE8> response = readResponseFrame();
+    checkResponseFrameTag(response, RES_SUCCESS);
+    checkResponseFrameSize(response, 2); // RES_SUCCESS + 0-pad
+
+    // Expect redirected data...
+#if defined(PLATFORM_WINDOWS)
+    EXPECT_EQ(buf[0], 'A');
+    EXPECT_EQ(buf[1], 'B');
+    EXPECT_EQ(buf[2], '\r');
+    EXPECT_EQ(buf[3], '\n');
+#endif
+#if defined(PLATFORM_OSX) || defined(PLATFORM_LINUX)
+    EXPECT_EQ(buf[0], 'A');
+    EXPECT_EQ(buf[1], 'B');
+    EXPECT_EQ(buf[2], '\n');
+    EXPECT_EQ(buf[3], 0x03);
+#endif
+    EXPECT_EQ(overflow[0], 0xDE);
+    EXPECT_EQ(overflow[1], 0xAD);
+    EXPECT_EQ(overflow[2], 0xCA);
+    EXPECT_EQ(overflow[3], 0xFE);
+}
+
+TEST_F(TestProtocolHandler, PutsZero)
+{
+    // Redirect stdout stream to a membuf... the REQ_PUTS will write there...
+    uint8_t buf[] = { 0x00, 0x01, 0x02, 0x03 };
+    uint8_t overflow[] = { 0xDE, 0xAD, 0xCA, 0xFE };
+    membuf mbuf(buf, 3);
+    const int outputStreamId = 1;
+    stubPlatform._setStreamBuf(outputStreamId, &mbuf);
+
+    // Now REQ_PUTS...
+    std::vector<BYTE8> putsFrame = {REQ_PUTS};
+    append32(putsFrame, FILE_STDOUT);
+    append16(putsFrame, 0); // no data to write
+    std::vector<BYTE8> padded = padFrame(putsFrame);
+    sendFrame(padded);
+
+    std::vector<BYTE8> response = readResponseFrame();
+    checkResponseFrameTag(response, RES_SUCCESS);
+    checkResponseFrameSize(response, 2); // RES_SUCCESS + 0-pad
+
+    // Expect only the platform-specific line end to have been written to the write sensing buffer.
+#if defined(PLATFORM_WINDOWS)
+    EXPECT_EQ(buf[0], '\r');
+    EXPECT_EQ(buf[1], '\n');
+    EXPECT_EQ(buf[2], 0x02);
+    EXPECT_EQ(buf[3], 0x03);
+#endif
+#if defined(PLATFORM_OSX) || defined(PLATFORM_LINUX)
+    EXPECT_EQ(buf[0], '\n');
+    EXPECT_EQ(buf[1], 0x01);
+    EXPECT_EQ(buf[2], 0x02);
+    EXPECT_EQ(buf[3], 0x03);
+#endif
+    EXPECT_EQ(overflow[0], 0xDE);
+    EXPECT_EQ(overflow[1], 0xAD);
+    EXPECT_EQ(overflow[2], 0xCA);
+    EXPECT_EQ(overflow[3], 0xFE);
+}
+
 // REQ_FLUSH
 // REQ_SEEK
 // REQ_TELL

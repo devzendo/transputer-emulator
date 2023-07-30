@@ -33,6 +33,7 @@ Second release (work in progress):
   * Open
   * Read
   * Write
+  * Puts
   * Get Key
   * Poll Key
   * Close

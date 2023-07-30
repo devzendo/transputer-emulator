@@ -204,9 +204,10 @@ bool ProtocolHandler::requestResponse() {
 //        case REQ_GETS: {
 //            break;
 //        }
-//        case REQ_PUTS: {
-//            break;
-//        }
+        case REQ_PUTS: {
+            reqPuts();
+            break;
+        }
 //        case REQ_FLUSH: {
 //            break;
 //        }
@@ -488,6 +489,41 @@ void ProtocolHandler::reqWrite() {
         // TODO if streamId == 1 or 2, flush (test after open done, so we can correctly sense presence/absence of flush call on platform
         codec.put(RES_SUCCESS);
         codec.put((WORD16) wrote);
+    } catch (const std::runtime_error &e) { // File must be open for writing
+        logWarn(e.what());
+        codec.put(RES_BADID);
+        codec.put((WORD16) 0);
+    } catch (const std::domain_error &e) { // Last op must be write
+        logWarn(e.what());
+        codec.put(RES_NOPOSN);
+        codec.put((WORD16) 0);
+    } catch (const std::range_error &e) {
+        logWarn(e.what());
+        codec.put(RES_BADID);
+        codec.put((WORD16) 0);
+    } catch (const std::invalid_argument &e) {
+        logWarn(e.what());
+        codec.put(RES_BADID);
+        codec.put((WORD16) 0);
+    }
+}
+
+void ProtocolHandler::reqPuts() {
+    const WORD32 streamId = codec.get32();
+    const std::string data = codec.getString(); // can be binary, this is fine.. Size limited to WORD16.
+    try {
+        WORD16 size = data.size();
+        logDebugF("Writing %d bytes to stream #%d", size, streamId);
+        WORD16 wrote = (size > 0) ? myPlatform.writeStream(streamId, size, (BYTE8 *) data.data()) : 0;
+#if defined(PLATFORM_WINDOWS)
+        wrote += myPlatform.writeStream(streamId, 2, (BYTE8 *) "\r\n");
+#endif
+#if defined(PLATFORM_OSX) || defined(PLATFORM_LINUX)
+        wrote += myPlatform.writeStream(streamId, 1, (BYTE8 *) "\n");
+#endif
+        logDebugF("Wrote %d bytes to stream #%d", wrote, streamId);
+        // Note no automatic flushing, and no indication to the client of the amount written..
+        codec.put(RES_SUCCESS);
     } catch (const std::runtime_error &e) { // File must be open for writing
         logWarn(e.what());
         codec.put(RES_BADID);

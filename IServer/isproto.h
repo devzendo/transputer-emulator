@@ -214,8 +214,30 @@ const BYTE8 REQ_OPEN_MODE_APPEND_UPDATE = 6;
 // | BYTE8 result         | RES_SUCCESS on success; RES_BADID if stream not open, or out of range.
 // +----------------------+
 // | WORD16 count         | Length of data written, which may be less than requested. Use REQ_FEOF/REQ_FERROR to check.
-// | BYTE8[] data         | A number of bytes read - see String definition, above - can be binary, not just ASCII.
 // +----------------------+
+
+// REQ_GETS
+// TBC
+
+// REQ_PUTS
+// Writes a line of text to a stream 'streamId' which must be open for output. The host-specified convention for newline
+// will be appended to the line and output to the file. The maximum line length is host-specified.
+//
+// Request:
+// +----------------------+
+// | BYTE8 REQ_PUTS       |
+// +----------------------+
+// | WORD32 streamid      | A stream identifier for this open file
+// | WORD16 count         | Length of data to write
+// | BYTE8[] data         | A number of bytes to write - see String definition, above - can be binary, not just ASCII.
+// +----------------------+
+//
+// Response data for REQ_PUTS:
+// +----------------------+
+// | BYTE8 result         | RES_SUCCESS on success; RES_BADID if stream not open, or out of range.
+// +----------------------+
+
+
 
 // REQ_EXIT
 // Request:
