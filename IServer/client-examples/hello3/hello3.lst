@@ -1,5 +1,5 @@
-DevZendo.org Macro Assembler 0.0.2-SNAPSHOT                                                                      20/12/2022 20:33:23
-Transputer Hello World                                                                                                    Page 1 - 6
+DevZendo.org Macro Assembler 0.0.2-SNAPSHOT                                                                      13/07/2023 13:12:59
+Transputer Hello World                                                                                                    Page 1 - 7
                       TITLE Transputer Hello World
                       
                       PAGE 60,132
@@ -14,7 +14,7 @@ Transputer Hello World                                                          
  = 0000               start_time  EQU 0
                       
  = 8000006F           ORG         MemStart - 1
- 8000006F D8          DB          STOP - START
+ 8000006F FB          DB          STOP - START
  = 80000070           ORG         MemStart
                       
                       ; Standard Transputer startup code.
@@ -58,8 +58,8 @@ Transputer Hello World                                                          
  800000AC E0          stnl    0                   ; store NotProcess.p to Link 3 input channel
  800000AD 24 F2       mint                        ; load A with NotProcess.p
  800000AF 67 20 20 20 ldc     0x80000018          ; load address of Link 2 input channel
-DevZendo.org Macro Assembler 0.0.2-SNAPSHOT                                                                      20/12/2022 20:33:23
-Transputer Hello World                                                                                                    Page 2 - 6
+DevZendo.org Macro Assembler 0.0.2-SNAPSHOT                                                                      13/07/2023 13:12:59
+Transputer Hello World                                                                                                    Page 2 - 7
  800000B3 20 20 21 48
  800000B7 E0          stnl    0                   ; store NotProcess.p to Link 2 input channel
  800000B8 24 F2       mint                        ; load A with NotProcess.p
@@ -89,39 +89,38 @@ Transputer Hello World                                                          
                       
                       
                       
- 800000FA 0D          j       MAIN
+ 800000FA 0C          j       MAIN
                       
- = 0100               NSS_CONSOLE     EQU 0x0100
- = 0101               CONSOLE_PUT_PSTR    EQU NSS_CONSOLE OR 0x01
+ = 000F               REQ_PUTS        EQU 0x0f
+ = 0000               STDOUT_STREAMID EQU 0x00
  = 80000000           LINK0_OUTPUT    EQU 0x80000000
  = 80000010           LINK0_INPUT     EQU 0x80000010
                       
                       
  800000FB             HWSTR:
- 800000FB 68 65 6C 6C DB      "hello world", 0x0a, 0x00 ; length 13
+ 800000FB 68 65 6C 6C DB      "hello world", 0x00 ; length 12
  800000FF 6F 20 77 6F
- 80000103 72 6C 64 0A
- 80000107 00
+ 80000103 72 6C 64 00
                       
- 80000108             MAIN:
- 80000108 21 20 B0    ajw     0x100    ; allow for 64 stack frames
+ 80000107             MAIN:
+ 80000107 21 20 B0    ajw     0x100    ; allow for 64 stack frames
                       
- 8000010B 61 4C       ldc     HWSTR - _M1
- 8000010D 21 FB       ldpi
- 8000010F             _M1:
+ 8000010A 61 4D       ldc     HWSTR - _M1
+ 8000010C 21 FB       ldpi
+ 8000010E             _M1:
                       ; call putConsolePString
                       ; a=800000FB (HWSTR), b=00000001 (irrelevant)
- 8000010F 92          call    putConsolePString
+ 8000010E 92          call    putConsolePString
                       
                       ; W 4 [80000158]=8000010D
                       ; W 4 [8000015C]=800000FB (HWSTR)
                       ; W 4 [80000160]=00000001
                       ; W 4 [80000164]=80000000
                       
-DevZendo.org Macro Assembler 0.0.2-SNAPSHOT                                                                      20/12/2022 20:33:23
-Transputer Hello World                                                                                                    Page 3 - 6
- 80000110             FIN:
- 80000110 2C F2       terminate
+ 8000010F             FIN:
+DevZendo.org Macro Assembler 0.0.2-SNAPSHOT                                                                      13/07/2023 13:12:59
+Transputer Hello World                                                                                                    Page 3 - 7
+ 8000010F 2C F2       terminate
                       
                       ; Stack effect notation used here:
                       ; fun(a=A, b=B, c=C): (a=A', b=B', c=C')
@@ -133,15 +132,15 @@ Transputer Hello World                                                          
                       ; Precondition: string is <= 255 bytes long. Only a single protocol frame will be sent to the server; If the s
                       ; is longer, this function could issue several frames for each segment. A future version could..
                       ; If the string is empty, no frame is emitted.
- 80000112             putConsolePString:
- = 0002               PPS_WLEN        EQU 2
+ 80000111             putConsolePString:
+ = 0002               PCPS_WLEN       EQU 2
                       
  = 0000               PPS_STRINGADDR  EQU 0
  = 0001               PPS_STRINGLEN   EQU 1
                       
                       ; before call, w=80000169
                       ; now this routine has been called, here, w=80000159
- 80000112 60 BE       ajw     -PPS_WLEN
+ 80000111 60 BE       ajw     -PCPS_WLEN
                       ; now w=80000151
                       
                       ; the call generates the following return stack
@@ -150,111 +149,166 @@ Transputer Hello World                                                          
                       ; DEBUG memory.cpp:281 W 4 [80000160]=00000001 (old b)
                       ; DEBUG memory.cpp:281 W 4 [80000164]=80000000 (old c)
                       ; get the old areg (string address) off the return stack
- 80000114 73          ldl     0x03
-                      ; 5 gets w+5word => 80000150+14 => 80000164 (old c)
-                      ; 4 gets w+4word => 80000150+10 => 80000160 (old b)
-                      ; 3 gets w+3word => 80000150+C = 8000015C (which is old a, the string address, which we want)
-                      ; 2 gets w+2word => 80000150+8 = 80000158 (the return address)
                       
-                      ; idea for later, store CONSOLE_PUT_PSTR then the length next to each other in the workspace, then out them as
-                      ; message (LSB of the length will be next to the CONSOLE_PUT_PSTR), then the string text, so we have two outpu
-                      ; rather than the three we have at the moment....?
+                      ; 5 => (old c)
+                      ; 4 => (old b)
+                      ; 3 => (which is old a, the string address, which we want)
+                      ; 2 => (the return address)
+                      ; 1 => PPS_STRINGLEN
+                      ; 0 => PPS_STRINGADDR
+ = 0003               WS_STR_ADDR EQU 0x03
+                      
+ 80000113 73          ldl     WS_STR_ADDR
+                      ; (a=string address)
                       
                       ; Store the string pointer for later
- 80000115 25 FA       dup
-                      ; (a=string address, b=string address, c=B)
- 80000117 D0          stl     PPS_STRINGADDR
-                      ; (a=string address, b=B, c=B)
+ 80000114 25 FA       dup
+                      ; (a=string address, b=string address)
+ 80000116 D0          stl     PPS_STRINGADDR   ; TODO don't need a separate WS element for this, it's at 0x03
+                      ; (a=string address)
                       
- 80000118 21 9C       call    strlen
+ 80000117 24 90       call    strlen
+                      ; (a=len)
                       
-                      ; (a=length, b=useless, c=useless)
- 8000011A 25 FA       dup
-                      ; (a=length, b=length, c=useless)
- 8000011C D1          stl     PPS_STRINGLEN
-                      ; (a=length, b,c=useless)
+ 80000119 25 FA       dup
+                      ; (a=len, b=len)
+ 8000011B D1          stl     PPS_STRINGLEN
+                      ; (a=len)
                       
-                      ; Empty string?
- 8000011D 21 A5       cj      _PPS_END
+                      ; Frame length is 2 bytes for length (a short), 1 byte for frame type (REQ_PUTS), 4 bytes for stream id 0, 2 b
+                      ; (len) for string length short, then <len> bytes of string. So, frame length is 9 + <len>.
+ 8000011C 89          adc     9
+DevZendo.org Macro Assembler 0.0.2-SNAPSHOT                                                                      13/07/2023 13:12:59
+Transputer Hello World                                                                                                    Page 4 - 7
+                      ; (a=frame length)
+ 8000011D 22 9D       call    outshort0
+                      ; ()
                       
-                      ; (a,b,c=useless)
-DevZendo.org Macro Assembler 0.0.2-SNAPSHOT                                                                      20/12/2022 20:33:23
-Transputer Hello World                                                                                                    Page 4 - 6
-                      
-                      ; Output CONSOLE_PUT_PSTR word
+                      ; Output REQ_PUTS byte
  8000011F 67 20 20 20 ldc     LINK0_OUTPUT
  80000123 20 20 20 40
-                      ; (a=LINK0_OUTPUT, b,c=useless)
- 80000127 21 20 41    ldc     CONSOLE_PUT_PSTR
-                      ; (a=CONSOLE_PUT_PSTR, b=LINK0_OUTPUT, c=useless)
- 8000012A FF          outword     ; CONSOLE_PUT_PSTR WORD32 -->
-                      ; (a=CONSOLE_PUT_PSTR, b=LINK0_OUTPUT, c=useless)
+                      ; (a=LINK0_OUTPUT)
+ 80000127 4F          ldc     REQ_PUTS
+                      ; (a=REQ_PUTS, b=LINK0_OUTPUT)
+ 80000128 FE          outbyte
+                      ; ()
                       
-                      ; Output length byte
- 8000012B 27 F9       pop
-                      ; (a=LINK0_OUTPUT, b=useless, c=CONSOLE_PUT_PSTR)
- 8000012D 71          ldl     PPS_STRINGLEN
-                      ; (a=string length, b=LINK0_OUTPUT, c=useless)
- 8000012E FE          outbyte     ; string length BYTE -->
-                      ; (a=string length, b=LINK0_OUTPUT, c=useless)
+                      ; Output Stdout stream id word32
+ 80000129 67 20 20 20 ldc     LINK0_OUTPUT
+ 8000012D 20 20 20 40
+                      ; (a=LINK0_OUTPUT)
+ 80000131 40          ldc     STDOUT_STREAMID
+                      ; (a=STDOUT_STREAMID, b=LINK0_OUTPUT)
+ 80000132 FF          outword
+                      ; ()
                       
-                      ; WANT:
+                      ; Output length word16
+ 80000133 71          ldl     PPS_STRINGLEN
+                      ; (a=string length)
+ 80000134 21 97       call    outshort0
+                      ; ()
+                      
+                      ; Output string data
+ 80000136 70          ldl     PPS_STRINGADDR
+ 80000137 67 20 20 20 ldc     LINK0_OUTPUT
+ 8000013B 20 20 20 40
+ 8000013F 71          ldl     PPS_STRINGLEN
                       ; (a=string length; b=LINK0_OUTPUT, c=string address)
+ 80000140 FB          out
+                      ; ()
                       
- 8000012F 70          ldl     PPS_STRINGADDR
-                      ; (a=string address; b=string length; c=LINK0_OUTPUT)
- 80000130 27 F9       pop
-                      ; (a=string length; b=LINK0_OUTPUT; c=string_address)
- 80000132 FB          out
-                      ; (a=string length; b=LINK0_OUTPUT; c=string_address)
-                      
- 80000133             _PPS_END:
-                      ; Empty string => (a=length, b=useless, c=useless)
- 80000133 B2          ajw     PPS_WLEN
- 80000134 22 F0       ret
+ 80000141 B2          ajw     PCPS_WLEN
+ 80000142 22 F0       ret
                       
                       
+                      ; Output the LSB and MSB of the short word, to the link address.
+                      ; (a=short word, b=link address): ()
+ 80000144             outshort:
+                      ; Workspace following call here...
+                      ; 3 => (old c)
+                      ; 2 => (old b=link address)
+                      ; 1 => (old a=short word)
+                      ; 0 => (the return address)
+ = 0002               WSOS_LINK EQU 0x02
+ = 0001               WSOS_WORD EQU 0x01
                       
- 80000136             strlen: ; look, no workspace!! all registers!
+ 80000144 72          ldl     WSOS_LINK
+                      ; (a=link address)
+ 80000145 11          ldlp    WSOS_WORD
+                      ; (a=address of short word, b=link address)
+ 80000146 F0          rev
+                      ; (a=link address, b=address of short word)
+DevZendo.org Macro Assembler 0.0.2-SNAPSHOT                                                                      13/07/2023 13:12:59
+Transputer Hello World                                                                                                    Page 5 - 7
+ 80000147 42          ldc     2
+                      ; (a=length=2, b=link address, c=address of short word)
+ 80000148 FB          out
+ 80000149 22 F0       ret
+                      
+                      ; Output the LSB and MSB of a short word to LINK0_OUTPUT.
+                      ; (a=short word): ()
+ 8000014B             outshort0:
+                      ; Workspace following call here...
+                      ; 3 => (old c)
+                      ; 2 => (old b)
+                      ; 1 => (old a=short word)
+                      ; 0 => (the return address)
+ = 0001               WSOS0_WORD EQU 0x01
+                      
+ 8000014B 67 20 20 20 ldc     LINK0_OUTPUT
+ 8000014F 20 20 20 40
+                      ; (a=link address)
+ 80000153 11          ldlp    WSOS0_WORD
+                      ; (a=address of short word, b=link address)
+ 80000154 F0          rev
+                      ; (a=link address, b=address of short word)
+ 80000155 42          ldc     2
+                      ; (a=length=2, b=link address, c=address of short word)
+ 80000156 FB          out
+ 80000157 22 F0       ret
+                      
+                      
+                      
+                      ; strlen(a=string address): (a=length)
+ 80000159             strlen: ; look, no workspace!! all registers!
                       
                       ; get the old areg (string address) off the return stack
                       ; this routine is workspace free, so no ajw....
- 80000136 71          ldl     0x01
+ 80000159 71          ldl     0x01
                       
-                      ; strlen(a=string address, b=B, c=C): (a=length, b=useless, c=useless)
- 80000137 40          ldc     0
-                      ; (a=length (0), b=string address, c=B)
- 80000138             _sl_loop:
- 80000138 F0          rev
-                      ; (a=string address, b=length, c=B or length [undefined])
- 80000139 25 FA       dup
+ 8000015A 40          ldc     0
+                      ; (a=length (0), b=string address)
+ 8000015B             _sl_loop:
+ 8000015B F0          rev
+                      ; (a=string address, b=length)
+ 8000015C 25 FA       dup
                       ; (a=string address, b=string address, c=length)
- 8000013B F1          lb
+ 8000015E F1          lb
                       ; (a=char, b=string address, c=length)
- 8000013C A5          cj      _sl_end
+ 8000015F A5          cj      _sl_end
                       
-                      ; (a=string address, b=length, c=length [undefined])
+                      ; (a=string address, b=length)
                       ; not end of string
- 8000013D 81          adc     1
-                      ; (a=string address+1, b=length, c=length [undefined])
- 8000013E F0          rev
-DevZendo.org Macro Assembler 0.0.2-SNAPSHOT                                                                      20/12/2022 20:33:23
-Transputer Hello World                                                                                                    Page 5 - 6
-                      ; (a=length, b=string address+1, c=length [undefined])
- 8000013F 81          adc     1
-                      ; (a=length+1, b=string address+1, c=length [undefined])
- 80000140 60 06       j       _sl_loop
+ 80000160 81          adc     1
+                      ; (a=string address+1, b=length)
+ 80000161 F0          rev
+                      ; (a=length, b=string address+1)
+ 80000162 81          adc     1
+                      ; (a=length+1, b=string address+1)
+ 80000163 60 06       j       _sl_loop
                       
- 80000142             _sl_end:
+ 80000165             _sl_end:
+DevZendo.org Macro Assembler 0.0.2-SNAPSHOT                                                                      13/07/2023 13:12:59
+Transputer Hello World                                                                                                    Page 6 - 7
                       ; (a=char, b=string address, c=length)
- 80000142 27 F9       pop
+ 80000165 27 F9       pop
                       ; (a=string address, b=length, c=char)
- 80000144 27 F9       pop
+ 80000167 27 F9       pop
                       ; (a=length, b=char, c=string address)
- 80000146 22 F0       ret
+ 80000169 22 F0       ret
                       
                       
- 80000148             STOP:
+ 8000016B             STOP:
                       END
 
 
@@ -298,31 +352,42 @@ Transputer Hello World                                                          
 
 
 
-DevZendo.org Macro Assembler 0.0.2-SNAPSHOT                                                                      20/12/2022 20:33:23
-Transputer Hello World                                                                                                    Page 6 - 6
+
+
+
+
+
+
+DevZendo.org Macro Assembler 0.0.2-SNAPSHOT                                                                      13/07/2023 13:12:59
+Transputer Hello World                                                                                                    Page 7 - 7
 Symbol Table - by Name
-CONSOLE_PUT_PSTR     00000101
-FIN                  80000110
+FIN                  8000010F
 HWSTR                800000FB
 LINK0_INPUT          80000010
 LINK0_OUTPUT         80000000
-MAIN                 80000108
+MAIN                 80000107
 MEMSTART             80000070
-NSS_CONSOLE          00000100
+OUTSHORT             80000144
+OUTSHORT0            8000014B
+PCPS_WLEN            00000002
 PPS_STRINGADDR       00000000
 PPS_STRINGLEN        00000001
-PPS_WLEN             00000002
-PUTCONSOLEPSTRING    80000112
+PUTCONSOLEPSTRING    80000111
+REQ_PUTS             0000000F
 START                80000070
 START_TIME           00000000
-STOP                 80000148
-STRLEN               80000136
+STDOUT_STREAMID      00000000
+STOP                 8000016B
+STRLEN               80000159
 TPTRLOC0             80000024
 TPTRLOC1             80000028
-_M1                  8000010F
-_PPS_END             80000133
-_SL_END              80000142
-_SL_LOOP             80000138
+WSOS0_WORD           00000001
+WSOS_LINK            00000002
+WSOS_WORD            00000001
+WS_STR_ADDR          00000003
+_M1                  8000010E
+_SL_END              80000165
+_SL_LOOP             8000015B
 
 Symbol Table - by Address
 LINK0_OUTPUT         80000000
@@ -332,29 +397,24 @@ TPTRLOC1             80000028
 MEMSTART             80000070
 START                80000070
 HWSTR                800000FB
-MAIN                 80000108
-_M1                  8000010F
-FIN                  80000110
-PUTCONSOLEPSTRING    80000112
-_PPS_END             80000133
-STRLEN               80000136
-_SL_LOOP             80000138
-_SL_END              80000142
-STOP                 80000148
+MAIN                 80000107
+_M1                  8000010E
+FIN                  8000010F
+PUTCONSOLEPSTRING    80000111
+OUTSHORT             80000144
+OUTSHORT0            8000014B
+STRLEN               80000159
+_SL_LOOP             8000015B
+_SL_END              80000165
+STOP                 8000016B
 PPS_STRINGADDR       00000000
+STDOUT_STREAMID      00000000
 START_TIME           00000000
+WSOS0_WORD           00000001
 PPS_STRINGLEN        00000001
-PPS_WLEN             00000002
-NSS_CONSOLE          00000100
-CONSOLE_PUT_PSTR     00000101
-
-
-
-
-
-
-
-
-
-
+WSOS_WORD            00000001
+WSOS_LINK            00000002
+PCPS_WLEN            00000002
+WS_STR_ADDR          00000003
+REQ_PUTS             0000000F
 

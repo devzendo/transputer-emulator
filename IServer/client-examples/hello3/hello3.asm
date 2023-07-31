@@ -76,14 +76,14 @@ START:
 
 	j       MAIN
 
-	NSS_CONSOLE     EQU 0x0100
-	CONSOLE_PUT_PSTR    EQU NSS_CONSOLE OR 0x01
+	REQ_PUTS        EQU 0x0f
+	STDOUT_STREAMID EQU 0x00
 	LINK0_OUTPUT    EQU 0x80000000
 	LINK0_INPUT     EQU 0x80000010
 
 
 HWSTR:
-	DB      "hello world", 0x0a, 0x00 ; length 13
+	DB      "hello world", 0x00 ; length 12
 
 MAIN:
     ajw     0x100    ; allow for 64 stack frames
@@ -114,14 +114,14 @@ FIN:
 ; is longer, this function could issue several frames for each segment. A future version could..
 ; If the string is empty, no frame is emitted.
 putConsolePString:
-	PPS_WLEN        EQU 2
+	PCPS_WLEN       EQU 2
 
 	PPS_STRINGADDR  EQU 0
 	PPS_STRINGLEN   EQU 1
 
     ; before call, w=80000169
     ; now this routine has been called, here, w=80000159
-	ajw     -PPS_WLEN
+	ajw     -PCPS_WLEN
     ; now w=80000151
 
     ; the call generates the following return stack
@@ -130,94 +130,144 @@ putConsolePString:
     ; DEBUG memory.cpp:281 W 4 [80000160]=00000001 (old b)
     ; DEBUG memory.cpp:281 W 4 [80000164]=80000000 (old c)
     ; get the old areg (string address) off the return stack
-    ldl     0x03
-    ; 5 gets w+5word => 80000150+14 => 80000164 (old c)
-    ; 4 gets w+4word => 80000150+10 => 80000160 (old b)
-    ; 3 gets w+3word => 80000150+C = 8000015C (which is old a, the string address, which we want)
-    ; 2 gets w+2word => 80000150+8 = 80000158 (the return address)
 
-; idea for later, store CONSOLE_PUT_PSTR then the length next to each other in the workspace, then out them as a 5-byte
-; message (LSB of the length will be next to the CONSOLE_PUT_PSTR), then the string text, so we have two outputs,
-; rather than the three we have at the moment....?
+    ; 5 => (old c)
+    ; 4 => (old b)
+    ; 3 => (which is old a, the string address, which we want)
+    ; 2 => (the return address)
+	; 1 => PPS_STRINGLEN
+	; 0 => PPS_STRINGADDR
+	WS_STR_ADDR EQU 0x03
+
+    ldl     WS_STR_ADDR
+    ; (a=string address)
 
 	; Store the string pointer for later
     dup
-    ; (a=string address, b=string address, c=B)
-	stl     PPS_STRINGADDR
-	; (a=string address, b=B, c=B)
+    ; (a=string address, b=string address)
+	stl     PPS_STRINGADDR   ; TODO don't need a separate WS element for this, it's at 0x03
+	; (a=string address)
 
 	call    strlen
+	; (a=len)
 
-	; (a=length, b=useless, c=useless)
 	dup
-	; (a=length, b=length, c=useless)
+	; (a=len, b=len)
 	stl     PPS_STRINGLEN
-	; (a=length, b,c=useless)
+	; (a=len)
 
-	; Empty string?
-	cj      _PPS_END
+    ; Frame length is 2 bytes for length (a short), 1 byte for frame type (REQ_PUTS), 4 bytes for stream id 0, 2 bytes
+    ; (len) for string length short, then <len> bytes of string. So, frame length is 9 + <len>.
+	adc     9
+	; (a=frame length)
+    call    outshort0
+	; ()
 
-	; (a,b,c=useless)
-
-    ; Output CONSOLE_PUT_PSTR word
+    ; Output REQ_PUTS byte
 	ldc     LINK0_OUTPUT
-	; (a=LINK0_OUTPUT, b,c=useless)
-	ldc     CONSOLE_PUT_PSTR
-	; (a=CONSOLE_PUT_PSTR, b=LINK0_OUTPUT, c=useless)
-	outword     ; CONSOLE_PUT_PSTR WORD32 -->
-	; (a=CONSOLE_PUT_PSTR, b=LINK0_OUTPUT, c=useless)
+	; (a=LINK0_OUTPUT)
+	ldc     REQ_PUTS
+	; (a=REQ_PUTS, b=LINK0_OUTPUT)
+	outbyte
+	; ()
 
-	; Output length byte
-	pop
-	; (a=LINK0_OUTPUT, b=useless, c=CONSOLE_PUT_PSTR)
+    ; Output Stdout stream id word32
+	ldc     LINK0_OUTPUT
+	; (a=LINK0_OUTPUT)
+    ldc     STDOUT_STREAMID
+	; (a=STDOUT_STREAMID, b=LINK0_OUTPUT)
+	outword
+	; ()
+
+	; Output length word16
 	ldl     PPS_STRINGLEN
-	; (a=string length, b=LINK0_OUTPUT, c=useless)
-	outbyte     ; string length BYTE -->
-	; (a=string length, b=LINK0_OUTPUT, c=useless)
+	; (a=string length)
+    call    outshort0
+	; ()
 
-    ; WANT:
-    ; (a=string length; b=LINK0_OUTPUT, c=string address)
-
+    ; Output string data
     ldl     PPS_STRINGADDR
-    ; (a=string address; b=string length; c=LINK0_OUTPUT)
-    pop
-    ; (a=string length; b=LINK0_OUTPUT; c=string_address)
+	ldc     LINK0_OUTPUT
+	ldl     PPS_STRINGLEN
+    ; (a=string length; b=LINK0_OUTPUT, c=string address)
     out
-    ; (a=string length; b=LINK0_OUTPUT; c=string_address)
+    ; ()
 
-_PPS_END:
-	; Empty string => (a=length, b=useless, c=useless)
-	ajw     PPS_WLEN
+	ajw     PCPS_WLEN
+	ret
+
+
+; Output the LSB and MSB of the short word, to the link address.
+; (a=short word, b=link address): ()
+outshort:
+    ; Workspace following call here...
+    ; 3 => (old c)
+    ; 2 => (old b=link address)
+    ; 1 => (old a=short word)
+    ; 0 => (the return address)
+	WSOS_LINK EQU 0x02
+	WSOS_WORD EQU 0x01
+
+	ldl     WSOS_LINK
+    ; (a=link address)
+    ldlp    WSOS_WORD
+	; (a=address of short word, b=link address)
+	rev
+	; (a=link address, b=address of short word)
+	ldc     2
+	; (a=length=2, b=link address, c=address of short word)
+	out
+	ret
+
+; Output the LSB and MSB of a short word to LINK0_OUTPUT.
+; (a=short word): ()
+outshort0:
+    ; Workspace following call here...
+    ; 3 => (old c)
+    ; 2 => (old b)
+    ; 1 => (old a=short word)
+    ; 0 => (the return address)
+	WSOS0_WORD EQU 0x01
+
+	ldc     LINK0_OUTPUT
+    ; (a=link address)
+    ldlp    WSOS0_WORD
+	; (a=address of short word, b=link address)
+	rev
+	; (a=link address, b=address of short word)
+	ldc     2
+	; (a=length=2, b=link address, c=address of short word)
+	out
 	ret
 
 
 
+; strlen(a=string address): (a=length)
 strlen: ; look, no workspace!! all registers!
 
     ; get the old areg (string address) off the return stack
     ; this routine is workspace free, so no ajw....
     ldl     0x01
 
-	; strlen(a=string address, b=B, c=C): (a=length, b=useless, c=useless)
 	ldc     0
-	; (a=length (0), b=string address, c=B)
+	; (a=length (0), b=string address)
 _sl_loop:
 	rev
-	; (a=string address, b=length, c=B or length [undefined])
+	; (a=string address, b=length)
 	dup
 	; (a=string address, b=string address, c=length)
 	lb
 	; (a=char, b=string address, c=length)
 	cj      _sl_end
 
-	; (a=string address, b=length, c=length [undefined])
+	; (a=string address, b=length)
 	; not end of string
 	adc     1
-	; (a=string address+1, b=length, c=length [undefined])
+	; (a=string address+1, b=length)
 	rev
-	; (a=length, b=string address+1, c=length [undefined])
+	; (a=length, b=string address+1)
 	adc     1
-	; (a=length+1, b=string address+1, c=length [undefined])
+	; (a=length+1, b=string address+1)
 	j       _sl_loop
 
 _sl_end:
