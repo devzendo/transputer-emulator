@@ -124,6 +124,9 @@ bool processCommandLine(int argc, char *argv[]) {
 					switch (argv[i][2]) {
 						case 'f':
 							debugLink = true;
+                            debugLinkRaw = true;
+                            debugPlatform = true;
+                            debugProtocol = true;
 							break;
 						case 'l':
 							debugLink = true;
@@ -331,17 +334,21 @@ int main(int argc, char *argv[]) {
 	}
 
 	if (monitorLink) {
+        logDebug("Monitoring boot link");
 		monitorBootLink();
 	} else {
+        logDebug("Processing IServer protocol");
 	    ProtocolHandler * myProtocolHandler = new ProtocolHandler(*myLink, *myPlatform, myRootDirectory);
 	    myProtocolHandler->setDebug(debugProtocol);
 	    while (!finished) {
 	        finished = myProtocolHandler->processFrame();
 	    }
 	    exitCode = myProtocolHandler->exitCode();
+        logDebugF("Received exit code %d", exitCode);
 	}
 
 	try {
+        logDebug("Resetting link");
 		myLink->resetLink();
 	} catch (exception &e) {
 		logErrorF("Could not reset link 0: %s", e.what());
