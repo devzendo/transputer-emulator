@@ -95,7 +95,7 @@ private:
 class ConsoleStream: public Stream {
 public:
     explicit ConsoleStream(int streamId, std::streambuf *buf) : Stream(streamId), iostream(buf) {
-        logInfoF("Opened console stream #%d", streamId);
+        logDebugF("Opened console stream #%d", streamId);
     }
 
     ~ConsoleStream() override {
@@ -282,7 +282,7 @@ WORD16 Platform::writeStream(int streamId, WORD16 size, BYTE8 *buffer) noexcept(
         logWarnF("Attempt to write to unopen stream #%d", streamId);
         throw std::invalid_argument("Stream id not open");
     }
-    logInfoF("writeStream - is open? %s", pStream->is_open() ? "open" : "closed");
+    logDebugF("writeStream - is open? %s", pStream->is_open() ? "open" : "closed");
     if (! pStream->isWritable) {
         logWarnF("Attempt to write to non-writable stream #%d", streamId);
         throw std::runtime_error("Stream not writable");
