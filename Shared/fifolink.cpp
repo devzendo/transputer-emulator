@@ -134,13 +134,15 @@ FIFOLink::~FIFOLink() {
 BYTE8 FIFOLink::readByte() throw (std::exception) {
 	static char msgbuf[255];
 	BYTE8 buf;
-	if (read(myReadFD, &buf, 1) == 1) {
+    int readlen = 0;
+    readlen = read(myReadFD, &buf, 1);
+	if (readlen == 1) {
 		if (bDebug) {
 			logDebugF("Link %d R #%08X %02X (%c)", myLinkNo, myReadSequence++, buf, isprint(buf) ? buf : '.');
 		}
 		return buf;
 	}
-	sprintf(msgbuf, "Could not read a byte from FIFO FD#%d: %s", myReadFD, strerror(errno));
+	sprintf(msgbuf, "Could not read a byte from FIFO FD#%d: (read %d byte(s)) %s", myReadFD, readlen, strerror(errno));
 	logWarn(msgbuf);
 	throw std::runtime_error(msgbuf);
 }
