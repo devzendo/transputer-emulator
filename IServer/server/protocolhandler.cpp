@@ -136,6 +136,9 @@ bool ProtocolHandler::processFrame() {
 }
 
 bool ProtocolHandler::readFrame() {
+    if (bDebug) {
+        logDebug("Starting to read a frame");
+    }
     // Frame length encoded in the first two bytes (little endian).
     // Minimum frame length is 8 (ie minimum message length of 6 bytes in the to-server
     // direction), maximum 512. Packet size must always be an even number of bytes.
