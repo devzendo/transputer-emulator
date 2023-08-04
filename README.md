@@ -67,6 +67,9 @@ Fifth release:
 0.0.2 Second Release (work in progress)
 * Converting the NodeServer to be IServer compatible. Similarly, "Hello World".
 * Release for macOS is upgraded from El Capitan to Mojave. Untested on Catalina.
+* IServer -df (full debug) now enables all parts of the debug output.
+* Successfully runs hello3.asm !
+* IServer now supports FPuts.
 
 0.0.1 First Release
 * Versioning and build now controlled by Maven and CMake.
