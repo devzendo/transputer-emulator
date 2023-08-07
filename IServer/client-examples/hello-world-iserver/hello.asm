@@ -1,8 +1,6 @@
-TITLE Transputer Hello World
+TITLE Transputer Hello World using the IServer protocol, fits in the primary bootstrap.
 
 PAGE 60,132
-
-; Third version without macros. Uses the IServer protocol.
 
 	.TRANSPUTER
 	MemStart    EQU 0x80000070

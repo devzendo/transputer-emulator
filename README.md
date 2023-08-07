@@ -65,7 +65,8 @@ Fifth release:
 
 # Release Notes
 0.0.2 Second Release (work in progress)
-* Converting the NodeServer to be IServer compatible. Similarly, "Hello World".
+* Converting the NodeServer to be IServer compatible. Similarly, "Hello World"
+  (see IServer/client-examples/hello-world-iserver).
 * Release for macOS is upgraded from El Capitan to Mojave. Untested on Catalina.
 * IServer -df (full debug) now enables all parts of the debug output.
 * Successfully runs hello3.asm !
