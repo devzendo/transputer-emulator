@@ -69,7 +69,7 @@ Fifth release:
   (see IServer/client-examples/hello-world-iserver).
 * Release for macOS is upgraded from El Capitan to Mojave. Untested on Catalina.
 * IServer -df (full debug) now enables all parts of the debug output.
-* Successfully runs hello3.asm !
+* Successfully runs hello.asm !
 * IServer now supports FPuts.
 
 0.0.1 First Release
@@ -209,26 +209,26 @@ To run the 'hello world' client program:
 
 In one terminal window...
 
-$ cd IServer/client-examples/hello2
-$ tmasm  -b hello2.bin -l hello2.lst hello2.asm
-Pass 1: Creating model from 233 macro-expanded line(s)
+$ cd IServer/client-examples/hello-world-iserver
+$ tmasm -b hello.bin -l hello.lst hello.asm
+Pass 1: Creating model from 245 macro-expanded/included line(s)
 End of Pass 1: Checking for unresolved forward references
 Pass 2: Updating model with 0 pass 2 section(s)
 End of Pass 2
-Writing binary file hello2.bin
+Writing binary file hello.bin
 Start address 0x8000006F
-End address 0x80000147
-Writing listing file hello2.lst
+End address 0x80000162
+Writing listing file hello.lst
 
-$ iserver hello2.bin
+$ iserver hello.bin
 (does not return)
 
 In second terminal window...
 $ temulate
-$
+$ (automatically returns, as the 'terminate' instruction is the last executed in hello.asm)
 
 The first terminal window should now show:
-$ iserver hello2.bin
+$ iserver hello.bin
 hello world
 (still does not return)
 Ctrl-C <<- you'll have to interrupt it.
