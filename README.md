@@ -71,6 +71,8 @@ Fifth release:
 * IServer -df (full debug) now enables all parts of the debug output.
 * Successfully runs hello.asm !
 * IServer now supports FPuts.
+* Added a "Hello World" example that uses the macro assembler's primary bootstrap
+  include file. (see IServer/client-examples/hello-world-secondary-iserver)
 
 0.0.1 First Release
 * Versioning and build now controlled by Maven and CMake.
