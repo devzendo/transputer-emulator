@@ -63,6 +63,9 @@ private:
     void reqPollKey();
     void reqExit();
     void reqId();
+
+    // Extended frame handling routines
+    void reqPutChar();
 };
 
 #endif // _PROTOCOL_HANDLER_H

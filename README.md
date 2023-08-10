@@ -33,10 +33,12 @@ Second release (work in progress):
   * Open
   * Read
   * Write
-  * Puts
+  * Puts (put string with newline to a stream)
   * Get Key
   * Poll Key
   * Close
+* It implements the following "extended" frame types, not part of the original IServer, for performance purposes:
+  * Put Char (to the console stream)
 * Note that the IServer's file handling does not yet prevent directory traversal vulnerabilities. Also line feed
   handling on Windows is broken. To be corrected.
 * Converting older C code (that's not very portable) to C++14 (that hopefully is more portable).
@@ -70,7 +72,7 @@ Fifth release:
 * Release for macOS is upgraded from El Capitan to Mojave. Untested on Catalina.
 * IServer -df (full debug) now enables all parts of the debug output.
 * Successfully runs hello.asm !
-* IServer now supports FPuts.
+* IServer now supports FPuts and the extended PutChar frame (used by eForth).
 * Added a "Hello World" example that uses the macro assembler's primary bootstrap
   include file. (see IServer/client-examples/hello-world-secondary-iserver)
 

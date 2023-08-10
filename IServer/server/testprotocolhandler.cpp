@@ -1524,3 +1524,38 @@ TEST_F(TestProtocolHandler, IdFrame)
 
 // TODO a good 510 byte frame
 // TODO a bad 511 byte frame
+
+// DevZendo.org Extended IServer requests
+// REQ_PUTCHAR
+TEST_F(TestProtocolHandler, PutCharHandling)
+{
+    std::vector<BYTE8> putsFrame = {REQ_PUTCHAR};
+    append8(putsFrame, 0x30);
+    std::vector<BYTE8> padded = padFrame(putsFrame);
+    bool wasSensedAsExitFrame = checkGoodFrame(padded);
+    EXPECT_FALSE(wasSensedAsExitFrame);
+    EXPECT_EQ(handler->unimplementedFrameCount(), 0L); // it is an implemented tag
+}
+
+TEST_F(TestProtocolHandler, PutCharOk)
+{
+    // Redirect stdout stream to a stringstream... the REQ_PUTCHAR will write there...
+    std::stringstream stringstream;
+    std::streambuf *buffer = stringstream.rdbuf();
+    const int outputStreamId = 1;
+    stubPlatform._setStreamBuf(outputStreamId, buffer);
+
+    // Now REQ_PUTCHAR...
+    std::vector<BYTE8> putsFrame = {REQ_PUTCHAR};
+    append8(putsFrame, 0x30);
+    std::vector<BYTE8> padded = padFrame(putsFrame);
+    sendFrame(padded);
+
+    std::vector<BYTE8> response = readResponseFrame();
+    checkResponseFrameTag(response, RES_SUCCESS);
+    checkResponseFrameSize(response, 2); // RES_SUCCESS + 0-pad
+
+    // Expect redirected data...
+    EXPECT_EQ(stringstream.str(), "0");
+}
+

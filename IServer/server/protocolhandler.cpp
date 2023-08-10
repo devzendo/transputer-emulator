@@ -65,6 +65,8 @@ namespace {
             case REQ_FERRSTAT: return "FErrStat";
             case REQ_COMMANDARG: return "CommandArg";
 
+            case REQ_PUTCHAR: return "PutChar";
+
             case RES_SUCCESS: return "Success";
             case RES_UNIMPLEMENTED: return "Unimplement";
             case RES_ERROR: return "Error";
@@ -307,6 +309,10 @@ bool ProtocolHandler::requestResponse() {
 //            break;
 //        }
 
+        case REQ_PUTCHAR: {
+            reqPutChar();
+            break;
+        }
         default: {
             logWarnF("Frame tag %02X (%s) is unknown", tag, tagToName(tag));
             myUnimplementedFrameCount++;
@@ -640,4 +646,34 @@ void ProtocolHandler::reqId() {
     codec.put((BYTE8) 0X00); // OS: ?
 #endif
     codec.put((BYTE8) ((BYTE8)myIOLink.getLinkType() & (BYTE8)0xff)); // Board: actually the link type
+}
+
+void ProtocolHandler::reqPutChar() {
+    const WORD32 streamId = 1; // Output stream
+    const BYTE8 data = codec.get8(); // can be binary, this is fine..
+    const WORD16 size = 1;
+    try {
+        logDebugF("Writing 1 byte to stream #%d", streamId);
+        WORD16 wrote = myPlatform.writeStream(streamId, size, (BYTE8 *) &data);
+        // Note no automatic flushing, and no indication to the client of the amount written..
+        if (wrote != 1) {
+            logWarnF("Wrote %d byte(s) to stream #%d", wrote, streamId);
+            codec.put(RES_TRUNCATED);
+        } else {
+            logDebugF("Wrote %d byte(s) to stream #%d", wrote, streamId);
+            codec.put(RES_SUCCESS);
+        }
+    } catch (const std::runtime_error &e) { // File must be open for writing
+        logWarn(e.what());
+        codec.put(RES_BADID);
+    } catch (const std::domain_error &e) { // Last op must be write
+        logWarn(e.what());
+        codec.put(RES_NOPOSN);
+    } catch (const std::range_error &e) {
+        logWarn(e.what());
+        codec.put(RES_BADID);
+    } catch (const std::invalid_argument &e) {
+        logWarn(e.what());
+        codec.put(RES_BADID);
+    }
 }

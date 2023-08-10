@@ -125,6 +125,9 @@ const BYTE8 REQ_TRANSLATE = 81;
 const BYTE8 REQ_FERRSTAT = 82;
 const BYTE8 REQ_COMMANDARG = 83;
 
+// DevZendo.org Extended IServer requests not present in the INMOS IServer
+const BYTE8 REQ_PUTCHAR = 90;
+
 // Result codes
 const BYTE8 RES_SUCCESS = 0;
 const BYTE8 RES_UNIMPLEMENTED = 1;
@@ -271,6 +274,23 @@ const WORD32 RES_EXIT_FAILURE = -999999999;
 // | BYTE8 os             | 0=unknown; 6=Windows; 7=macOS; 8=Linux
 // +----------------------+
 
+
+// DevZendo.org Extended IServer requests
+
+// REQ_PUTCHAR
+// Writes a single character of text to the output console stream which must be open for output. 
+//
+// Request:
+// +----------------------+
+// | BYTE8 REQ_PUTCHAR    |
+// +----------------------+
+// | BYTE8 char           | A single character to write - can be binary, not just ASCII.
+// +----------------------+
+//
+// Response data for REQ_PUTCHAR:
+// +----------------------+
+// | BYTE8 result         | RES_SUCCESS on success; RES_BADID if stream not open, or out of range.
+// +----------------------+
 
 #endif // _ISPROTO_H
 
