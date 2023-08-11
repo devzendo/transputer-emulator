@@ -55,7 +55,8 @@ bool Memory::initialise(long initialRAMSize, const char *romFile) {
 		myMemory[i] = 0xAA;
 	}*/
 	myMemEnd = InternalMemStart + initialRAMSize;
-	mySize = initialRAMSize;
+    mySize = initialRAMSize;
+    logDebugF("RAM (size %d bytes) from %08X to %08X", mySize, InternalMemStart, myMemEnd);
 
 	if (romFile) {
 		myROMPresent = true;
