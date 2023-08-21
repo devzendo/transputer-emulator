@@ -15,6 +15,9 @@
 #include <cstdio>
 #include <cstring>
 #include <cstdlib>
+#include <fstream>
+#include <sstream>
+#include <map>
 #include <set>
 
 using namespace std;
@@ -38,6 +41,7 @@ WORD32 flags;
 static char *romFile;
 static char *progName;
 set<WORD32> breakpointAddresses;
+map<std::string, WORD32> symbolToAddress;
 
 void usage() {
 	logInfoF("Parachute v%s Portable Transputer Emulator " __DATE__, projectVersion);
@@ -70,6 +74,7 @@ void usage() {
 	logInfo("  -j    Enables break on j0");
 	logInfo("  -t    Terminate emulation upon memory violation");
 	logInfo("  -b<H> Add H (a hex address) as a breakpoint (can be repeated)");
+    logInfo("  -s<F> Load a list of symbols (lines with NAME HEX-ADDRESS) from file X");
 }
 
 void showConfiguration() {
@@ -206,6 +211,41 @@ bool processCommandLine(int argc, char *argv[]) {
 						}
 					}
 					break;
+                case 's': {
+                    char symbolFile[128];
+#if defined(PLATFORM_WINDOWS)
+                    if (sscanf_s(&argv[i][2], "%s", symbolFile) == 1) {
+#elif defined(PLATFORM_OSX) || defined(PLATFORM_LINUX)
+                    if (sscanf(&argv[i][2], "%s", symbolFile) == 1) {
+#endif
+                        std::ifstream read(symbolFile);
+                        for (std::string line; std::getline(read, line); ) {
+                            // inserting the line into a stream that helps us parse the content
+                            std::stringstream ss(line);
+                            // read each symbol
+                            std::string symbolName;
+                            std::string addressString;
+                            ss >> symbolName;
+                            ss >> addressString;
+                            WORD32 symbolAddress;
+#if defined(PLATFORM_WINDOWS)
+                            if (sscanf_s(&address, "08%x", &symbolAddress) == 1) {
+#elif defined(PLATFORM_OSX) || defined(PLATFORM_LINUX)
+                            if (sscanf(addressString.c_str(), "%08x", &symbolAddress) == 1) {
+#endif
+                                logDebugF("name [%s] value 0x%08X", symbolName.c_str(), symbolAddress);
+                                symbolToAddress[symbolName] = symbolAddress;
+                            } else {
+                                logFatalF("Symbol %s 'address' %s is not a valid 8-digit hex address", symbolName.c_str(), addressString.c_str());
+                                return 0;
+                            }
+                        }
+                    } else {
+                        logFatal("-s must be directly followed by a symbol file");
+                        return 0;
+                    }
+                    break;
+                }
 			}
 		} else {
             romFile = argv[i];
@@ -237,6 +277,7 @@ void interruptHandler(int sig) {
 int main(int argc, char *argv[]) {
 	Memory *memory;
 	CPU *cpu;
+	SymbolTable *symbolTable;
 	progName = argv[0];
 	romFile = NULL;
 	ramSize = DefaultMemSize;
@@ -269,13 +310,19 @@ int main(int argc, char *argv[]) {
 	signal(SIGSEGV,segViolHandler);
 	signal(SIGINT,interruptHandler);
 #endif
+	symbolTable = new SymbolTable();
+	for (map<std::string, WORD32>::const_iterator iter = symbolToAddress.begin();
+		iter != symbolToAddress.end(); iter++) {
+		symbolTable->addSymbol(iter->first, iter->second);
+	}
+
 	memory = new Memory();
-	if (!memory->initialise(ramSize, romFile)) {
+	if (!memory->initialise(ramSize, romFile, symbolTable)) {
 		delete linkFactory;
 		exit(1);
 	}
 	cpu = new CPU();
-	if (!cpu->initialise(memory, linkFactory)) {
+	if (!cpu->initialise(memory, linkFactory, symbolTable)) {
 		logFatal("CPU setup failed");
 		delete linkFactory;
 		delete memory;
@@ -288,6 +335,7 @@ int main(int argc, char *argv[]) {
 	}
 
 	cpu->emulate(romFile);
+
 	fflush(stdout);
 	delete linkFactory;
 	delete memory;

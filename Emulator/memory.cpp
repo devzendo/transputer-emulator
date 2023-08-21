@@ -45,7 +45,8 @@ void Memory::resetMemory() {
 	myCurrentCycles = 0;
 }
 
-bool Memory::initialise(long initialRAMSize, const char *romFile) {
+bool Memory::initialise(long initialRAMSize, const char *romFile, SymbolTable *symbolTable) {
+	mySymbolTable = symbolTable;
 	myMemory = (BYTE8 *)calloc(initialRAMSize, 1);
 	if (myMemory == NULL) {
 		logFatal("Failed to allocate memory");
@@ -55,8 +56,8 @@ bool Memory::initialise(long initialRAMSize, const char *romFile) {
 		myMemory[i] = 0xAA;
 	}*/
 	myMemEnd = InternalMemStart + initialRAMSize;
-    mySize = initialRAMSize;
-    logDebugF("RAM (size %d bytes) from %08X to %08X", mySize, InternalMemStart, myMemEnd);
+	mySize = initialRAMSize;
+	logDebugF("RAM (size %d bytes) from %08X to %08X", mySize, InternalMemStart, myMemEnd);
 
 	if (romFile) {
 		myROMPresent = true;
@@ -538,5 +539,4 @@ WORD32 w;
 		leftBytes -= 16;
 	}
 }
-
 

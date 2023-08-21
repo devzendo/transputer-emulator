@@ -75,6 +75,8 @@ Fifth release:
 * IServer now supports FPuts and the extended PutChar frame (used by eForth).
 * Added a "Hello World" example that uses the macro assembler's primary bootstrap
   include file. (see IServer/client-examples/hello-world-secondary-iserver)
+* Emulator now allows a list of symbols to be loaded; these are displayed when
+  disassembling or using the monitor.
 
 0.0.1 First Release
 * Versioning and build now controlled by Maven and CMake.

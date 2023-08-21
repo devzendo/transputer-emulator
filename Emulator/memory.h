@@ -15,12 +15,13 @@
 #define _MEMORY_H
 
 #include "types.h"
+#include "symbol.h"
 
 class Memory {
 	public:
 		// 2-phase CTOR since there's only one global Memory
 		Memory();
-		bool initialise(long initialRAMSize, const char *romFileName);
+		bool initialise(long initialRAMSize, const char *romFileName, SymbolTable *symbolTable);
 		~Memory();
 		WORD32 getMemEnd();
 		int getMemSize();
@@ -37,6 +38,7 @@ class Memory {
 		void hexDump(WORD32 addr, WORD32 len);
 		void hexDumpWords(WORD32 addr, WORD32 lenInBytes);
 	private:
+		SymbolTable *mySymbolTable;
 		bool loadROMFile(const char *romFileName);
 		BYTE8 *myMemory;
 		int mySize;
@@ -51,7 +53,6 @@ class Memory {
 		WORD32 myROMStart;
 		BYTE8 *myReadOnlyMemory;
 		size_t myReadOnlyMemorySize;
-
 };
 
 #endif // _MEMORY_H

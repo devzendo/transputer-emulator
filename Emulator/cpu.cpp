@@ -17,6 +17,7 @@ using namespace std;
 #include <cstdlib>
 #include <cstring>
 #include <cstdio>
+#include <string>
 
 #include "types.h"
 #include "memloc.h"
@@ -29,6 +30,7 @@ using namespace std;
 #include "linkfactory.h"
 #include "opcodes.h"
 #include "disasm.h"
+#include "symbol.h"
 
 // Special offsets below the workspace pointer, or other pointer:
 inline WORD32 Wdesc_Priority(WORD32 Wdesc) {
@@ -122,9 +124,10 @@ CPU::CPU() {
 	logDebug("CPU CTOR");
 }
 
-bool CPU::initialise(Memory *memory, LinkFactory *linkFactory) {
+bool CPU::initialise(Memory *memory, LinkFactory *linkFactory, SymbolTable *symbolTable) {
 	int i;
 	bool allLinksOK = true;
+	mySymbolTable = symbolTable;
 	myMemory = memory;
 	for (i = 0; i < 4; i++) {
 		if ((myLinks[i] = linkFactory->createLink(i)) == NULL) {
@@ -147,16 +150,16 @@ bool CPU::initialise(Memory *memory, LinkFactory *linkFactory) {
 }
 
 void CPU::addBreakpoint(const WORD32 breakpointAddress) {
-    logInfoF("Breakpoint added: %08X", breakpointAddress);
-    BreakpointAddresses.insert(breakpointAddress);
+	logInfoF("Breakpoint added: %08X", breakpointAddress);
+	BreakpointAddresses.insert(breakpointAddress);
 }
 
 void CPU::removeBreakpoint(const WORD32 breakpointAddress) {
-    if (BreakpointAddresses.erase(breakpointAddress) == 0) {
-        logInfoF("Breakpoint not present: %08X", breakpointAddress);
-    } else {
-        logInfoF("Breakpoint removed: %08X", breakpointAddress);
-    }
+	if (BreakpointAddresses.erase(breakpointAddress) == 0) {
+		logInfoF("Breakpoint not present: %08X", breakpointAddress);
+	} else {
+		logInfoF("Breakpoint removed: %08X", breakpointAddress);
+	}
 }
 
 CPU::~CPU() {
@@ -179,7 +182,22 @@ void CPU::DumpRegs(int logLevel) {
 		(IS_FLAG_SET(EmulatorState_DeschedulePending) ? 'd' : '-')),
 		(IS_FLAG_SET(EmulatorState_Interrupt) ? 'I' : '-'),
 		Areg, Breg, Creg, Wdesc);
-	logFormat(logLevel, "       O #%08X I #%08X", Oreg, IPtr);
+	bool aSymbol = mySymbolTable->addressExists(Areg);
+	bool bSymbol = mySymbolTable->addressExists(Breg);
+	bool cSymbol = mySymbolTable->addressExists(Creg);
+	bool wSymbol = mySymbolTable->addressExists(Wdesc);
+	if (aSymbol | bSymbol | cSymbol | wSymbol) {
+		logFormat(logLevel, "       A %9s B %9s C %9s W %9s", 
+			mySymbolTable->symbolOrEmptyString(Areg).c_str(), mySymbolTable->symbolOrEmptyString(Breg).c_str(),
+			mySymbolTable->symbolOrEmptyString(Creg).c_str(), mySymbolTable->symbolOrEmptyString(Wdesc).c_str());
+	}
+	bool oSymbol = mySymbolTable->addressExists(Oreg);
+	bool iSymbol = mySymbolTable->addressExists(IPtr);
+	logFormat(logLevel,   "       O #%08X I #%08X", Oreg, IPtr);
+	if (oSymbol | iSymbol) {
+		logFormat(logLevel, "       O %9s I %9s",
+			mySymbolTable->symbolOrEmptyString(Oreg).c_str(), mySymbolTable->symbolOrEmptyString(IPtr).c_str());
+	}
 }
 
 void CPU::DumpQueueRegs(int logLevel) {
@@ -308,13 +326,16 @@ void CPU::disassembleCurrInstruction(int logLevel) {
 		case D_nfix:
 			if ((flags & DebugFlags_DebugLevel) >= Debug_OprCodes) {
 				// The IPtr of this instruction is needed for prefixes
-				logFormat(logLevel, "#%08X: %s", IPtr - 1, disassembleDirectOperation(Instruction, Oreg));
+				logFormat(logLevel, "#%08X%s: %s", IPtr - 1, 
+					mySymbolTable->possibleSymbol(IPtr - 1),
+					disassembleDirectOperation(Instruction, Oreg));
 			}
 			break;
 		case D_opr:
 			if ((flags & DebugFlags_DebugLevel) >= Debug_Disasm) {
 				if ((flags & DebugFlags_DebugLevel) >= Debug_OprCodes) {
-					logFormat(logLevel, ">%08X: %s", IPtr - 1,
+					logFormat(logLevel, ">%08X%s: %s", IPtr - 1,
+							mySymbolTable->possibleSymbol(IPtr - 1),
 							disassembleIndirectOperation(Oreg, Areg));
 				} else {
 					logFormat(logLevel, "#%08X: %s",
@@ -326,7 +347,8 @@ void CPU::disassembleCurrInstruction(int logLevel) {
 		default: // another direct instruction
 			if ((flags & DebugFlags_DebugLevel) >= Debug_Disasm) {
 				if ((flags & DebugFlags_DebugLevel) >= Debug_OprCodes) {
-					logFormat(logLevel, ">%08X: %s", IPtr - 1,
+					logFormat(logLevel, ">%08X%s: %s", IPtr - 1,
+							mySymbolTable->possibleSymbol(IPtr - 1),
 							disassembleDirectOperation(Instruction, Oreg));
 				} else {
 					logFormat(logLevel, "#%08X: %s",
@@ -536,6 +558,7 @@ inline bool CPU::monitor(void) {
 		} else {
 			logWarnF("Unknown monitor command '%s'", instr);
 		}
+    logInfo("");
 	}
 }
 
@@ -2050,6 +2073,9 @@ inline void CPU::interpret(void) {
 		       (EmulatorState_ErrorFlag | EmulatorState_HaltOnError)) {
 		SET_FLAGS(EmulatorState_Terminate);
 		logWarn("Halt-On-Error and Error set. Stopping.");
+	}
+	if (IS_FLAG_SET(DebugFlags_DebugLevel | DebugFlags_Monitor)) {
+		logFormat(LOGLEVEL_DEBUG, "");
 	}
 }
 

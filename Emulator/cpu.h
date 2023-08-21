@@ -20,17 +20,19 @@
 #include "memory.h"
 #include "link.h"
 #include "linkfactory.h"
+#include "symbol.h"
 
 class CPU {
 	public:
 		// 2-phase CTOR since there's only one global CPU
 		CPU();
-		bool initialise(Memory *memory, LinkFactory *linkFactory);
+		bool initialise(Memory *memory, LinkFactory *linkFactory, SymbolTable *symbolTable);
 		void addBreakpoint(WORD32 breakpointAddress);
-        void removeBreakpoint(WORD32 breakpointAddress);
+		void removeBreakpoint(WORD32 breakpointAddress);
 		void emulate(const bool bootFromROM);
 		~CPU();
 	private:
+		SymbolTable *mySymbolTable;
 		// Dynamically allocated memory
 		Memory *myMemory;
 		Link *myLinks[4];
