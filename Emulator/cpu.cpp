@@ -422,11 +422,11 @@ inline bool CPU::monitor(void) {
 			logInfo("di [addr [len]]      disassemble from addr (hex) for len (hex) bytes");
 			logInfo("db [addr [len]]      dump hex bytes/ASCII from addr (hex) for len (hex) bytes");
 			logInfo("dw [addr [len]]      dump hex words/ASCII from addr (hex) for len (hex) words");
-            logInfo("w [len]              dump hex words/ASCII from Wptr for len (hex) words;");
-            logInfo("                     default len = current Workspace size");
-            logInfo("b addr  or  b+ addr  add addr (hex) as a breakpoint");
-            logInfo("b- addr              remove addr (hex) as a breakpoint");
-            logInfo("b?  or  b <no args>  display all breakpoint addresses");
+			logInfo("w [len]              dump hex words/ASCII from Wptr for len (hex) words;");
+			logInfo("                     default len = current Workspace size");
+			logInfo("b addr  or  b+ addr  add addr (hex) as a breakpoint");
+			logInfo("b- addr              remove addr (hex) as a breakpoint");
+			logInfo("b?  or  b <no args>  display all breakpoint addresses");
 			logInfo("<return>             single-step current instruction");
 			logInfo("r                    display all registers (depends on register display flags)");
 			logInfo("rq                   display queue registers");

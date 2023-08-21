@@ -26,6 +26,7 @@ class SymbolTable {
 		bool addressExists(WORD32 addr);
 		std::string symbolOrEmptyString(WORD32 addr);
 		char *possibleSymbol(WORD32 addr); // note: static storage, same address returned each time - copy it!
+		std::string possibleSymbolString(WORD32 addr);
 		~SymbolTable();
 	private:
 		map<std::string, WORD32> symbolToAddress;

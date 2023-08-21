@@ -64,6 +64,17 @@ char *SymbolTable::possibleSymbol(WORD32 address) {
 	return buf;
 }
 
+std::string SymbolTable::possibleSymbolString(WORD32 address) {
+	std::string buf;
+	if (addressToSymbol.count(address) == 1) {
+		buf += '[';
+		buf += addressToSymbol[address];
+		buf += ']';
+	}
+	return buf;
+}
+
+
 
 SymbolTable::~SymbolTable() {
 	logDebugF("SymbolTable DTOR - this is 0x%lx", this);
