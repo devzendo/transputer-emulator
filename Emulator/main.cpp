@@ -73,8 +73,10 @@ void usage() {
 	logInfo("  -i    Enters interactive monitor immediately");
 	logInfo("  -j    Enables break on j0");
 	logInfo("  -t    Terminate emulation upon memory violation");
-	logInfo("  -b<H> Add H (a hex address) as a breakpoint (can be repeated)");
-    logInfo("  -s<F> Load a list of symbols (lines with NAME HEX-ADDRESS) from file X");
+	logInfo("  -s<F> Load a list of symbols (lines with NAME HEX-ADDRESS) from file X");
+	logInfo("  -b<H> Add H (a hex address or symbol) as a breakpoint (can be repeated)");
+	logInfo("        (Note: symbols must have been specified first with -s<F> to give");
+	logInfo("         a symbol as a breakpoint)");
 }
 
 void showConfiguration() {
@@ -104,7 +106,7 @@ bool processCommandLine(int argc, char *argv[]) {
 #if defined(PLATFORM_WINDOWS)
 						int n = sscanf_s(&argv[i][2], "%d", &newMegs);
 #elif defined(PLATFORM_OSX) || defined(PLATFORM_LINUX)
-                        int n = sscanf(&argv[i][2], "%d", &newMegs);
+						int n = sscanf(&argv[i][2], "%d", &newMegs);
 #endif
 						if (n == 1) {
 							if (newMegs < 4 || newMegs > 64) {
@@ -191,65 +193,78 @@ bool processCommandLine(int argc, char *argv[]) {
 				case 'i':
 					SET_FLAGS(DebugFlags_Monitor | Debug_DisRegs);
 					break;
-                case 'j':
-                    SET_FLAGS(EmulatorState_J0Break);
-                    break;
+				case 'j':
+					SET_FLAGS(EmulatorState_J0Break);
+					break;
 				case 't':
 					SET_FLAGS(DebugFlags_TerminateOnMemViol);
 					break;
 				case 'b': {
-						WORD32 breakpointAddress = 0;
+					// TODO if you want a breakpoint at a symbol whose name is a valid hex number, tough!
+					char symbolName[40];
+					WORD32 breakpointAddress = 0;
 #if defined(PLATFORM_WINDOWS)
-						if (sscanf_s(&argv[i][2], "%x", &breakpointAddress) == 1) {
+					if (sscanf_s(&argv[i][2], "%s", symbolName) == 1) {
 #elif defined(PLATFORM_OSX) || defined(PLATFORM_LINUX)
-						if (sscanf(&argv[i][2], "%x", &breakpointAddress) == 1) {
+					if (sscanf(&argv[i][2], "%s", symbolName) == 1) {
 #endif
-							breakpointAddresses.insert(breakpointAddress);
-						} else {
-							logFatal("-b must be directly followed by a hex address e.g. -b8007F123");
-							return 0;
+						if (symbolToAddress.count(symbolName) == 1) {
+							breakpointAddresses.insert(symbolToAddress[symbolName]);
+							break;
 						}
+						// else fall through to try hex..
+					}
+#if defined(PLATFORM_WINDOWS)
+					if (sscanf_s(&argv[i][2], "%x", &breakpointAddress) == 1) {
+#elif defined(PLATFORM_OSX) || defined(PLATFORM_LINUX)
+					if (sscanf(&argv[i][2], "%x", &breakpointAddress) == 1) {
+#endif
+						breakpointAddresses.insert(breakpointAddress);
+					} else {
+						logFatal("-b must be directly followed by a hex address or symbol e.g. -b8007F123");
+						return 0;
+					}
 					}
 					break;
-                case 's': {
-                    char symbolFile[128];
+				case 's': {
+					char symbolFile[128];
 #if defined(PLATFORM_WINDOWS)
-                    if (sscanf_s(&argv[i][2], "%s", symbolFile) == 1) {
+					if (sscanf_s(&argv[i][2], "%s", symbolFile) == 1) {
 #elif defined(PLATFORM_OSX) || defined(PLATFORM_LINUX)
-                    if (sscanf(&argv[i][2], "%s", symbolFile) == 1) {
+					if (sscanf(&argv[i][2], "%s", symbolFile) == 1) {
 #endif
-                        std::ifstream read(symbolFile);
-                        for (std::string line; std::getline(read, line); ) {
-                            // inserting the line into a stream that helps us parse the content
-                            std::stringstream ss(line);
-                            // read each symbol
-                            std::string symbolName;
-                            std::string addressString;
-                            ss >> symbolName;
-                            ss >> addressString;
-                            WORD32 symbolAddress;
+						std::ifstream read(symbolFile);
+						for (std::string line; std::getline(read, line); ) {
+							// inserting the line into a stream that helps us parse the content
+							std::stringstream ss(line);
+							// read each symbol
+							std::string symbolName;
+							std::string addressString;
+							ss >> symbolName;
+							ss >> addressString;
+							WORD32 symbolAddress;
 #if defined(PLATFORM_WINDOWS)
-                            if (sscanf_s(&address, "08%x", &symbolAddress) == 1) {
+							if (sscanf_s(addressString.c_str(), "08%x", &symbolAddress) == 1) {
 #elif defined(PLATFORM_OSX) || defined(PLATFORM_LINUX)
-                            if (sscanf(addressString.c_str(), "%08x", &symbolAddress) == 1) {
+							if (sscanf(addressString.c_str(), "%08x", &symbolAddress) == 1) {
 #endif
-                                logDebugF("name [%s] value 0x%08X", symbolName.c_str(), symbolAddress);
-                                symbolToAddress[symbolName] = symbolAddress;
-                            } else {
-                                logFatalF("Symbol %s 'address' %s is not a valid 8-digit hex address", symbolName.c_str(), addressString.c_str());
-                                return 0;
-                            }
-                        }
-                    } else {
-                        logFatal("-s must be directly followed by a symbol file");
-                        return 0;
-                    }
-                    break;
-                }
+								logDebugF("name [%s] value 0x%08X", symbolName.c_str(), symbolAddress);
+								symbolToAddress[symbolName] = symbolAddress;
+							} else {
+								logFatalF("Symbol %s 'address' %s is not a valid 8-digit hex address", symbolName.c_str(), addressString.c_str());
+								return 0;
+							}
+						}
+					} else {
+                        			logFatal("-s must be directly followed by a symbol file");
+                        			return 0;
+                    			}
+					}
+					break;
 			}
 		} else {
-            romFile = argv[i];
-        }
+			romFile = argv[i];
+		}
 	}
 	if (showConf) {
 		showConfiguration();
