@@ -434,6 +434,7 @@ inline bool CPU::monitor(void) {
 			logInfo("f                    display flags");
 			logInfo("s                    display all state: registers, flags, current disassembly");
 			logInfo("q                    quit emulator");
+            logInfo("t                    toggle disassembly of opr/memory R/W");
 			logInfo("g                    'go': quit monitor, continue interpretation");
 			logInfo("                     (until any breakpoints reached)");
 		}
@@ -550,9 +551,19 @@ inline bool CPU::monitor(void) {
 		} else if (strcmp(instr, "f") == 0) {
 			dumpFlags();
 		} else if (strcmp(instr, "q") == 0) {
-			SET_FLAGS(EmulatorState_Terminate);
-			return false;
-		} else if (strcmp(instr, "g") == 0) {
+            SET_FLAGS(EmulatorState_Terminate);
+            return false;
+        } else if (strcmp(instr, "t") == 0) {
+            if (IS_FLAG_SET(Debug_OprCodes)) {
+                logInfo("Stopping disassembly");
+                CLEAR_FLAGS(Debug_OprCodes);
+                CLEAR_FLAGS(MemAccessDebug_ReadWriteData);
+            } else {
+                logInfo("Starting disassembly");
+                SET_FLAGS(Debug_OprCodes);
+                SET_FLAGS(MemAccessDebug_ReadWriteData);
+            }
+        } else if (strcmp(instr, "g") == 0) {
 			CLEAR_FLAGS(DebugFlags_Monitor);
 			return false;
 		} else {

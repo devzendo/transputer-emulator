@@ -77,6 +77,8 @@ Fifth release:
   include file. (see IServer/client-examples/hello-world-secondary-iserver)
 * Emulator now allows a list of symbols to be loaded; these are displayed when
   disassembling or using the monitor.
+* The emulator's monitor now accepts a 't' command which toggles the display of
+  disassembly and memory read/write.
 
 0.0.1 First Release
 * Versioning and build now controlled by Maven and CMake.
