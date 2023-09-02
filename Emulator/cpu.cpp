@@ -150,16 +150,18 @@ bool CPU::initialise(Memory *memory, LinkFactory *linkFactory, SymbolTable *symb
 }
 
 void CPU::addBreakpoint(const WORD32 breakpointAddress) {
-	logInfoF("Breakpoint added: %08X", breakpointAddress);
 	BreakpointAddresses.insert(breakpointAddress);
 }
 
 void CPU::removeBreakpoint(const WORD32 breakpointAddress) {
 	if (BreakpointAddresses.erase(breakpointAddress) == 0) {
 		logInfoF("Breakpoint not present: %08X", breakpointAddress);
-	} else {
-		logInfoF("Breakpoint removed: %08X", breakpointAddress);
 	}
+}
+
+void CPU::seteForthStackAddresses(WORD32 aSPP, WORD32 aRPP) {
+    SPP = aSPP;
+    RPP = aRPP;
 }
 
 CPU::~CPU() {
@@ -214,6 +216,32 @@ void CPU::DumpClockRegs(int logLevel, WORD32 instCycles) {
 		qr = MaxQuantum - qr;
 	logFormat(logLevel, "       Hc#%08X Lc#%08X Qr#%08X C##%08X",
 		HiClock, LoClock, qr, instCycles);
+}
+
+void CPU::DumpeForthDiagnostics(int logLevel) {
+    // turn off memory access diagnostics while we access memory...
+    WORD32 oldflags = flags & DebugFlags_MemAccessDebugLevel;
+    CLEAR_FLAGS(DebugFlags_MemAccessDebugLevel);
+
+    // eForth registers from the workspace...
+    WORD32 SPX = myMemory->getWord(Wdesc_WPtr(Wdesc) + 4); // Word[1]
+    WORD32 IP = myMemory->getWord(Wdesc_WPtr(Wdesc) + 8);  // Word[2]
+    WORD32 RP = myMemory->getWord(Wdesc_WPtr(Wdesc) + 12); // Word[3]
+    logFormat(logLevel, "SP #%08X %c RP #%08X %c IP #%08X%s", SPX, (SPX == SPP ? 'E' : ' '), RP, (RP == RPP ? 'E' : ' '), IP, mySymbolTable->possibleSymbolString(IP).c_str());
+
+    // Note: if the sizes of the stacks change, the i<XX will need changing in these loops:
+    // Data stack...
+    for (WORD32 i=0,a=SPP; a>SPX && i<176; i++,a-=4) {
+        WORD32 w = myMemory->getWord(a-4);
+        logFormat(logLevel, "SP[%3d]@#%08X:#%08X%s", i, a-4, w, mySymbolTable->possibleSymbolString(w).c_str());
+    }
+    // Return stack...
+    for (WORD32 i=0,a=RPP; a>RP && i<64; i++,a-=4) {
+        WORD32 w = myMemory->getWord(a-4);
+        logFormat(logLevel, "RP[%3d]@#%08X:#%08X%s", i, a-4, w, mySymbolTable->possibleSymbolString(w).c_str());
+    }
+
+    SET_FLAGS(oldflags);
 }
 
 // Disassemble from addr all full instructions up to addr+maxlen
@@ -2071,11 +2099,13 @@ inline void CPU::interpret(void) {
 	if (Instruction != D_pfix && Instruction != D_nfix) {
 		InstructionStartIPtr = IPtr;
 		if ((flags & DebugFlags_DebugLevel) >= Debug_DisRegs) {
-			DumpRegs(LOGLEVEL_DEBUG);
-			if (IS_FLAG_SET(EmulatorState_QueueInstruction))
-				DumpQueueRegs(LOGLEVEL_DEBUG);
-			if (IS_FLAG_SET(EmulatorState_TimerInstruction))
-				DumpClockRegs(LOGLEVEL_DEBUG, InstCycles+MemCycles);
+            DumpRegs(LOGLEVEL_DEBUG);
+            if (IS_FLAG_SET(EmulatorState_QueueInstruction))
+                DumpQueueRegs(LOGLEVEL_DEBUG);
+            if (IS_FLAG_SET(EmulatorState_TimerInstruction))
+                DumpClockRegs(LOGLEVEL_DEBUG, InstCycles + MemCycles);
+            if (IS_FLAG_SET(DebugFlags_eForth))
+                DumpeForthDiagnostics(LOGLEVEL_DEBUG);
 		}
 	}
 

@@ -42,6 +42,7 @@ static char *romFile;
 static char *progName;
 set<WORD32> breakpointAddresses;
 map<std::string, WORD32> symbolToAddress;
+WORD32 SPP, RPP;
 
 void usage() {
 	logInfoF("Parachute v%s Portable Transputer Emulator " __DATE__, projectVersion);
@@ -77,6 +78,10 @@ void usage() {
 	logInfo("  -b<H> Add H (a hex address or symbol) as a breakpoint (can be repeated)");
 	logInfo("        (Note: symbols must have been specified first with -s<F> to give");
 	logInfo("         a symbol as a breakpoint)");
+	logInfo("  -e    Enables debug features that assist eForth debugging:");
+	logInfo("        Displays the data and return stacks (with symbols)");
+	logInfo("        (Note: symbols must have been specified first with -s<F> and");
+	logInfo("         these must include stack symbols)");
 }
 
 void showConfiguration() {
@@ -248,7 +253,7 @@ bool processCommandLine(int argc, char *argv[]) {
 #elif defined(PLATFORM_OSX) || defined(PLATFORM_LINUX)
 							if (sscanf(addressString.c_str(), "%08x", &symbolAddress) == 1) {
 #endif
-								logDebugF("name [%s] value 0x%08X", symbolName.c_str(), symbolAddress);
+								// logDebugF("name [%s] value 0x%08X", symbolName.c_str(), symbolAddress);
 								symbolToAddress[symbolName] = symbolAddress;
 							} else {
 								logFatalF("Symbol %s 'address' %s is not a valid 8-digit hex address", symbolName.c_str(), addressString.c_str());
@@ -256,10 +261,23 @@ bool processCommandLine(int argc, char *argv[]) {
 							}
 						}
 					} else {
-                        			logFatal("-s must be directly followed by a symbol file");
-                        			return 0;
-                    			}
+                            logFatal("-s must be directly followed by a symbol file");
+                            return 0;
+                        }
 					}
+					break;
+				case 'e': {
+                    SET_FLAGS(DebugFlags_eForth);
+                    bool gotAllSymbols =
+                        (symbolToAddress.count("SPP") == 1) &&
+                        (symbolToAddress.count("RPP") == 1);
+                    if (!gotAllSymbols) {
+                        logFatal("-e option requires SPP and RPP symbols");
+                        return 0;
+                    }
+                    SPP = symbolToAddress["SPP"];
+                    RPP = symbolToAddress["RPP"];
+                    }
 					break;
 			}
 		} else {
@@ -326,10 +344,15 @@ int main(int argc, char *argv[]) {
 	signal(SIGINT,interruptHandler);
 #endif
 	symbolTable = new SymbolTable();
+    int symbolCount = 0;
 	for (map<std::string, WORD32>::const_iterator iter = symbolToAddress.begin();
 		iter != symbolToAddress.end(); iter++) {
 		symbolTable->addSymbol(iter->first, iter->second);
+        symbolCount++;
 	}
+    if (symbolCount != 0) {
+        logInfoF("Added %d symbol(s)", symbolCount);
+    }
 
 	memory = new Memory();
 	if (!memory->initialise(ramSize, romFile, symbolTable)) {
@@ -348,8 +371,12 @@ int main(int argc, char *argv[]) {
 		 iter != breakpointAddresses.end(); iter++) {
 		cpu->addBreakpoint(*iter);
 	}
+    if (IS_FLAG_SET(DebugFlags_eForth)) {
+        cpu->seteForthStackAddresses(SPP, RPP);
+    }
 
-	cpu->emulate(romFile);
+
+    cpu->emulate(romFile);
 
 	fflush(stdout);
 	delete linkFactory;

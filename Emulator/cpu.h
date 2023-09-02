@@ -29,6 +29,7 @@ class CPU {
 		bool initialise(Memory *memory, LinkFactory *linkFactory, SymbolTable *symbolTable);
 		void addBreakpoint(WORD32 breakpointAddress);
 		void removeBreakpoint(WORD32 breakpointAddress);
+        void seteForthStackAddresses(WORD32 SPP, WORD32 RPP);
 		void emulate(const bool bootFromROM);
 		~CPU();
 	private:
@@ -69,6 +70,9 @@ class CPU {
 		WORD32 CurrDisasmLen;
 		WORD32 LastAjwInBytes;
 		set<WORD32> BreakpointAddresses;
+        // eForth diagnostic; start of data and return stack
+        WORD32 SPP;
+        WORD32 RPP;
 
 		// Internal methods:
 		inline void DROP(void);
@@ -78,6 +82,7 @@ class CPU {
 		void DumpRegs(int logLevel);
 		void DumpQueueRegs(int logLevel);
 		void DumpClockRegs(int logLevel, WORD32 instCycles);
+        void DumpeForthDiagnostics(int logLevel);
 
 		inline void bootFromROMFile(const char *fileName);
 		inline void bootFromLink0(void);

@@ -32,13 +32,18 @@ SymbolTable::SymbolTable() {
 }
 
 void SymbolTable::addSymbol(const std::string name, const WORD32 address) {
-	logInfoF("Symbol added: %s=%08X", name.c_str(), address);
+//	logDebugF("Symbol added: %s=%08X", name.c_str(), address);
 	symbolToAddress[name] = address;
 	addressToSymbol[address] = name;
 }
 
 bool SymbolTable::symbolExists(std::string name) {
 	return symbolToAddress.count(name) == 1;
+}
+
+// precondition: it's known to exist
+WORD32 SymbolTable::getSymbolValue(std::string name) {
+    return symbolToAddress[name];
 }
 
 bool SymbolTable::addressExists(WORD32 address) {

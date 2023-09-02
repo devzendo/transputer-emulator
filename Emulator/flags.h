@@ -25,7 +25,7 @@
    Emulator Configuration Flags
    
    0 (0xF)            
-   1                   Holds the degugging level of the emulator.
+   1                   Holds the debugging level of the emulator.
    2                   There are 16 possible levels, as given below.
    3
    
@@ -44,7 +44,7 @@
    
    11 (0x800)          Monitor active
    
-   12 (0x1000)         Reserved
+   12 (0x1000)         eForth diagnostics: on or off
    
    13 (0x2000)         Reserved
    
@@ -62,6 +62,7 @@
 #define DebugFlags_Queues 0x200
 #define DebugFlags_TerminateOnMemViol 0x0400
 #define DebugFlags_Monitor 0x0800
+#define DebugFlags_eForth 0x1000
 
 // Debugging Levels, i.e. flags & DebugFlags_DebugLevel
 #define Debug_None 0                            // No debugging information
