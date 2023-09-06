@@ -220,6 +220,9 @@ void CPU::DumpClockRegs(int logLevel, WORD32 instCycles) {
 }
 
 void CPU::DumpeForthDiagnostics(int logLevel) {
+	// Shenanigans to build an idea of the currently nested word execution
+	// based on colon words, code words, and words/sequences that have funky
+	// pop action.
 	if (mySymbolTable->addressExists(IPtr - 1)) {
 		std::string symbol = mySymbolTable->getSymbolName(IPtr - 1);
 		// Ignore jump labels that end in a digit
@@ -245,6 +248,10 @@ void CPU::DumpeForthDiagnostics(int logLevel) {
 			if (isCode) {
 				CodeSymbol = symbol;
 			}
+			// DOUSE has a rapid double pop action :)
+			if (!WordStack.empty() && WordStack.back() == "DOUSE" && CodeSymbol == "EXIT") {
+				WordStack.pop_back();
+			}
 			if (symbol == "EXIT" || symbol == "DOVAR" || symbol == "EXECU") {
 				WordStack.pop_back();
 			} else {
@@ -269,7 +276,7 @@ void CPU::DumpeForthDiagnostics(int logLevel) {
 		logFormat(logLevel, "Words: %s", words.c_str());
 	}
 
-	// turn off memory access diagnostics while we access memory...
+	// Turn off memory access diagnostics while we access memory...
 	WORD32 oldflags = flags & DebugFlags_MemAccessDebugLevel;
 	CLEAR_FLAGS(DebugFlags_MemAccessDebugLevel);
 
@@ -291,6 +298,7 @@ void CPU::DumpeForthDiagnostics(int logLevel) {
 		logFormat(logLevel, "RP[%3d]@#%08X:#%08X%s", i, a-4, w, mySymbolTable->possibleSymbolString(w).c_str());
 	}
 
+	// Restore memory access diagnostics.
 	SET_FLAGS(oldflags);
 }
 
