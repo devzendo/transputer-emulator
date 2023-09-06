@@ -46,6 +46,11 @@ WORD32 SymbolTable::getSymbolValue(std::string name) {
     return symbolToAddress[name];
 }
 
+// precondition: it's known to exist
+std::string SymbolTable::getSymbolName(WORD32 addr) {
+    return addressToSymbol[addr];
+}
+
 bool SymbolTable::addressExists(WORD32 address) {
 	return addressToSymbol.count(address) == 1;
 }

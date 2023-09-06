@@ -15,6 +15,7 @@
 #define _CPU_H
 
 #include <set>
+#include <deque>
 
 #include "types.h"
 #include "memory.h"
@@ -29,7 +30,7 @@ class CPU {
 		bool initialise(Memory *memory, LinkFactory *linkFactory, SymbolTable *symbolTable);
 		void addBreakpoint(WORD32 breakpointAddress);
 		void removeBreakpoint(WORD32 breakpointAddress);
-        void seteForthStackAddresses(WORD32 SPP, WORD32 RPP);
+		void seteForthStackAddresses(WORD32 SPP, WORD32 RPP);
 		void emulate(const bool bootFromROM);
 		~CPU();
 	private:
@@ -70,9 +71,12 @@ class CPU {
 		WORD32 CurrDisasmLen;
 		WORD32 LastAjwInBytes;
 		set<WORD32> BreakpointAddresses;
-        // eForth diagnostic; start of data and return stack
-        WORD32 SPP;
-        WORD32 RPP;
+		// eForth diagnostic; start of data and return stack
+		WORD32 SPP;
+		WORD32 RPP;
+		deque<std::string> WordStack;
+		std::string PossiblyColonWord;
+		std::string CodeSymbol;
 
 		// Internal methods:
 		inline void DROP(void);
@@ -82,7 +86,7 @@ class CPU {
 		void DumpRegs(int logLevel);
 		void DumpQueueRegs(int logLevel);
 		void DumpClockRegs(int logLevel, WORD32 instCycles);
-        void DumpeForthDiagnostics(int logLevel);
+		void DumpeForthDiagnostics(int logLevel);
 
 		inline void bootFromROMFile(const char *fileName);
 		inline void bootFromLink0(void);

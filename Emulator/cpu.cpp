@@ -14,6 +14,7 @@
 #include <exception>
 using namespace std;
 
+#include <cctype>
 #include <cstdlib>
 #include <cstring>
 #include <cstdio>
@@ -219,29 +220,78 @@ void CPU::DumpClockRegs(int logLevel, WORD32 instCycles) {
 }
 
 void CPU::DumpeForthDiagnostics(int logLevel) {
-    // turn off memory access diagnostics while we access memory...
-    WORD32 oldflags = flags & DebugFlags_MemAccessDebugLevel;
-    CLEAR_FLAGS(DebugFlags_MemAccessDebugLevel);
+	if (mySymbolTable->addressExists(IPtr - 1)) {
+		std::string symbol = mySymbolTable->getSymbolName(IPtr - 1);
+		// Ignore jump labels that end in a digit
+		char lastChar = symbol.at(symbol.size() - 1);
+		if (!isdigit(lastChar)) {
+			bool isCode = symbol == "BYE" || symbol == "QRX" ||
+				symbol == "TXSTO" || symbol == "STOIO" ||
+				symbol == "TDISASM" || symbol == "TERMINATE" ||
+				symbol == "DOLIT" || symbol == "DOLST" ||
+				symbol == "EXIT" || symbol == "EXECU" || 
+				symbol == "DONXT" || symbol == "QBRAN" ||
+				symbol == "BRAN" || symbol == "STORE" ||
+				symbol == "AT" || symbol == "CSTOR" ||
+				symbol == "CAT" || symbol == "RPAT" ||
+				symbol == "RPSTO" || symbol == "RFROM" ||
+				symbol == "RAT" || symbol == "TOR" ||
+				symbol == "SPAT" || symbol == "SPSTO" ||
+				symbol == "DROP" || symbol == "DUPP" ||
+				symbol == "SWAP" || symbol == "OVER" ||
+				symbol == "ZLESS" || symbol == "ANDD" ||
+				symbol == "ORR" || symbol == "XORR" ||
+				symbol == "UMPLUS";
+			if (isCode) {
+				CodeSymbol = symbol;
+			}
+			if (symbol == "EXIT" || symbol == "DOVAR" || symbol == "EXECU") {
+				WordStack.pop_back();
+			} else {
+				if (symbol == "DOLST") {
+					WordStack.push_back(PossiblyColonWord);
+				} else {
+					PossiblyColonWord = symbol;
+				}
+			}
+		}
+	}
+	if (WordStack.empty() && CodeSymbol == "") {
+		logFormat(logLevel, "Words: empty");
+	} else {
+		std::string words;
+		for (auto word: WordStack) {
+			words += word + " ";
+		}
+		if (CodeSymbol != "") {
+			words += "[" + CodeSymbol + "]";
+		}
+		logFormat(logLevel, "Words: %s", words.c_str());
+	}
 
-    // eForth registers from the workspace...
-    WORD32 SPX = myMemory->getWord(Wdesc_WPtr(Wdesc) + 4); // Word[1]
-    WORD32 IP = myMemory->getWord(Wdesc_WPtr(Wdesc) + 8);  // Word[2]
-    WORD32 RP = myMemory->getWord(Wdesc_WPtr(Wdesc) + 12); // Word[3]
-    logFormat(logLevel, "SP #%08X %c RP #%08X %c IP #%08X%s", SPX, (SPX == SPP ? 'E' : ' '), RP, (RP == RPP ? 'E' : ' '), IP, mySymbolTable->possibleSymbolString(IP).c_str());
+	// turn off memory access diagnostics while we access memory...
+	WORD32 oldflags = flags & DebugFlags_MemAccessDebugLevel;
+	CLEAR_FLAGS(DebugFlags_MemAccessDebugLevel);
 
-    // Note: if the sizes of the stacks change, the i<XX will need changing in these loops:
-    // Data stack...
-    for (WORD32 i=0,a=SPP; a>SPX && i<176; i++,a-=4) {
-        WORD32 w = myMemory->getWord(a-4);
-        logFormat(logLevel, "SP[%3d]@#%08X:#%08X%s", i, a-4, w, mySymbolTable->possibleSymbolString(w).c_str());
-    }
-    // Return stack...
-    for (WORD32 i=0,a=RPP; a>RP && i<64; i++,a-=4) {
-        WORD32 w = myMemory->getWord(a-4);
-        logFormat(logLevel, "RP[%3d]@#%08X:#%08X%s", i, a-4, w, mySymbolTable->possibleSymbolString(w).c_str());
-    }
+	// eForth registers from the workspace...
+	WORD32 SPX = myMemory->getWord(Wdesc_WPtr(Wdesc) + 4); // Word[1]
+	WORD32 IP = myMemory->getWord(Wdesc_WPtr(Wdesc) + 8);  // Word[2]
+	WORD32 RP = myMemory->getWord(Wdesc_WPtr(Wdesc) + 12); // Word[3]
+	logFormat(logLevel, "SP #%08X %c RP #%08X %c IP #%08X%s", SPX, (SPX == SPP ? 'E' : ' '), RP, (RP == RPP ? 'E' : ' '), IP, mySymbolTable->possibleSymbolString(IP).c_str());
 
-    SET_FLAGS(oldflags);
+	// Note: if the sizes of the stacks change, the i<XX will need changing in these loops:
+	// Data stack...
+	for (WORD32 i=0,a=SPP; SPX != 0 && a>SPX && i<176; i++,a-=4) {
+       		WORD32 w = myMemory->getWord(a-4);
+		logFormat(logLevel, "SP[%3d]@#%08X:#%08X%s", i, a-4, w, mySymbolTable->possibleSymbolString(w).c_str());
+	}
+	// Return stack...
+	for (WORD32 i=0,a=RPP; RP != 0 && a>RP && i<64; i++,a-=4) {
+		WORD32 w = myMemory->getWord(a-4);
+		logFormat(logLevel, "RP[%3d]@#%08X:#%08X%s", i, a-4, w, mySymbolTable->possibleSymbolString(w).c_str());
+	}
+
+	SET_FLAGS(oldflags);
 }
 
 // Disassemble from addr all full instructions up to addr+maxlen
@@ -2099,13 +2149,13 @@ inline void CPU::interpret(void) {
 	if (Instruction != D_pfix && Instruction != D_nfix) {
 		InstructionStartIPtr = IPtr;
 		if ((flags & DebugFlags_DebugLevel) >= Debug_DisRegs) {
-            DumpRegs(LOGLEVEL_DEBUG);
-            if (IS_FLAG_SET(EmulatorState_QueueInstruction))
-                DumpQueueRegs(LOGLEVEL_DEBUG);
-            if (IS_FLAG_SET(EmulatorState_TimerInstruction))
-                DumpClockRegs(LOGLEVEL_DEBUG, InstCycles + MemCycles);
-            if (IS_FLAG_SET(DebugFlags_eForth))
-                DumpeForthDiagnostics(LOGLEVEL_DEBUG);
+			DumpRegs(LOGLEVEL_DEBUG);
+			if (IS_FLAG_SET(EmulatorState_QueueInstruction))
+				DumpQueueRegs(LOGLEVEL_DEBUG);
+			if (IS_FLAG_SET(EmulatorState_TimerInstruction))
+				DumpClockRegs(LOGLEVEL_DEBUG, InstCycles + MemCycles);
+			if (IS_FLAG_SET(DebugFlags_eForth))
+				DumpeForthDiagnostics(LOGLEVEL_DEBUG);
 		}
 	}
 
