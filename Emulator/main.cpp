@@ -115,7 +115,7 @@ bool processCommandLine(int argc, char *argv[]) {
 #endif
 						if (n == 1) {
 							if (newMegs < 4 || newMegs > 64) {
-								logFatal("Initial memory size must be in range [1..64] MB");
+								logFatal("Initial memory size must be in range [4..64] MB");
 								return 0;
 							}
 							ramSize = newMegs * Mega;
@@ -261,23 +261,23 @@ bool processCommandLine(int argc, char *argv[]) {
 							}
 						}
 					} else {
-                            logFatal("-s must be directly followed by a symbol file");
-                            return 0;
-                        }
+						logFatal("-s must be directly followed by a symbol file");
+						return 0;
+					}
 					}
 					break;
 				case 'e': {
-                    SET_FLAGS(DebugFlags_eForth);
-                    bool gotAllSymbols =
-                        (symbolToAddress.count("SPP") == 1) &&
-                        (symbolToAddress.count("RPP") == 1);
-                    if (!gotAllSymbols) {
-                        logFatal("-e option requires SPP and RPP symbols");
-                        return 0;
-                    }
-                    SPP = symbolToAddress["SPP"];
-                    RPP = symbolToAddress["RPP"];
-                    }
+					SET_FLAGS(DebugFlags_eForth);
+					bool gotAllSymbols =
+						(symbolToAddress.count("SPP") == 1) &&
+						(symbolToAddress.count("RPP") == 1);
+					if (!gotAllSymbols) {
+						logFatal("-e option requires SPP and RPP symbols");
+						return 0;
+					}
+					SPP = symbolToAddress["SPP"];
+					RPP = symbolToAddress["RPP"];
+					}
 					break;
 			}
 		} else {
@@ -344,15 +344,15 @@ int main(int argc, char *argv[]) {
 	signal(SIGINT,interruptHandler);
 #endif
 	symbolTable = new SymbolTable();
-    int symbolCount = 0;
+	int symbolCount = 0;
 	for (map<std::string, WORD32>::const_iterator iter = symbolToAddress.begin();
 		iter != symbolToAddress.end(); iter++) {
 		symbolTable->addSymbol(iter->first, iter->second);
         symbolCount++;
 	}
-    if (symbolCount != 0) {
-        logInfoF("Added %d symbol(s)", symbolCount);
-    }
+	if (symbolCount != 0) {
+		logInfoF("Added %d symbol(s)", symbolCount);
+	}
 
 	memory = new Memory();
 	if (!memory->initialise(ramSize, romFile, symbolTable)) {
