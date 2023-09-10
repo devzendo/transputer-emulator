@@ -105,14 +105,14 @@ bool processCommandLine(int argc, char *argv[]) {
 	}
 
 	for (int i = 1; i < argc; i++) {
-		// logDebugF("Processing cmd line arg %d of %d : '%s'", i, argc, argv[i]);
+		logDebugF("Processing cmd line arg %d of %d : '%s'", i, argc, argv[i]);
 		if (strlen(argv[i]) > 1 && argv[i][0] == '-') {
 			switch (argv[i][1]) {
 				default:
 					if (!programCommandLine.empty()) {
 						programCommandLine += " ";
-						programCommandLine += std::string(argv[i]);
 					}
+					programCommandLine += std::string(argv[i]);
 					break;
 
 				case 'm':
@@ -182,8 +182,8 @@ bool processCommandLine(int argc, char *argv[]) {
 			} else {
 				if (!programCommandLine.empty()) {
 					programCommandLine += " ";
-					programCommandLine += std::string(argv[i]);
 				}
+				programCommandLine += std::string(argv[i]);
 			}
 		}
 	}
