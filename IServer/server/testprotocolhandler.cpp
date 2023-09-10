@@ -44,6 +44,10 @@ public:
     void setTimeMillis(WORD32 timeMillis); // for tests
     UTCTime getUTCTime() override;
     void setUTCTime(UTCTime utcTime); // for tests
+
+    std::vector<BYTE8> getCommandLineAll();
+    std::vector<BYTE8> getCommandLineForProgram();
+    void setCommandLine(std::string text); // for tests
 private:
     std::vector<BYTE8> myKeyboardChars;
     std::vector<BYTE8> myScreenChars;
@@ -1483,6 +1487,51 @@ TEST_F(TestProtocolHandler, ExitFrameCustom)
 }
 
 // REQ_COMMAND
+
+TEST_F(TestProtocolHandler, CommandFrameFull)
+{
+    stubPlatform.setCommandLines("is a b c", "a b c");
+    std::vector<BYTE8> cmdFrame = {REQ_COMMAND};
+    append8(cmdFrame, 1);
+    std::vector<BYTE8> padded = padFrame(cmdFrame);
+    EXPECT_EQ(checkGoodFrame(padded), false); // its length is good, it's not an exit frame
+    EXPECT_EQ(handler->unimplementedFrameCount(), 0L); // it is an implemented tag
+    std::vector<BYTE8> response = readResponseFrame();
+    checkResponseFrameSize(response, 12); // 11 with 1 byte padding
+    checkResponseFrameTag(response, RES_SUCCESS);
+    EXPECT_EQ((int)response[3], 0x08);
+    EXPECT_EQ((int)response[4], 0x00);
+    EXPECT_EQ((int)response[5], 'i');
+    EXPECT_EQ((int)response[6], 's');
+    EXPECT_EQ((int)response[7], ' ');
+    EXPECT_EQ((int)response[8], 'a');
+    EXPECT_EQ((int)response[9], ' ');
+    EXPECT_EQ((int)response[10], 'b');
+    EXPECT_EQ((int)response[11], ' ');
+    EXPECT_EQ((int)response[12], 'c');
+}
+
+TEST_F(TestProtocolHandler, CommandFrameForProgram)
+{
+    stubPlatform.setCommandLines("is a b c", "a b c");
+    std::vector<BYTE8> cmdFrame = {REQ_COMMAND};
+    append8(cmdFrame, 0);
+    std::vector<BYTE8> padded = padFrame(cmdFrame);
+    EXPECT_EQ(checkGoodFrame(padded), false); // its length is good, it's not an exit frame
+    EXPECT_EQ(handler->unimplementedFrameCount(), 0L); // it is an implemented tag
+    std::vector<BYTE8> response = readResponseFrame();
+    checkResponseFrameSize(response, 8);
+    checkResponseFrameTag(response, RES_SUCCESS);
+    EXPECT_EQ((int)response[3], 0x05);
+    EXPECT_EQ((int)response[4], 0x00);
+    EXPECT_EQ((int)response[5], 'a');
+    EXPECT_EQ((int)response[6], ' ');
+    EXPECT_EQ((int)response[7], 'b');
+    EXPECT_EQ((int)response[8], ' ');
+    EXPECT_EQ((int)response[9], 'c');
+}
+
+
 // REQ_CORE
 // REQ_ID
 

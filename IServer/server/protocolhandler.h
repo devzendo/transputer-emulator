@@ -62,6 +62,7 @@ private:
     void reqGetKey();
     void reqPollKey();
     void reqExit();
+    void reqCommand();
     void reqId();
 
     // Extended frame handling routines

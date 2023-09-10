@@ -29,6 +29,8 @@ using namespace std;
 #if defined(PLATFORM_WINDOWS)
 #include <direct.h>
 #define GetCurrentDir _getcwd
+#include <io.h>
+#define access _access_s
 #endif
 
 #include "filesystem.h"
@@ -58,6 +60,8 @@ static PlatformFactory *platformFactory;
 static Link *myLink;
 static LinkFactory *linkFactory;
 static std::string myRootDirectory;
+static std::string fullCommandLine;
+static std::string programCommandLine;
 
 void usage() {
 	logInfoF("Parachute v%s IServer" __DATE__, projectVersion);
@@ -70,8 +74,8 @@ void usage() {
 	logInfo("booting the Emulator from ROM.");
 	logInfo("Options:");
 	logInfo("  -df   Full debug");
-    logInfo("  -dp   Enables platform debug");
-    logInfo("  -dP   Enables protocol debug");
+	logInfo("  -dp   Enables platform debug");
+	logInfo("  -dP   Enables protocol debug");
 	logInfo("  -dl   Enables link communications (high level) debug");
 	logInfo("  -dL   Enables link communications (high & low level) debug");
 	logInfo("  -m    Monitors boot link instead of handling protocol");
@@ -82,14 +86,35 @@ void usage() {
 	logInfo("        FIFO, Socket or shared Memory. Default is FIFO.");
 	logInfo("        (only FIFO implemented yet)");
 	logInfo("  -r<directory> Sets the root directory served by the IServer. Current directory if not given.");
+	logInfo("Any options not understood by the IServer are stored to be made available to the transputer.");
+}
+
+bool fileExists(const std::string &filename)
+{
+	return access(filename.c_str(), 0) == 0;
 }
 
 bool processCommandLine(int argc, char *argv[]) {
 	int logLevel = LOGLEVEL_INFO;
+
+	for (int i = 0; i < argc; i++) {
+		fullCommandLine += std::string(argv[i]);
+		if (i != argc-1) {
+			fullCommandLine += " ";
+		}
+	}
+
 	for (int i = 1; i < argc; i++) {
 		// logDebugF("Processing cmd line arg %d of %d : '%s'", i, argc, argv[i]);
 		if (strlen(argv[i]) > 1 && argv[i][0] == '-') {
 			switch (argv[i][1]) {
+				default:
+					if (!programCommandLine.empty()) {
+						programCommandLine += " ";
+						programCommandLine += std::string(argv[i]);
+					}
+					break;
+
 				case 'm':
 					monitorLink = true;
 					break;
@@ -124,9 +149,9 @@ bool processCommandLine(int argc, char *argv[]) {
 					switch (argv[i][2]) {
 						case 'f':
 							debugLink = true;
-                            debugLinkRaw = true;
-                            debugPlatform = true;
-                            debugProtocol = true;
+							debugLinkRaw = true;
+							debugPlatform = true;
+							debugProtocol = true;
 							break;
 						case 'l':
 							debugLink = true;
@@ -138,24 +163,33 @@ bool processCommandLine(int argc, char *argv[]) {
 						case 'p':
 							debugPlatform = true;
 							break;
-                        case 'P':
-                            debugProtocol = true;
-                            break;
+						case 'P':
+							debugProtocol = true;
+							break;
 						default:
 							usage();
 							return 0;
 					}
 					break;
-			    case 'r':
-			        char *thisArg=argv[i];
-			        myRootDirectory = thisArg + 2;
-			        break;
+				case 'r':
+					char *thisArg=argv[i];
+					myRootDirectory = thisArg + 2;
+					break;
 			}
 		} else {
-			bootFile = argv[i];
+			if (fileExists(argv[i])) {
+				bootFile = argv[i];
+			} else {
+				if (!programCommandLine.empty()) {
+					programCommandLine += " ";
+					programCommandLine += std::string(argv[i]);
+				}
+			}
 		}
 	}
 	//logDebug("End of cmd line processing");
+	logDebugF("Full command line [%s]", fullCommandLine.c_str());
+	logDebugF("Program command line [%s]", programCommandLine.c_str());
 	return 1;
 }
 
@@ -269,40 +303,41 @@ int main(int argc, char *argv[]) {
 	}
 
 	// Thanks to computinglife in https://stackoverflow.com/questions/143174/how-do-i-get-the-directory-that-a-program-is-running-from
-    if (!GetCurrentDir(currentPath, sizeof(currentPath))) {
-        logFatalF("Could not get current working directory: %s", getLastError().c_str());
-        cleanup();
-        exit(1);
-    }
-    currentPath[sizeof(currentPath) - 1] = '\0'; /* not really required */
-    if (myRootDirectory.empty()) {
-        myRootDirectory = currentPath;
-    }
-    logDebugF("Root directory is '%s'", myRootDirectory.c_str());
-    try {
-        if (!pathIsDir(myRootDirectory)) {
-            logFatalF("Root directory '%s' is not a directory", myRootDirectory.c_str());
-            cleanup();
-            exit(1);
-        }
-        logDebugF("Root directory '%s' is a directory.", myRootDirectory.c_str());
-    } catch (exception &e) {
-        logFatalF("Could not check root directory for existence: %s", e.what());
-        cleanup();
-        exit(1);
-    }
+	if (!GetCurrentDir(currentPath, sizeof(currentPath))) {
+		logFatalF("Could not get current working directory: %s", getLastError().c_str());
+		cleanup();
+		exit(1);
+	}
+	currentPath[sizeof(currentPath) - 1] = '\0'; /* not really required */
+	if (myRootDirectory.empty()) {
+		myRootDirectory = currentPath;
+	}
+	logDebugF("Root directory is '%s'", myRootDirectory.c_str());
+	try {
+		if (!pathIsDir(myRootDirectory)) {
+			logFatalF("Root directory '%s' is not a directory", myRootDirectory.c_str());
+			cleanup();
+			exit(1);
+		}
+		logDebugF("Root directory '%s' is a directory.", myRootDirectory.c_str());
+	} catch (exception &e) {
+		logFatalF("Could not check root directory for existence: %s", e.what());
+		cleanup();
+		exit(1);
+	}
 
-    platformFactory = new PlatformFactory(debugPlatform);
+	platformFactory = new PlatformFactory(debugPlatform);
 	myPlatform = platformFactory->createPlatform();
-    try {
-        myPlatform->initialise();
-    } catch (exception &e) {
-        logFatalF("Could not initialise platform: %s", e.what());
-        cleanup();
-        exit(1);
-    }
+	myPlatform->setCommandLines(fullCommandLine, programCommandLine);
+	try {
+		myPlatform->initialise();
+	} catch (exception &e) {
+		logFatalF("Could not initialise platform: %s", e.what());
+		cleanup();
+		exit(1);
+	}
 
-    linkFactory = new LinkFactory(true, debugLinkRaw);
+	linkFactory = new LinkFactory(true, debugLinkRaw);
 	if (!linkFactory->processCommandLine(argc, argv)) {
 		cleanup();
 		exit(1);
@@ -334,21 +369,21 @@ int main(int argc, char *argv[]) {
 	}
 
 	if (monitorLink) {
-        logDebug("Monitoring boot link");
+		logDebug("Monitoring boot link");
 		monitorBootLink();
 	} else {
-        logDebug("Processing IServer protocol");
-	    ProtocolHandler * myProtocolHandler = new ProtocolHandler(*myLink, *myPlatform, myRootDirectory);
-	    myProtocolHandler->setDebug(debugProtocol);
-	    while (!finished) {
-	        finished = myProtocolHandler->processFrame();
-	    }
-	    exitCode = myProtocolHandler->exitCode();
-        logDebugF("Received exit code %d", exitCode);
+		logDebug("Processing IServer protocol");
+		ProtocolHandler * myProtocolHandler = new ProtocolHandler(*myLink, *myPlatform, myRootDirectory);
+		myProtocolHandler->setDebug(debugProtocol);
+		while (!finished) {
+			finished = myProtocolHandler->processFrame();
+		}
+		exitCode = myProtocolHandler->exitCode();
+		logDebugF("Received exit code %d", exitCode);
 	}
 
 	try {
-        logDebug("Resetting link");
+		logDebug("Resetting link");
 		myLink->resetLink();
 	} catch (exception &e) {
 		logErrorF("Could not reset link 0: %s", e.what());

@@ -13,6 +13,7 @@
 
 #include <exception>
 #include <memory>
+#include <vector>
 #include <misc.h>
 #include <fstream>
 #include <iostream>
@@ -252,6 +253,11 @@ Platform::Platform() {
     myNextAvailableFile = FILE_STDERR + 1;
 }
 
+void Platform::setCommandLines(std::string fullCommandLine, std::string programCommandLine) {
+	myFullCommandLine = fullCommandLine;
+	myProgramCommandLine = programCommandLine;
+}
+
 Platform::~Platform() {
     logDebug("Destroying platform");
 
@@ -269,6 +275,19 @@ Platform::~Platform() {
 
 void Platform::setDebug(bool newDebug) {
     bDebug = newDebug;
+}
+
+
+std::vector<BYTE8> Platform::getCommandLineAll() {
+	std::vector<BYTE8> v;
+	std::copy(myFullCommandLine.begin(), myFullCommandLine.end(), std::back_inserter(v));
+	return v;
+}
+
+std::vector<BYTE8> Platform::getCommandLineForProgram() {
+	std::vector<BYTE8> v;
+	std::copy(myProgramCommandLine.begin(), myProgramCommandLine.end(), std::back_inserter(v));
+	return v;
 }
 
 
@@ -322,6 +341,13 @@ WORD16 Platform::readStream(int streamId, WORD16 size, BYTE8 *buffer) noexcept(f
     pStream->lastIOOperation = IO_READ;
     logDebugF("Read %d bytes from stream #%d", read, streamId);
     return read;
+}
+
+void Platform::flushStream(int streamId) noexcept(false) {
+    // precondition: all the validity/writability checks have been done in the write call that called this..
+    std::unique_ptr<Stream> &pStream = myFiles[streamId];
+    pStream->getIOStream().flush();
+    // Not implementing the last IO operation check at the moment - this is currently just used to flush after putchar
 }
 
 WORD16 Platform::openFileStream(const std::string & filePath, const std::ios_base::openmode mode) {

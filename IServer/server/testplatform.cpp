@@ -394,3 +394,17 @@ TEST_F(TestPlatform, CloseFails) {
     EXPECT_EQ(platform->closeStream(fileStreamId), false);
 }
 
+TEST_F(TestPlatform, CommandLineAll) {
+	platform->setCommandLines("iserver -ld xyz", "xyz");
+	std::vector<BYTE8> full = platform->getCommandLineAll();
+	std::vector<BYTE8> expected_full{'i', 's', 'e', 'r', 'v', 'e', 'r', ' ', '-', 'l', 'd', ' ', 'x', 'y', 'z'};
+	EXPECT_EQ(full, expected_full);
+}
+
+TEST_F(TestPlatform, CommandLineForProgram) {
+	platform->setCommandLines("iserver -ld xyz", "xyz");
+	std::vector<BYTE8> program = platform->getCommandLineForProgram();
+	std::vector<BYTE8> expected_program{'x', 'y', 'z'};
+	EXPECT_EQ(program, expected_program);
+}
+

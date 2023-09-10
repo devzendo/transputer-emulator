@@ -15,6 +15,7 @@
 //------------------------------------------------------------------------------
 
 #include <string>
+#include <vector>
 #include <filesystem.h>
 #include "types.h"
 #include "constants.h"
@@ -278,9 +279,10 @@ bool ProtocolHandler::requestResponse() {
             break;
         }
 
-//        case REQ_COMMAND: {
-//            break;
-//        }
+        case REQ_COMMAND: {
+            reqCommand();
+            break;
+        }
 //        case REQ_CORE: {
 //            break;
 //        }
@@ -531,7 +533,8 @@ void ProtocolHandler::reqPuts() {
         wrote += myPlatform.writeStream(streamId, 1, (BYTE8 *) "\n");
 #endif
         logDebugF("Wrote %d bytes to stream #%d", wrote, streamId);
-        // Note no automatic flushing, and no indication to the client of the amount written..
+        //myPlatform.flushStream(streamId);
+        // Note no no indication to the client of the amount written..
         codec.put(RES_SUCCESS);
     } catch (const std::runtime_error &e) { // File must be open for writing
         logWarn(e.what());
@@ -627,6 +630,23 @@ void ProtocolHandler::reqExit() {
     }
     logDebugF("Exit code set to %04X", myExitCode);
     codec.put(RES_SUCCESS);
+}
+
+void ProtocolHandler::reqCommand() {
+    const BYTE8 all = codec.get8();
+    logDebugF("Command line 'all' flag is %d", all);
+    std::vector<BYTE8> commandLine;
+    if (all) {
+	    commandLine = myPlatform.getCommandLineAll();
+    } else {
+	    commandLine = myPlatform.getCommandLineForProgram();
+    }
+
+    codec.put(RES_SUCCESS);
+    codec.put((WORD16) commandLine.size());
+    for (auto c: commandLine) {
+	    codec.put((BYTE8) c);
+    }
 }
 
 void ProtocolHandler::reqId() {

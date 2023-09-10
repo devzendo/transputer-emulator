@@ -71,6 +71,7 @@ class Platform {
 public:
     Platform();
     virtual void initialise() noexcept(false) = 0;
+    void setCommandLines(std::string fullCommandLine, std::string programCommandLine);
     virtual ~Platform();
     void setDebug(bool newDebug);
 
@@ -80,10 +81,14 @@ public:
 
     virtual WORD32 getTimeMillis() = 0;
     virtual UTCTime getUTCTime() = 0;
+    
+    std::vector<BYTE8> getCommandLineAll();
+    std::vector<BYTE8> getCommandLineForProgram();
 
     // The WORD16s used for size parameters come from the protocol definition of REQ_READ, REQ_WRITE.
     WORD16 writeStream(int streamId, WORD16 size, BYTE8* buffer) noexcept(false);
     WORD16 readStream(int streamId, WORD16 size, BYTE8* buffer) noexcept(false);
+    void flushStream(int streamId);
 
     WORD16 openFileStream(const std::string & filePath, std::ios_base::openmode mode);
     bool closeStream(int streamId); // true => close succeeded
@@ -97,6 +102,8 @@ protected:
     bool bDebug;
     std::unique_ptr<Stream> myFiles[MAX_FILES];
     int myNextAvailableFile;
+    std::string myFullCommandLine;
+    std::string myProgramCommandLine;
 };
 
 #endif // _PLATFORM_H

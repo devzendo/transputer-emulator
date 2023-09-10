@@ -259,6 +259,33 @@ const BYTE8 REQ_OPEN_MODE_APPEND_UPDATE = 6;
 const WORD32 RES_EXIT_SUCCESS = 999999999;
 const WORD32 RES_EXIT_FAILURE = -999999999;
 
+
+// REQ_COMMAND
+// Requests the command line arguments of the IServer. Either the full command
+// line, or only those arguments that were not intended for the IServer itself.
+// This is how a Transputer program (e.g. the occam compiler) gets its
+// arguments: they're given to the IServer, which ignores them but allows the
+// compiler to obtain them.
+//
+// Request:
+// +----------------------+
+// | BYTE8 REQ_COMMAND    |
+// +----------------------+
+// | BYTE8 all            | Zero requests only the Transputer program args.
+// |                      | Nonzero requests the entire IServer command line
+// |                      | including the name of the IServer command.
+// +----------------------+
+//
+// Response data for REQ_COMMAND:
+// +----------------------+
+// | BYTE8 result         | RES_SUCCESS on success.
+// | STRING commandline   | The command line.
+// +----------------------+
+
+
+
+
+
 // REQ_ID
 // Request:
 // +----------------------+
