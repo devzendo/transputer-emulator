@@ -24,6 +24,7 @@ TVSLink::TVSLink(int linkNo, std::string tvsProgram, std::string tvsInput, std::
     myTVSProgram = tvsProgram;
     myTVSInput = tvsInput;
     myTVSOutput = tvsOutput;
+    myProgramSent = myInputSent = 0;
     logDebugF("Constructing TVS link %d for cpu client", myLinkNo);
 }
 
@@ -40,7 +41,7 @@ void TVSLink::initialise(void) throw (std::exception) {
     }
     if (!myTVSInput.empty()) {
         try {
-            myTVSInputStream.open(myTVSProgram, std::ifstream::in | std::ifstream::binary);
+            myTVSInputStream.open(myTVSInput, std::ifstream::in | std::ifstream::binary);
         } catch (std::system_error& e) {
             sprintf(msgbuf, "Could not open input file %s: %s", myTVSInput.c_str(), e.code().message().c_str());
             logFatalF("%s", msgbuf);
@@ -84,14 +85,16 @@ BYTE8 TVSLink::readByte() throw (std::exception) {
                 logInfo("Program and input files are both at EOF");
                 finished = true;
             } else {
+                myInputSent++;
                 if (bDebug) {
-                    logDebug("Read input byte...");
+                    logDebugF("Read input byte %08x...", myInputSent);
                 }
             }
         }
     } else {
+        myProgramSent++;
         if (bDebug) {
-            logDebug("Read program byte...");
+            logDebugF("Read program byte %08x...", myProgramSent);
         }
     }
     if (finished) {

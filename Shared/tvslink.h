@@ -40,6 +40,7 @@ private:
     std::ifstream myTVSInputStream;
     std::string myTVSOutput;
     std::ofstream myTVSOutputStream;
+    WORD32 myProgramSent, myInputSent;
     WORD32 myWriteSequence, myReadSequence;
 };
 
