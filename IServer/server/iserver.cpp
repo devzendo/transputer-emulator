@@ -48,7 +48,7 @@ using namespace std;
 // global variables
 static char currentPath[FILENAME_MAX];
 static char *progName;
-static char *bootFile;
+static std::string bootFile;
 static bool debugPlatform;
 static bool debugProtocol;
 static bool debugLink;
@@ -172,13 +172,12 @@ bool processCommandLine(int argc, char *argv[]) {
 					}
 					break;
 				case 'r':
-					char *thisArg=argv[i];
-					myRootDirectory = thisArg + 2;
+					myRootDirectory = std::string(argv[i] + 2);
 					break;
 			}
 		} else {
 			if (fileExists(argv[i])) {
-				bootFile = argv[i];
+				bootFile = std::string(argv[i]);
 			} else {
 				if (!programCommandLine.empty()) {
 					programCommandLine += " ";
@@ -206,22 +205,23 @@ void monitorBootLink(void) {
 	}
 }
 
-// The boot file must start with a byte indicating its length; if the code is longer than 255 bytes, the boot file
+// Send a file's contents over the link, typically a boot file.
+// A boot file must start with a byte indicating its length; if the code is longer than 255 bytes, the boot file
 // must contain a chain loader, first.
-// Precondition: bootFile != NULL
-void sendBootFile(void) {
-    // Open boot file and set exceptions to be thrown on failure
-    ifstream bootStream;
-    bootStream.exceptions(std::ifstream::failbit | std::ifstream::badbit);
+// Precondition: sendFile != empty
+void sendFileOverLink(std::string sendFile, std::string fileDescription) {
+    // Open file and set exceptions to be thrown on failure
+    ifstream fileStream;
+    fileStream.exceptions(std::ifstream::failbit | std::ifstream::badbit);
 
     try {
         BYTE8 buf[128];
         streamsize nread = 0;
-        bootStream.open(bootFile, ifstream::in | ifstream::binary);
+        fileStream.open(sendFile, ifstream::in | ifstream::binary);
         do {
-            bootStream.exceptions(std::ifstream::goodbit);
-            bootStream.read(reinterpret_cast<char *>(buf), 128);
-            nread = bootStream.gcount();
+            fileStream.exceptions(std::ifstream::goodbit);
+            fileStream.read(reinterpret_cast<char *>(buf), 128);
+            nread = fileStream.gcount();
             if (nread > 0) {
                 if (debugLink) {
                     logDebugF("Read %d bytes of boot code; sending down link", nread);
@@ -232,7 +232,7 @@ void sendBootFile(void) {
                         myLink->writeByte(buf[i]);
                     } catch (exception e) {
                         logFatalF("Could not write down link 0: %s", e.what());
-                        bootStream.close();
+                        fileStream.close();
                         finished = true;
                         return;
                     }
@@ -240,7 +240,7 @@ void sendBootFile(void) {
             }
         } while (nread > 0);
     } catch (std::system_error& e) {
-        logFatalF("Could not open boot file %s: %s", bootFile, e.code().message().c_str());
+        logFatalF("Could not open %s file %s: %s", fileDescription.c_str(), sendFile.c_str(), e.code().message().c_str());
         finished = true;
         return;
     }
@@ -288,7 +288,7 @@ void interruptHandler(int sig) {
 
 int main(int argc, char *argv[]) {
 	progName = argv[0];
-	bootFile = NULL;
+	bootFile = "";
 	debugPlatform = false;
 	debugProtocol = false;
 	debugLink = false;
@@ -363,8 +363,8 @@ int main(int argc, char *argv[]) {
 	}
 
 	// start iserver operations
-	if (bootFile != NULL) {
-		sendBootFile();
+	if (!bootFile.empty()) {
+		sendFileOverLink(bootFile, "boot");
 		logDebug("End of boot file send");
 	}
 
