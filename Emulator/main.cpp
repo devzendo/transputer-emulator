@@ -73,7 +73,7 @@ void usage() {
 	logInfo("  -m<X> Sets initial memory size to X MB");
 	logInfo("  -i    Enters interactive monitor immediately");
 	logInfo("  -j    Enables break on j0");
-	logInfo("  -t    Terminate emulation upon memory violation");
+	logInfo("  -x    Terminate emulation upon memory violation");
 	logInfo("  -s<F> Load a list of symbols (lines with NAME HEX-ADDRESS) from file X");
 	logInfo("  -b<H> Add H (a hex address or symbol) as a breakpoint (can be repeated)");
 	logInfo("        (Note: symbols must have been specified first with -s<F> to give");
@@ -82,6 +82,8 @@ void usage() {
 	logInfo("        Displays the data and return stacks (with symbols)");
 	logInfo("        (Note: symbols must have been specified first with -s<F> and");
 	logInfo("         these must include stack symbols)");
+	logInfo("  -tvs  program-file optional-input-file output-file");
+	logInfo("        Run a program from Mike Brüstle's validation suite");
 }
 
 void showConfiguration() {
@@ -201,7 +203,7 @@ bool processCommandLine(int argc, char *argv[]) {
 				case 'j':
 					SET_FLAGS(EmulatorState_J0Break);
 					break;
-				case 't':
+				case 'x':
 					SET_FLAGS(DebugFlags_TerminateOnMemViol);
 					break;
 				case 'b': {
@@ -277,6 +279,22 @@ bool processCommandLine(int argc, char *argv[]) {
 					}
 					SPP = symbolToAddress["SPP"];
 					RPP = symbolToAddress["RPP"];
+					}
+					break;
+				case 't':
+					if (std::string(argv[i]) == "-tvs") {
+						// -tvs  program-file optional-input-file output-file
+						// i     i+1          i+2                 i+3
+						if (argc < i+4) {
+							logFatal("-tvs requires program-file optional-input-file output-file");
+							return 0;
+						}
+						i += 3;
+						// Skip the arguments here, the linkfactory uses the arguments; we just don't
+						// want them in the command line that we can serve to the emulator.
+					} else {
+						logFatalF("Unknown option '%s'", argv[i]);
+						return 0;
 					}
 					break;
 			}

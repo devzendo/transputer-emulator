@@ -14,6 +14,8 @@
 #include <cstdlib>
 #include <cctype>
 #include <cstring>
+#include <fstream>
+#include <iostream>
 #include "platformdetection.h"
 #include "types.h"
 #include "constants.h"
@@ -25,6 +27,8 @@
 #include <windows.h>
 #include "namedpipelink.h"
 #endif
+#include "tvslink.h"
+#include "nulllink.h"
 
 #include "linkfactory.h"
 #include "log.h"
@@ -33,6 +37,7 @@ LinkFactory::LinkFactory(bool isServer, bool isDebug) {
 	logDebug("LinkFactory CTOR");
 	bServer = isServer;
 	bDebug = isDebug;
+	bTVS = false;
 	for (int i = 0; i < 4; i++) {
 		myLinkTypes[i] = LinkType_FIFO;
 	}
@@ -69,6 +74,27 @@ bool LinkFactory::processCommandLine(int argc, char *argv[]) {
 				case 'M': myLinkTypes[n - '0'] = LinkType_SharedMemory; break;
 			}
 		}
+		if (std::string(argv[i]) == "-tvs") {
+			if (bServer) {
+				logFatal("TVS support is only for the emulator, not iserver");
+				return false;
+			}
+			// -tvs  program-file optional-input-file output-file
+			// i     i+1          i+2                 i+3
+			if (argc < i+4) {
+				logFatal("-tvs requires program-file optional-input-file output-file");
+				return false;
+			}
+			bTVS = true;
+			tvsProgram = std::string(argv[++i]);
+			tvsInput = std::string(argv[++i]);
+			tvsOutput = std::string(argv[++i]);
+			logInfoF("TVS Program [%s] Input [%s] Output [%s]", tvsProgram.c_str(), tvsInput.c_str(), tvsOutput.c_str());
+			myLinkTypes[0] = LinkType_TVS;
+			myLinkTypes[1] = LinkType_Null;
+			myLinkTypes[2] = LinkType_Null;
+			myLinkTypes[3] = LinkType_Null;
+		}
 	}
 	return true;
 }
@@ -89,6 +115,12 @@ Link *LinkFactory::createLink(int linkNo) {
 		case LinkType_SharedMemory:
 			logFatal("Shared memory links not yet implemented");
 			return NULL;
+		case LinkType_TVS:
+			newLink = new TVSLink(linkNo, tvsProgram, tvsInput, tvsOutput);
+			break;
+		case LinkType_Null:
+			newLink = new NullLink(linkNo, bServer);
+			break;
 		default:
 			logFatal("Unknown link type requested");
 			return NULL;

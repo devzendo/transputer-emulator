@@ -23,6 +23,10 @@ private:
 	int myLinkTypes[4];
 	bool bServer;
 	bool bDebug;
+	bool bTVS;
+	std::string tvsProgram;
+	std::string tvsInput;
+	std::string tvsOutput;
 };
 
 #endif // _LINKFACTORY_H

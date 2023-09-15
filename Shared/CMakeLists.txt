@@ -8,6 +8,8 @@ add_library(parachutedev STATIC log.h log.cpp misc.h misc.cpp hexdump.h hexdump.
         "${platform_sources}"
         linkfactory.h linkfactory.cpp constants.h emuquery.h memloc.h platformdetection.h types.h
         stublink.cpp stublink.h
+	tvslink.cpp tvslink.h
+	nulllink.cpp nulllink.h
         filesystem.cpp filesystem.h)
 
 add_library(testfixtures STATIC tempfilesfixture.h tempfilesfixture.cpp exceptionfixture.h)

@@ -29,6 +29,8 @@ const int LinkType_Socket = 1;
 const int LinkType_SharedMemory = 2;
 const int LinkType_NamedPipe = 3;
 const int LinkType_Stub = 4; // for testing
+const int LinkType_TVS = 5;
+const int LinkType_Null = 6;
 
 class Link {
 public:
@@ -47,7 +49,7 @@ public:
 	int readBytes(BYTE8* buffer, int bytesToRead) throw (std::exception);
 	int writeBytes(BYTE8* buffer, int bytesToWrite) throw (std::exception);
 	WORD16 readShort(void) throw (std::exception);
-    void writeShort(WORD16 b) throw (std::exception);
+	void writeShort(WORD16 b) throw (std::exception);
 	WORD32 readWord(void) throw (std::exception);
 	void writeWord(WORD32 w) throw (std::exception);
 	virtual void resetLink(void) throw (std::exception) = 0;

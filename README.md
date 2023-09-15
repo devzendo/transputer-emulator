@@ -19,6 +19,11 @@ First release 0.0.1 Midsummer 2019 (13 June 2019) as part of Parachute 0.0.1.
 Project started around 19/08/2005, with a long hiatus. Another hiatus from Sep 2021 to Dec 2022.
 Another hiatus from Dec 2022 to Jul 2023.
 
+Currently working on compatibility with the aid of Mike Brüstle's Transputer
+Validation Suite, and attempting to run other typical Transputer software such
+as the Inmos occam and C compilers, and the port of Minix. Also adding debugging
+facilities to aid the completion of the eForth Transputer port.
+
 ## Roadmap
 First release:
 * Ported to macOS (El Capitan +), Linux (Ubuntu 16.04, Ubuntu 18.04, CentOS 7.6, Raspbian Stretch), Windows 10.
@@ -44,12 +49,13 @@ Second release (work in progress):
   handling on Windows is broken. To be corrected.
 * Converting older C code (that's not very portable) to C++14 (that hopefully is more portable).
 * Upgrade macOS build from El Capitan to Catalina (and beyond).
-* eForth requires the following facilities of IServer (it currently accesses a UART; these routines must be changed
-  to use IServer protocol on Link 0):
+* eForth requires the following facilities of IServer (it originally accessed a UART; these routines have been
+  changed to use IServer protocol on Link 0):
   * URD: Read and wait (odd return system)
   * ?RX: Return input character and indication of whether there is any input available
   * TX!: Send output character
   * !IO: Initialise UART
+* Allow validation using Mike's TVS
   
 Third release:
 * Capable of running eForth.
@@ -83,6 +89,7 @@ Fifth release:
   disassembling or using the monitor.
 * The emulator's monitor now accepts a 't' command which toggles the display of
   disassembly and memory read/write.
+* The emulator can run tests from Mike Brüstle's Transputer Validation Suite.
 
 0.0.1 First Release
 * Versioning and build now controlled by Maven and CMake.
@@ -377,7 +384,9 @@ This project would not have been possible without the hard work and inspiration 
 Notably, thanks to:
 
 Michael Brüstle of transputer.net for assistance with details of the T800, and for finding problems with
-timer queue addresses - and for maintaining a superb archive.
+timer queue addresses - and for maintaining a superb archive. Also for
+granting access to the Transputer Validation Suite (which is not for
+redistribution).
 
 Dr. Barry Cook, formerly of Keele University, for starting my interest in the transputer, and for my final year
 undergraduate Computer Science project, also a transputer emulator (with different goals).
