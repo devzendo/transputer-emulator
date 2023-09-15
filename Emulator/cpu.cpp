@@ -1042,7 +1042,7 @@ inline void CPU::interpret(void) {
 								myLink = myLinks[3];
 								break;
 							default: // Do input from memory channel
-						        if (myMemory->isLegalMemory(Creg) &&
+								if (myMemory->isLegalMemory(Creg) &&
 								    myMemory->isLegalMemory(Creg + Areg)) {
 									WORD32 WorkSpace = myMemory->getWord(Breg);
 									if (Wdesc_WPtr(WorkSpace) == NotProcess_p) {

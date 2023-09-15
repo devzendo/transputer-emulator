@@ -121,21 +121,21 @@ FIFOLink::~FIFOLink() {
 		myWriteFD = -1;
 	}
 	// It's not fatal if we can't remove the FIFOs, as the first side (emulator/server) that gets here will do it.
-    logDebugF("Removing %s", myReadFifoName);
+	logDebugF("Removing %s", myReadFifoName);
 	if (unlink(myReadFifoName) == -1) {
-        logDebugF("Could not remove %s: %s", myReadFifoName, strerror(errno));
-    }
-    logDebugF("Removing %s", myWriteFifoName);
-    if (unlink(myWriteFifoName) == -1) {
-        logDebugF("Could not remove %s: %s", myWriteFifoName, strerror(errno));
-    }
+		logDebugF("Could not remove %s: %s", myReadFifoName, strerror(errno));
+	}
+	logDebugF("Removing %s", myWriteFifoName);
+	if (unlink(myWriteFifoName) == -1) {
+		logDebugF("Could not remove %s: %s", myWriteFifoName, strerror(errno));
+	}
 }
 
 BYTE8 FIFOLink::readByte() throw (std::exception) {
 	static char msgbuf[255];
 	BYTE8 buf;
-    int readlen = 0;
-    readlen = read(myReadFD, &buf, 1);
+	int readlen = 0;
+	readlen = read(myReadFD, &buf, 1);
 	if (readlen == 1) {
 		if (bDebug) {
 			logDebugF("Link %d R #%08X %02X (%c)", myLinkNo, myReadSequence++, buf, isprint(buf) ? buf : '.');
