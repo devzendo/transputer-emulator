@@ -120,7 +120,7 @@ extern WORD32 flags;
    
    29 (0x20000000)     Reserved
   
-   30 (0x40000000)     Reserved
+   30 (0x40000000)     Emulator: running TVS program
   
    31 (0x80000000)     Emulator: termination required
 */
@@ -137,6 +137,7 @@ extern WORD32 flags;
 #define EmulatorState_BreakpointInstruction 0x2000000
 #define EmulatorState_J0Break 0x4000000
 
+#define EmulatorState_TVS       0x40000000
 #define EmulatorState_Terminate 0x80000000
 
 // Flag mask applied before each instruction, to reset some of the flags:

@@ -292,6 +292,7 @@ bool processCommandLine(int argc, char *argv[]) {
 						i += 3;
 						// Skip the arguments here, the linkfactory uses the arguments; we just don't
 						// want them in the command line that we can serve to the emulator.
+						SET_FLAGS(EmulatorState_TVS);
 					} else {
 						logFatalF("Unknown option '%s'", argv[i]);
 						return 0;
