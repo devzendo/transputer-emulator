@@ -216,12 +216,19 @@ timerenableh, timerenablel, timerdisableh, timerdisablel.
 T810: checkaddr, delay, dislinkinth, dislinkintl, distimesl, enlinkinth, enlinkintl,
 entimesl, fpmacc, fpxprod, ldhw, macc, pause, sthw, xprod
 
+## Instructions required for eForth
+ldc, ldpi, dup, adc, rev, ldnl, gcall
+stl, ldl, wcnt, gajw, mint, clrj0break,
+timerdisableh, timerdisablel, toggledisasm,
+outbyte, outword, ldlp, in, terminate, cj, sb,
+and, eqc, lb, not, or, xor, lsum.
 
 ## Transputer Validation Suite conformance
+In the report, entries marked with * are priorities to fix for eForth.
 tests: 54, ok: 22, fail: 32
 
 ```
-        adc FAIL
+        adc FAIL *
         add FAIL
         alt PASS
         and PASS
@@ -252,7 +259,7 @@ bitrevnbits FAIL
        lshl FAIL
        lshr FAIL
        lsub FAIL
-       lsum FAIL
+       lsum FAIL *
        mint PASS
         mul FAIL
        norm unimplemented FAIL
