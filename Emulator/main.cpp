@@ -390,12 +390,11 @@ int main(int argc, char *argv[]) {
 		 iter != breakpointAddresses.end(); iter++) {
 		cpu->addBreakpoint(*iter);
 	}
-    if (IS_FLAG_SET(DebugFlags_eForth)) {
-        cpu->seteForthStackAddresses(SPP, RPP);
-    }
+	if (IS_FLAG_SET(DebugFlags_eForth)) {
+		cpu->seteForthStackAddresses(SPP, RPP);
+	}
 
-
-    cpu->emulate(romFile);
+	cpu->emulate(romFile);
 
 	fflush(stdout);
 	delete linkFactory;
