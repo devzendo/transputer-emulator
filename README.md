@@ -158,12 +158,14 @@ The greatest omission is floating point - this is an integer T805 at the moment!
 
 The proposed T810 instructions are not implemented.
 
-Those that are not emit a diagnostic when encountered.
+Those that are not implemented emit a diagnostic when encountered.
 
 See the sections 'Implemented Instructions' and 'Unimplemented Instructions' below.
 
-It is my intention to eventually implement the complete instruction set. My focus is on the common integer instructions,
-those that support communications, process management, diagnostics, and then the floating point instructions.
+It is my intention to eventually implement the complete instruction set, such
+that it completely passes the Transputer Validation Suite. My focus is on the
+common integer instructions, those that support communications, process
+management, diagnostics, and then the floating point instructions.
 
 ## Implemented Instructions
 Direct:
@@ -213,6 +215,67 @@ timerenableh, timerenablel, timerdisableh, timerdisablel.
 
 T810: checkaddr, delay, dislinkinth, dislinkintl, distimesl, enlinkinth, enlinkintl,
 entimesl, fpmacc, fpxprod, ldhw, macc, pause, sthw, xprod
+
+
+## Transputer Validation Suite conformance
+tests: 54, ok: 22, fail: 32
+
+```
+        adc FAIL
+        add FAIL
+        alt PASS
+        and PASS
+       bcnt PASS
+     bitcnt PASS
+bitrevnbits FAIL
+ bitrevword FAIL
+       bsub PASS
+      ccnt1 PASS
+     cflerr unimplemented FAIL
+    crcbyte unimplemented FAIL
+    crcword unimplemented FAIL
+      csngl FAIL
+      csub0 PASS
+      cword FAIL
+       diff PASS
+        div FAIL
+        dup PASS
+        eqc PASS
+       fmul unimplemented FAIL
+         gt PASS
+       ladd FAIL
+        ldc PASS
+      ldiff FAIL
+      ldinf unimplemented FAIL
+       ldiv FAIL
+       lmul FAIL
+       lshl FAIL
+       lshr FAIL
+       lsub FAIL
+       lsum FAIL
+       mint PASS
+        mul FAIL
+       norm unimplemented FAIL
+        not PASS
+         or PASS
+ postnormsn unimplemented FAIL
+       prod PASS
+        rem FAIL
+        rev PASS
+    roundsn unimplemented FAIL
+        shl FAIL
+        shr FAIL
+        sub FAIL
+        sum PASS
+       talt PASS
+   unpacksn unimplemented FAIL
+       wcnt FAIL
+       wsub PASS
+     wsubdb PASS
+      xdble FAIL
+        xor PASS
+      xword FAIL
+```
 
 
 # Using the Emulator
