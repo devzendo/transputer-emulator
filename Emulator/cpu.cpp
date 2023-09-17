@@ -709,17 +709,21 @@ inline void CPU::interpret(void) {
 	OldOreg = Oreg;
 	switch (Instruction) {
 		case D_j: // jump
-            if (Oreg == 0) {
-            	if (IS_FLAG_SET(EmulatorState_J0Break)) {
-            		logInfo("*** Breakpoint (j 0) ***");
-            		bool hiPriority = swapContextForBreakpointInstruction();
-            		InstCycles = hiPriority ? 11 : 13;
-            	} else {
-            		logWarn("j: 0, but j 0 break not set");
-            	}
-            }
+			if (Oreg == 0) {
+				if (IS_FLAG_SET(EmulatorState_TVS)) {
+					logInfo("j 0 in TVS; terminating");
+					SET_FLAGS(EmulatorState_Terminate);
+				}
+				if (IS_FLAG_SET(EmulatorState_J0Break)) {
+					logInfo("*** Breakpoint (j 0) ***");
+					bool hiPriority = swapContextForBreakpointInstruction();
+					InstCycles = hiPriority ? 11 : 13;
+				} else {
+					logWarn("j: 0, but j 0 break not set");
+				}
+			}
 			if (Oreg == -2) {
-                logWarn("j: infinite loop - premature end?");
+				logWarn("j: infinite loop - premature end?");
 			} else {
 				IPtr += Oreg;
 				InstCycles = 3;
@@ -1933,17 +1937,35 @@ inline void CPU::interpret(void) {
 					} // End of O_fpentry switch
 					break;
 
-				// T801 instructions
-                case O_start:
-                case O_testhardchan:
-                case O_testldd:
-                case O_teststd:
-                case O_testlde:
-                case O_testste:
-                case O_testlds:
-                case O_teststs:
-                    logWarnF("Unimplemented T801 opr instruction Oreg=%08X", Oreg);
-                    break;
+				// Instructions described in "Transputer Instruction Set - Appendix" by Guy Harriman.
+				// Present on all Transputers.
+				case O_start:
+					if (IS_FLAG_SET(EmulatorState_TVS)) {
+						logInfo("start executed in TVS program");
+						SET_FLAGS(EmulatorState_Terminate);
+					} else {
+						start();
+					}
+					break;
+					
+				case O_testlds:
+					PUSH(flags);
+					break;
+				case O_teststs:
+					flags = POP();
+					break;
+				case O_testhardchan:
+					// Parachute software link abstraction does not
+					// have visibility of this.. hardware
+					// version probably will though.
+				case O_testldd:
+					// Parachute does not store the Dreg and
+					// Ereg as 'proper' CPU registers (yet).
+				case O_teststd:
+				case O_testlde:
+				case O_testste:
+					logWarnF("Unimplemented appendix opr instruction Oreg=%08X", Oreg);
+					break;
 
 				// T805 instructions
 				case O_break: // Break (swap process context)
@@ -2180,10 +2202,18 @@ inline void CPU::interpret(void) {
 
 
 // See TTH, p53
+// Transputer Instruction Set - Appendix states that the first link to receive a
+// byte handles the boot/peek/poke protocol, and that the links are polled in a
+// repeating cycle starting at link 0.
+// Note that Parachute is not a microcode emulator, and does not have a reset or
+// analyse 'pin'.
 void CPU::bootFromLink0() {
 	bootLen = 0;
 	Link *bootLink = NULL;
 	int linkNo = -1;
+	Areg = IPtr;
+	Breg = Wdesc;
+	IPtr = MemStart;
 	// Boot from the link in Creg
 	switch (Creg) {
 		case Link0Input: linkNo = 0; break;
@@ -2266,12 +2296,17 @@ void CPU::bootFromLink0() {
 }
 
 void CPU::emulate(const bool bootFromROM) {
+	myBootFromROM = bootFromROM;
 	// Initialise timing subsystem
 	CycleCount = CycleCountSinceReset = 
 		HiClock = LoClock = LoClockLastQuantumExpiry = 0L;
 	// Initialise T800 registers. See TTS, p30, CWG p74
 	Oreg = Areg = Breg = 0;
 	FAreg = FBreg = FCreg = (REAL64)0.0;
+	// These 'preserved bits' don't tie up with those given in the spec of
+	// the start instruction, in Transputer Instruction Set - Appendix.
+	// That does not include the descheduling bits, FErrorFlag, and does
+	// include the EnableJ0Break flag.
 	flags = flags & (~(EmulatorState_ErrorFlag | EmulatorState_FErrorFlag |
 						EmulatorState_HaltOnError |
 						EmulatorState_DeschedulePending |
@@ -2283,25 +2318,7 @@ void CPU::emulate(const bool bootFromROM) {
 	CurrDataLen = CurrDisasmLen = 64;
 	LastAjwInBytes = 16; // useful, perhaps, until next ajw
 
-	if (bootFromROM) {
-		logDebug("---- Starting Boot from ROM ----");
-		Wdesc = MemStart;
-		IPtr = ResetCode;
-		// CWG states Areg, Breg are set to previous values of Iptr, Wdesc.. there are no previous values.. I don't
-		// support Analyse mode (yet) - which is how these might be set?
-		Creg = 0xDEADF00D; // CWG states 'undefined'.
-	} else {
-		logDebug("---- Starting Boot from Link 0 ----");
-		// NB: CWG states Areg is set to the previous value of IPtr, Breg the previous of Wdesc,
-		// Creg a pointer to the link the Transputer booted from.
-		IPtr = MemStart;
-		Creg = Link0Input; // The default IServer link input
-		bootFromLink0();
-		// The initial workspace is the first free word of memory. A low priority process.
-		// If booting from ROM, this should be MemStart - but ROM boot isn't supported yet.
-		Wdesc = WordAlign((WORD32)(IPtr + (WORD32)bootLen));
-	}
-	Wdesc |= 0x1;
+	start();
 
 	// Go...
 	//
@@ -2337,6 +2354,29 @@ void CPU::emulate(const bool bootFromROM) {
 		DumpClockRegs(LOGLEVEL_DEBUG, (WORD32)0);
 	}
 }
+
+// Executed from emulate, above, and also on receipt of a start instruction.
+void CPU::start() {
+	if (myBootFromROM) {
+		logDebug("---- Starting Boot from ROM ----");
+		Areg = IPtr;
+		Breg = Wdesc;
+		IPtr = ResetCode;
+		Wdesc = MemStart;
+		Creg = 0xDEADF00D; // CWG states 'undefined'.
+	} else {
+		logDebug("---- Starting Boot from Link 0 ----");
+		// NB: CWG states Areg is set to the previous value of IPtr, Breg the previous of Wdesc,
+		// Creg a pointer to the link the Transputer booted from.
+		IPtr = MemStart;
+		Creg = Link0Input; // The default IServer link input
+		bootFromLink0();
+		// The initial workspace is the first free word of memory. A low priority process.
+		Wdesc = WordAlign((WORD32)(IPtr + (WORD32)bootLen));
+	}
+	Wdesc |= 0x1;
+}
+
 
 // Evaluation stack routines
 // Use like: HiWord=POP(); (HiWord=TOS, shuffle)

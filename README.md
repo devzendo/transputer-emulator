@@ -56,6 +56,7 @@ Second release (work in progress):
   * TX!: Send output character
   * !IO: Initialise UART
 * Allow validation using Mike's TVS
+* Implemented the instructions from "Transputer Instruction Set - Appendix".
   
 Third release:
 * Capable of running eForth.
@@ -90,6 +91,7 @@ Fifth release:
 * The emulator's monitor now accepts a 't' command which toggles the display of
   disassembly and memory read/write.
 * The emulator can run tests from Mike Brüstle's Transputer Validation Suite.
+* Implemented the instructions from "Transputer Instruction Set - Appendix".
 
 0.0.1 First Release
 * Versioning and build now controlled by Maven and CMake.
@@ -178,6 +180,9 @@ savel, sb, seterr, sethalterr, shl, shr, startp, sthb, sthf, stlb, stlf,
 stoperr, stopp, sttimer, sub, sum, talt, testerr, testhalterr, tin, wcnt, wsub,
 wsubdb, xdble, xor, xword.
 
+From the Transputer Instruction Set - Appendix:
+start, testhardchan, testldd, testlde, testlds, teststd, testste, teststs.
+
 T805:
 break, clrj0break, lddevid, ldmemstartval, pop, setj0break, testj0break.
 
@@ -202,8 +207,6 @@ T414: cflerr, ldinf, postnormsn, roundsn, unpacksn.
 
 T800: crcbyte, crcword, move2dall, move2dinit, move2dnonzero, move2dzero.
 
-T801:
-start, testhardchan, testldd, testlde, testlds, teststd, testste, teststs.
 
 T805:
 timerenableh, timerenablel, timerdisableh, timerdisablel.

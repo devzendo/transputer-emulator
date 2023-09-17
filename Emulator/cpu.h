@@ -32,8 +32,10 @@ class CPU {
 		void removeBreakpoint(WORD32 breakpointAddress);
 		void seteForthStackAddresses(WORD32 SPP, WORD32 RPP);
 		void emulate(const bool bootFromROM);
+		void start();
 		~CPU();
 	private:
+		bool myBootFromROM;
 		SymbolTable *mySymbolTable;
 		// Dynamically allocated memory
 		Memory *myMemory;
