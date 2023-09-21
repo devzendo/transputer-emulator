@@ -48,5 +48,8 @@ const int MaxQuantum=2048;          // Quantum of execution for low priority tas
                                     //      expressed in number of HiClock ticks.
 
 
+const WORD32 Positive_Inf=((WORD32) 0x7f800000);
+const WORD32 Negative_Inf=((WORD32) 0xff800000);
+
 #endif // _CONSTANTS_H
 

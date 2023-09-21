@@ -186,6 +186,9 @@ wsubdb, xdble, xor, xword.
 From the Transputer Instruction Set - Appendix:
 start, testlds, teststs.
 
+T414:
+cflerr
+
 T805:
 break, clrj0break, lddevid, ldmemstartval, pop, setj0break, testj0break.
 
@@ -207,11 +210,14 @@ fpusqrtlast, fpusqrtstep, norm, testpranal.
 From the Transputer Instruction Set - Appendix:
 testhardchan, testldd, testlde, teststd, testste, 
 
-32-bit Transputers: fmul.
+32-bit Transputers:
+fmul.
 
-T414: cflerr, ldinf, postnormsn, roundsn, unpacksn.
+T414:
+ldinf, postnormsn, roundsn, unpacksn.
 
-T800: crcbyte, crcword, move2dall, move2dinit, move2dnonzero, move2dzero.
+T800:
+crcbyte, crcword, move2dall, move2dinit, move2dnonzero, move2dzero.
 
 T805:
 timerenableh, timerenablel, timerdisableh, timerdisablel.
@@ -227,7 +233,7 @@ outbyte, outword, ldlp, in, terminate, cj, sb,
 and, eqc, lb, not, or, xor, lsum.
 
 ## Transputer Validation Suite conformance
-tests: 54, ok: 27, fail: 27
+tests: 54, ok: 28, fail: 26
 
 ```
         adc PASS
@@ -240,7 +246,7 @@ bitrevnbits PASS
  bitrevword PASS
        bsub PASS
       ccnt1 PASS
-     cflerr unimplemented FAIL
+     cflerr PASS
     crcbyte unimplemented FAIL
     crcword unimplemented FAIL
       csngl FAIL

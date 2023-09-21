@@ -1874,11 +1874,18 @@ inline void CPU::interpret(void) {
 					break;
 
 				// T414 only instructions
+				case O_cflerr: // check single length fp infinity or NaN
+					if ((Areg & 0x7FFFFFFF) == Positive_Inf ||
+						(((Areg & 0x7F800000) == Positive_Inf) &&
+						 ((Areg & 0x7FFFFFFF) != Positive_Inf))) {
+						SET_FLAGS(EmulatorState_ErrorFlag);
+					}
+					break;
+
 				case O_unpacksn: //
 				case O_roundsn: //
 				case O_postnormsn: //
 				case O_ldinf: //
-				case O_cflerr: //
 					logWarnF("Unimplemented T414 opr instruction Oreg=%08X", Oreg);
 					SET_FLAGS(EmulatorState_BadInstruction);
 					break;
