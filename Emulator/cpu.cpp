@@ -1819,9 +1819,16 @@ inline void CPU::interpret(void) {
 					}
 					break;
 
-				case O_bitrevword: // reverse bits in word
-					Areg ^= 0xffffffff;
-					InstCycles = BitsPerWord + 4; // T800 uses a shift here
+				case O_bitrevword: { // reverse bits in word
+						WORD32 temp = 0;
+						for (int i=0; i<32; i++) {
+							temp <<= 1;
+							temp |= (Areg & 1);
+							Areg >>= 1;
+						}
+						Areg = temp;
+						InstCycles = BitsPerWord + 4;
+					}
 					break;
 
 				case O_bitrevnbits: { // Areg = Breg with bottom Areg bits reversed
@@ -1866,27 +1873,39 @@ inline void CPU::interpret(void) {
 					InstCycles = 3;
 					break;
 
-				// These will be easy to implement, but are not
-				// necessary yet
-				case O_move2dinit: //  initialise data for 2-dimensional block move
-					// Areg contains the width of the
-					// block, Breg the dest addr and Creg
-					// the src addr
-				case O_move2dall: //
-				case O_crcword: //
-				case O_crcbyte: //
-				case O_norm: //
-
-				// The unimplemented instructions...
-				case O_testpranal: //
-				case O_fmul: //
+				// T414 only instructions
 				case O_unpacksn: //
 				case O_roundsn: //
 				case O_postnormsn: //
 				case O_ldinf: //
 				case O_cflerr: //
+					logWarnF("Unimplemented T414 opr instruction Oreg=%08X", Oreg);
+					SET_FLAGS(EmulatorState_BadInstruction);
+					break;
+
+				// T800 only instructions
+				case O_move2dinit: //  initialise data for 2-dimensional block move
+					// Areg contains the width of the
+					// block, Breg the dest addr and Creg
+					// the src addr
+				case O_move2dall: //
 				case O_move2dnonzero: //
 				case O_move2dzero: //
+				case O_crcword: //
+				case O_crcbyte: //
+					logWarnF("Unimplemented T800 opr instruction Oreg=%08X", Oreg);
+					SET_FLAGS(EmulatorState_BadInstruction);
+					break;
+
+				case O_fmul: //
+					logWarnF("Unimplemented T414/T800 opr instruction Oreg=%08X", Oreg);
+					SET_FLAGS(EmulatorState_BadInstruction);
+					break;
+
+
+				// The unimplemented instructions...
+				case O_norm: //
+				case O_testpranal: //
 
 				case O_fpdup: //
 				case O_fprev: //
