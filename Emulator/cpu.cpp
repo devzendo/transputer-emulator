@@ -766,8 +766,11 @@ inline void CPU::interpret(void) {
 
 		case D_adc: { // add constant checked
 				WORD32 AregSign = Areg & SignBit;
-				Areg += Oreg;
-				if ((Areg & SignBit) != AregSign) {
+				WORD32 OregSign = Oreg & SignBit;
+				WORD32 result = Areg + Oreg;
+				Areg = result;
+				WORD32 resultSign = Areg & SignBit;
+				if (AregSign == OregSign && AregSign != resultSign) {
 					SET_FLAGS(EmulatorState_ErrorFlag);
 				}
 			}
@@ -827,11 +830,14 @@ inline void CPU::interpret(void) {
 					break;
 
 				case O_add: { // add checked
+						WORD32 BregSign = Breg & SignBit;
 						WORD32 AregSign = Areg & SignBit;
 						Areg += Breg;
-						Breg = Creg;
-						if ((Areg & SignBit) != AregSign)
+						WORD32 resultSign = Areg & SignBit;
+						if (BregSign == AregSign && BregSign != resultSign) {
 							SET_FLAGS(EmulatorState_ErrorFlag);
+						}
+						Breg = Creg;
 					}
 					break;
 
@@ -980,7 +986,7 @@ inline void CPU::interpret(void) {
 				case O_wcnt: // word count
 					Creg = Breg;
 					Breg = Areg & ByteSelectMask;
-					Areg >>= 2;
+					Areg  = ((SWORD32)Areg) >> 2;
 					InstCycles = 5;
 					break;
 
@@ -1717,9 +1723,14 @@ inline void CPU::interpret(void) {
 					break;
 
 				case O_lsum: { // long sum with carry placed in Breg
-						WORD32 AregSign = Areg & SignBit;
-						Areg += (Breg + (Creg & 1));
-						Breg = ((Areg & SignBit) != AregSign) ? 1 : 0;
+						WORD32 result = Breg + Areg;
+						WORD32 newCarry = result < Breg;
+						Areg = result;
+						result += (Creg & 0x00000001);
+						if (result < Areg)
+							newCarry = 1;
+						Areg = result;
+						Breg = newCarry;
 						InstCycles = 3;
 					}
 					break;
@@ -1814,20 +1825,37 @@ inline void CPU::interpret(void) {
 					break;
 
 				case O_bitrevnbits: { // Areg = Breg with bottom Areg bits reversed
-						WORD32 mask;
-						if (Areg >= BitsPerWord) {
-							logWarn("bitrevnbits: Areg >= 32");
-							Areg = Breg = 0;
-						} else {
-							if (Areg == 0)  {
-								logWarn("bitrevnbits: Areg = 0");
+						// logInfoF("bitrevnbits: Areg (num bits): %08X Breg (number): %08X", Areg, Breg);
+						WORD32 temp = 0;
+						if (Areg > BitsPerWord) {
+							logWarnF("bitrevnbits: UNDEFINED BEHAVIOUR Areg: %08X", Areg);
+							// With thanks to Mike Bruestle's analysis & TVS
+							if (Areg >= 2 * BitsPerWord) {
+								Areg = 0;
 							} else {
+								// Reverse...
+								for (int i=0; i<32; i++) {
+									temp <<= 1;
+									temp |= (Breg & 1);
+									Breg >>= 1;
+								}
+								Areg = temp << (Areg - BitsPerWord);
+							}
+						} else {
+							if (Areg != 0)  {
+								// logInfo("bitrevnbits: 1 <= Areg <= 32 bits");
+								// Reverse...
 								// All more significant bits are zeroed. CWG p. 68. Sec 8.2
-								mask = ((1 << Areg) - 1); // (pow(2,Areg)-1)
-								Areg = (Breg & mask) ^ mask;
-								Breg = Creg;
+								for (int i=0; i<Areg; i++) {
+									temp <<= 1;
+									temp |= (Breg & 1);
+									Breg >>= 1;
+								}
+								Areg = temp;
 							}
 						}
+						// logInfoF("bitrevnbits: Final Areg %08X\n", Areg);
+						Breg = Creg;
 						InstCycles = Areg + 4;
 					}
 					break;

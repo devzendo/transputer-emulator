@@ -56,7 +56,6 @@ Second release (work in progress):
   * TX!: Send output character
   * !IO: Initialise UART
 * Allow validation using Mike's TVS
-* Implemented the instructions from "Transputer Instruction Set - Appendix".
   
 Third release:
 * Capable of running eForth.
@@ -87,10 +86,12 @@ Fifth release:
 * Added a "Hello World" example that uses the macro assembler's primary bootstrap
   include file. (see IServer/client-examples/hello-world-secondary-iserver)
 * Emulator now allows a list of symbols to be loaded; these are displayed when
-  disassembling or using the monitor.
+  disassembling or using the monitor; also enhancements for debugging eForth.
 * The emulator's monitor now accepts a 't' command which toggles the display of
   disassembly and memory read/write.
 * The emulator can run tests from Mike Brüstle's Transputer Validation Suite.
+* Corrected several instruction implementations with guidance from TVS: add,
+  adc, bitrevnbits, lsum, wcnt.
 * Implemented the instructions from "Transputer Instruction Set - Appendix".
 
 0.0.1 First Release
@@ -183,7 +184,7 @@ stoperr, stopp, sttimer, sub, sum, talt, testerr, testhalterr, tin, wcnt, wsub,
 wsubdb, xdble, xor, xword.
 
 From the Transputer Instruction Set - Appendix:
-start, testhardchan, testldd, testlde, testlds, teststd, testste, teststs.
+start, testlds, teststs.
 
 T805:
 break, clrj0break, lddevid, ldmemstartval, pop, setj0break, testj0break.
@@ -203,12 +204,14 @@ fpstnli32, fpstnlsn, fpsub, fpuabs, fpuchki64, fpudivby2, fpuexpinc32, fpumulby2
 fpunoround, fpur32tor64, fpur64tor32, fpurm, fpurn, fpurp, fpurz, fpusqrtfirst,
 fpusqrtlast, fpusqrtstep, norm, testpranal.
 
+From the Transputer Instruction Set - Appendix:
+testhardchan, testldd, testlde, teststd, testste, 
+
 32-bit Transputers: fmul.
 
 T414: cflerr, ldinf, postnormsn, roundsn, unpacksn.
 
 T800: crcbyte, crcword, move2dall, move2dinit, move2dnonzero, move2dzero.
-
 
 T805:
 timerenableh, timerenablel, timerdisableh, timerdisablel.
@@ -224,17 +227,16 @@ outbyte, outword, ldlp, in, terminate, cj, sb,
 and, eqc, lb, not, or, xor, lsum.
 
 ## Transputer Validation Suite conformance
-In the report, entries marked with * are priorities to fix for eForth.
-tests: 54, ok: 22, fail: 32
+tests: 54, ok: 26, fail: 28
 
 ```
-        adc FAIL *
-        add FAIL
+        adc PASS
+        add PASS
         alt PASS
         and PASS
        bcnt PASS
      bitcnt PASS
-bitrevnbits FAIL
+bitrevnbits PASS
  bitrevword FAIL
        bsub PASS
       ccnt1 PASS
@@ -259,7 +261,7 @@ bitrevnbits FAIL
        lshl FAIL
        lshr FAIL
        lsub FAIL
-       lsum FAIL *
+       lsum PASS
        mint PASS
         mul FAIL
        norm unimplemented FAIL
@@ -276,7 +278,7 @@ bitrevnbits FAIL
         sum PASS
        talt PASS
    unpacksn unimplemented FAIL
-       wcnt FAIL
+       wcnt PASS
        wsub PASS
      wsubdb PASS
       xdble FAIL
@@ -452,24 +454,42 @@ This installation location is defined in the operating-system-specific profile s
 
 
 # Acknowledgements
-This project would not have been possible without the hard work and inspiration of many individuals.
+This project would not have been possible without the hard work and inspiration
+of many individuals.
 
 Notably, thanks to:
 
-Michael Brüstle of transputer.net for assistance with details of the T800, and for finding problems with
-timer queue addresses - and for maintaining a superb archive. Also for
-granting access to the Transputer Validation Suite (which is not for
-redistribution).
+Michael Brüstle of transputer.net for invaluable assistance with details of the
+T800, idiosyncrasies of its operation, aspects of undefined behaviour, for
+finding problems with timer queue addresses - and for maintaining a superb
+archive. Also for granting access to the Transputer Validation Suite (which is
+not for redistribution).
 
-Dr. Barry Cook, formerly of Keele University, for starting my interest in the transputer, and for my final year
-undergraduate Computer Science project, also a transputer emulator (with different goals).
+Dr. Barry Cook, formerly of Keele University, for starting my interest in the
+transputer, and for my final year undergraduate Computer Science project, also a
+transputer emulator (with different goals).
 
 The transputer designers, and all at Inmos/ST who developed it.
 
-Julian Highfield for his T414 emulator.
+Authors of other emulators:
 
-Yury Shevchuk and Roman Pozlevich for the gcc-t800 port, ttools and libxputer packages.  These were used throughout
-an earlier version of the project, for bootstrap code, object and executable file format and loader.
+Julian Highfield for his T414 emulator which may be found at 
+https://web.archive.org/web/20130515034826/http://spirit.lboro.ac.uk/emulator.html
+
+Gavin Crate's various emulators based on microcode and Julian Highfield's
+emulator, which may be found at
+https://sites.google.com/site/transputeremulator/Home
+
+Andras Pahia's continuation of this emulator which may be found at
+https://github.com/pahihu/t4
+
+Andrew Menadue's 'picoputer' extension of Andras' emulator to run on the Raspberry Pi Pico,
+connected to real Inmos IMSC011 link adapters; this may be found at
+https://github.com/blackjetrock/picoputer
+
+Yury Shevchuk and Roman Pozlevich for the gcc-t800 port, ttools and libxputer
+packages.  These were used throughout an earlier version of the project, for
+bootstrap code, object and executable file format and loader.
 
 
 # Bibliography
