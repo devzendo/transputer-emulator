@@ -842,6 +842,7 @@ inline void CPU::interpret(void) {
 					break;
 
 				case O_sub: { // subtract checked
+						logWarn("sub: TVS fail");
 						WORD32 AregSign = Areg & SignBit;
 						Areg = Breg - Areg;
 						Breg = Creg;
@@ -851,6 +852,7 @@ inline void CPU::interpret(void) {
 					break;
                 
 				case O_mul: { // multiply checked
+						logWarn("mul: TVS fail");
 						WORD32 AregSign = Areg & SignBit;
 						InstCycles = BitsPerWord + 6;
 						Areg *= Breg;
@@ -861,6 +863,7 @@ inline void CPU::interpret(void) {
 					break;
 
 				case O_div: // divide 
+					logWarn("div: TVS FAIL");
 					if ((Areg == 0) || ((Areg == 0xFFFFFFFF) && (Breg == SignBit))) {
 						SET_FLAGS(EmulatorState_ErrorFlag);
 					} else {
@@ -871,6 +874,7 @@ inline void CPU::interpret(void) {
 					break;
 
 				case O_rem: // remainder
+					logWarn("rem: TVS fail");
 					if ((Areg == 0) || ((Areg == 0xFFFFFFFF) && (Breg == SignBit))) {
 						SET_FLAGS(EmulatorState_ErrorFlag);
 					} else {
@@ -916,6 +920,7 @@ inline void CPU::interpret(void) {
 					break;
 
 				case O_shl: // shift left unsigned
+					logWarn("shl: TVS fail");
 					InstCycles = Areg + 2;
 					if (Areg >= BitsPerWord) {
 						logWarn("shl: Areg >= 32");
@@ -932,6 +937,7 @@ inline void CPU::interpret(void) {
 					break;
 
 				case O_shr: // shift right unsigned
+					logWarn("shr: TVS fail");
 					InstCycles = Areg + 2;
 					if (Areg >= BitsPerWord) {
 						logWarn("shr: Areg >= 32");
@@ -1375,6 +1381,7 @@ inline void CPU::interpret(void) {
 					break;
 
 				case O_xword: // extend to word (cwg p142 & sec 5.8.1)
+					logWarn("xword: TVS fail");
 				    // Simplified version taken from Transputer Assembly Language programming
 					if ( Breg < Areg ) {
 						Areg = Breg;
@@ -1697,6 +1704,7 @@ inline void CPU::interpret(void) {
 					break;
 
 				case O_ladd: { // long add with carry (LS bit of Creg)
+						logWarn("ladd: TVS fail");
 						WORD32 AregSign = Areg & SignBit;
 						Areg += Breg;
 						if ((Areg & SignBit) != AregSign) {
@@ -1712,6 +1720,7 @@ inline void CPU::interpret(void) {
 					break;
 
 				case O_lsub: { // long subtract with carry (LS bit of Creg)
+						logWarn("lsub: TVS fail");
 						WORD32 AregSign = Areg & SignBit;
 						Areg = Breg - Areg;
 						if ((Areg & SignBit) != AregSign) {
@@ -1740,6 +1749,7 @@ inline void CPU::interpret(void) {
 					break;
 
 				case O_ldiff: { // long difference with borrow placed in Breg
+						logWarn("ldiff: TVS fail");
 						WORD32 AregSign = Areg & SignBit;
 						Areg = (Breg - Areg) - (Creg & 1);
 						Breg = ((Areg & SignBit) != AregSign) ? 1 : 0;
@@ -1748,6 +1758,7 @@ inline void CPU::interpret(void) {
 					break;
 
 				case O_lmul: { // long multiply
+						logWarn("lmul: TVS fail");
 						WORD64 MulReg = (((WORD64)Breg) * ((WORD64)Areg)) + ((WORD64)Creg);
 						InstCycles = BitsPerWord + 1;
 						Breg = (WORD32) (MulReg & 0xffffffff);
@@ -1756,6 +1767,7 @@ inline void CPU::interpret(void) {
 					break;
 
 				case O_ldiv: // long divide
+					logWarn("ldiv: TVS fail");
 					// TODO review this code
 					InstCycles = BitsPerWord + 3;
 					if (Creg >= Areg) {
@@ -1774,6 +1786,7 @@ inline void CPU::interpret(void) {
 					break;
 
 				case O_lshl: // long shift left
+					logWarn("lshl: TVS fail");
 					InstCycles = Areg + 3;
 					if (Areg >= (BitsPerWord << 1)) {
 						logWarn("lshl: Areg >= 64");
@@ -1792,6 +1805,7 @@ inline void CPU::interpret(void) {
 					break;
 
 				case O_lshr: // long shift right
+					logWarn("lshr: TVS fail");
 					InstCycles = Areg + 3;
 					if (Areg >= (BitsPerWord << 1)) {
 						logWarn("lshr: Areg >= 64");
