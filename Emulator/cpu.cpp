@@ -1384,30 +1384,34 @@ inline void CPU::interpret(void) {
 					InstCycles = 4;
 					Breg = Creg;
 					break;
-
-				case O_cword: // check word
-					// warning C4146: unary minus operator applied to unsigned type, result still unsigned
-					if (( Breg >= Areg ) || ( Breg <= ( - Areg ) )) {
-						SET_FLAGS(EmulatorState_ErrorFlag);
+				case O_cword: { // check word
+						// Areg must be a power of 2; ie has a single bit
+						int bits = 0, t = Areg;
+						for (int i=0; i<32; i++) {
+							if ((t & 1) == 1) {
+								bits++;
+							}
+							t >>= 1;
+						}
+						if (bits == 1 && Areg != NotProcess_p && 
+							(( (SWORD32)Breg >= (SWORD32)Areg ) || 
+							( (SWORD32)Breg < (SWORD32)(- Areg ) )) ) {
+							SET_FLAGS(EmulatorState_ErrorFlag);
+						}
+						InstCycles = 5;
+						DROP();
 					}
-					InstCycles = 5;
-					DROP();
 					break;
 
 				case O_xdble: // extend to double
 					InstCycles++;
 					Creg = Breg;
-					// TAUTOLOGICAL Breg = (Areg < 0 ? -1 : 0); // Areg < 0 is a tautological comparison: false
-					// So cast Areg to long to correct the comparison.
-					// Areg is WORD32, an unsigned int
-					Breg = ((long)Areg < 0 ? -1 : 0);
+					Breg = ((SWORD32)Areg < 0 ? -1 : 0);
 					break;
 
 				case O_csngl: // check single
-					// TAUTOLOGICAL Areg < 0 is a tautological comparison: false; Areg >= 0 is true
-					// So cast Areg to long to correct the comparison.
-					// Areg is WORD32, an unsigned int
-					if ( (((long)Areg < 0) && (Breg != -1)) || (((long)Areg >= 0) && (Breg != 0))) {
+					if ((((SWORD32)Areg < 0)  && ((SWORD32)Breg != -1)) || 
+						(((SWORD32)Areg >= 0) && (Breg != 0))) {
 						SET_FLAGS(EmulatorState_ErrorFlag);
 					}
 					InstCycles = 3;
