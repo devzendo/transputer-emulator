@@ -852,23 +852,42 @@ inline void CPU::interpret(void) {
 					break;
                 
 				case O_mul: { // multiply checked
-						logWarn("mul: TVS fail");
-						WORD32 AregSign = Areg & SignBit;
-						InstCycles = BitsPerWord + 6;
-						Areg *= Breg;
-						Breg = Creg;
-						if ((Areg & SignBit) != AregSign)
+						// From "Hacker's Delight, 2nd ed", Henry S. Warren. p32
+						// "The test can be simplified if unsigned division is
+						// available..."
+
+						// logInfoF("mul: Areg %08X Breg %08X", Areg, Breg);
+
+						WORD32 c = (Areg & SignBit) == (Breg & SignBit) ?
+							0x7FFFFFFF : // 2^31 - 1
+							0x80000000 ; // 2^31
+						WORD32 uAreg = (Areg & SignBit) ? ~Areg + 1 : Areg;
+						WORD32 uBreg = (Breg & SignBit) ? ~Breg + 1 : Breg;
+						bool overflow = Breg != 0 && (uAreg > (c / uBreg));
+						// logInfoF("mul: c: %08X uAreg %08X uBreg %08X", c, uAreg, uBreg);
+						if (overflow) {
 							SET_FLAGS(EmulatorState_ErrorFlag);
+							// std::cout << "mul: overflow" << std::endl;
 						}
+						Areg *= Breg;
+
+						// logInfoF("mul: result: %08X\n", Areg);
+						Breg = Creg;
+						InstCycles = BitsPerWord + 6;
+					}
 					break;
 
 				case O_div: // divide 
-					logWarn("div: TVS FAIL");
 					if ((Areg == 0) || ((Areg == 0xFFFFFFFF) && (Breg == SignBit))) {
 						SET_FLAGS(EmulatorState_ErrorFlag);
-					} else {
-						Areg = Breg / Areg;
 						Breg = Creg;
+					} else {
+						WORD32 absAreg = abs((SWORD32)Areg);
+						WORD32 absBreg = abs((SWORD32)Breg);
+						Areg = (SWORD32)Breg / (SWORD32)Areg;
+						Breg = Creg;
+						// With thanks to Mike Bruestle's analysis & TVS
+						Creg = absBreg - (abs((SWORD32)Areg) | 1) * absAreg;
 						InstCycles = BitsPerWord + 10;
 					}
 					break;
@@ -1400,7 +1419,7 @@ inline void CPU::interpret(void) {
 							}
 							t >>= 1;
 						}
-						if (bits == 1 && Areg != NotProcess_p && 
+						if (bits == 1 && Areg != SignBit && 
 							(( (SWORD32)Breg >= (SWORD32)Areg ) || 
 							( (SWORD32)Breg < (SWORD32)(- Areg ) )) ) {
 							SET_FLAGS(EmulatorState_ErrorFlag);

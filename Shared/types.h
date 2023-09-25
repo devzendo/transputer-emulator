@@ -14,11 +14,15 @@
 #ifndef _TYPES_H
 #define _TYPES_H
 
+#define BYTE8 unsigned char
+
 #define WORD16 unsigned short
+
 #define WORD32 unsigned int
 #define SWORD32 signed int
+
 #define WORD64 unsigned long long
-#define BYTE8 unsigned char
+#define SWORD64 signed long long
 #define REAL64 double
 
 #endif // _TYPES_H

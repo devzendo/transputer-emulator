@@ -91,7 +91,7 @@ Fifth release:
   disassembly and memory read/write.
 * The emulator can run tests from Mike Brüstle's Transputer Validation Suite.
 * Corrected several instruction implementations with guidance from TVS: add,
-  adc, bitrevnbits, bitrevword, csngl, cword, lsum, wcnt, xdble.
+  adc, bitrevnbits, bitrevword, csngl, cword, div, lsum, mul, wcnt, xdble.
 * Implemented the instructions from "Transputer Instruction Set - Appendix".
 
 0.0.1 First Release
@@ -233,7 +233,7 @@ outbyte, outword, ldlp, in, terminate, cj, sb,
 and, eqc, lb, not, or, xor, lsum.
 
 ## Transputer Validation Suite conformance
-tests: 54, ok: 31, fail: 23
+tests: 54, ok: 33, fail: 21
 
 ```
         adc PASS
@@ -253,7 +253,7 @@ bitrevnbits PASS
       csub0 PASS
       cword PASS
        diff PASS
-        div FAIL
+        div PASS
         dup PASS
         eqc PASS
        fmul unimplemented FAIL
@@ -269,7 +269,7 @@ bitrevnbits PASS
        lsub FAIL
        lsum PASS
        mint PASS
-        mul FAIL
+        mul PASS
        norm unimplemented FAIL
         not PASS
          or PASS
@@ -493,6 +493,8 @@ Andrew Menadue's 'picoputer' extension of Andras' emulator to run on the Raspber
 connected to real Inmos IMSC011 link adapters; this may be found at
 https://github.com/blackjetrock/picoputer
 
+Henry S. Warren, for "Hacker's Delight".
+
 Yury Shevchuk and Roman Pozlevich for the gcc-t800 port, ttools and libxputer
 packages.  These were used throughout an earlier version of the project, for
 bootstrap code, object and executable file format and loader.
@@ -525,6 +527,9 @@ bootstrap code, object and executable file format and loader.
 
 "Transputer Development System, second edition"
   http://transputer.net/prog/72-trn-011-01/tds2nd.pdf
+
+"Hacker's Delight, second edition, Henry S. Warren"
+  https://www.pearson.com/en-us/subject-catalog/p/hackers-delight/P200000000672/9780321842688
 
 
 # License, Copyright & Contact info
