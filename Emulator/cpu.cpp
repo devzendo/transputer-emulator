@@ -1723,17 +1723,18 @@ inline void CPU::interpret(void) {
 					break;
 
 				case O_ladd: { // long add with carry (LS bit of Creg)
-						logWarn("ladd: TVS fail");
+						// logInfoF("ladd: Areg %08X Breg %08X Carry %08X", Areg, Breg, Creg & 0x00000001);
+
 						WORD32 AregSign = Areg & SignBit;
-						Areg += Breg;
-						if ((Areg & SignBit) != AregSign) {
+						WORD32 BregSign = Breg & SignBit;
+						Areg = Breg + Areg + (Creg & 0x00000001);
+						WORD32 resultSign = Areg & SignBit;
+						if ((BregSign == AregSign) && (BregSign != resultSign)) {
+							// logInfo("ladd: carry overflow");
 							SET_FLAGS(EmulatorState_ErrorFlag);
 						}
-						AregSign = Areg & SignBit;
-						Areg += (Creg & 1);
-						if ((Areg & SignBit) != AregSign) {
-							SET_FLAGS(EmulatorState_ErrorFlag);
-						}
+
+						// logInfoF("ladd: result %08X\n", Areg);
 						InstCycles++;
 					}
 					break;
