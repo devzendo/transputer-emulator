@@ -1769,10 +1769,16 @@ inline void CPU::interpret(void) {
 					break;
 
 				case O_ldiff: { // long difference with borrow placed in Breg
-						logWarn("ldiff: TVS fail");
-						WORD32 AregSign = Areg & SignBit;
-						Areg = (Breg - Areg) - (Creg & 1);
-						Breg = ((Areg & SignBit) != AregSign) ? 1 : 0;
+						WORD32 carry = Creg & 0x00000001;
+						WORD32 result = Breg - Areg;
+						WORD32 newCarry = result > Breg;
+						Areg = result;
+						result = Areg - carry;
+						if (result > Areg) {
+							newCarry = 1;
+						}
+						Areg = result;
+						Breg = newCarry;
 						InstCycles = 3;
 					}
 					break;
