@@ -92,7 +92,7 @@ Fifth release:
 * The emulator can run tests from Mike Brüstle's Transputer Validation Suite.
 * Corrected several instruction implementations with guidance from TVS: add,
   adc, bitrevnbits, bitrevword, csngl, cword, div, ladd, ldiff, ldiv, lmul,
-  lshl, lshr, lsub, lsum, mul, wcnt, xdble.
+  lshl, lshr, lsub, lsum, mul, rem, wcnt, xdble.
 * Implemented the instructions from "Transputer Instruction Set - Appendix".
 
 0.0.1 First Release
@@ -234,7 +234,7 @@ outbyte, outword, ldlp, in, terminate, cj, sb,
 and, eqc, lb, not, or, xor, lsum.
 
 ## Transputer Validation Suite conformance
-tests: 54, ok: 41, fail: 13
+tests: 54, ok: 42, fail: 12
 
 ```
         adc PASS
@@ -276,7 +276,7 @@ bitrevnbits PASS
          or PASS
  postnormsn unimplemented FAIL
        prod PASS
-        rem FAIL
+        rem PASS
         rev PASS
     roundsn unimplemented FAIL
         shl FAIL

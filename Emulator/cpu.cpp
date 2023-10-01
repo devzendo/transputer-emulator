@@ -896,14 +896,22 @@ inline void CPU::interpret(void) {
 					break;
 
 				case O_rem: // remainder
-					logWarn("rem: TVS fail");
-					if ((Areg == 0) || ((Areg == 0xFFFFFFFF) && (Breg == SignBit))) {
+					if (Areg == 0) {
+						Areg = Breg;
+						Breg = Creg;
 						SET_FLAGS(EmulatorState_ErrorFlag);
 					} else {
-						Areg = Breg % Areg;
-						Breg = Creg;
-						InstCycles = BitsPerWord + 5;
+						if ((Areg == 0xFFFFFFFF) && (Breg == SignBit)) {
+							Areg = 0;
+							Breg = Creg;
+							Creg = 0;
+						} else {
+							Areg = (SWORD32)Breg % (SWORD32)Areg;
+							Breg = Creg;
+							Creg = abs((SWORD32)Areg);
+						}
 					}
+					InstCycles = BitsPerWord + 5;
 					break;
 
 				case O_sum: // sum unchecked
