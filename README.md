@@ -91,8 +91,8 @@ Fifth release:
   disassembly and memory read/write.
 * The emulator can run tests from Mike Brüstle's Transputer Validation Suite.
 * Corrected several instruction implementations with guidance from TVS: add,
-  adc, bitrevnbits, bitrevword, csngl, cword, div, ladd, ldiff, ldiv, lsum, mul,
-  wcnt, xdble.
+  adc, bitrevnbits, bitrevword, csngl, cword, div, ladd, ldiff, ldiv, lmul,
+  lsum, mul, wcnt, xdble.
 * Implemented the instructions from "Transputer Instruction Set - Appendix".
 
 0.0.1 First Release
@@ -234,7 +234,7 @@ outbyte, outword, ldlp, in, terminate, cj, sb,
 and, eqc, lb, not, or, xor, lsum.
 
 ## Transputer Validation Suite conformance
-tests: 54, ok: 37, fail: 17
+tests: 54, ok: 38, fail: 16
 
 ```
         adc PASS
@@ -264,7 +264,7 @@ bitrevnbits PASS
       ldiff PASS
       ldinf unimplemented FAIL
        ldiv PASS
-       lmul FAIL
+       lmul PASS
        lshl FAIL
        lshr FAIL
        lsub FAIL

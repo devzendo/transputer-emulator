@@ -1787,11 +1787,11 @@ inline void CPU::interpret(void) {
 					break;
 
 				case O_lmul: { // long multiply
-						logWarn("lmul: TVS fail");
-						WORD64 MulReg = (((WORD64)Breg) * ((WORD64)Areg)) + ((WORD64)Creg);
+						WORD64 MulReg = (((WORD64)Breg) * Areg) + Creg;
 						InstCycles = BitsPerWord + 1;
-						Breg = (WORD32) (MulReg & 0xffffffff);
-						Areg = (WORD32) ((MulReg >> BitsPerWord) & 0xffffffff);
+						Breg = (WORD32) ((MulReg >> BitsPerWord) & 0xffffffff);
+						Areg = (WORD32) (MulReg & 0xffffffff);
+						Creg = Breg;
 					}
 					break;
 
