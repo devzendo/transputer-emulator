@@ -1743,15 +1743,11 @@ inline void CPU::interpret(void) {
 					break;
 
 				case O_lsub: { // long subtract with carry (LS bit of Creg)
-						logWarn("lsub: TVS fail");
 						WORD32 AregSign = Areg & SignBit;
-						Areg = Breg - Areg;
-						if ((Areg & SignBit) != AregSign) {
-							SET_FLAGS(EmulatorState_ErrorFlag);
-						}
-						AregSign = Areg & SignBit;
-						Areg = Areg - (Creg & 1);
-						if ((Areg & SignBit) != AregSign) {
+						WORD32 BregSign = Breg & SignBit;
+						Areg = Breg - Areg - (Creg & 0x00000001);
+						WORD32 resultSign = Areg & SignBit;
+						if ((BregSign != AregSign) && (AregSign == resultSign)) {
 							SET_FLAGS(EmulatorState_ErrorFlag);
 						}
 						InstCycles++;
