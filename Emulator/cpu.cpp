@@ -1810,7 +1810,7 @@ inline void CPU::interpret(void) {
 							Breg = rem;
 							Areg = div;
 						} else {
-							WORD64 CregBreg = ((WORD64)Creg << 32) | Breg;
+							WORD64 CregBreg = MakeWORD64(Creg, Breg);
 							// std::cout << "ldiv: WORD64 version CregBreg " << std::hex << std::setw(16) << std::setfill('0') << CregBreg << std::endl;
 							Breg = (WORD32) (CregBreg % Areg);
 							Areg = (WORD32) (CregBreg / Areg);
@@ -1836,22 +1836,18 @@ inline void CPU::interpret(void) {
 					break;
 
 				case O_lshr: // long shift right
-					logWarn("lshr: TVS fail");
 					InstCycles = Areg + 3;
 					if (Areg >= (BitsPerWord << 1)) {
-						logWarn("lshr: Areg >= 64");
+						logDebug("lshr: Areg >= 64");
 						InstCycles = 3;
 						Areg = Breg = 0;
 					} else {
-						if (Areg == 0) {
-							logWarn("lshr: Areg = 0");
-						} else {
-							// Assertion: 0 <= Areg <= 2*BitsPerWord
-							WORD64 ShiftReg = MakeWORD64(Creg, Breg) >> Areg;
-							Areg = (WORD32) (ShiftReg & 0xffffffff);
-							Breg = (WORD32) ((ShiftReg >> BitsPerWord) & 0xffffffff);
-						}
+						// Assertion: 0 <= Areg <= 2*BitsPerWord
+						WORD64 ShiftReg = MakeWORD64(Creg, Breg) >> Areg;
+						Areg = (WORD32) (ShiftReg & 0xffffffff);
+						Breg = (WORD32) ((ShiftReg >> BitsPerWord) & 0xffffffff);
 					}
+					Creg = Breg;
 					break;
 
 				case O_bitcnt: { // bit count
