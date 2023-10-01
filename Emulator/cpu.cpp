@@ -1821,22 +1821,18 @@ inline void CPU::interpret(void) {
 					break;
 
 				case O_lshl: // long shift left
-					logWarn("lshl: TVS fail");
 					InstCycles = Areg + 3;
 					if (Areg >= (BitsPerWord << 1)) {
-						logWarn("lshl: Areg >= 64");
+						logDebug("lshl: Areg >= 64");
 						InstCycles = 3;
 						Areg = Breg = 0;
 					} else {
-					       	if (Areg == 0) {
-							logWarn("lshl: Areg = 0");
-						} else {
-							// Assertion: 0 <= Areg <= 2*BitsPerWord
-							WORD64 ShiftReg = MakeWORD64(Creg, Breg) << Areg;
-							Areg = (WORD32) (ShiftReg & 0xffffffff);
-							Breg = (WORD32) ((ShiftReg >> BitsPerWord) & 0xffffffff);
-						}
+						// Assertion: 0 <= Areg <= 2*BitsPerWord
+						WORD64 ShiftReg = MakeWORD64(Creg, Breg) << Areg;
+						Areg = (WORD32) (ShiftReg & 0xffffffff);
+						Breg = (WORD32) ((ShiftReg >> BitsPerWord) & 0xffffffff);
 					}
+					Creg = Breg;
 					break;
 
 				case O_lshr: // long shift right
