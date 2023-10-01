@@ -20,6 +20,9 @@ using namespace std;
 #include <cstdio>
 #include <string>
 
+#include <iomanip>
+#include <iostream>
+
 #include "types.h"
 #include "memloc.h"
 #include "memory.h"
@@ -1793,21 +1796,27 @@ inline void CPU::interpret(void) {
 					break;
 
 				case O_ldiv: // long divide
-					logWarn("ldiv: TVS fail");
-					// TODO review this code
+					// logInfoF("ldiv: Areg %08X Breg %08X Creg %08X", Areg, Breg, Creg);
 					InstCycles = BitsPerWord + 3;
-					if (Creg >= Areg) {
+					if (Areg == 0 || Creg >= Areg) {
+						// logInfo("ldiv: error\n");
+						DROP();
 						SET_FLAGS(EmulatorState_ErrorFlag);
 					} else {
 						if (Creg == 0) {
-							WORD32 t;
-							t = Breg / Areg;
-							Breg %= Areg;
-							Areg = t;
+							// logInfo("ldiv: quick version");
+							WORD32 div = Breg / Areg;
+							WORD32 rem = Breg % Areg;
+							Breg = rem;
+							Areg = div;
 						} else {
-							logWarn("ldiv: 0 < Creg < Areg");
-							SET_FLAGS(EmulatorState_BadInstruction);
+							WORD64 CregBreg = ((WORD64)Creg << 32) | Breg;
+							// std::cout << "ldiv: WORD64 version CregBreg " << std::hex << std::setw(16) << std::setfill('0') << CregBreg << std::endl;
+							Breg = (WORD32) (CregBreg % Areg);
+							Areg = (WORD32) (CregBreg / Areg);
 						}
+						// logInfoF("ldiv result: Areg %08X Breg %08X\n", Areg, Breg);
+						Creg = Breg;
 					}
 					break;
 
