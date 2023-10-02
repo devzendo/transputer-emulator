@@ -845,13 +845,15 @@ inline void CPU::interpret(void) {
 					break;
 
 				case O_sub: { // subtract checked
-						logWarn("sub: TVS fail");
+						WORD32 BregSign = Breg & SignBit;
 						WORD32 AregSign = Areg & SignBit;
 						Areg = Breg - Areg;
-						Breg = Creg;
-						if ((Areg & SignBit) != AregSign)
+						WORD32 resultSign = Areg & SignBit;
+						if (BregSign != AregSign && BregSign == resultSign) {
 							SET_FLAGS(EmulatorState_ErrorFlag);
 						}
+						Breg = Creg;
+					}
 					break;
                 
 				case O_mul: { // multiply checked
@@ -950,37 +952,27 @@ inline void CPU::interpret(void) {
 					break;
 
 				case O_shl: // shift left unsigned
-					logWarn("shl: TVS fail");
 					InstCycles = Areg + 2;
 					if (Areg >= BitsPerWord) {
-						logWarn("shl: Areg >= 32");
+						logDebug("shl: Areg >= 32");
 						InstCycles++;
-						Areg = Breg = 0;
+						Areg = 0;
 					} else {
-						if (Areg == 0) {
-							logWarn("shl: Areg = 0");
-						} else {
-							Areg = Breg << Areg;
-							Breg = Creg;
-						}
+						Areg = Breg << Areg;
 					}
+					Breg = Creg;
 					break;
 
 				case O_shr: // shift right unsigned
-					logWarn("shr: TVS fail");
 					InstCycles = Areg + 2;
 					if (Areg >= BitsPerWord) {
-						logWarn("shr: Areg >= 32");
+						logDebug("shr: Areg >= 32");
 						InstCycles++;
 						Areg = Breg = 0;
 					} else {
-						if (Areg == 0) {
-							logWarn("shr: Areg = 0");
-						} else {
-							Areg = Breg >> Areg;
-							Breg = Creg;
-						}
+						Areg = Breg >> Areg;
 					}
+					Breg = Creg;
 					break;
 
 				case O_gt: { // greater than signed
