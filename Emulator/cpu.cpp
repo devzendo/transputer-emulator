@@ -1402,16 +1402,23 @@ inline void CPU::interpret(void) {
 					SET_FLAGS(EmulatorState_ErrorFlag);
 					break;
 
-				case O_xword: // extend to word (cwg p142 & sec 5.8.1)
-					logWarn("xword: TVS fail");
-				    // Simplified version taken from Transputer Assembly Language programming
-					if ( Breg < Areg ) {
-						Areg = Breg;
-					} else {
-						Areg = Breg - ( Areg << 1);
+				case O_xword: { // extend to word (cwg p142 &ssec 5.8.1)
+						WORD32 bitcount = 0;
+						WORD32 temp = Areg;
+						while (temp != 0) {
+							bitcount += (temp & 1);
+							temp >>= 1;
+						}
+						if (bitcount == 1) {
+							if (Areg & Breg) {
+								Areg = Breg | ~( Areg - 1);
+							} else {
+								Areg = Breg;
+							}
+						}
+						InstCycles = 4;
+						Breg = Creg;
 					}
-					InstCycles = 4;
-					Breg = Creg;
 					break;
 				case O_cword: { // check word
 						// Areg must be a power of 2; ie has a single bit
