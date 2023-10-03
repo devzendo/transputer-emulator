@@ -18,6 +18,7 @@
 #include <stdexcept>
 #include <system_error>
 #include <sys/stat.h>
+#include <string.h>
 #include <errno.h>
 using namespace std;
 

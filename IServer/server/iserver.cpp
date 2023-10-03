@@ -64,7 +64,7 @@ static std::string fullCommandLine;
 static std::string programCommandLine;
 
 void usage() {
-	logInfoF("Parachute v%s IServer" __DATE__, projectVersion);
+	logInfoF("Parachute v%s IServer " __DATE__, projectVersion);
 	logInfo(" (C) 2005-2023 Matt J. Gumbley");
 	logInfo("  http://devzendo.github.io/parachute");
 	logInfo("Usage:");

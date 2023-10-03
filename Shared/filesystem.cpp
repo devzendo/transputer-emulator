@@ -22,6 +22,7 @@
 #endif
 
 #if defined(PLATFORM_OSX) || defined(PLATFORM_LINUX)
+#include <string.h>
 #include <errno.h>
 #endif
 

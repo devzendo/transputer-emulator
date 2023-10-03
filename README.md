@@ -351,7 +351,8 @@ Emulator - the T414/T800/T801/T805 emulator.
 
 # Building and Installing
 The distribution currently builds under the following systems:
-* Apple macOS 'Mojave' 10.14 (untested on more recent versions)
+* Apple macOS 'Mojave' 10.14 and 'Catalina' 10.15 (untested on more recent versions)
+* Linux Mint 21.12 Intel x86-64
 * Windows 10 64-bit (untested on earlier versions e.g. XP, 7, 8, 8.1)
 * CentOS Linux 7.6 Intel x86-64
 * Raspbian Stretch
