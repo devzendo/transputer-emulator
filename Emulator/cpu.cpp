@@ -849,7 +849,7 @@ inline void CPU::interpret(void) {
 						WORD32 AregSign = Areg & SignBit;
 						Areg = Breg - Areg;
 						WORD32 resultSign = Areg & SignBit;
-						if (BregSign != AregSign && BregSign == resultSign) {
+						if ((BregSign != AregSign) && (AregSign == resultSign)) {
 							SET_FLAGS(EmulatorState_ErrorFlag);
 						}
 						Breg = Creg;
