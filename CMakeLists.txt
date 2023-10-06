@@ -5,6 +5,18 @@ set(CMAKE_CXX_STANDARD 14)
 set(CMAKE_CXX_STANDARD_REQUIRED ON) # Don't fall back to an earlier standard if the one declared isn't available
 set(CMAKE_CXX_EXTENSIONS OFF)
 
+# Most builds set NOCROSS=true, since an option must be given (due to maven cmake plugin inflexibility).
+# We ignore that here. But if CROSS is set, it defines a toolchain/SDK and otherwise modifies the build.
+# If we're doing a cross compilation, set a variable to make it easier to sense..
+if(DEFINED CACHE{CROSS})
+    if($CACHE{CROSS} STREQUAL "PICO")
+        message(STATUS "Cross-compiling for Raspberry Pi Pico")
+        set(PICO ON) # Now sense this for ease with if(PICO) ... endif()
+    endif()
+else()
+    message(STATUS "Not cross-compiling, this is a full build")
+endif()
+
 # VERSION is filtered into target/classes/version.cpp by using the maven resources plugin.
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DDEBUG -DVERSION=\"${VERSION}\"")
 if(WIN32)

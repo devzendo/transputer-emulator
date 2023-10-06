@@ -5,7 +5,8 @@
 This is a portable, open source emulator of the 32-bit Inmos T414/T800/T801/T805 Transputer family, and a host/file
 I/O Server that interfaces it to a host OS, providing boot/debug/IO facilities.
 
-It runs on Apple macOS (From El Capitan to Catalina), Windows 10, CentOS 7.6, Ubuntu 16.04/18.04 and Raspbian Stretch.
+It runs on Apple macOS (From El Capitan to Catalina), Windows 10, CentOS 7.6, Ubuntu 16.04/18.04, Linux Mint 21.2,
+and Raspbian Stretch. An embedded version of the emulator component is also available for the Raspberry Pi Pico.
 
 It is part of the [Parachute Project](https://devzendo.github.io/parachute).
 
@@ -22,7 +23,8 @@ Another hiatus from Dec 2022 to Jul 2023.
 Currently working on compatibility with the aid of Mike Brüstle's Transputer
 Validation Suite, and attempting to run other typical Transputer software such
 as the Inmos occam and C compilers, and the port of Minix. Also adding debugging
-facilities to aid the completion of the eForth Transputer port.
+facilities to aid the completion of the eForth Transputer port, and adding a build
+for the Raspberry Pi Pico.
 
 ## Roadmap
 First release:
@@ -55,7 +57,8 @@ Second release (work in progress):
   * ?RX: Return input character and indication of whether there is any input available
   * TX!: Send output character
   * !IO: Initialise UART
-* Allow validation using Mike's TVS
+* Allow validation using Mike's TVS and pass tests for all implemented instructions
+* Add a build for the Raspberry Pi Pico
   
 Third release:
 * Capable of running eForth.
@@ -94,6 +97,7 @@ Fifth release:
   adc, bitrevnbits, bitrevword, csngl, cword, div, ladd, ldiff, ldiv, lmul,
   lshl, lshr, lsub, lsum, mul, rem, shl, shr, sub, wcnt, xdble, xword.
 * Implemented the instructions from "Transputer Instruction Set - Appendix".
+* Add a build of the emulator for the Raspberry Pi Pico.
 
 0.0.1 First Release
 * Versioning and build now controlled by Maven and CMake.
@@ -353,6 +357,7 @@ Emulator - the T414/T800/T801/T805 emulator.
 The distribution currently builds under the following systems:
 * Apple macOS 'Mojave' 10.14 and 'Catalina' 10.15 (untested on more recent versions)
 * Linux Mint 21.12 Intel x86-64
+* Raspberry Pi Pico (cross-compiled on Linux Mint)
 * Windows 10 64-bit (untested on earlier versions e.g. XP, 7, 8, 8.1)
 * CentOS Linux 7.6 Intel x86-64
 * Raspbian Stretch
@@ -414,15 +419,21 @@ Prerequisites:
     (Clang 5.0.1)
 - Raspbian Stretch:
   - Clang 3.5.0
-
+- Raspberry Pi Pico (build on Linux Mint)
+  - The Pico SDK and toolchain:
+    apt install gcc-arm-none-eabi libnewlib-arm-none-eabi build-essential
 The typical install location is:
 - macOS/Linux: /opt/parachute
 - Windows: C:\parachute
+- Raspberry Pi Pico: temulate.uf2 - copy it to your Pico with BOOTSEL held down
 
 ## Building
 To build, cd to the top level directory (where this README.md is) and do:
 On windows: vcvarsall.bat as shown above
 mvn clean compile -P build
+
+For Raspberry Pi Pico:
+mvn -DCROSS=PICO clean compile -P build
 
 This will:
  * download all dependencies and plugins (quite a few of these), 
@@ -439,7 +450,6 @@ This doesn't install it on your system - see below.
 ## Cleaning the Build Tree
 To clean:
 mvn clean
-This effectively does:
 rm -rf cmake-build-debug
 
 ## Installing the Built Code

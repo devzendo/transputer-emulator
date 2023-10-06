@@ -151,6 +151,7 @@
                                     <targetPath>${project.basedir}/${cmake.binary.dir}</targetPath>
                                     <generator>${cmake.generator}</generator>
                                     <classifier>${cmake.classifier}</classifier>
+                                    <options><option>-D</option><option>${cmake.option}</option></options>
                                 </configuration>
                             </execution>
 
@@ -215,12 +216,45 @@
             </build>
         </profile>
         <profile>
+            <!-- Prerequisite: Pi Pico tool chain and SDK are installed.
+                 Define the -DCROSS=PICO property to maven to trigger this
+                 cross compilation. This causes the string CROSS=PICO to
+                 be passed to cmake generate by the options mechanism.
+                 Cmake sees this as a 'cache variable', which can be
+                 sensed in the CMakeLists.txt.  -->
+            <id>pi-pico</id>
+            <activation>
+                <property>
+                    <name>CROSS</name>
+                    <value>PICO</value>
+                </property>
+            </activation>
+            <properties>
+                <!-- Use the apt-installed cmake: no need to set its path -->
+
+                <!-- One of the generators defined at https://cmake.org/cmake/help/v3.7/manual/cmake-generators.7.html -->
+                <cmake.generator>Unix Makefiles</cmake.generator>
+                <!-- The classifier of the current platform. One of [windows-x86_32, windows-x86_64, linux-x86_32, linux-x86_64, linux-arm_32, mac-x86_64]. -->
+                <cmake.classifier>linux-x86_64</cmake.classifier>
+
+                <install.dir>/opt/parachute</install.dir>
+                <binary.suffix></binary.suffix>
+                <assembly.name>pi-pico-distribution</assembly.name>
+                <cmake.option>CROSS=PICO</cmake.option>
+            </properties>
+            <build>
+            </build>
+        </profile>
+        <profile>
             <id>linux-amd64</id>
             <activation>
                 <os>
                     <name>linux</name>
                     <arch>amd64</arch>
                 </os>
+                <property>
+                    <name>!CROSS</name>
+                </property>
             </activation>
             <properties>
                 <!-- The CMake maven plugin understands cmake.root.dir -->
@@ -234,6 +268,8 @@
                 <install.dir>/opt/parachute</install.dir>
                 <binary.suffix></binary.suffix>
                 <assembly.name>linux-distribution</assembly.name>
+                <!-- This isn't being sensed in CMakeLists.txt but there has to be some option -->
+                <cmake.option>NOCROSS=true</cmake.option>
             </properties>
             <build>
             </build>
@@ -258,6 +294,8 @@
                 <install.dir>/opt/parachute</install.dir>
                 <binary.suffix></binary.suffix>
                 <assembly.name>linux-distribution</assembly.name>
+                <!-- This isn't being sensed in CMakeLists.txt but there has to be some option -->
+                <cmake.option>NOCROSS=true</cmake.option>
             </properties>
             <build>
             </build>
@@ -282,6 +320,8 @@
                 <install.dir>/opt/parachute</install.dir>
                 <binary.suffix></binary.suffix>
                 <assembly.name>macosx-distribution</assembly.name>
+                <!-- This isn't being sensed in CMakeLists.txt but there has to be some option -->
+                <cmake.option>NOCROSS=true</cmake.option>
             </properties>
             <build>
             </build>
@@ -306,6 +346,8 @@
                 <install.dir>C:/parachute</install.dir>
                 <binary.suffix>.exe</binary.suffix>
                 <assembly.name>windows-distribution</assembly.name>
+                <!-- This isn't being sensed in CMakeLists.txt but there has to be some option -->
+                <cmake.option>NOCROSS=true</cmake.option>
             </properties>
             <build>
             </build>
