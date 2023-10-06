@@ -383,6 +383,7 @@ Prerequisites:
   - If you want to build the client-examples programs, you'll need the
     <a href="https://bitbucket.org/devzendo/transputer-macro-assembler">DevZendo.org Transputer Macro Assembler</a>
     installed and on your PATH.
+  - The TMPDIR environment variable must be set to something on all POSIX systems, or some tests will fail.
 - macOS 'Mojave' 10.14.6:
   - CMake 3.15.5 (from MacPorts) and 3.14.3 (from CLion)
   - GNU Make. I use 4.2.1.
@@ -422,6 +423,7 @@ Prerequisites:
 - Raspberry Pi Pico (build on Linux Mint)
   - The Pico SDK and toolchain:
     apt install gcc-arm-none-eabi libnewlib-arm-none-eabi build-essential
+
 The typical install location is:
 - macOS/Linux: /opt/parachute
 - Windows: C:\parachute
@@ -429,7 +431,9 @@ The typical install location is:
 
 ## Building
 To build, cd to the top level directory (where this README.md is) and do:
+
 On windows: vcvarsall.bat as shown above
+
 mvn clean compile -P build
 
 For Raspberry Pi Pico:
