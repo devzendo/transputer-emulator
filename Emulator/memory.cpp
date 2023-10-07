@@ -79,7 +79,9 @@ bool Memory::loadROMFile(const char *fileName) {
 	char msgbuf[255];
 	if (stat(fileName, &st) == -1) {
 #if defined(PLATFORM_OSX) || defined(PLATFORM_LINUX)
-		strerror_r(errno, msgbuf, 255);
+		if (strerror_r(errno, msgbuf, 255) == NULL) {
+			// do nothing; ignore warning
+		}
 #elif defined(PLATFORM_WINDOWS)
 		strerror_s(msgbuf, 255, errno);
 #endif
