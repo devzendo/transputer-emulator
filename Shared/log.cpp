@@ -189,6 +189,8 @@ void logPrompt(void) {
 }
 
 void getInput(char *buf, int buflen) {
-	fgets(buf, buflen, stdin);
+	if (fgets(buf, buflen, stdin) == NULL) {
+		// do nothing. casting fgets' output to void still causes warnings
+	}
 }
 
