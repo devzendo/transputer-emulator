@@ -26,8 +26,14 @@
 #elif defined(PLATFORM_WINDOWS)
 #include <windows.h>
 #include "namedpipelink.h"
+#elif defined(PLATFORM_PICO)
+#include "picousbseriallink.h"
 #endif
+
+#if defined(PLATFORM_OSX) || defined(PLATFORM_LINUX) || defined(PLATFORM_WINDOWS)
 #include "tvslink.h"
+#endif
+
 #include "nulllink.h"
 
 #include "linkfactory.h"
@@ -38,11 +44,19 @@ LinkFactory::LinkFactory(bool isServer, bool isDebug) {
 	bServer = isServer;
 	bDebug = isDebug;
 	bTVS = false;
+#if defined(PLATFORM_PICO)
+	myLinkTypes[0] = LinkType_FIFO;
+	for (int i = 1; i < 4; i++) {
+		myLinkTypes[i] = LinkType_Null; // for now, until we have PIO links
+	}
+#else
 	for (int i = 0; i < 4; i++) {
 		myLinkTypes[i] = LinkType_FIFO;
 	}
+#endif
 }
 
+#if defined(DESKTOP)
 static void linkConfigError(char *arg, const char *reason) {
 	logFatalF("Command line option '%s' is not of the form -L<0..3><F|S|M> (%s)", arg, reason);
 }
@@ -74,6 +88,7 @@ bool LinkFactory::processCommandLine(int argc, char *argv[]) {
 				case 'M': myLinkTypes[n - '0'] = LinkType_SharedMemory; break;
 			}
 		}
+#if defined(PLATFORM_OSX) || defined(PLATFORM_LINUX) || defined(PLATFORM_WINDOWS)
 		if (std::string(argv[i]) == "-tvs") {
 			if (bServer) {
 				logFatal("TVS support is only for the emulator, not iserver");
@@ -95,9 +110,16 @@ bool LinkFactory::processCommandLine(int argc, char *argv[]) {
 			myLinkTypes[2] = LinkType_Null;
 			myLinkTypes[3] = LinkType_Null;
 		}
+#endif
 	}
 	return true;
 }
+#else // DESKTOP
+// Embedded version..
+bool LinkFactory::processCommandLine(int argc, char *argv[]) {
+	return true;
+}
+#endif // DESKTOP
 
 Link *LinkFactory::createLink(int linkNo) {
 	Link *newLink = NULL;
@@ -107,6 +129,8 @@ Link *LinkFactory::createLink(int linkNo) {
 			newLink = new FIFOLink(linkNo, bServer);
 #elif defined(PLATFORM_WINDOWS)
 			newLink = new NamedPipeLink(linkNo, bServer);
+#elif defined(PLATFORM_PICO)
+			newLink = new PicoUSBSerialLink(linkNo, bServer);
 #endif
 			break;
 		case LinkType_Socket:
@@ -116,7 +140,12 @@ Link *LinkFactory::createLink(int linkNo) {
 			logFatal("Shared memory links not yet implemented");
 			return NULL;
 		case LinkType_TVS:
+#if defined(PLATFORM_OSX) || defined(PLATFORM_LINUX) || defined(PLATFORM_WINDOWS)
 			newLink = new TVSLink(linkNo, tvsProgram, tvsInput, tvsOutput);
+#else
+			logFatal("TVS links not implemented on this platform");
+			return NULL;
+#endif
 			break;
 		case LinkType_Null:
 			newLink = new NullLink(linkNo, bServer);

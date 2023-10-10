@@ -44,6 +44,7 @@ set<WORD32> breakpointAddresses;
 map<std::string, WORD32> symbolToAddress;
 WORD32 SPP, RPP;
 
+#if defined(DESKTOP)
 void usage() {
 	logInfoF("Parachute v%s Portable Transputer Emulator " __DATE__, projectVersion);
 	logInfo("  (C) 2005-2023 Matt J. Gumbley");
@@ -324,17 +325,26 @@ void interruptHandler(int sig) {
 	SET_FLAGS(EmulatorState_Terminate);
 }
 
-#endif
+#endif // UNIX
+
+#endif // DESKTOP
 
 int main(int argc, char *argv[]) {
 	Memory *memory;
 	CPU *cpu;
+#ifdef DESKTOP
 	SymbolTable *symbolTable;
+#endif
 	progName = argv[0];
 	romFile = NULL;
 	ramSize = DefaultMemSize;
 	romSize = 0;
 	flags = 0;
+
+#ifdef EMBEDDED
+	int logLevel = LOGLEVEL_DEBUG;
+	setLogLevel(logLevel);
+#endif
 
 #if defined(PLATFORM_OSX) // I only use CLion on OSX
 	// Stop CLion reporting this check as unreachable (which it is, on systems that don't
@@ -351,41 +361,57 @@ int main(int argc, char *argv[]) {
 #pragma clang diagnostic pop
 #endif
 
+#if defined(DESKTOP)
 	if (!processCommandLine(argc, argv)) {
 		exit(1);
 	}
+#endif
 	LinkFactory *linkFactory = new LinkFactory(false, IS_FLAG_SET(DebugFlags_LinkComms) ? true : false);
+#if defined(DESKTOP)
 	if (!linkFactory->processCommandLine(argc, argv)) {
 		exit(1);
 	}
-#ifdef UNIX
-	signal(SIGSEGV,segViolHandler);
-	signal(SIGINT,interruptHandler);
 #endif
+#ifdef UNIX
+	signal(SIGSEGV, segViolHandler);
+	signal(SIGINT, interruptHandler);
+#endif
+#if defined(DESKTOP)
 	symbolTable = new SymbolTable();
 	int symbolCount = 0;
 	for (map<std::string, WORD32>::const_iterator iter = symbolToAddress.begin();
 		iter != symbolToAddress.end(); iter++) {
 		symbolTable->addSymbol(iter->first, iter->second);
-        symbolCount++;
+        	symbolCount++;
 	}
 	if (symbolCount != 0) {
 		logInfoF("Added %d symbol(s)", symbolCount);
 	}
+#endif
 
 	memory = new Memory();
-	if (!memory->initialise(ramSize, romFile, symbolTable)) {
+#if defined(DESKTOP)
+	if (!memory->initialiseROMFileAndSymbolTable(romFile, symbolTable)) {
+		delete linkFactory;
+		exit(1);
+	}
+#endif
+	if (!memory->initialise(ramSize)) {
 		delete linkFactory;
 		exit(1);
 	}
 	cpu = new CPU();
-	if (!cpu->initialise(memory, linkFactory, symbolTable)) {
+#if defined(DESKTOP)
+	cpu->initialiseSymbolTable(symbolTable);
+#endif
+	if (!cpu->initialise(memory, linkFactory)) {
 		logFatal("CPU setup failed");
 		delete linkFactory;
 		delete memory;
 		exit(1);
 	}
 
+#if defined(DESKTOP)
 	for (set<WORD32>::const_iterator iter = breakpointAddresses.begin();
 		 iter != breakpointAddresses.end(); iter++) {
 		cpu->addBreakpoint(*iter);
@@ -393,6 +419,7 @@ int main(int argc, char *argv[]) {
 	if (IS_FLAG_SET(DebugFlags_eForth)) {
 		cpu->seteForthStackAddresses(SPP, RPP);
 	}
+#endif
 
 	cpu->emulate(romFile);
 

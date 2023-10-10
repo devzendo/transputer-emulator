@@ -7,7 +7,9 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 
 # Most builds set NOCROSS=true, since an option must be given (due to maven cmake plugin inflexibility).
 # We ignore that here. But if CROSS is set, it defines a toolchain/SDK and otherwise modifies the build.
-# If we're doing a cross compilation, set a variable to make it easier to sense..
+#
+# If we're doing a cross compilation, set a variable to make it easier to sense.. and also set a convenient
+# EMBEDDED variable if we're building for any of the small boards...
 if(DEFINED CACHE{CROSS})
     if($CACHE{CROSS} STREQUAL "PICO")
         message(STATUS "Cross-compiling for Raspberry Pi Pico")
@@ -16,6 +18,20 @@ if(DEFINED CACHE{CROSS})
 else()
     message(STATUS "Not cross-compiling, this is a full build")
 endif()
+
+if(PICO) # OR TEENSY OR ADAFRUIT_FEATHER .. or whatever
+  set(EMBEDDED ON)
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DPICO")
+endif()
+if(EMBEDDED)
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DEMBEDDED")
+else()
+  set(DESKTOP ON)
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DDESKTOP")
+endif()
+
+# So you'll either have DESKTOP or EMBEDDED, and then Shared/platformdetection.h will give you
+# one of PLATFORM_OSX, PLATFORM_LINUX, PLATFORM_WINDOWS, PLATFORM_PICO.
 
 # VERSION is filtered into target/classes/version.cpp by using the maven resources plugin.
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DDEBUG -DVERSION=\"${VERSION}\"")
@@ -35,35 +51,38 @@ project(transputer-emulator)
 # Build googletest & googlemock
 # Thanks to https://crascit.com/2015/07/25/cmake-gtest/
 # Download and unpack googletest at configure time
-configure_file(CMakeLists.googletest.txt googletest-download/CMakeLists.txt)
-execute_process(COMMAND "${CMAKE_COMMAND}" -G "${CMAKE_GENERATOR}" .
+if(NOT(EMBEDDED))
+  configure_file(CMakeLists.googletest.txt googletest-download/CMakeLists.txt)
+  execute_process(COMMAND "${CMAKE_COMMAND}" -G "${CMAKE_GENERATOR}" .
         WORKING_DIRECTORY "${CMAKE_BINARY_DIR}/googletest-download" )
-execute_process(COMMAND "${CMAKE_COMMAND}" --build .
+  execute_process(COMMAND "${CMAKE_COMMAND}" --build .
         WORKING_DIRECTORY "${CMAKE_BINARY_DIR}/googletest-download" )
 
-# Prevent GoogleTest from overriding our compiler/linker options
-# when building with Visual Studio
-set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
+  # Prevent GoogleTest from overriding our compiler/linker options
+  # when building with Visual Studio
+  set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
 
-# Add googletest directly to our build. This adds
-# the following targets: gtest, gtest_main, gmock
-# and gmock_main
-add_subdirectory("${CMAKE_BINARY_DIR}/googletest-src"
+  # Add googletest directly to our build. This adds
+  # the following targets: gtest, gtest_main, gmock
+  # and gmock_main
+  add_subdirectory("${CMAKE_BINARY_DIR}/googletest-src"
         "${CMAKE_BINARY_DIR}/googletest-build")
 
-# The gtest/gmock targets carry header search path
-# dependencies automatically when using CMake 2.8.11 or
-# later. Otherwise we have to add them here ourselves.
-if(CMAKE_VERSION VERSION_LESS 2.8.11)
+  # The gtest/gmock targets carry header search path
+  # dependencies automatically when using CMake 2.8.11 or
+  # later. Otherwise we have to add them here ourselves.
+  if(CMAKE_VERSION VERSION_LESS 2.8.11)
     include_directories("${gtest_SOURCE_DIR}/include"
             "${gmock_SOURCE_DIR}/include")
-endif()
+  endif()
 
-# Now simply link your own targets against gtest, gmock,
-# etc. as appropriate
+  # Now simply link your own targets against gtest, gmock,
+  # etc. as appropriate
 
-include(CTest)
-enable_testing()
+  include(CTest)
+  enable_testing()
+
+endif() # NOT(PICO)
 
 ########################################################################################################################
 # Build gsl-lite
@@ -103,5 +122,8 @@ target_include_directories( gsl INTERFACE ${GSL_LITE_INCLUDE_DIR} )
 # Build the transputer emulator and related code...
 add_subdirectory(target/classes)
 add_subdirectory(Shared)
-add_subdirectory(IServer)
 add_subdirectory(Emulator)
+
+if(NOT(EMBEDDED))
+  add_subdirectory(IServer)
+endif()

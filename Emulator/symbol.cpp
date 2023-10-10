@@ -21,6 +21,8 @@
 #include <errno.h>
 using namespace std;
 
+#ifdef DESKTOP
+
 #include "types.h"
 #include "symbol.h"
 #include "log.h"
@@ -89,4 +91,7 @@ std::string SymbolTable::possibleSymbolString(WORD32 address) {
 SymbolTable::~SymbolTable() {
 	logDebugF("SymbolTable DTOR - this is 0x%lx", this);
 }
+
+#endif // DESKTOP
+
 

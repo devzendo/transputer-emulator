@@ -21,22 +21,24 @@
 #include "memory.h"
 #include "link.h"
 #include "linkfactory.h"
+#include "platformdetection.h"
 #include "symbol.h"
 
 class CPU {
 	public:
 		// 2-phase CTOR since there's only one global CPU
 		CPU();
-		bool initialise(Memory *memory, LinkFactory *linkFactory, SymbolTable *symbolTable);
+		bool initialise(Memory *memory, LinkFactory *linkFactory);
+#ifdef DESKTOP
+		void initialiseSymbolTable(SymbolTable *symbolTable);
 		void addBreakpoint(WORD32 breakpointAddress);
 		void removeBreakpoint(WORD32 breakpointAddress);
 		void seteForthStackAddresses(WORD32 SPP, WORD32 RPP);
+#endif
 		void emulate(const bool bootFromROM);
 		void start();
 		~CPU();
 	private:
-		bool myBootFromROM;
-		SymbolTable *mySymbolTable;
 		// Dynamically allocated memory
 		Memory *myMemory;
 		Link *myLinks[4];
@@ -72,6 +74,9 @@ class CPU {
 		WORD32 CurrDisasmAddress;
 		WORD32 CurrDisasmLen;
 		WORD32 LastAjwInBytes;
+#ifdef DESKTOP
+		bool myBootFromROM;
+		SymbolTable *mySymbolTable;
 		set<WORD32> BreakpointAddresses;
 		// eForth diagnostic; start of data and return stack
 		WORD32 SPP;
@@ -79,25 +84,28 @@ class CPU {
 		deque<std::string> WordStack;
 		std::string PossiblyColonWord;
 		std::string CodeSymbol;
+#endif
 
 		// Internal methods:
 		inline void DROP(void);
 		inline WORD32 POP(void);
 		inline void PUSH(WORD32 x);
+		inline void interpret(void);
+		inline void bootFromLink0(void);
+		bool swapContextForBreakpointInstruction(void);
 
+#ifdef DESKTOP
 		void DumpRegs(int logLevel);
 		void DumpQueueRegs(int logLevel);
 		void DumpClockRegs(int logLevel, WORD32 instCycles);
 		void DumpeForthDiagnostics(int logLevel);
 
 		inline void bootFromROMFile(const char *fileName);
-		inline void bootFromLink0(void);
 		void disassembleCurrInstruction(int logLevel);
 		WORD32 disassembleRange(WORD32 addr, WORD32 maxlen);
-		inline void interpret(void);
 		inline bool monitor(void);
 		void showBreakpointAddresses();
-		bool swapContextForBreakpointInstruction(void);
+#endif
 
 };
 

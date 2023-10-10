@@ -58,10 +58,15 @@
 
 // Linux
 
-#if defined(__linux__)
+#if defined(__linux__) && !defined EMBEDDED
 /* Linux. --------------------------------------------------- */
 #define PLATFORM_LINUX
 
+#endif
+
+
+#if defined(__linux__) && defined(PICO)
+#define PLATFORM_PICO
 #endif
 
 

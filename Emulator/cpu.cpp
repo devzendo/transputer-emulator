@@ -128,10 +128,9 @@ CPU::CPU() {
 	logDebug("CPU CTOR");
 }
 
-bool CPU::initialise(Memory *memory, LinkFactory *linkFactory, SymbolTable *symbolTable) {
+bool CPU::initialise(Memory *memory, LinkFactory *linkFactory) {
 	int i;
 	bool allLinksOK = true;
-	mySymbolTable = symbolTable;
 	myMemory = memory;
 	for (i = 0; i < 4; i++) {
 		if ((myLinks[i] = linkFactory->createLink(i)) == NULL) {
@@ -153,6 +152,22 @@ bool CPU::initialise(Memory *memory, LinkFactory *linkFactory, SymbolTable *symb
 	return true;
 }
 
+CPU::~CPU() {
+	logDebug("CPU DTOR");
+	for (int i = 0; i < 4; i++) {
+		if (myLinks[i] != NULL) {
+			delete myLinks[i];
+			myLinks[i] = NULL;
+		}
+	}
+}
+
+#ifdef DESKTOP
+
+void CPU::initialiseSymbolTable(SymbolTable *symbolTable) {
+	mySymbolTable = symbolTable;
+}
+
 void CPU::addBreakpoint(const WORD32 breakpointAddress) {
 	BreakpointAddresses.insert(breakpointAddress);
 }
@@ -166,16 +181,6 @@ void CPU::removeBreakpoint(const WORD32 breakpointAddress) {
 void CPU::seteForthStackAddresses(WORD32 aSPP, WORD32 aRPP) {
     SPP = aSPP;
     RPP = aRPP;
-}
-
-CPU::~CPU() {
-	logDebug("CPU DTOR");
-	for (int i = 0; i < 4; i++) {
-		if (myLinks[i] != NULL) {
-			delete myLinks[i];
-			myLinks[i] = NULL;
-		}
-	}
 }
 
 void CPU::DumpRegs(int logLevel) {
@@ -523,7 +528,7 @@ inline bool CPU::monitor(void) {
 			logInfo("f                    display flags");
 			logInfo("s                    display all state: registers, flags, current disassembly");
 			logInfo("q                    quit emulator");
-            logInfo("t                    toggle disassembly of opr/memory R/W");
+			logInfo("t                    toggle disassembly of opr/memory R/W");
 			logInfo("g                    'go': quit monitor, continue interpretation");
 			logInfo("                     (until any breakpoints reached)");
 		}
@@ -658,9 +663,12 @@ inline bool CPU::monitor(void) {
 		} else {
 			logWarnF("Unknown monitor command '%s'", instr);
 		}
-    logInfo("");
+		logInfo("");
 	}
 }
+
+#endif // DESKTOP
+
 
 bool CPU::swapContextForBreakpointInstruction(void) {
 	bool hiPriority = Wdesc_HiPriority(Wdesc);
@@ -676,13 +684,18 @@ bool CPU::swapContextForBreakpointInstruction(void) {
 }
 
 inline void CPU::interpret(void) {
+#ifdef DESKTOP
 	bool hitBreakpoint = IS_FLAG_SET(EmulatorState_BreakpointInstruction) ||
 						 BreakpointAddresses.count(IPtr) == 1;
+#endif // DESKTOP
+
 	// Fetch the current instruction
 	CurrInstruction = myMemory->getInstruction(IPtr++);
 	// Decode it
 	Instruction = CurrInstruction & 0xf0;
 	Oreg |= (CurrInstruction & 0x0f);
+
+#ifdef DESKTOP
 	//logDebugF("CurrInstruction =0x%02X Oreg=0x%08X", CurrInstruction, Oreg);
 	// Disassemble it
 	if (IS_FLAG_SET(DebugFlags_DebugLevel | DebugFlags_Monitor)) {
@@ -698,6 +711,8 @@ inline void CPU::interpret(void) {
 			return; // it's terminated if it returns false
 		}
 	}
+#endif // DESKTOP
+
 	// Execute instruction, assuming one cycle per instruction unless
 	// set otherwise.
 	InstCycles = 1;
@@ -802,7 +817,7 @@ inline void CPU::interpret(void) {
 			break;
 
 		case D_ajw: // adjust workspace
-            LastAjwInBytes = Oreg << 2; // convenience store of current workspace size (in bytes) for the monitor w command
+			LastAjwInBytes = Oreg << 2; // convenience store of current workspace size (in bytes) for the monitor w command
 			Wdesc += LastAjwInBytes;
 			break;
 
@@ -2007,7 +2022,7 @@ inline void CPU::interpret(void) {
 						case FP_fpuclrerr: // clear floating error
 							CLEAR_FLAGS(EmulatorState_FErrorFlag);
 							// RoundMode := ToNearest
-                            break;
+							break;
 
 						// The unimplemented floating-point instructions
 						case FP_fpusqrtfirst: //
@@ -2106,7 +2121,7 @@ inline void CPU::interpret(void) {
 					PUSH(19); // T805 uses values 10-19. I'm a late series T805.
 					break;
 
-                // Nonstandard emulator functions
+				// Nonstandard emulator functions
 				case X_togglemonitor:
 					if (IS_FLAG_SET(DebugFlags_Monitor)) {
 						logInfo("Exitting monitor");
@@ -2173,6 +2188,7 @@ inline void CPU::interpret(void) {
 	// TODO
 	// Detect bad instructions
 	if (IS_FLAG_SET(EmulatorState_BadInstruction)) {
+#ifdef DESKTOP
 		// TODO is this IPtr the wrong one? It's the next instruction, surely?
 		logFatalF("Bad instruction: #%08X Oreg:#%08X IPtr:%08X %s", Instruction, OldOreg, IPtr,
 				(Instruction == D_opr) ?
@@ -2180,6 +2196,7 @@ inline void CPU::interpret(void) {
 				disassembleDirectOperation(Instruction, OldOreg)
 			 );
 		DumpRegs(LOGLEVEL_FATAL);
+#endif
 		SET_FLAGS(EmulatorState_Terminate);
 	}
 
@@ -2222,7 +2239,7 @@ inline void CPU::interpret(void) {
 		if ((Wdesc_HiPriority(Wdesc) && (HiHead==NotProcess_p)) ||
 			((!Wdesc_HiPriority(Wdesc)) && (Wdesc_WPtr(LoHead)==NotProcess_p))) {
 			// Do nothing - Nothing needed to be descheduled.
-            logDebug("Nothing to deschedule");
+			logDebug("Nothing to deschedule");
 		} else {
 			// Store the IPtr in the workspace
 			myMemory->setWord(W_IPTR(Wdesc), IPtr);
@@ -2232,7 +2249,7 @@ inline void CPU::interpret(void) {
 				Wdesc = HiHead;
 				IPtr = myMemory->getWord(W_IPTR(Wdesc));
 				HiHead = myMemory->getWord(W_LINK(Wdesc));
-            } else {
+			} else {
 				// Low priority => Wdesc != Wptr
 				Wdesc = LoHead;
 				IPtr = myMemory->getWord(W_IPTR(Wdesc));
@@ -2274,6 +2291,7 @@ inline void CPU::interpret(void) {
 		}
 	}
 
+#ifdef DESKTOP
 	// Now dump out registers if we're not dealing with a prefix,
 	// and the debug level is high enough. InstructionStartIPtr
 	// means that if nfix and pfix instructions are being debugged, the
@@ -2290,6 +2308,7 @@ inline void CPU::interpret(void) {
 				DumpeForthDiagnostics(LOGLEVEL_DEBUG);
 		}
 	}
+#endif
 
 	// Halt-On-Error and Error flags => terminate
 	if ((flags & (EmulatorState_ErrorFlag | EmulatorState_HaltOnError)) ==
@@ -2297,9 +2316,11 @@ inline void CPU::interpret(void) {
 		SET_FLAGS(EmulatorState_Terminate);
 		logWarn("Halt-On-Error and Error set. Stopping.");
 	}
+#ifdef DESKTOP
 	if (IS_FLAG_SET(DebugFlags_DebugLevel | DebugFlags_Monitor)) {
 		logFormat(LOGLEVEL_DEBUG, "");
 	}
+#endif
 }
 
 
@@ -2398,7 +2419,9 @@ void CPU::bootFromLink0() {
 }
 
 void CPU::emulate(const bool bootFromROM) {
+#ifdef DESKTOP
 	myBootFromROM = bootFromROM;
+#endif
 	// Initialise timing subsystem
 	CycleCount = CycleCountSinceReset = 
 		HiClock = LoClock = LoClockLastQuantumExpiry = 0L;
@@ -2425,6 +2448,7 @@ void CPU::emulate(const bool bootFromROM) {
 	// Go...
 	//
 	InstructionStartIPtr = IPtr;
+#ifdef DESKTOP
 	if ((flags & DebugFlags_DebugLevel) >= Debug_DisRegs) {
 		DumpRegs(LOGLEVEL_DEBUG);
 	}
@@ -2434,6 +2458,7 @@ void CPU::emulate(const bool bootFromROM) {
 	if ((flags & DebugFlags_Clocks) == DebugFlags_Clocks) {
 		DumpClockRegs(LOGLEVEL_DEBUG, (WORD32)0);
 	}
+#endif
 	// For speed, what flags do we turn on before interpreting each instruction?
 	InterpFlagSet = 0;
 	if (IS_FLAG_SET(DebugFlags_Clocks))
@@ -2446,6 +2471,7 @@ void CPU::emulate(const bool bootFromROM) {
 		interpret();
 	}
 	logDebug("---- Ending Emulation ----");
+#ifdef DESKTOP
 	if ((flags & DebugFlags_DebugLevel) >= Debug_DisRegs) {
 		DumpRegs(LOGLEVEL_DEBUG);
 	}
@@ -2455,10 +2481,12 @@ void CPU::emulate(const bool bootFromROM) {
 	if ((flags & DebugFlags_Clocks) == DebugFlags_Clocks) {
 		DumpClockRegs(LOGLEVEL_DEBUG, (WORD32)0);
 	}
+#endif
 }
 
 // Executed from emulate, above, and also on receipt of a start instruction.
 void CPU::start() {
+#ifdef DESKTOP
 	if (myBootFromROM) {
 		logDebug("---- Starting Boot from ROM ----");
 		Areg = IPtr;
@@ -2467,6 +2495,7 @@ void CPU::start() {
 		Wdesc = MemStart;
 		Creg = 0xDEADF00D; // CWG states 'undefined'.
 	} else {
+#endif
 		logDebug("---- Starting Boot from Link 0 ----");
 		// NB: CWG states Areg is set to the previous value of IPtr, Breg the previous of Wdesc,
 		// Creg a pointer to the link the Transputer booted from.
@@ -2475,7 +2504,9 @@ void CPU::start() {
 		bootFromLink0();
 		// The initial workspace is the first free word of memory. A low priority process.
 		Wdesc = WordAlign((WORD32)(IPtr + (WORD32)bootLen));
+#ifdef DESKTOP
 	}
+#endif
 	Wdesc |= 0x1;
 }
 

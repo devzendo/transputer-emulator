@@ -16,12 +16,16 @@
 
 #include "types.h"
 #include "symbol.h"
+#include "platformdetection.h"
 
 class Memory {
 	public:
 		// 2-phase CTOR since there's only one global Memory
 		Memory();
-		bool initialise(long initialRAMSize, const char *romFileName, SymbolTable *symbolTable);
+		bool initialise(long initialRAMSize);
+#ifdef DESKTOP
+		bool initialiseROMFileAndSymbolTable(const char *romFileName, SymbolTable *symbolTable);
+#endif
 		~Memory();
 		WORD32 getMemEnd();
 		int getMemSize();
@@ -38,7 +42,9 @@ class Memory {
 		void hexDump(WORD32 addr, WORD32 len);
 		void hexDumpWords(WORD32 addr, WORD32 lenInBytes);
 	private:
+#ifdef DESKTOP
 		SymbolTable *mySymbolTable;
+#endif
 		bool loadROMFile(const char *romFileName);
 		BYTE8 *myMemory;
 		int mySize;

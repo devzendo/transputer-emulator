@@ -46,8 +46,7 @@ void Memory::resetMemory() {
 	myCurrentCycles = 0;
 }
 
-bool Memory::initialise(long initialRAMSize, const char *romFile, SymbolTable *symbolTable) {
-	mySymbolTable = symbolTable;
+bool Memory::initialise(long initialRAMSize) {
 	myMemory = (BYTE8 *)calloc(initialRAMSize, 1);
 	if (myMemory == NULL) {
 		logFatal("Failed to allocate memory");
@@ -60,15 +59,21 @@ bool Memory::initialise(long initialRAMSize, const char *romFile, SymbolTable *s
 	mySize = initialRAMSize;
 	logDebugF("RAM (size %d bytes) from %08X to %08X", mySize, InternalMemStart, myMemEnd);
 
+	myROMPresent = false;
+	myReadOnlyMemory = NULL;
+	myReadOnlyMemorySize = 0;
+	return true;
+}
+
+#ifdef DESKTOP
+bool Memory::initialiseROMFileAndSymbolTable(const char *romFile, SymbolTable *symbolTable) {
+	mySymbolTable = symbolTable;
+
 	if (romFile) {
 		myROMPresent = true;
 		if (!loadROMFile(romFile)) {
 			return false;
 		}
-	} else {
-		myROMPresent = false;
-		myReadOnlyMemory = NULL;
-		myReadOnlyMemorySize = 0;
 	}
 	return true;
 }
@@ -128,6 +133,8 @@ bool Memory::loadROMFile(const char *fileName) {
 	return true;
 }
 
+#endif // DESKTOP
+
 Memory::~Memory() {
 	logDebugF("Memory DTOR - this is 0x%lx, Memory is 0x%lx, ROM is 0x%lx", this, myMemory, myReadOnlyMemory);
 	if (myMemory != NULL) {
@@ -165,21 +172,37 @@ BYTE8 Memory::getByte(WORD32 addr) {
 		}
 		b = myMemory[addr - InternalMemStart];
 		if ((flags & DebugFlags_MemAccessDebugLevel) != MemAccessDebug_No) {
+#ifdef DESKTOP
 			logDebugF("R 1 [%08X]%s=%02X (%c)", addr, mySymbolTable->possibleSymbolString(addr).c_str(), b, isprint(b) ? b : '?');
+#else
+			logDebugF("R 1 [%08X]=%02X (%c)", addr, b, isprint(b) ? b : '?');
+#endif
 		}
 	} else if (myROMPresent && addr >= myROMStart && addr <= MaxINT) {
 		myCurrentCycles += 1;
 		// not tracking highest ROM access here
 		b = myReadOnlyMemory[addr - myROMStart];
 		if ((flags & DebugFlags_MemAccessDebugLevel) != MemAccessDebug_No) {
+#ifdef DESKTOP
 			logDebugF("R 1 [%08X]%s=%02X (%c)", addr, mySymbolTable->possibleSymbolString(addr).c_str(), b, isprint(b) ? b : '?');
+#else
+			logDebugF("R 1 [%08X]=%02X (%c)", addr, b, isprint(b) ? b : '?');
+#endif
 		}
 	} else {
 		if (IS_FLAG_SET(DebugFlags_TerminateOnMemViol)) {
+#ifdef DESKTOP
 			logFatalF("Memory violation reading byte from %08X%s", addr, mySymbolTable->possibleSymbolString(addr).c_str());
+#else
+			logFatalF("Memory violation reading byte from %08X", addr);
+#endif
 			SET_FLAGS(EmulatorState_Terminate);
 		} else {
+#ifdef DESKTOP
 			logErrorF("Memory violation reading byte from %08X%s", addr, mySymbolTable->possibleSymbolString(addr).c_str());
+#else
+			logErrorF("Memory violation reading byte from %08X", addr);
+#endif
 		}
 		b = 0x00;
 	}
@@ -195,21 +218,37 @@ BYTE8 Memory::getInstruction(WORD32 addr) {
 		}
 		b = myMemory[addr - InternalMemStart];
 		if ((flags & DebugFlags_MemAccessDebugLevel) == MemAccessDebug_Full) {
+#ifdef DESKTOP
 			logDebugF("I 1 [%08X]%s=%02X", addr, mySymbolTable->possibleSymbolString(addr).c_str(), b);
+#else
+			logDebugF("I 1 [%08X]=%02X", addr, b);
+#endif
 		}
 	} else if (myROMPresent && addr >= myROMStart && addr <= MaxINT) {
 		myCurrentCycles += 1;
 		// not tracking highest ROM access here
 		b = myReadOnlyMemory[addr - myROMStart];
 		if ((flags & DebugFlags_MemAccessDebugLevel) == MemAccessDebug_Full) {
+#ifdef DESKTOP
 			logDebugF("I 1 [%08X]%s=%02X", addr, mySymbolTable->possibleSymbolString(addr).c_str(), b);
+#else
+			logDebugF("I 1 [%08X]=%02X", addr, b);
+#endif
 		}
 	} else {
 		if (IS_FLAG_SET(DebugFlags_TerminateOnMemViol)) {
+#ifdef DESKTOP
 			logFatalF("Memory violation reading instruction from %08X%s", addr, mySymbolTable->possibleSymbolString(addr).c_str());
+#else
+			logFatalF("Memory violation reading instruction from %08X", addr );
+#endif
 			SET_FLAGS(EmulatorState_Terminate);
 		} else {
+#ifdef DESKTOP
 			logErrorF("Memory violation reading instruction from %08X%s", addr, mySymbolTable->possibleSymbolString(addr).c_str());
+#else
+			logErrorF("Memory violation reading instruction from %08X", addr);
+#endif
 		}
 		b = 0x00;
 	}
@@ -224,21 +263,41 @@ void Memory::setByte(WORD32 addr, BYTE8 value) {
 		}
 		myMemory[addr - InternalMemStart] = value;
 		if ((flags & DebugFlags_MemAccessDebugLevel) != MemAccessDebug_No) {
+#ifdef DESKTOP
 			logDebugF("W 1 [%08X]%s=%02X", addr, mySymbolTable->possibleSymbolString(addr).c_str(), value);
+#else
+			logDebugF("W 1 [%08X]=%02X", addr, value);
+#endif
 		}
 	} else if (myROMPresent && addr >= myROMStart && addr <= MaxINT) {
 		if (IS_FLAG_SET(DebugFlags_TerminateOnMemViol)) {
+#ifdef DESKTOP
 			logFatalF("Memory violation writing byte to ROM %08X%s", addr, mySymbolTable->possibleSymbolString(addr).c_str());
+#else
+			logFatalF("Memory violation writing byte to ROM %08X", addr);
+#endif
 			SET_FLAGS(EmulatorState_Terminate);
 		} else {
+#ifdef DESKTOP
 			logErrorF("Memory violation writing byte to ROM %08X%s", addr, mySymbolTable->possibleSymbolString(addr).c_str());
+#else
+			logErrorF("Memory violation writing byte to ROM %08X", addr);
+#endif
 		}
 	} else {
 		if (IS_FLAG_SET(DebugFlags_TerminateOnMemViol)) {
+#ifdef DESKTOP
 			logFatalF("Memory violation writing byte to %08X%s", addr, mySymbolTable->possibleSymbolString(addr).c_str());
+#else
+			logFatalF("Memory violation writing byte to %08X", addr);
+#endif
 			SET_FLAGS(EmulatorState_Terminate);
 		} else {
+#ifdef DESKTOP
 			logErrorF("Memory violation writing byte to %08X%s", addr, mySymbolTable->possibleSymbolString(addr).c_str());
+#else
+			logErrorF("Memory violation writing byte to %08X", addr);
+#endif
 		}
 	}
 }
@@ -257,7 +316,11 @@ WORD32 Memory::getWord(WORD32 addr) {
 		// Transputer. LSB first MSB last
 		w = (b[3] << 24) | (b[2] << 16) | (b[1] << 8) | b[0];
 		if ((flags & DebugFlags_MemAccessDebugLevel) != MemAccessDebug_No) {
+#ifdef DESKTOP
 			logDebugF("R 4 [%08X]%s=%08X%s", addr, mySymbolTable->possibleSymbolString(addr).c_str(), w, mySymbolTable->possibleSymbolString(w).c_str());
+#else
+			logDebugF("R 4 [%08X]=%08X", addr, w);
+#endif
 		}
 	} else if (myROMPresent && addr >= myROMStart && addr <= MaxINT) {
 		myCurrentCycles += 1;
@@ -268,14 +331,26 @@ WORD32 Memory::getWord(WORD32 addr) {
 		// Transputer. LSB first MSB last
 		w = (b[3] << 24) | (b[2] << 16) | (b[1] << 8) | b[0];
 		if ((flags & DebugFlags_MemAccessDebugLevel) != MemAccessDebug_No) {
+#ifdef DESKTOP
 			logDebugF("R 4 [%08X]%s=%08X%s", addr, mySymbolTable->possibleSymbolString(addr).c_str(), w, mySymbolTable->possibleSymbolString(w).c_str());
+#else
+			logDebugF("R 4 [%08X]=%08X", addr, w);
+#endif
 		}
 	} else {
 		if (IS_FLAG_SET(DebugFlags_TerminateOnMemViol)) {
+#ifdef DESKTOP
 			logFatalF("Memory violation reading word from %08X%s", addr, mySymbolTable->possibleSymbolString(addr).c_str());
+#else
+			logFatalF("Memory violation reading word from %08X", addr);
+#endif
 			SET_FLAGS(EmulatorState_Terminate);
 		} else {
+#ifdef DESKTOP
 			logErrorF("Memory violation reading word from %08X%s", addr, mySymbolTable->possibleSymbolString(addr).c_str());
+#else
+			logErrorF("Memory violation reading word from %08X", addr);
+#endif
 		}
 		w = 0xC0DEDBAD;
 	}
@@ -298,21 +373,41 @@ void Memory::setWord(WORD32 addr, WORD32 value) {
 		b[2] = (value & 0x00ff0000) >> 16;
 		b[3] = (value & 0xff000000) >> 24;
 		if ((flags & DebugFlags_MemAccessDebugLevel) != MemAccessDebug_No) {
+#ifdef DESKTOP
 			logDebugF("W 4 [%08X]%s=%08X%s", addr, mySymbolTable->possibleSymbolString(addr).c_str(), value, mySymbolTable->possibleSymbolString(value).c_str());
+#else
+			logDebugF("W 4 [%08X]=%08X", addr, value);
+#endif
 		}
 	} else if (myROMPresent && addr >= myROMStart && addr <= MaxINT) {
 		if (IS_FLAG_SET(DebugFlags_TerminateOnMemViol)) {
+#ifdef DESKTOP
 			logFatalF("Memory violation writing word to ROM %08X%s", addr, mySymbolTable->possibleSymbolString(addr).c_str());
+#else
+			logFatalF("Memory violation writing word to ROM %08X", addr);
+#endif
 			SET_FLAGS(EmulatorState_Terminate);
 		} else {
+#ifdef DESKTOP
 			logErrorF("Memory violation writing word to ROM %08X%s", addr, mySymbolTable->possibleSymbolString(addr).c_str());
+#else
+			logErrorF("Memory violation writing word to ROM %08X", addr);
+#endif
 		}
 	} else {
 		if (IS_FLAG_SET(DebugFlags_TerminateOnMemViol)) {
+#ifdef DESKTOP
 			logFatalF("Memory violation writing word to %08X%s", addr, mySymbolTable->possibleSymbolString(addr).c_str());
+#else
+			logFatalF("Memory violation writing word to %08X", addr);
+#endif
 			SET_FLAGS(EmulatorState_Terminate);
 		} else {
+#ifdef DESKTOP
 			logErrorF("Memory violation writing word to %08X%s", addr, mySymbolTable->possibleSymbolString(addr).c_str());
+#else
+			logErrorF("Memory violation writing word to %08X", addr);
+#endif
 		}
 	}
 }
