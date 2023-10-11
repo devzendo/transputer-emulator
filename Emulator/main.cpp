@@ -38,13 +38,15 @@ using namespace std;
 long ramSize;
 long romSize;
 WORD32 flags;
+
+#ifdef DESKTOP
+
 static char *romFile;
 static char *progName;
 set<WORD32> breakpointAddresses;
 map<std::string, WORD32> symbolToAddress;
 WORD32 SPP, RPP;
 
-#if defined(DESKTOP)
 void usage() {
 	logInfoF("Parachute v%s Portable Transputer Emulator " __DATE__, projectVersion);
 	logInfo("  (C) 2005-2023 Matt J. Gumbley");
@@ -329,14 +331,18 @@ void interruptHandler(int sig) {
 
 #endif // DESKTOP
 
+#ifdef DESKTOP
 int main(int argc, char *argv[]) {
+#else
+int main() {
+#endif
 	Memory *memory;
 	CPU *cpu;
 #ifdef DESKTOP
 	SymbolTable *symbolTable;
-#endif
 	progName = argv[0];
 	romFile = NULL;
+#endif
 	ramSize = DefaultMemSize;
 	romSize = 0;
 	flags = 0;
@@ -421,7 +427,11 @@ int main(int argc, char *argv[]) {
 	}
 #endif
 
+#if defined(DESKTOP)
 	cpu->emulate(romFile);
+#else
+	cpu->emulate(false);
+#endif
 
 	fflush(stdout);
 	delete linkFactory;
