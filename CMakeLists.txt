@@ -40,6 +40,7 @@ endif()
 if(PICO)
   include(pico_sdk_import.cmake)
   include(pico_extras_import.cmake)
+  set(PICO_CXX_ENABLE_EXCEPTIONS 1)
 endif(PICO)
 
 # VERSION is filtered into target/classes/version.cpp by using the maven resources plugin.

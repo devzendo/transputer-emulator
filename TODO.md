@@ -5,8 +5,7 @@
   pass; need to assess whether the other instructions testable via the TVS but
   not yet currently implemented are required, and implement them.
 * Adding debug facilities to aid eForth port.
-* Need to remove use of C++ exceptions: Linux Mint 21 build is warning about it; Pi Pico build
-  fails due to their presence.
+* Need to remove use of C++ exceptions? Linux Mint 21 build is warning about it.
 * Adding support for the Pi Pico: Need a Pico USB Serial link, supported on the IServer side by a
   FIFO that works with a serial device. Logging needs to be recorded to a memory area, that can be
   probed by an analyser when the emulator is in boot mode. Use the Maker Pi Pico's NeoRGB LEDs as
