@@ -423,6 +423,9 @@ Prerequisites:
 - Raspberry Pi Pico (build on Linux Mint)
   - The Pico SDK and toolchain:
     apt install gcc-arm-none-eabi libnewlib-arm-none-eabi build-essential
+    The Pico SDK should be cloned from https://github.com/raspberrypi/pico-sdk
+    The Pico Extras should be cloned into the directory alongside the SDK from https://github.com/raspberrypi/pico-extras
+    i.e. the pico-sdk and pico-extras clones are siblings.
 
 The typical install location is:
 - macOS/Linux: /opt/parachute
@@ -432,12 +435,14 @@ The typical install location is:
 ## Building
 To build, cd to the top level directory (where this README.md is) and do:
 
-On windows: vcvarsall.bat as shown above
+On windows: `vcvarsall.bat` as shown above
 
-mvn clean compile -P build
+Then for all desktop builds:
+`mvn clean compile -P build`
 
 For Raspberry Pi Pico:
-mvn -DCROSS=PICO clean compile -P build
+Set the `PICO_SDK_PATH` environment variable to point to a copy of the Pico SDK.
+`mvn -DCROSS=PICO clean compile -P build`
 
 This will:
  * download all dependencies and plugins (quite a few of these), 
@@ -447,7 +452,8 @@ This will:
    * cd cmake-build-debug; cmake .. (ie regenerate the cmake cache)
    * cmake --build cmake-build-debug --target all -- -j 4
 
-This build will build the entire system: T800 emulator and iserver, client libraries, etc. 
+This build will build the entire system: T800 emulator and iserver, client
+libraries, etc.  (Only the emulator is built for Rasperry Pi Pico.)
 
 This doesn't install it on your system - see below.
 

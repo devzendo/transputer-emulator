@@ -5,8 +5,9 @@ set(CMAKE_CXX_STANDARD 14)
 set(CMAKE_CXX_STANDARD_REQUIRED ON) # Don't fall back to an earlier standard if the one declared isn't available
 set(CMAKE_CXX_EXTENSIONS OFF)
 
-# Most builds set NOCROSS=true, since an option must be given (due to maven cmake plugin inflexibility).
-# We ignore that here. But if CROSS is set, it defines a toolchain/SDK and otherwise modifies the build.
+# Most (maven-invoked) builds set NOCROSS=true, since an option must be given
+# (due to maven cmake plugin inflexibility). We ignore that here. But if CROSS
+# is set, it defines a toolchain/SDK and otherwise modifies the build.
 #
 # If we're doing a cross compilation, set a variable to make it easier to sense.. and also set a convenient
 # EMBEDDED variable if we're building for any of the small boards...
@@ -19,10 +20,13 @@ else()
     message(STATUS "Not cross-compiling, this is a full build")
 endif()
 
+# Convenience CMake variables, and analogues of them as C++ preprocessor definitions.
 if(PICO) # OR TEENSY OR ADAFRUIT_FEATHER .. or whatever
   set(EMBEDDED ON)
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DPICO")
 endif()
+
+# It's either embedded, or desktop.
 if(EMBEDDED)
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DEMBEDDED")
 else()
@@ -32,6 +36,11 @@ endif()
 
 # So you'll either have DESKTOP or EMBEDDED, and then Shared/platformdetection.h will give you
 # one of PLATFORM_OSX, PLATFORM_LINUX, PLATFORM_WINDOWS, PLATFORM_PICO.
+
+if(PICO)
+  include(pico_sdk_import.cmake)
+  include(pico_extras_import.cmake)
+endif(PICO)
 
 # VERSION is filtered into target/classes/version.cpp by using the maven resources plugin.
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DDEBUG -DVERSION=\"${VERSION}\"")
@@ -46,6 +55,9 @@ endif(UNIX)
 
 project(transputer-emulator)
 
+if(PICO) 
+  pico_sdk_init()
+endif(PICO)
 
 ########################################################################################################################
 # Build googletest & googlemock
