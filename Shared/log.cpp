@@ -149,40 +149,6 @@ void logBug(const char *s) {
 	*myOutputStream << "*BUG* " << s << std::endl;
 }
 
-void logInfoF_old(char *fmt, ...) {
-	char *buf;
-	va_list ap;
-	int n, size = 100;
-	if (myLogLevel <= LOGLEVEL_INFO) {
-		if ((buf = (char *)malloc(size)) == NULL) {
-			logError("Out of memory in logInfoF");
-			return;
-		}
-		while (1) {
-			// try to print in allocated buffer
-			va_start(ap, fmt);
-			n = vsnprintf(buf, size, fmt, ap);
-			va_end(ap);
-			// if ok, display it
-			if (n >= -1 && n < size) {
-				*myOutputStream << "INFO  " << buf << std::endl;
-				free(buf);
-				return;
-			}
-			// else try again with more space
-			if (n >= -1) { // glibc 2.1
-				size = n+1; // precisely what is needed
-			} else { // glibc 2.0
-				size *= 2; // twice old size
-			}
-			if ((buf = (char *)realloc(buf, size)) == NULL) {
-				logError("Reallocation failure in logInfoF");
-				return;
-			}
-		}
-	}
-}
-
 void logPrompt(void) {
 	*myOutputStream << "> ";
 	myOutputStream->flush();
