@@ -16,7 +16,6 @@
 #ifndef _TVSLINK_H
 #define _TVSLINK_H
 
-#include <exception>
 #include <string>
 #include <fstream>
 #include <iostream>
@@ -27,11 +26,11 @@
 class TVSLink : public Link {
 public:
     TVSLink(int linkNo, std::string tvsProgram, std::string tvsInput, std::string tvsOutput);
-    void initialise(void) throw (std::exception);
+    void initialise(void);
     ~TVSLink(void);
-    BYTE8 readByte(void) throw (std::exception);
-    void writeByte(BYTE8 b) throw (std::exception);
-    void resetLink(void) throw (std::exception);
+    BYTE8 readByte(void);
+    void writeByte(BYTE8 b);
+    void resetLink(void);
     int getLinkType(void);
 private:
     std::string myTVSProgram;

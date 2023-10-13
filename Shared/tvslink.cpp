@@ -28,7 +28,7 @@ TVSLink::TVSLink(int linkNo, std::string tvsProgram, std::string tvsInput, std::
     logDebugF("Constructing TVS link %d for cpu client", myLinkNo);
 }
 
-void TVSLink::initialise(void) throw (std::exception) {
+void TVSLink::initialise(void) {
     static char msgbuf[255];
     logDebugF("Initialising TVS link %d for cpu client", myLinkNo);
     myWriteSequence = myReadSequence = 0;
@@ -68,7 +68,7 @@ TVSLink::~TVSLink() {
     myTVSOutputStream.close();
 }
 
-BYTE8 TVSLink::readByte() throw (std::exception) {
+BYTE8 TVSLink::readByte() {
     BYTE8 buf[1];
     bool finished = false;
     myTVSProgramStream.read(reinterpret_cast<char *>(buf), 1);
@@ -108,7 +108,7 @@ BYTE8 TVSLink::readByte() throw (std::exception) {
     return buf[0];
 }
 
-void TVSLink::writeByte(BYTE8 buf) throw (std::exception) {
+void TVSLink::writeByte(BYTE8 buf) {
     if (bDebug) {
         logDebugF("Link %d W #%08X %02X (%c)", myLinkNo, myWriteSequence++, buf, isprint(buf) ? buf : '.');
     }
@@ -117,7 +117,7 @@ void TVSLink::writeByte(BYTE8 buf) throw (std::exception) {
     myTVSOutputStream.flush();
 }
 
-void TVSLink::resetLink(void) throw (std::exception) {
+void TVSLink::resetLink(void) {
     // TODO
 }
 

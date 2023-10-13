@@ -11,7 +11,6 @@
 //
 //------------------------------------------------------------------------------
 
-#include <exception>
 #include <cctype>
 
 #include "nulllink.h"
@@ -22,7 +21,7 @@ NullLink::NullLink(int linkNo, bool isServer) :
     logDebugF("Constructing Null link %d for %s", myLinkNo, isServer ? "server" : "cpu client");
 }
 
-void NullLink::initialise(void) throw (std::exception) {
+void NullLink::initialise(void) {
     myWriteSequence = myReadSequence = 0;
 }
 
@@ -30,20 +29,20 @@ NullLink::~NullLink() {
     logDebugF("Destroying Null link %d", myLinkNo);
 }
 
-BYTE8 NullLink::readByte() throw (std::exception) {
+BYTE8 NullLink::readByte() {
     if (bDebug) {
         logDebugF("Link %d R #%08X 00 (.)", myLinkNo, myReadSequence++);
     }
     return 0;
 }
 
-void NullLink::writeByte(BYTE8 buf) throw (std::exception) {
+void NullLink::writeByte(BYTE8 buf) {
     if (bDebug) {
         logDebugF("Link %d W #%08X 00 (.)", myLinkNo, myWriteSequence++);
     }
 }
 
-void NullLink::resetLink(void) throw (std::exception) {
+void NullLink::resetLink(void) {
     // TODO
 }
 

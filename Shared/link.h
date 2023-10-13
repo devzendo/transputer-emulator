@@ -14,8 +14,6 @@
 #ifndef _LINK_H
 #define _LINK_H
 
-#include <exception>
-
 #include "platformdetection.h"
 #include "types.h"
 
@@ -35,7 +33,7 @@ const int LinkType_Null = 6;
 class Link {
 public:
 	Link(int linkNo, bool isServer);
-	virtual void initialise(void) throw (std::exception) = 0;
+	virtual void initialise(void) = 0;
 	virtual ~Link(void);
 	// TODO may need buffer-centric versions of these, and
 	// these are entirely synchronous. to prevent blocking I/O
@@ -44,15 +42,15 @@ public:
 	// asynchrony.
 	// For now, just to get data flowing from the IServer,
 	// I'll use the synchronous forms.
-	virtual BYTE8 readByte(void) throw (std::exception) = 0;
-	virtual void writeByte(BYTE8 b) throw (std::exception) = 0;
-	int readBytes(BYTE8* buffer, int bytesToRead) throw (std::exception);
-	int writeBytes(BYTE8* buffer, int bytesToWrite) throw (std::exception);
-	WORD16 readShort(void) throw (std::exception);
-	void writeShort(WORD16 b) throw (std::exception);
-	WORD32 readWord(void) throw (std::exception);
-	void writeWord(WORD32 w) throw (std::exception);
-	virtual void resetLink(void) throw (std::exception) = 0;
+	virtual BYTE8 readByte(void) = 0;
+	virtual void writeByte(BYTE8 b) = 0;
+	int readBytes(BYTE8* buffer, int bytesToRead);
+	int writeBytes(BYTE8* buffer, int bytesToWrite);
+	WORD16 readShort(void);
+	void writeShort(WORD16 b);
+	WORD32 readWord(void);
+	void writeWord(WORD32 w);
+	virtual void resetLink(void) = 0;
 	int getLinkNo(void);
 	void setDebug(bool newDebug);
 	virtual int getLinkType(void) = 0;

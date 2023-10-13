@@ -39,7 +39,7 @@ NamedPipeLink::NamedPipeLink(int linkNo, bool isServer) : Link(linkNo, isServer)
     myPipeName[0] = '\0';
 }
 
-void NamedPipeLink::initialise(void) throw (std::exception) {
+void NamedPipeLink::initialise(void) {
 	static char msgbuf[255];
 
     sprintf_s(myPipeName, NAME_LEN, "\\\\.\\pipe\\temulink%d", myLinkNo);
@@ -94,7 +94,7 @@ NamedPipeLink::~NamedPipeLink() {
     logDebugF("[DTOR] Destroyed named pipe link %d", myLinkNo);
 }
 
-void NamedPipeLink::connect(void) throw (std::exception) {
+void NamedPipeLink::connect(void) {
     if (myConnected) {
         return;
     }
@@ -144,7 +144,7 @@ void NamedPipeLink::connect(void) throw (std::exception) {
     myConnected = true;
 }
 
-BYTE NamedPipeLink::readByte() throw (std::exception) {
+BYTE NamedPipeLink::readByte() {
     static char msgbuf[255];
     BYTE buf;
     DWORD cbBytesRead = 0, cbReplyBytes = 0, cbWritten = 0;
@@ -181,7 +181,7 @@ BYTE NamedPipeLink::readByte() throw (std::exception) {
     return buf;
 }
 
-void NamedPipeLink::writeByte(BYTE buf) throw (std::exception) {
+void NamedPipeLink::writeByte(BYTE buf) {
     static char msgbuf[255];
 
     BYTE bufstore = buf;
@@ -212,7 +212,7 @@ void NamedPipeLink::writeByte(BYTE buf) throw (std::exception) {
     }
 }
 
-void NamedPipeLink::resetLink(void) throw (std::exception) {
+void NamedPipeLink::resetLink(void) {
 	// TODO
     logDebugF("[resetLink] Reset link %d by %s", myLinkNo, bServer ? "server" : "cpu client");
 }

@@ -27,7 +27,7 @@ StubLink::StubLink(int linkNo, bool isServer) :
     logDebugF("Constructing stub link %d for %s", myLinkNo, isServer ? "server" : "cpu client");
 }
 
-void StubLink::initialise(void) throw (std::exception) {
+void StubLink::initialise(void) {
     myReadQueue.empty();
     myWriteQueue.empty();
     myWriteSequence = myReadSequence = 0;
@@ -39,7 +39,7 @@ StubLink::~StubLink() {
     myWriteQueue.empty();
 }
 
-BYTE8 StubLink::readByte() throw (std::exception) {
+BYTE8 StubLink::readByte() {
     static char msgbuf[255];
     BYTE8 buf = rdq->front();
     rdq->pop();
@@ -49,7 +49,7 @@ BYTE8 StubLink::readByte() throw (std::exception) {
     return buf;
 }
 
-void StubLink::writeByte(BYTE8 buf) throw (std::exception) {
+void StubLink::writeByte(BYTE8 buf) {
     static char msgbuf[255];
     if (bDebug) {
         logDebugF("Link %d W #%08X %02X (%c)", myLinkNo, myWriteSequence++, buf, isprint(buf) ? buf : '.');
@@ -57,7 +57,7 @@ void StubLink::writeByte(BYTE8 buf) throw (std::exception) {
     wrq->push(buf);
 }
 
-void StubLink::resetLink(void) throw (std::exception) {
+void StubLink::resetLink(void) {
     // TODO
 }
 

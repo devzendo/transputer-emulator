@@ -11,8 +11,6 @@
 //
 //------------------------------------------------------------------------------
 
-#include <exception>
-
 #include "types.h"
 #include "constants.h"
 #include "link.h"
@@ -29,7 +27,7 @@ Link::~Link(void) {
 	logDebugF("Destroying link %d", myLinkNo);
 }
 
-int Link::readBytes(BYTE8* buffer, int bytesToRead) throw (std::exception) {
+int Link::readBytes(BYTE8* buffer, int bytesToRead) {
     // TODO improve inefficiency
     int readCount = 0;
     for (; readCount < bytesToRead; readCount++) {
@@ -38,7 +36,7 @@ int Link::readBytes(BYTE8* buffer, int bytesToRead) throw (std::exception) {
     return readCount;
 }
 
-int Link::writeBytes(BYTE8* buffer, int bytesToWrite) throw (std::exception) {
+int Link::writeBytes(BYTE8* buffer, int bytesToWrite) {
     // TODO improve inefficiency
     int writtenCount = 0;
     for (; writtenCount < bytesToWrite; writtenCount++) {
@@ -47,19 +45,19 @@ int Link::writeBytes(BYTE8* buffer, int bytesToWrite) throw (std::exception) {
     return writtenCount;
 }
 
-WORD16 Link::readShort(void) throw (std::exception) {
+WORD16 Link::readShort(void) {
     // Input a little-endian short, LSB first MSB last
     return (readByte()) |
            (readByte() << 8);
 }
 
-void Link::writeShort(WORD16 w) throw (std::exception) {
+void Link::writeShort(WORD16 w) {
     // Always output as a little-endian short, LSB first MSB last
     writeByte(w & 0x00ff);
     writeByte((w & 0xff00) >> 8);
 }
 
-WORD32 Link::readWord(void) throw (std::exception) {
+WORD32 Link::readWord(void) {
 	// Input a little-endian word, LSB first MSB last
 	return (readByte()) |
 		  (readByte() << 8) |
@@ -67,7 +65,7 @@ WORD32 Link::readWord(void) throw (std::exception) {
 		  (readByte() << 24);
 }
 
-void Link::writeWord(WORD32 w) throw (std::exception) {
+void Link::writeWord(WORD32 w) {
 	// Always output as a little-endian word, LSB first MSB last
 	writeByte(w & 0x000000ff);
 	writeByte((w & 0x0000ff00) >> 8);

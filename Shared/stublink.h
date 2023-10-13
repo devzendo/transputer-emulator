@@ -14,7 +14,6 @@
 #ifndef _STUBLINK_H
 #define _STUBLINK_H
 
-#include <exception>
 #include <queue>
 #include <vector>
 
@@ -24,11 +23,11 @@
 class StubLink : public Link {
 public:
     StubLink(int linkNo, bool isServer);
-    void initialise(void) throw (std::exception);
+    void initialise(void);
     ~StubLink(void);
-    BYTE8 readByte(void) throw (std::exception);
-    void writeByte(BYTE8 b) throw (std::exception);
-    void resetLink(void) throw (std::exception);
+    BYTE8 readByte(void);
+    void writeByte(BYTE8 b);
+    void resetLink(void);
     // Used by tests to sense what has been written (by SUT calling writeByte) and
     // to inject data to be read (by SUT calling readbyte).
     std::vector<BYTE8> getWrittenBytes();

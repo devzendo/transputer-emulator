@@ -14,7 +14,6 @@
 #ifndef _NULLLINK_H
 #define _NULLLINK_H
 
-#include <exception>
 #include <queue>
 #include <vector>
 
@@ -24,11 +23,11 @@
 class NullLink : public Link {
 public:
     NullLink(int linkNo, bool isServer);
-    void initialise(void) throw (std::exception);
+    void initialise(void); 
     ~NullLink(void);
-    BYTE8 readByte(void) throw (std::exception);
-    void writeByte(BYTE8 b) throw (std::exception);
-    void resetLink(void) throw (std::exception);
+    BYTE8 readByte(void);
+    void writeByte(BYTE8 b);
+    void resetLink(void);
     int getLinkType(void);
 private:
     WORD32 myWriteSequence, myReadSequence;

@@ -14,19 +14,17 @@
 #ifndef _FIFOLINK_H
 #define _FIFOLINK_H
 
-#include <exception>
-
 #include "types.h"
 #include "link.h"
 
 class FIFOLink : public Link {
 public:
 	FIFOLink(int linkNo, bool isServer);
-	void initialise(void) throw (std::exception);
+	void initialise(void);
 	~FIFOLink(void);
-	BYTE8 readByte(void) throw (std::exception);
-	void writeByte(BYTE8 b) throw (std::exception);
-	void resetLink(void) throw (std::exception);
+	BYTE8 readByte(void);
+	void writeByte(BYTE8 b);
+	void resetLink(void);
 	int getLinkType(void);
 private:
 	int myWriteFD, myReadFD;

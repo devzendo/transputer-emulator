@@ -14,7 +14,6 @@
 #ifndef _NAMEDPIPELINK_H
 #define _NAMEDPIPELINK_H
 
-#include <exception>
 #include <winbase.h>
 
 #include "types.h"
@@ -25,14 +24,14 @@ const int NAME_LEN = 256;
 class NamedPipeLink : public Link {
 public:
     NamedPipeLink(int linkNo, bool isServer);
-    void initialise(void) throw (std::exception);
+    void initialise(void);
     ~NamedPipeLink(void);
-    BYTE readByte(void) throw (std::exception);
-    void writeByte(BYTE b) throw (std::exception);
-    void resetLink(void) throw (std::exception);
+    BYTE readByte(void);
+    void writeByte(BYTE b);
+    void resetLink(void);
     int getLinkType(void);
 private:
-    void connect(void) throw (std::exception);
+    void connect(void);
     bool myConnected = false;
     HANDLE myPipeHandle;
     WORD32 myWriteSequence, myReadSequence;

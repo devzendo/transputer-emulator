@@ -37,7 +37,7 @@ FIFOLink::FIFOLink(int linkNo, bool isServer) : Link(linkNo, isServer) {
 	myWriteSequence = myReadSequence = 0;
 }
 
-void FIFOLink::initialise(void) throw (std::exception) {
+void FIFOLink::initialise(void) {
 	static char msgbuf[255];
 	struct stat st;
 	// Filenames are relative to the CPU client.
@@ -131,7 +131,7 @@ FIFOLink::~FIFOLink() {
 	}
 }
 
-BYTE8 FIFOLink::readByte() throw (std::exception) {
+BYTE8 FIFOLink::readByte() {
 	static char msgbuf[255];
 	BYTE8 buf;
 	int readlen = 0;
@@ -147,7 +147,7 @@ BYTE8 FIFOLink::readByte() throw (std::exception) {
 	throw std::runtime_error(msgbuf);
 }
 
-void FIFOLink::writeByte(BYTE8 buf) throw (std::exception) {
+void FIFOLink::writeByte(BYTE8 buf) {
 	static char msgbuf[255];
 	BYTE8 bufstore = buf;
 	if (bDebug) {
@@ -160,7 +160,7 @@ void FIFOLink::writeByte(BYTE8 buf) throw (std::exception) {
 	throw std::runtime_error(msgbuf);
 }
 
-void FIFOLink::resetLink(void) throw (std::exception) {
+void FIFOLink::resetLink(void) {
 	// TODO
 }
 
