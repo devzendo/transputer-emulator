@@ -55,8 +55,10 @@ extern void logBug(const char *s);
 #define logErrorF(fmt, ...) logFormat(LOGLEVEL_ERROR, fmt, __VA_ARGS__)
 #define logFatalF(fmt, ...) logFormat(LOGLEVEL_FATAL, fmt, __VA_ARGS__)
 
+#ifdef DESKTOP
 extern void logPrompt(void);
 extern void getInput(char *buf, int buflen);
+#endif
 
 #endif // _LOG_H
 
