@@ -95,41 +95,42 @@ if(NOT(EMBEDDED))
   include(CTest)
   enable_testing()
 
-endif() # NOT(PICO)
 
-########################################################################################################################
-# Build gsl-lite
-# Thanks to 'As external Git project' at https://github.com/gsl-lite/gsl-lite#as-external-git-project
-# project( use-gsl-lite LANGUAGES CXX )
-# Using commit 503b14b 15 Aug 2020 since that's the last commit before our last successful build.
-# Set default ExternalProject root directory and add gsl-lite:
-set( GSL_LITE_URL https://github.com/gsl-lite/gsl-lite.git )
+  ########################################################################################################################
+  # Build gsl-lite
+  # Thanks to 'As external Git project' at https://github.com/gsl-lite/gsl-lite#as-external-git-project
+  # project( use-gsl-lite LANGUAGES CXX )
+  # Using commit 503b14b 15 Aug 2020 since that's the last commit before our last successful build.
+  # Set default ExternalProject root directory and add gsl-lite:
+  set( GSL_LITE_URL https://github.com/gsl-lite/gsl-lite.git )
 
-include( ExternalProject )
-find_package( Git REQUIRED )
-set_directory_properties( PROPERTIES EP_PREFIX ${CMAKE_BINARY_DIR}/gsl-lite-download )
-ExternalProject_Add(
-        gsl-extern
-        GIT_REPOSITORY ${GSL_LITE_URL}
-        GIT_TAG 503b14b
-        TIMEOUT 10
-        UPDATE_COMMAND ${GIT_EXECUTABLE} pull origin master
-        CONFIGURE_COMMAND ""
-        BUILD_COMMAND ""
-        INSTALL_COMMAND ""
-        LOG_DOWNLOAD ON
-)
+  include( ExternalProject )
+  find_package( Git REQUIRED )
+  set_directory_properties( PROPERTIES EP_PREFIX ${CMAKE_BINARY_DIR}/gsl-lite-download )
+  ExternalProject_Add(
+          gsl-extern
+          GIT_REPOSITORY ${GSL_LITE_URL}
+          GIT_TAG 503b14b
+          TIMEOUT 10
+          UPDATE_COMMAND ${GIT_EXECUTABLE} pull origin master
+          CONFIGURE_COMMAND ""
+          BUILD_COMMAND ""
+          INSTALL_COMMAND ""
+          LOG_DOWNLOAD ON
+  )
 
-# Provide #include access to gsl-lite as <gsl/gsl-lite.hpp>:
-ExternalProject_Get_Property( gsl-extern SOURCE_DIR )
-set( GSL_LITE_INCLUDE_DIR ${SOURCE_DIR}/include CACHE INTERNAL "Include folder for gsl-lite" )
+  # Provide #include access to gsl-lite as <gsl/gsl-lite.hpp>:
+  ExternalProject_Get_Property( gsl-extern SOURCE_DIR )
+  set( GSL_LITE_INCLUDE_DIR ${SOURCE_DIR}/include CACHE INTERNAL "Include folder for gsl-lite" )
 
-add_library( gsl INTERFACE )
-target_include_directories( gsl INTERFACE ${GSL_LITE_INCLUDE_DIR} )
+  add_library( gsl INTERFACE )
+  target_include_directories( gsl INTERFACE ${GSL_LITE_INCLUDE_DIR} )
 
-# Now link your targets with gsl:
-# e.g. target_link_libraries(testfilesystem parachutedev gtest gmock_main gsl)
+  # Now link your targets with gsl:
+  # e.g. target_link_libraries(testfilesystem parachutedev gtest gmock_main gsl)
 
+
+endif() # NOT(EMBEDDED)
 
 ########################################################################################################################
 # Build the transputer emulator and related code...
