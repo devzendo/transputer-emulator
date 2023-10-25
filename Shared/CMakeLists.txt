@@ -23,6 +23,7 @@ add_library(parachutedev STATIC log.h log.cpp misc.h misc.cpp hexdump.h hexdump.
         "${platform_sources}"
         linkfactory.h linkfactory.cpp constants.h emuquery.h memloc.h platformdetection.h types.h
         nulllink.cpp nulllink.h
+        ringbuffer.cpp ringbuffer.h
         "${non_embedded_sources}"
 )
 
@@ -49,5 +50,10 @@ if(NOT(EMBEDDED))
   add_executable(testcharacterisation testcharacterisation.cpp)
   target_link_libraries(testcharacterisation testfixtures gtest gmock_main)
   add_test(NAME testcharacterisation COMMAND testcharacterisation)
+  
+  add_executable(testringbuffer testringbuffer.cpp)
+  target_link_libraries(testringbuffer parachutedev gtest gmock_main)
+  add_test(NAME testringbuffer COMMAND testringbuffer)
+
 endif() # NOT EMBEDDED
 

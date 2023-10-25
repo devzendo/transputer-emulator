@@ -41,7 +41,7 @@ void logToFile(const char *fileName) {
 		loggingToTestLog = true;
 	}
 }
-#endif
+#endif // DESKTOP
 
 void logFlush(void) {
 #ifdef DESKTOP
@@ -199,4 +199,13 @@ void getInput(char *buf, int buflen) {
 		// do nothing. casting fgets' output to void still causes warnings
 	}
 }
-#endif
+#endif // DESKTOP
+
+#ifdef EMBEDDED
+static RingBuffer *logRingBuffer = NULL;
+void setLogRingBuffer(RingBuffer *buf) {
+	logRingBuffer = buf;
+}
+
+#endif // EMBEDDED
+

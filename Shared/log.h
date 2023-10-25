@@ -16,6 +16,11 @@
 
 #include <cstring>
 
+#ifdef EMBEDDED
+#include "ringbuffer.h"
+#endif
+
+
 const int LOGLEVEL_DEBUG = 0;
 const int LOGLEVEL_INFO = 1;
 const int LOGLEVEL_WARN = 2;
@@ -58,6 +63,10 @@ extern void logBug(const char *s);
 #ifdef DESKTOP
 extern void logPrompt(void);
 extern void getInput(char *buf, int buflen);
+#endif
+
+#ifdef EMBEDDED
+extern void setLogRingBuffer(RingBuffer *buf);
 #endif
 
 #endif // _LOG_H
