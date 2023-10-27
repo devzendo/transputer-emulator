@@ -14,16 +14,22 @@
 #include <cstdlib>
 #include <cstdarg> // vsnprintf is supposed to be in here, but is in cstdio in RH73
 #include <cstdio>
+
 #ifdef DESKTOP
 #include <iostream>
 #include <fstream>
 #endif 
+
+#ifdef EMBEDDED
+#include "ringbuffer.h"
+#endif
 
 #include "log.h"
 
 static const char *tags[5] = {
 	"DEBUG ", "INFO  ", "WARN  ", "ERROR ", "FATAL ",
 };
+
 
 #ifdef DESKTOP
 static std::ostream *myOutputStream = &std::cout;
@@ -43,6 +49,48 @@ void logToFile(const char *fileName) {
 }
 #endif // DESKTOP
 
+
+#ifdef EMBEDDED
+static RingBuffer *logBuffer = nullptr;
+static std::size_t logBufferSize = 0;
+
+void setLogRingBuffer(RingBuffer *myBuffer, std::size_t myBufferSize) {
+	logBuffer = myBuffer;
+	logBufferSize = myBufferSize;
+}
+
+char popLogChar() {
+	if (logBuffer != nullptr) {
+		return logBuffer->pop();
+	}
+	return '\0';
+}
+
+void pushLogChar(char ch) {
+	if (logBuffer != nullptr) {
+		logBuffer->push(ch);
+	}
+}
+
+void pushLogString(char *s) {
+	if (logBuffer != nullptr) {
+		for (char *p=s; *p != '\0'; p++) {
+			logBuffer->push(*p);
+		}
+	}
+}
+
+void pushLogStringLn(char *s) {
+	if (logBuffer != nullptr) {
+		for (char *p=s; *p != '\0'; p++) {
+			logBuffer->push(*p);
+		}
+		logBuffer->push('\n');
+	}
+}
+#endif // EMBEDDED
+
+
 void logFlush(void) {
 #ifdef DESKTOP
     myOutputStream->flush();
@@ -59,7 +107,14 @@ void _logDebug(int l, const char *f, const char *s) {
 #ifdef DESKTOP
 		*myOutputStream << tags[LOGLEVEL_DEBUG] << f << ":" << l << " " << s << std::endl;
 #elif EMBEDDED
-		// TODO
+		pushLogString((char *)tags[LOGLEVEL_DEBUG]);
+		pushLogString((char *)f);
+		pushLogChar(':');
+		char lineNo[10];
+		sprintf(lineNo, "%d", l);
+		pushLogString(lineNo);
+		pushLogChar(' ');
+		pushLogStringLn((char *)s);
 #endif
 	}
 }
@@ -82,7 +137,14 @@ void _logDebugF(int l, const char *f, const char *fmt, ...) {
 #ifdef DESKTOP
 				*myOutputStream << tags[LOGLEVEL_DEBUG] << f << ":" << l << " " << buf << std::endl;
 #elif EMBEDDED
-				// TODO
+				pushLogString((char *)tags[LOGLEVEL_DEBUG]);
+				pushLogString((char *)f);
+				pushLogChar(':');
+				char lineNo[10];
+				sprintf(lineNo, "%d", l);
+				pushLogString(lineNo);
+				pushLogChar(' ');
+				pushLogStringLn(buf);
 #endif
 				free(buf);
 				return;
@@ -120,7 +182,8 @@ void logFormat(int level, const char *fmt, ...) {
 #ifdef DESKTOP
 				*myOutputStream << tags[level] << buf << std::endl;
 #elif EMBEDDED
-				// TODO
+				pushLogString((char *)tags[level]);
+				pushLogStringLn(buf);
 #endif
 				free(buf);
 				return;
@@ -144,7 +207,8 @@ void logInfo(const char *s) {
 #ifdef DESKTOP
 		*myOutputStream << tags[LOGLEVEL_INFO] << s << std::endl;
 #elif EMBEDDED
-		// TODO
+		pushLogString((char *)tags[LOGLEVEL_INFO]);
+		pushLogStringLn((char *)s);
 #endif
 	}
 }
@@ -154,7 +218,8 @@ void logWarn(const char *s) {
 #ifdef DESKTOP
 		*myOutputStream << tags[LOGLEVEL_WARN] << s << std::endl;
 #elif EMBEDDED
-		// TODO
+		pushLogString((char *)tags[LOGLEVEL_WARN]);
+		pushLogStringLn((char *)s);
 #endif
 	}
 }
@@ -164,7 +229,8 @@ void logError(const char *s) {
 #ifdef DESKTOP
 		*myOutputStream << tags[LOGLEVEL_ERROR] << s << std::endl;
 #elif EMBEDDED
-		// TODO
+		pushLogString((char *)tags[LOGLEVEL_ERROR]);
+		pushLogStringLn((char *)s);
 #endif
 
 	}
@@ -175,7 +241,8 @@ void logFatal(const char *s) {
 #ifdef DESKTOP
 		*myOutputStream << tags[LOGLEVEL_FATAL] << s << std::endl;
 #elif EMBEDDED
-		// TODO
+		pushLogString((char *)tags[LOGLEVEL_FATAL]);
+		pushLogStringLn((char *)s);
 #endif
 	}
 }
@@ -184,7 +251,8 @@ void logBug(const char *s) {
 #ifdef DESKTOP
 	*myOutputStream << "*BUG* " << s << std::endl;
 #elif EMBEDDED
-	// TODO
+	pushLogString((char *)"*BUG*");
+	pushLogStringLn((char *)s);
 #endif
 }
 
@@ -200,12 +268,4 @@ void getInput(char *buf, int buflen) {
 	}
 }
 #endif // DESKTOP
-
-#ifdef EMBEDDED
-static RingBuffer *logRingBuffer = NULL;
-void setLogRingBuffer(RingBuffer *buf) {
-	logRingBuffer = buf;
-}
-
-#endif // EMBEDDED
 
