@@ -331,6 +331,12 @@ void interruptHandler(int sig) {
 
 #endif // DESKTOP
 
+
+#ifdef EMBEDDED
+const std::size_t RING_BUFFER_SIZE = 8192;
+#endif // EMBEDDED
+
+
 #ifdef DESKTOP
 int main(int argc, char *argv[]) {
 #else
@@ -350,7 +356,11 @@ int main() {
 #ifdef EMBEDDED
 	int logLevel = LOGLEVEL_DEBUG;
 	setLogLevel(logLevel);
+	char *ringBufferMemory = (char *)malloc(RING_BUFFER_SIZE);
+	RingBuffer *ringBuffer = RingBuffer(ringBufferMemory, RING_BUFFER_SIZE);
+	setLogRingBuffer(ringBuffer);
 #endif
+
 
 #if defined(PLATFORM_OSX) // I only use CLion on OSX
 	// Stop CLion reporting this check as unreachable (which it is, on systems that don't
@@ -429,14 +439,20 @@ int main() {
 
 #if defined(DESKTOP)
 	cpu->emulate(romFile);
+	fflush(stdout);
 #else
 	cpu->emulate(false);
 #endif
 
-	fflush(stdout);
 	delete linkFactory;
 	delete memory;
 	delete cpu;
+	
+#ifdef EMBEDDED
+	delete ringBuffer;
+	free(ringBufferMemory);
+#endif // EMBEDDED
+
 	return 0;
 }
 
