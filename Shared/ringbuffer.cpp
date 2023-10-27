@@ -13,10 +13,45 @@
 
 #include "ringbuffer.h"
 
-RingBuffer::RingBuffer(char* buffer, std::size_t bufferSize) {
+RingBuffer::RingBuffer(char* myBuffer, std::size_t myBufferSize) {
+	buffer = myBuffer;
+	bufferSize = myBufferSize;
+	headIndex = 1;
+	tailIndex = contentsSize = 0;
 }
 
 RingBuffer::~RingBuffer() {
+}
+
+char RingBuffer::pop() {
+	if (contentsSize == 0) {
+		return '\0';
+	}
+	char front = buffer[headIndex];
+	headIndex++;
+	contentsSize--;
+	if (headIndex == bufferSize) {
+		headIndex = 0;
+	}
+	return front;
+}
+
+void RingBuffer::push(char newChar) {
+	tailIndex++;
+	contentsSize++;
+	if (tailIndex == bufferSize) {
+		tailIndex = 0;
+	}
+	if (contentsSize > bufferSize) {
+		if (contentsSize != 0) {
+			headIndex++;
+			contentsSize--;
+			if (headIndex == bufferSize) {
+				headIndex = 0;
+			}
+		}
+	}
+	buffer[tailIndex] = newChar;
 }
 
 

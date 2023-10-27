@@ -18,9 +18,19 @@
 
 class RingBuffer {
 public:
-	RingBuffer(char* buffer, std::size_t bufferSize);
+	RingBuffer(char* myBuffer, std::size_t myBufferSize);
 	~RingBuffer(void);
+
+	// Returns next character, or \0 if exhausted or empty
+	char pop();
+
+	// Append a character to the buffer, wrapping around if needed.
+	void push(char);
+
 protected:
+	char* buffer;
+	std::size_t headIndex, tailIndex;
+	std::size_t contentsSize, bufferSize;
 };
 
 #endif // _RINGBUFFER_H
