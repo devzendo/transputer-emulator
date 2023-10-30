@@ -385,10 +385,11 @@ Prerequisites:
   - Python (prefer 3.x but 2.x is fine; required by the GoogleTest build). Command line interpreter python needs to be
     on the PATH.
   - Java 8 JDK (for Maven).
-  - Apache Maven. I use 3.6.0. (You can build without it, it's just doing some preprocessing, running cmake in various
+  - Apache Maven. I use 3.6.0+. (You can build without it, it's just doing some preprocessing, running cmake in various
     stages, and is used for packaging and overall build control. It's just much easier with it.) Command line tool mvn
-    needs to be on the PATH.
-  - CMake. I use 3.10.3. Command line tool cmake needs to be on the PATH.
+    needs to be on the PATH. It's recommended to download the latest binary release from https://maven.apache.org/download.cgi
+    and unzip it, placing its bin directory on the PATH.
+  - CMake. I use 3.10.3+. Command line tool cmake needs to be on the PATH. 
   - If you want to build the client-examples programs, you'll need the
     <a href="https://bitbucket.org/devzendo/transputer-macro-assembler">DevZendo.org Transputer Macro Assembler</a>
     installed and on your PATH.
@@ -419,22 +420,37 @@ Prerequisites:
 - Ubuntu 16.04:
   - Clang etc.:
     apt-get install build-essential clang-6.0 make clang
+  - It's recommended to unzip cmake under /opt - the maven build expects it there. Add a symlink 
+    /opt/cmake -> /opt/cmake-3.27.7-linux-x86_64 and add /opt/cmake/bin to the PATH.
 - Ubuntu 18.04:
   - Clang etc.:
     apt-get install build-essential clang-7 make clang
+  - It's recommended to unzip cmake under /opt - the maven build expects it there. Add a symlink 
+    /opt/cmake -> /opt/cmake-3.27.7-linux-x86_64 and add /opt/cmake/bin to the PATH.
+- Linux Mint 21.12, Pop!_OS 22.04:
+  - G++ 11 etc:
+    apt-get install build-essential g++-11 make
+  - It's recommended to unzip cmake under /opt - the maven build expects it there. Add a symlink 
+    /opt/cmake -> /opt/cmake-3.27.7-linux-x86_64 and add /opt/cmake/bin to the PATH.
 - CentOS 7.6.1810:
   - Clang/LLVM 7:
     yum install centos-release-scl-rh
     yum --enablerepo=centos-sclo-rh-testing install devtoolset-7 devtoolset-7-llvm
     (Clang 5.0.1)
+  - It's recommended to unzip cmake under /opt - the maven build expects it there. Add a symlink 
+    /opt/cmake -> /opt/cmake-3.27.7-linux-x86_64 and add /opt/cmake/bin to the PATH.
 - Raspbian Stretch:
   - Clang 3.5.0
+  - It's recommended to unzip cmake under /opt - the maven build expects it there. Add a symlink 
+    /opt/cmake -> /opt/cmake-3.27.7-linux-x86_64 and add /opt/cmake/bin to the PATH.
 - Raspberry Pi Pico (build on Linux Mint)
   - The Pico SDK and toolchain:
     apt install gcc-arm-none-eabi libnewlib-arm-none-eabi build-essential
     The Pico SDK should be cloned from https://github.com/raspberrypi/pico-sdk
+    Set the `PICO_SDK_PATH` environment variable to point to this copy of the Pico SDK.
     The Pico Extras should be cloned into the directory alongside the SDK from https://github.com/raspberrypi/pico-extras
     i.e. the pico-sdk and pico-extras clones are siblings.
+    CMake can be installed from apt, no need for a manual install.
 
 The typical install location is:
 - macOS/Linux: /opt/parachute
@@ -449,8 +465,9 @@ On windows: `vcvarsall.bat` as shown above
 Then for all desktop builds:
 `mvn clean compile -P build`
 
+NOTE: if you have a test failure from testfilesystem, set the TMPDIR environment variable to /tmp.
+
 For Raspberry Pi Pico:
-Set the `PICO_SDK_PATH` environment variable to point to a copy of the Pico SDK.
 `mvn -DCROSS=PICO clean compile -P build`
 
 This will:
