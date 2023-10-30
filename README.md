@@ -355,14 +355,23 @@ Emulator - the T414/T800/T801/T805 emulator.
 
 # Building and Installing
 The distribution currently builds under the following systems:
-* Apple macOS 'Mojave' 10.14 and 'Catalina' 10.15 (untested on more recent versions)
-* Linux Mint 21.12 Intel x86-64
-* Raspberry Pi Pico (cross-compiled on Linux Mint)
-* Windows 10 64-bit (untested on earlier versions e.g. XP, 7, 8, 8.1)
-* CentOS Linux 7.6 Intel x86-64
-* Raspbian Stretch
-* Ubuntu Linux 16.04.4 LTS Intel x86-64
-* Ubuntu Linux 18.04.2 LTS Intel x86-64
+* Apple macOS
+  * 'Mojave' 10.14 
+  * 'Catalina' 10.15 
+  * (untested on more recent versions)
+* Linux
+  * Linux Mint 21.12 Intel x86-64
+  * Pop!_OS 22.04 Intel x86-64
+  * CentOS Linux 7.6 Intel x86-64
+  * Ubuntu Linux 16.04.4 LTS Intel x86-64
+  * Ubuntu Linux 18.04.2 LTS Intel x86-64
+  * Raspbian Stretch
+* Microsoft Windows
+  * Windows 10 64-bit
+  * (untested on earlier versions e.g. XP, 7, 8, 8.1)
+  * Due to lack of compatible TPM hardware, I cannot build on Windows 11 or later.
+* Embedded microcontrollers
+  * Raspberry Pi Pico (cross-compiled on Linux Mint and Pop!_OS)
 
 C++ Dependencies:
 * Google Test and Google Mock
