@@ -21,11 +21,14 @@ public:
 	RingBuffer(char* myBuffer, std::size_t myBufferSize);
 	~RingBuffer(void);
 
-	// Returns next character, or \0 if exhausted or empty
+	// Returns next character, or \0 if exhausted or empty.
 	char pop();
 
 	// Append a character to the buffer, wrapping around if needed.
 	void push(char);
+
+	// Empties the ringbuffer; resets it to initial conditions.
+	void clear();
 
 protected:
 	char* buffer;

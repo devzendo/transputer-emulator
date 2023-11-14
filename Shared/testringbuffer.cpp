@@ -111,6 +111,13 @@ TEST_F(RingBufferTest, Oscillate)
 	EXPECT_EQ(ringBuffer->pop(), '\0');
 }
 
+TEST_F(RingBufferTest, Clear)
+{
+	ringBuffer->push('3');
+	ringBuffer->clear();
+	EXPECT_EQ(ringBuffer->pop(), '\0');
+}
+
 
 
 

@@ -16,11 +16,15 @@
 RingBuffer::RingBuffer(char* myBuffer, std::size_t myBufferSize) {
 	buffer = myBuffer;
 	bufferSize = myBufferSize;
-	headIndex = 1;
-	tailIndex = contentsSize = 0;
+	clear();
 }
 
 RingBuffer::~RingBuffer() {
+}
+
+void RingBuffer::clear() {
+	headIndex = 1;
+	tailIndex = contentsSize = 0;
 }
 
 char RingBuffer::pop() {
