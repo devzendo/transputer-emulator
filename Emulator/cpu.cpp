@@ -162,69 +162,22 @@ CPU::~CPU() {
 	}
 }
 
+/*
+ * The EMBEDDED variant just has the monitor with registers, dumps, disassembly,
+ * and breakpoints (but no breakpoints set from the command line since there
+ * isn't one).
+ * The DESKTOP variant adds a symbol table (that can be loaded from a map file),
+ * eForth stack address / colon-word / data and return stack diagnostics.
+ */
 #ifdef DESKTOP
 
 void CPU::initialiseSymbolTable(SymbolTable *symbolTable) {
 	mySymbolTable = symbolTable;
 }
 
-void CPU::addBreakpoint(const WORD32 breakpointAddress) {
-	BreakpointAddresses.insert(breakpointAddress);
-}
-
-void CPU::removeBreakpoint(const WORD32 breakpointAddress) {
-	if (BreakpointAddresses.erase(breakpointAddress) == 0) {
-		logInfoF("Breakpoint not present: %08X", breakpointAddress);
-	}
-}
-
 void CPU::seteForthStackAddresses(WORD32 aSPP, WORD32 aRPP) {
     SPP = aSPP;
     RPP = aRPP;
-}
-
-void CPU::DumpRegs(int logLevel) {
-	logFormat(logLevel, "%c%c%c%c%c%c A #%08X B #%08X C #%08X W #%08X",
-		(Wdesc_HiPriority(Wdesc) ? 'H' : 'L'),
-		(IS_FLAG_SET(EmulatorState_ErrorFlag) ? 'E' : '-'),
-		(IS_FLAG_SET(EmulatorState_FErrorFlag) ? 'F' : '-'),
-		(IS_FLAG_SET(EmulatorState_HaltOnError) ? 'H' : '-'),
-		(IS_FLAG_SET(EmulatorState_DescheduleRequired) ? 'D' :
-		(IS_FLAG_SET(EmulatorState_DeschedulePending) ? 'd' : '-')),
-		(IS_FLAG_SET(EmulatorState_Interrupt) ? 'I' : '-'),
-		Areg, Breg, Creg, Wdesc);
-	bool aSymbol = mySymbolTable->addressExists(Areg);
-	bool bSymbol = mySymbolTable->addressExists(Breg);
-	bool cSymbol = mySymbolTable->addressExists(Creg);
-	bool wSymbol = mySymbolTable->addressExists(Wdesc);
-	if (aSymbol | bSymbol | cSymbol | wSymbol) {
-		logFormat(logLevel, "       A %9s B %9s C %9s W %9s", 
-			mySymbolTable->symbolOrEmptyString(Areg).c_str(), mySymbolTable->symbolOrEmptyString(Breg).c_str(),
-			mySymbolTable->symbolOrEmptyString(Creg).c_str(), mySymbolTable->symbolOrEmptyString(Wdesc).c_str());
-	}
-	bool oSymbol = mySymbolTable->addressExists(Oreg);
-	bool iSymbol = mySymbolTable->addressExists(IPtr);
-	logFormat(logLevel,   "       O #%08X I #%08X", Oreg, IPtr);
-	if (oSymbol | iSymbol) {
-		logFormat(logLevel, "       O %9s I %9s",
-			mySymbolTable->symbolOrEmptyString(Oreg).c_str(), mySymbolTable->symbolOrEmptyString(IPtr).c_str());
-	}
-}
-
-void CPU::DumpQueueRegs(int logLevel) {
-	logFormat(logLevel, "       Hf#%08X Hb#%08X Lf#%08X Lb#%08X",
-		HiHead, HiTail, LoHead, LoTail);
-}
-
-void CPU::DumpClockRegs(int logLevel, WORD32 instCycles) {
-	int qr;
-	qr = LoClock - LoClockLastQuantumExpiry;
-	if (qr >= MaxQuantum)
-		qr = 0;
-	else
-		qr = MaxQuantum - qr;
-	logFormat(logLevel, "       Hc#%08X Lc#%08X Qr#%08X C##%08X",
-		HiClock, LoClock, qr, instCycles);
 }
 
 void CPU::DumpeForthDiagnostics(int logLevel) {
@@ -310,6 +263,75 @@ void CPU::DumpeForthDiagnostics(int logLevel) {
 	SET_FLAGS(oldflags);
 }
 
+#endif // DESKTOP
+
+void CPU::addBreakpoint(const WORD32 breakpointAddress) {
+	BreakpointAddresses.insert(breakpointAddress);
+}
+
+void CPU::removeBreakpoint(const WORD32 breakpointAddress) {
+	if (BreakpointAddresses.erase(breakpointAddress) == 0) {
+		logInfoF("Breakpoint not present: %08X", breakpointAddress);
+	}
+}
+
+void CPU::showBreakpointAddresses() {
+    if (BreakpointAddresses.empty()) {
+        logInfo("No breakpoints are set");
+    } else {
+        for (set<WORD32>::const_iterator iter = BreakpointAddresses.begin();
+             iter != BreakpointAddresses.end(); iter++) {
+            logInfoF("Breakpoint %08X", *iter);
+        }
+    }
+}
+
+void CPU::DumpRegs(int logLevel) {
+	logFormat(logLevel, "%c%c%c%c%c%c A #%08X B #%08X C #%08X W #%08X",
+		(Wdesc_HiPriority(Wdesc) ? 'H' : 'L'),
+		(IS_FLAG_SET(EmulatorState_ErrorFlag) ? 'E' : '-'),
+		(IS_FLAG_SET(EmulatorState_FErrorFlag) ? 'F' : '-'),
+		(IS_FLAG_SET(EmulatorState_HaltOnError) ? 'H' : '-'),
+		(IS_FLAG_SET(EmulatorState_DescheduleRequired) ? 'D' :
+		(IS_FLAG_SET(EmulatorState_DeschedulePending) ? 'd' : '-')),
+		(IS_FLAG_SET(EmulatorState_Interrupt) ? 'I' : '-'),
+		Areg, Breg, Creg, Wdesc);
+#ifdef DESKTOP
+	bool aSymbol = mySymbolTable->addressExists(Areg);
+	bool bSymbol = mySymbolTable->addressExists(Breg);
+	bool cSymbol = mySymbolTable->addressExists(Creg);
+	bool wSymbol = mySymbolTable->addressExists(Wdesc);
+	if (aSymbol | bSymbol | cSymbol | wSymbol) {
+		logFormat(logLevel, "       A %9s B %9s C %9s W %9s", 
+			mySymbolTable->symbolOrEmptyString(Areg).c_str(), mySymbolTable->symbolOrEmptyString(Breg).c_str(),
+			mySymbolTable->symbolOrEmptyString(Creg).c_str(), mySymbolTable->symbolOrEmptyString(Wdesc).c_str());
+	}
+	bool oSymbol = mySymbolTable->addressExists(Oreg);
+	bool iSymbol = mySymbolTable->addressExists(IPtr);
+	logFormat(logLevel,   "       O #%08X I #%08X", Oreg, IPtr);
+	if (oSymbol | iSymbol) {
+		logFormat(logLevel, "       O %9s I %9s",
+			mySymbolTable->symbolOrEmptyString(Oreg).c_str(), mySymbolTable->symbolOrEmptyString(IPtr).c_str());
+	}
+#endif // DESKTOP
+}
+
+void CPU::DumpQueueRegs(int logLevel) {
+	logFormat(logLevel, "       Hf#%08X Hb#%08X Lf#%08X Lb#%08X",
+		HiHead, HiTail, LoHead, LoTail);
+}
+
+void CPU::DumpClockRegs(int logLevel, WORD32 instCycles) {
+	int qr;
+	qr = LoClock - LoClockLastQuantumExpiry;
+	if (qr >= MaxQuantum)
+		qr = 0;
+	else
+		qr = MaxQuantum - qr;
+	logFormat(logLevel, "       Hc#%08X Lc#%08X Qr#%08X C##%08X",
+		HiClock, LoClock, qr, instCycles);
+}
+
 // Disassemble from addr all full instructions up to addr+maxlen
 // return number of bytes actually disassembled, i.e. don't
 // disassemble a part instruction.
@@ -325,9 +347,9 @@ WORD32 CPU::disassembleRange(WORD32 addr, WORD32 maxlen) {
 	WORD32 i;
 	line[0] = '\0';
 #if defined(PLATFORM_WINDOWS)
-    sprintf_s(line, 256, "%08X ", addr);
+	sprintf_s(line, 256, "%08X ", addr);
 #elif defined(PLATFORM_OSX) || defined(PLATFORM_LINUX)
-    sprintf(line, "%08X ", addr);
+	sprintf(line, "%08X ", addr);
 #endif
 	for (caddr = addr; caddr < addr + maxlen; caddr++) {
 		BYTE8 b = myMemory->getInstruction(caddr);
@@ -335,10 +357,10 @@ WORD32 CPU::disassembleRange(WORD32 addr, WORD32 maxlen) {
 		BYTE8 cInstruction = b & 0xf0;
 		cOreg |= (b & 0x0f);
 #if defined(PLATFORM_WINDOWS)
-        sprintf_s(misc, 256, "%02X ", b);
+		sprintf_s(misc, 256, "%02X ", b);
 		strcat_s(line, 256, misc); // TODO: fix potential BUFFER OVERFLOW
 #elif defined(PLATFORM_OSX) || defined(PLATFORM_LINUX)
-        sprintf(misc, "%02X ", b);
+		sprintf(misc, "%02X ", b);
 		strcat(line, misc); // TODO: fix potential BUFFER OVERFLOW
 #endif
 		clen++;
@@ -377,11 +399,11 @@ WORD32 CPU::disassembleRange(WORD32 addr, WORD32 maxlen) {
 				// initialise for next op
 				oprStart = caddr + 1;
 #if defined(PLATFORM_WINDOWS)
-                sprintf_s(line, 256, "%08X ", oprStart);
+				sprintf_s(line, 256, "%08X ", oprStart);
 #elif defined(PLATFORM_OSX) || defined(PLATFORM_LINUX)
-                sprintf(line, "%08X ", oprStart);
+				sprintf(line, "%08X ", oprStart);
 #endif
-                cOreg = 0;
+				cOreg = 0;
 				retval += clen;
 				clen = 0;
 				break;
@@ -401,11 +423,11 @@ WORD32 CPU::disassembleRange(WORD32 addr, WORD32 maxlen) {
 				// initialise for next op
 				oprStart = caddr + 1;
 #if defined(PLATFORM_WINDOWS)
-                sprintf_s(line, 256, "%08X ", oprStart);
+				sprintf_s(line, 256, "%08X ", oprStart);
 #elif defined(PLATFORM_OSX) || defined(PLATFORM_LINUX)
-                sprintf(line, "%08X ", oprStart);
+				sprintf(line, "%08X ", oprStart);
 #endif
-                cOreg = 0;
+				cOreg = 0;
 				retval += clen;
 				clen = 0;
 				break;
@@ -420,17 +442,29 @@ void CPU::disassembleCurrInstruction(int logLevel) {
 		case D_nfix:
 			if ((flags & DebugFlags_DebugLevel) >= Debug_OprCodes) {
 				// The IPtr of this instruction is needed for prefixes
+#ifdef DESKTOP
 				logFormat(logLevel, "#%08X%s: %s", IPtr - 1, 
 					mySymbolTable->possibleSymbol(IPtr - 1),
 					disassembleDirectOperation(Instruction, Oreg));
+#endif
+#ifdef EMBEDDED
+				logFormat(logLevel, "#%08X: %s", IPtr - 1, 
+					disassembleDirectOperation(Instruction, Oreg));
+#endif
 			}
 			break;
 		case D_opr:
 			if ((flags & DebugFlags_DebugLevel) >= Debug_Disasm) {
 				if ((flags & DebugFlags_DebugLevel) >= Debug_OprCodes) {
+#ifdef DESKTOP
 					logFormat(logLevel, ">%08X%s: %s", IPtr - 1,
 							mySymbolTable->possibleSymbol(IPtr - 1),
 							disassembleIndirectOperation(Oreg, Areg));
+#endif
+#ifdef EMBEDEDD
+					logFormat(logLevel, ">%08X: %s", IPtr - 1,
+							disassembleIndirectOperation(Oreg, Areg));
+#endif
 				} else {
 					logFormat(logLevel, "#%08X: %s",
 							InstructionStartIPtr,
@@ -441,9 +475,15 @@ void CPU::disassembleCurrInstruction(int logLevel) {
 		default: // another direct instruction
 			if ((flags & DebugFlags_DebugLevel) >= Debug_Disasm) {
 				if ((flags & DebugFlags_DebugLevel) >= Debug_OprCodes) {
+#ifdef DESKTOP
 					logFormat(logLevel, ">%08X%s: %s", IPtr - 1,
 							mySymbolTable->possibleSymbol(IPtr - 1),
 							disassembleDirectOperation(Instruction, Oreg));
+#endif
+#ifdef EMBEDDED
+					logFormat(logLevel, ">%08X: %s", IPtr - 1,
+							disassembleDirectOperation(Instruction, Oreg));
+#endif
 				} else {
 					logFormat(logLevel, "#%08X: %s",
 							InstructionStartIPtr,
@@ -479,22 +519,12 @@ void dumpFlags() {
 		logInfo("-- TIMER INSTRUCTION");
 }
 
-void CPU::showBreakpointAddresses() {
-    if (BreakpointAddresses.empty()) {
-        logInfo("No breakpoints are set");
-    } else {
-        for (set<WORD32>::const_iterator iter = BreakpointAddresses.begin();
-             iter != BreakpointAddresses.end(); iter++) {
-            logInfoF("Breakpoint %08X", *iter);
-        }
-    }
-}
-
 // Monitor. Return true to single step to next instruction; false to quit emulator or monitor (check flags).
 inline bool CPU::monitor(void) {
 	char instr[80];
 	size_t len;
 	WORD32 a1, a2;
+
 	// The instruction has just been disassembled, but we allow for
 	// other commands to be issued. Return exits the monitor,
 	// causing interpretation to continue.
@@ -545,93 +575,53 @@ inline bool CPU::monitor(void) {
 		} else if (strcmp(instr, "ci") == 0) {
 			disassembleCurrInstruction(LOGLEVEL_INFO);
 		} else if (strncmp("di", instr, 2) == 0) {
-#if defined(PLATFORM_WINDOWS)
-			if (sscanf_s(instr, "di %x %x", &a1, &a2) == 2) {
-#elif defined(PLATFORM_OSX) || defined(PLATFORM_LINUX)
 			if (sscanf(instr, "di %x %x", &a1, &a2) == 2) {
-#endif
 				CurrDisasmAddress = a1;
 				CurrDisasmLen = a2;
-#if defined(PLATFORM_WINDOWS)
-			} else if (sscanf_s(instr, "di %x", &a1) == 1) {
-#elif defined(PLATFORM_OSX) || defined(PLATFORM_LINUX)
-            } else if (sscanf(instr, "di %x", &a1) == 1) {
-#endif
+			} else if (sscanf(instr, "di %x", &a1) == 1) {
 				CurrDisasmAddress = a1;
 			}
 			CurrDisasmAddress += disassembleRange(CurrDisasmAddress, CurrDisasmLen);
 		} else if (strncmp("db", instr, 2) == 0) {
-#if defined(PLATFORM_WINDOWS)
-			if (sscanf_s(instr, "db %x %x", &a1, &a2) == 2) {
-#elif defined(PLATFORM_OSX) || defined(PLATFORM_LINUX)
 			if (sscanf(instr, "db %x %x", &a1, &a2) == 2) {
-#endif
 				CurrDataAddress = a1;
 				CurrDataLen = a2;
-#if defined(PLATFORM_WINDOWS)
-            } else if (sscanf_s(instr, "db %x", &a1) == 1) {
-#elif defined(PLATFORM_OSX) || defined(PLATFORM_LINUX)
-            } else if (sscanf(instr, "db %x", &a1) == 1) {
-#endif
+			} else if (sscanf(instr, "db %x", &a1) == 1) {
 				CurrDataAddress = a1;
 			}
 			//logInfoF("db addr %08X len %08X", CurrDataAddress, CurrDataLen);
 			myMemory->hexDump(CurrDataAddress, CurrDataLen);
 			CurrDataAddress += CurrDataLen;
 		} else if (strncmp("dw", instr, 2) == 0) {
-#if defined(PLATFORM_WINDOWS)
-			if (sscanf_s(instr, "dw %x %x", &a1, &a2) == 2) {
-#elif defined(PLATFORM_OSX) || defined(PLATFORM_LINUX)
 			if (sscanf(instr, "dw %x %x", &a1, &a2) == 2) {
-#endif
 				CurrDataAddress = a1;
 				CurrDataLen = a2;
-#if defined(PLATFORM_WINDOWS)
-            } else if (sscanf_s(instr, "dw %x", &a1) == 1) {
-#elif defined(PLATFORM_OSX) || defined(PLATFORM_LINUX)
 			} else if (sscanf(instr, "dw %x", &a1) == 1) {
-#endif
 				CurrDataAddress = a1;
 			}
 			//logInfoF("dw addr %08X len %08X", CurrDataAddress, CurrDataLen);
 			myMemory->hexDumpWords(CurrDataAddress, CurrDataLen);
 			CurrDataAddress += CurrDataLen;
-        } else if (strncmp("w", instr, 1) == 0) {
-            CurrDataAddress = Wdesc_WPtr(Wdesc);
-#if defined(PLATFORM_WINDOWS)
-			if (sscanf_s(instr, "w %x", &a1) == 1) {
-#elif defined(PLATFORM_OSX) || defined(PLATFORM_LINUX)
-            if (sscanf(instr, "w %x", &a1) == 1) {
-#endif
-                CurrDataLen = a1 << 2;
-            } else {
-                CurrDataLen = LastAjwInBytes;
-            }
-            myMemory->hexDumpWords(CurrDataAddress, CurrDataLen);
-        } else if (strncmp("b?", instr, 2) == 0) {
-		    showBreakpointAddresses();
+		} else if (strncmp("w", instr, 1) == 0) {
+			CurrDataAddress = Wdesc_WPtr(Wdesc);
+			if (sscanf(instr, "w %x", &a1) == 1) {
+				CurrDataLen = a1 << 2;
+			} else {
+				CurrDataLen = LastAjwInBytes;
+			}
+			myMemory->hexDumpWords(CurrDataAddress, CurrDataLen);
+		} else if (strncmp("b?", instr, 2) == 0) {
+			showBreakpointAddresses();
 		} else if (strncmp("b+", instr, 2) == 0) {
-#if defined(PLATFORM_WINDOWS)
-			if (sscanf_s(instr, "b+ %x", &a1) == 1) {
-#elif defined(PLATFORM_OSX) || defined(PLATFORM_LINUX)
 			if (sscanf(instr, "b+ %x", &a1) == 1) {
-#endif
 				addBreakpoint(a1);
 			}
 		} else if (strncmp("b-", instr, 2) == 0) {
-#if defined(PLATFORM_WINDOWS)
-			if (sscanf_s(instr, "b- %x", &a1) == 1) {
-#elif defined(PLATFORM_OSX) || defined(PLATFORM_LINUX)
 			if (sscanf(instr, "b- %x", &a1) == 1) {
-#endif
 				removeBreakpoint(a1);
 			}
-        } else if (strncmp("b", instr, 1) == 0) {
-#if defined(PLATFORM_WINDOWS)
-			if (sscanf_s(instr, "b %x", &a1) == 1) {
-#elif defined(PLATFORM_OSX) || defined(PLATFORM_LINUX)
+		} else if (strncmp("b", instr, 1) == 0) {
 			if (sscanf(instr, "b %x", &a1) == 1) {
-#endif
 				addBreakpoint(a1);
 			} else {
 				showBreakpointAddresses();
@@ -645,19 +635,19 @@ inline bool CPU::monitor(void) {
 		} else if (strcmp(instr, "f") == 0) {
 			dumpFlags();
 		} else if (strcmp(instr, "q") == 0) {
-            SET_FLAGS(EmulatorState_Terminate);
-            return false;
-        } else if (strcmp(instr, "t") == 0) {
-            if (IS_FLAG_SET(Debug_OprCodes)) {
-                logInfo("Stopping disassembly");
-                CLEAR_FLAGS(Debug_OprCodes);
-                CLEAR_FLAGS(MemAccessDebug_ReadWriteData);
-            } else {
-                logInfo("Starting disassembly");
-                SET_FLAGS(Debug_OprCodes);
-                SET_FLAGS(MemAccessDebug_ReadWriteData);
-            }
-        } else if (strcmp(instr, "g") == 0) {
+			SET_FLAGS(EmulatorState_Terminate);
+			return false;
+		} else if (strcmp(instr, "t") == 0) {
+			if (IS_FLAG_SET(Debug_OprCodes)) {
+				logInfo("Stopping disassembly");
+				CLEAR_FLAGS(Debug_OprCodes);
+				CLEAR_FLAGS(MemAccessDebug_ReadWriteData);
+			} else {
+				logInfo("Starting disassembly");
+				SET_FLAGS(Debug_OprCodes);
+				SET_FLAGS(MemAccessDebug_ReadWriteData);
+			}
+		} else if (strcmp(instr, "g") == 0) {
 			CLEAR_FLAGS(DebugFlags_Monitor);
 			return false;
 		} else {
@@ -666,9 +656,6 @@ inline bool CPU::monitor(void) {
 		logInfo("");
 	}
 }
-
-#endif // DESKTOP
-
 
 bool CPU::swapContextForBreakpointInstruction(void) {
 	bool hiPriority = Wdesc_HiPriority(Wdesc);
@@ -684,10 +671,8 @@ bool CPU::swapContextForBreakpointInstruction(void) {
 }
 
 inline void CPU::interpret(void) {
-#ifdef DESKTOP
 	bool hitBreakpoint = IS_FLAG_SET(EmulatorState_BreakpointInstruction) ||
 						 BreakpointAddresses.count(IPtr) == 1;
-#endif // DESKTOP
 
 	// Fetch the current instruction
 	CurrInstruction = myMemory->getInstruction(IPtr++);
@@ -695,7 +680,6 @@ inline void CPU::interpret(void) {
 	Instruction = CurrInstruction & 0xf0;
 	Oreg |= (CurrInstruction & 0x0f);
 
-#ifdef DESKTOP
 	//logDebugF("CurrInstruction =0x%02X Oreg=0x%08X", CurrInstruction, Oreg);
 	// Disassemble it
 	if (IS_FLAG_SET(DebugFlags_DebugLevel | DebugFlags_Monitor)) {
@@ -706,12 +690,15 @@ inline void CPU::interpret(void) {
 		SET_FLAGS(DebugFlags_Monitor); // Enable monitor mode, until you exit it with 'g' (or 'q').
 		CLEAR_FLAGS(EmulatorState_BreakpointInstruction); // Will be set on the next breakpoint instruction.
 	}
-	if (hitBreakpoint || IS_FLAG_SET(DebugFlags_Monitor)) {
+	if (IS_FLAG_SET(DebugFlags_Monitor)) {
 		if (!monitor()) {
 			return; // it's terminated if it returns false
 		}
 	}
-#endif // DESKTOP
+
+#ifdef EMBEDDED
+	// TODO if enter-monitor button detected (perhaps on each quantum expiry?) enter monitor mode..
+#endif // EMBEDDED
 
 	// Execute instruction, assuming one cycle per instruction unless
 	// set otherwise.
@@ -1585,7 +1572,7 @@ inline void CPU::interpret(void) {
 							else if (ChanAddr == Wdesc) {
 								// Already waiting on this channel so ignore
 								; // Do nothing
-	                        }
+							}
 							// Another process is waiting on channel Breg?
 							else {
 								// Set flag to show guard is ready

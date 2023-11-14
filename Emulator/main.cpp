@@ -332,11 +332,6 @@ void interruptHandler(int sig) {
 #endif // DESKTOP
 
 
-#ifdef EMBEDDED
-const std::size_t RING_BUFFER_SIZE = 8192;
-#endif // EMBEDDED
-
-
 #ifdef DESKTOP
 int main(int argc, char *argv[]) {
 #else
@@ -356,9 +351,6 @@ int main() {
 #ifdef EMBEDDED
 	int logLevel = LOGLEVEL_DEBUG;
 	setLogLevel(logLevel);
-	char *ringBufferMemory = (char *)malloc(RING_BUFFER_SIZE);
-	RingBuffer *ringBuffer = RingBuffer(ringBufferMemory, RING_BUFFER_SIZE);
-	setLogRingBuffer(ringBuffer);
 #endif
 
 
@@ -448,11 +440,6 @@ int main() {
 	delete memory;
 	delete cpu;
 	
-#ifdef EMBEDDED
-	delete ringBuffer;
-	free(ringBufferMemory);
-#endif // EMBEDDED
-
 	return 0;
 }
 

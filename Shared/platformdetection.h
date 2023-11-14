@@ -35,6 +35,11 @@
 
 #endif
 
+#if defined(PLATFORM_WINDOWS)
+// See https://stackoverflow.com/questions/54525846/alternative-to-sscanf-that-makes-both-linux-and-windows-happy
+// This should obviate the need for windows-specific sscanf_s idiocy and the like.
+#define _CRT_SECURE_CPP_OVERLOAD_STANDARD_NAMES
+#endif
 
 // OSX
 

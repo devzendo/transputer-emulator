@@ -20,10 +20,6 @@
 #include <fstream>
 #endif 
 
-#ifdef EMBEDDED
-#include "ringbuffer.h"
-#endif
-
 #include "log.h"
 
 static const char *tags[5] = {
@@ -50,47 +46,6 @@ void logToFile(const char *fileName) {
 #endif // DESKTOP
 
 
-#ifdef EMBEDDED
-static RingBuffer *logBuffer = nullptr;
-static std::size_t logBufferSize = 0;
-
-void setLogRingBuffer(RingBuffer *myBuffer, std::size_t myBufferSize) {
-	logBuffer = myBuffer;
-	logBufferSize = myBufferSize;
-}
-
-char popLogChar() {
-	if (logBuffer != nullptr) {
-		return logBuffer->pop();
-	}
-	return '\0';
-}
-
-void pushLogChar(char ch) {
-	if (logBuffer != nullptr) {
-		logBuffer->push(ch);
-	}
-}
-
-void pushLogString(char *s) {
-	if (logBuffer != nullptr) {
-		for (char *p=s; *p != '\0'; p++) {
-			logBuffer->push(*p);
-		}
-	}
-}
-
-void pushLogStringLn(char *s) {
-	if (logBuffer != nullptr) {
-		for (char *p=s; *p != '\0'; p++) {
-			logBuffer->push(*p);
-		}
-		logBuffer->push('\n');
-	}
-}
-#endif // EMBEDDED
-
-
 void logFlush(void) {
 #ifdef DESKTOP
     myOutputStream->flush();
@@ -106,15 +61,6 @@ void _logDebug(int l, const char *f, const char *s) {
 	if (myLogLevel <= LOGLEVEL_DEBUG) {
 #ifdef DESKTOP
 		*myOutputStream << tags[LOGLEVEL_DEBUG] << f << ":" << l << " " << s << std::endl;
-#elif EMBEDDED
-		pushLogString((char *)tags[LOGLEVEL_DEBUG]);
-		pushLogString((char *)f);
-		pushLogChar(':');
-		char lineNo[10];
-		sprintf(lineNo, "%d", l);
-		pushLogString(lineNo);
-		pushLogChar(' ');
-		pushLogStringLn((char *)s);
 #endif
 	}
 }
@@ -136,15 +82,6 @@ void _logDebugF(int l, const char *f, const char *fmt, ...) {
 			if (n >= -1 && n < size) {
 #ifdef DESKTOP
 				*myOutputStream << tags[LOGLEVEL_DEBUG] << f << ":" << l << " " << buf << std::endl;
-#elif EMBEDDED
-				pushLogString((char *)tags[LOGLEVEL_DEBUG]);
-				pushLogString((char *)f);
-				pushLogChar(':');
-				char lineNo[10];
-				sprintf(lineNo, "%d", l);
-				pushLogString(lineNo);
-				pushLogChar(' ');
-				pushLogStringLn(buf);
 #endif
 				free(buf);
 				return;
@@ -181,9 +118,6 @@ void logFormat(int level, const char *fmt, ...) {
 			if (n >= -1 && n < size) {
 #ifdef DESKTOP
 				*myOutputStream << tags[level] << buf << std::endl;
-#elif EMBEDDED
-				pushLogString((char *)tags[level]);
-				pushLogStringLn(buf);
 #endif
 				free(buf);
 				return;
@@ -202,64 +136,41 @@ void logFormat(int level, const char *fmt, ...) {
 	}
 }
 
-void logInfo(const char *s) {
-	if (myLogLevel <= LOGLEVEL_INFO) {
+void logLevel(const int level, const char *s) {
+	if (myLogLevel <= level) {
 #ifdef DESKTOP
-		*myOutputStream << tags[LOGLEVEL_INFO] << s << std::endl;
-#elif EMBEDDED
-		pushLogString((char *)tags[LOGLEVEL_INFO]);
-		pushLogStringLn((char *)s);
+		*myOutputStream << tags[level] << s << std::endl;
 #endif
 	}
+}
+
+void logInfo(const char *s) {
+	logLevel(LOGLEVEL_INFO, s);
 }
 
 void logWarn(const char *s) {
-	if (myLogLevel <= LOGLEVEL_WARN) {
-#ifdef DESKTOP
-		*myOutputStream << tags[LOGLEVEL_WARN] << s << std::endl;
-#elif EMBEDDED
-		pushLogString((char *)tags[LOGLEVEL_WARN]);
-		pushLogStringLn((char *)s);
-#endif
-	}
+	logLevel(LOGLEVEL_WARN, s);
 }
 
 void logError(const char *s) {
-	if (myLogLevel <= LOGLEVEL_ERROR) {
-#ifdef DESKTOP
-		*myOutputStream << tags[LOGLEVEL_ERROR] << s << std::endl;
-#elif EMBEDDED
-		pushLogString((char *)tags[LOGLEVEL_ERROR]);
-		pushLogStringLn((char *)s);
-#endif
-
-	}
+	logLevel(LOGLEVEL_ERROR, s);
 }
 
 void logFatal(const char *s) {
-	if (myLogLevel <= LOGLEVEL_FATAL) {
-#ifdef DESKTOP
-		*myOutputStream << tags[LOGLEVEL_FATAL] << s << std::endl;
-#elif EMBEDDED
-		pushLogString((char *)tags[LOGLEVEL_FATAL]);
-		pushLogStringLn((char *)s);
-#endif
-	}
+	logLevel(LOGLEVEL_FATAL, s);
 }
 
 void logBug(const char *s) {
 #ifdef DESKTOP
 	*myOutputStream << "*BUG* " << s << std::endl;
-#elif EMBEDDED
-	pushLogString((char *)"*BUG*");
-	pushLogStringLn((char *)s);
 #endif
 }
 
-#ifdef DESKTOP
 void logPrompt(void) {
+#ifdef DESKTOP
 	*myOutputStream << "> ";
 	myOutputStream->flush();
+#endif
 }
 
 void getInput(char *buf, int buflen) {
@@ -267,5 +178,4 @@ void getInput(char *buf, int buflen) {
 		// do nothing. casting fgets' output to void still causes warnings
 	}
 }
-#endif // DESKTOP
 
