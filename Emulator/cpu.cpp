@@ -690,7 +690,7 @@ inline void CPU::interpret(void) {
 		SET_FLAGS(DebugFlags_Monitor); // Enable monitor mode, until you exit it with 'g' (or 'q').
 		CLEAR_FLAGS(EmulatorState_BreakpointInstruction); // Will be set on the next breakpoint instruction.
 	}
-	if (IS_FLAG_SET(DebugFlags_Monitor)) {
+	if (hitBreakpoint || IS_FLAG_SET(DebugFlags_Monitor)) {
 		if (!monitor()) {
 			return; // it's terminated if it returns false
 		}
@@ -2123,10 +2123,12 @@ inline void CPU::interpret(void) {
 						logInfo("Stopping disassembly");
 						CLEAR_FLAGS(Debug_OprCodes);
 						CLEAR_FLAGS(MemAccessDebug_ReadWriteData);
+						CLEAR_FLAGS(DebugFlags_LinkComms);
 					} else {
 						logInfo("Starting disassembly");
 						SET_FLAGS(Debug_OprCodes);
 						SET_FLAGS(MemAccessDebug_ReadWriteData);
+						SET_FLAGS(DebugFlags_LinkComms);
 					}
 					break;
 				case X_terminate:
