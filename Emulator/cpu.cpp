@@ -205,7 +205,7 @@ void CPU::DumpeForthDiagnostics(int logLevel) {
 				symbol == "SWAP" || symbol == "OVER" ||
 				symbol == "ZLESS" || symbol == "ANDD" ||
 				symbol == "ORR" || symbol == "XORR" ||
-				symbol == "UMPLUS";
+				symbol == "UMPLUS" || symbol == "UMMOD";
 			if (isCode) {
 				CodeSymbol = symbol;
 			}
@@ -213,7 +213,7 @@ void CPU::DumpeForthDiagnostics(int logLevel) {
 			if (!WordStack.empty() && WordStack.back() == "DOUSE" && CodeSymbol == "EXIT") {
 				WordStack.pop_back();
 			}
-			if (symbol == "EXIT" || symbol == "DOVAR" || symbol == "EXECU") {
+			if ((symbol == "EXIT" || symbol == "DOVAR" || symbol == "EXECU") && !WordStack.empty()) {
 				WordStack.pop_back();
 			} else {
 				if (symbol == "DOLST") {
