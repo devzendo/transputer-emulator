@@ -590,6 +590,10 @@ void ProtocolHandler::reqPollKey() {
     const WORD16 size = 1;
     try {
         logDebug("Poll key from stream #1");
+        // TDS 2nd edition says the response is "result key", and if a keystroke
+        // is not available, the call returns immediately with a nonzero
+        // result... suggests that it always returns two bytes.. but Inmos'
+        // iserver replies as I do here, with a RES_SUCCESS/key or RES_ERROR.
         if (myPlatform.isConsoleCharAvailable()) {
             // Offsets into the transaction buffer...
             // 0 frame size lsb
@@ -601,6 +605,7 @@ void ProtocolHandler::reqPollKey() {
             logDebugF("Read console char 0x%x", consoleChar);
             codec.put(consoleChar);
         } else {
+            logDebug("No console char available");
             codec.put(RES_ERROR);
         }
     } catch (const std::range_error &e) {
