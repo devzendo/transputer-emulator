@@ -51,5 +51,8 @@ const int MaxQuantum=2048;          // Quantum of execution for low priority tas
 const WORD32 Positive_Inf=((WORD32) 0x7f800000);
 const WORD32 Negative_Inf=((WORD32) 0xff800000);
 
+const SWORD64 MostNeg=0xFFFFFFFF80000000;
+const SWORD64 MostPos=0x000000007FFFFFFF;
+
 #endif // _CONSTANTS_H
 
