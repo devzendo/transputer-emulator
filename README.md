@@ -59,6 +59,7 @@ Second release (work in progress):
   * !IO: Initialise UART
 * Allow validation using Mike's TVS and pass tests for all implemented instructions
 * Add a build for the Raspberry Pi Pico
+* Builds are now for Ubuntu 24.04, macOS Catalina, Raspberry Pi Debian, Windows 10, Rasperry Pi Pico
   
 Third release:
 * Capable of running eForth.
@@ -355,17 +356,14 @@ Emulator - the T414/T800/T801/T805 emulator.
 
 # Building and Installing
 The distribution currently builds under the following systems:
-* Apple macOS
+* Apple macOS - Intel only
   * 'Mojave' 10.14 
   * 'Catalina' 10.15 
   * (untested on more recent versions)
 * Linux
   * Linux Mint 21.12 Intel x86-64
-  * Pop!_OS 22.04 Intel x86-64
-  * CentOS Linux 7.6 Intel x86-64
-  * Ubuntu Linux 16.04.4 LTS Intel x86-64
-  * Ubuntu Linux 18.04.2 LTS Intel x86-64
-  * Raspbian Stretch
+  * Ubuntu Linux 24.04 LTS Intel x86-64
+  * Raspberry Pi Debian 12
 * Microsoft Windows
   * Windows 10 64-bit
   * (untested on earlier versions e.g. XP, 7, 8, 8.1)
@@ -384,7 +382,7 @@ Prerequisites:
     to be on the PATH.
   - Python (prefer 3.x but 2.x is fine; required by the GoogleTest build). Command line interpreter python needs to be
     on the PATH.
-  - Java 8 JDK (for Maven).
+  - Java 17 JDK (for Maven).
   - Apache Maven. I use 3.6.0+. (You can build without it, it's just doing some preprocessing, running cmake in various
     stages, and is used for packaging and overall build control. It's just much easier with it.) Command line tool mvn
     needs to be on the PATH. It's recommended to download the latest binary release from https://maven.apache.org/download.cgi
@@ -427,7 +425,7 @@ Prerequisites:
     apt-get install build-essential clang-7 make clang
   - It's recommended to unzip cmake under /opt - the maven build expects it there. Add a symlink 
     /opt/cmake -> /opt/cmake-3.27.7-linux-x86_64 and add /opt/cmake/bin to the PATH.
-- Linux Mint 21.12, Pop!_OS 22.04:
+- Linux Mint 21.12, Pop!_OS 22.04, Ubuntu 24.04:
   - G++ 11 etc:
     apt-get install build-essential g++-11 make
   - It's recommended to unzip cmake under /opt - the maven build expects it there. Add a symlink 
