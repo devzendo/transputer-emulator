@@ -38,6 +38,7 @@ Memory::Memory() {
 
 void Memory::resetMemory() {
 	myMemory = NULL;
+	myROMPresent = false;
 	myReadOnlyMemory = NULL;
 	myReadOnlyMemorySize = 0;
 	mySize = 0;
@@ -59,9 +60,6 @@ bool Memory::initialise(long initialRAMSize) {
 	mySize = initialRAMSize;
 	logDebugF("RAM (size %d bytes) from %08X to %08X", mySize, InternalMemStart, myMemEnd);
 
-	myROMPresent = false;
-	myReadOnlyMemory = NULL;
-	myReadOnlyMemorySize = 0;
 	return true;
 }
 
@@ -84,7 +82,7 @@ bool Memory::loadROMFile(const char *fileName) {
 	char msgbuf[255];
 	if (stat(fileName, &st) == -1) {
 #if defined(PLATFORM_OSX) || defined(PLATFORM_LINUX)
-		if (strerror_r(errno, msgbuf, 255) == NULL) {
+		if (strerror_r(errno, msgbuf, 255) == 0) {
 			// do nothing; ignore warning
 		}
 #elif defined(PLATFORM_WINDOWS)
