@@ -58,7 +58,7 @@ Second release (work in progress):
   * TX!: Send output character
   * !IO: Initialise UART
 * Allow validation using Mike's TVS and pass tests for all implemented instructions
-* Add a build for the Raspberry Pi Pico
+* Add the start of a build for the Raspberry Pi Pico
 * Builds are now for Ubuntu 24.04, macOS Catalina, Raspberry Pi Debian, Windows 10, Rasperry Pi Pico
   
 Third release:
@@ -89,6 +89,9 @@ Fifth release:
   request.
 * Added a "Hello World" example that uses the macro assembler's primary bootstrap
   include file. (see IServer/client-examples/hello-world-secondary-iserver)
+* Added a "Hello World" example that can boot from ROM.
+  (see IServer/client-examples/hello-world-iserver-rom)
+* Bugfix: A loaded ROM's memory is now initialised/destroyed correctly.
 * Emulator now allows a list of symbols to be loaded; these are displayed when
   disassembling or using the monitor; also enhancements for debugging eForth.
 * The emulator's monitor now accepts a 't' command which toggles the display of
@@ -430,6 +433,8 @@ Prerequisites:
     apt-get install build-essential g++-11 make
   - It's recommended to unzip cmake under /opt - the maven build expects it there. Add a symlink 
     /opt/cmake -> /opt/cmake-3.27.7-linux-x86_64 and add /opt/cmake/bin to the PATH.
+  - Or just install it via apt, and create symlinks /opt/cmake/bin/cmake -> /usr/bin/cmake and
+    /opt/cmake/bin/ctest -> /usr/bin/ctest .
 - CentOS 7.6.1810:
   - Clang/LLVM 7:
     yum install centos-release-scl-rh
