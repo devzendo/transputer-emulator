@@ -16,7 +16,6 @@
 #include <exception>
 #include <cctype>
 
-#include "platformdetection.h"
 #include "tvslink.h"
 #include "log.h"
 
