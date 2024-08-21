@@ -367,7 +367,12 @@ void ProtocolHandler::reqOpen() {
     // TODO filename is not validated against directory-traversal attacks
     const std::string filePath = pathJoin(myRootDirectory, filename);
     logInfoF("Fully-qualified path is '%s", filePath.c_str());
+#if defined(PLATFORM_LINUX)
+    std::ios::openmode iosOpenMode;
+#endif
+#if defined(PLATFORM_OSX) || defined(PLATFORM_WINDOWS)
     std::ios::openmode iosOpenMode = 0;
+#endif
     bool error = false;
     switch (openType) {
         case REQ_OPEN_TYPE_BINARY:
