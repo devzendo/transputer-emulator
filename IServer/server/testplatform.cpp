@@ -11,6 +11,9 @@
 //
 //------------------------------------------------------------------------------
 
+#include <chrono>
+#include <thread>
+
 #include "log.h"
 #include "platform.h"
 #include "platformfactory.h"
@@ -408,3 +411,20 @@ TEST_F(TestPlatform, CommandLineForProgram) {
 	EXPECT_EQ(program, expected_program);
 }
 
+// Interactive...
+/*
+TEST_F(TestPlatform, DISABLED_ConsolePollKey) {
+    for(int i=0;i<200;i++) {
+        bool gotKey = platform->isConsoleCharAvailable();
+        logInfoF("gotKey %d", gotKey);
+        if (gotKey) {
+            unsigned char consoleChar = platform->getConsoleChar();
+            logInfoF("Read console char 0x%x", consoleChar);
+            if (consoleChar == 'x') {
+                break;
+            }
+        }
+        std::this_thread::sleep_for(std::chrono::milliseconds(250));
+    }
+}
+*/
