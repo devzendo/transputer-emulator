@@ -50,7 +50,7 @@ Second release (work in progress):
 * Note that the IServer's file handling does not yet prevent directory traversal vulnerabilities. Also line feed
   handling on Windows is broken. To be corrected.
 * Converting older C code (that's not very portable) to C++14 (that hopefully is more portable).
-* Upgrade macOS build from El Capitan to Catalina (and beyond).
+* Upgrade macOS build from El Capitan to Catalina.
 * eForth requires the following facilities of IServer (it originally accessed a UART; these routines have been
   changed to use IServer protocol on Link 0):
   * URD: Read and wait (odd return system)
@@ -58,8 +58,9 @@ Second release (work in progress):
   * TX!: Send output character
   * !IO: Initialise UART
 * Allow validation using Mike's TVS and pass tests for all implemented instructions
-* Add the start of a build for the Raspberry Pi Pico
-* Builds are now for Ubuntu 24.04, macOS Catalina, Raspberry Pi Debian, Windows 10, Rasperry Pi Pico
+* Add the start of a build for the Raspberry Pi Pico - that can run Hello World booted from a link; that has a single
+  core, and single link over CDC-USB Serial. The memory/flash use is quantified.
+* Builds are now for Ubuntu 24.04, macOS Catalina, Raspberry Pi Debian, Windows 10, Rasperry Pi Pico.
   
 Third release:
 * Capable of running eForth.
