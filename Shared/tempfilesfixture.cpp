@@ -27,8 +27,8 @@
 #include "filesystem.h"
 
 namespace {
-    unsigned long millisecondsSinceEpoch() {
-        unsigned long milliseconds_since_epoch =
+    auto millisecondsSinceEpoch() {
+        auto milliseconds_since_epoch =
                 std::chrono::system_clock::now().time_since_epoch() /
                 std::chrono::milliseconds(1);
         return milliseconds_since_epoch;
