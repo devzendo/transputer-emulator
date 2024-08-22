@@ -1286,7 +1286,7 @@ TEST_F(TestProtocolHandler, PutsOkToRealFile)
 TEST_F(TestProtocolHandler, PutsTruncated)
 {
     // Redirect stdout stream to a membuf... the REQ_PUTS will write there...
-    uint8_t buf[] = { 0x00, 0x01, 0x02, 0x03 };
+    uint8_t buf[] = { 0x00, 0x01, 0x02, 0x03, 0x04, 0x05 };
     uint8_t overflow[] = { 0xDE, 0xAD, 0xCA, 0xFE };
     membuf mbuf(buf, 3);
 
@@ -1310,12 +1310,16 @@ TEST_F(TestProtocolHandler, PutsTruncated)
     EXPECT_EQ(buf[1], 'B');
     EXPECT_EQ(buf[2], '\r');
     EXPECT_EQ(buf[3], '\n');
+    EXPECT_EQ(buf[4], 0x04);
+    EXPECT_EQ(buf[5], 0x05);
 #endif
 #if defined(PLATFORM_OSX) || defined(PLATFORM_LINUX)
     EXPECT_EQ(buf[0], 'A');
     EXPECT_EQ(buf[1], 'B');
     EXPECT_EQ(buf[2], '\n');
     EXPECT_EQ(buf[3], 0x03);
+    EXPECT_EQ(buf[4], 0x04);
+    EXPECT_EQ(buf[5], 0x05);
 #endif
     EXPECT_EQ(overflow[0], 0xDE);
     EXPECT_EQ(overflow[1], 0xAD);

@@ -538,8 +538,10 @@ void ProtocolHandler::reqPuts() {
         wrote += myPlatform.writeStream(streamId, 1, (BYTE8 *) "\n");
 #endif
         logDebugF("Wrote %d bytes to stream #%d", wrote, streamId);
-        //myPlatform.flushStream(streamId);
-        // Note no no indication to the client of the amount written..
+        // There is no automatic flushing of the stream, with:
+        // myPlatform.flushStream(streamId);
+        // - there is a separate flush call.
+        // Note no indication to the client of the amount written..
         codec.put(RES_SUCCESS);
     } catch (const std::runtime_error &e) { // File must be open for writing
         logWarn(e.what());
