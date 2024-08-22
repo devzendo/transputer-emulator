@@ -195,6 +195,29 @@
                     </plugin>
 
                     <plugin>
+                        <groupId>org.codehaus.mojo</groupId>
+                        <artifactId>exec-maven-plugin</artifactId>
+                        <version>3.4.1</version>
+                        <executions>
+                            <execution>
+                                <id>which-platform</id>
+                                <phase>process-classes</phase> <!-- Just after compiling, before testing -->
+                                <goals>
+                                    <goal>exec</goal>
+                                </goals>
+                            </execution>
+                        </executions>
+                        <configuration>
+                            <executable>${cmake.binary.dir}/Emulator/temulate${binary.suffix}</executable>
+                            <workingDirectory>${cmake.binary.dir}/Emulator</workingDirectory>
+                            <arguments>
+                                <argument>-p</argument>
+                            </arguments>
+                            <timeout>10000</timeout>
+                        </configuration>
+                    </plugin>
+
+                    <plugin>
                         <artifactId>maven-assembly-plugin</artifactId>
                         <version>3.1.1</version>
                         <configuration>

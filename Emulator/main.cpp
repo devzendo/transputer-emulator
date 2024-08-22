@@ -57,6 +57,7 @@ void usage() {
 	logInfo("given, the Emulator uses Boot From Link, waiting for the boot protocol on Link 0.");
 	logInfo("Options:");
 	logInfo("  -c    Displays configuration summary");
+    logInfo("  -p    Displays platform information");
 	logInfo("  -da   Enables disassembly during emulation");
 	logInfo("  -dr   Enables disassembly & registers during emulation");
 	logInfo("  -do   Enables disassembly & regs & opr/fpentry");
@@ -87,25 +88,6 @@ void usage() {
 	logInfo("         these must include stack symbols)");
 	logInfo("  -tvs  program-file optional-input-file output-file");
 	logInfo("        Run a program from Mike Brüstle's validation suite");
-    logDebug("Platform:");
-#if defined(PLATFORM_WINDOWS)
-    logDebug("WINDOWS");
-#endif
-#if defined(PLATFORM_OSX)
-    logDebug("OSX");
-#endif
-#if defined(PLATFORM_LINUX)
-    logDebug("LINUX");
-#endif
-#if defined(PLATFORM_PICO)
-    logDebug("PICO");
-#endif
-#if defined(PLATFORM_BITS_64)
-    logDebug("64 bits");
-#endif
-#if defined(PLATFORM_BITS_32)
-    logDebug("32 bits");
-#endif
 }
 
 void showConfiguration() {
@@ -113,6 +95,28 @@ void showConfiguration() {
 	logInfoF("Internal memory: #%08X to #%08X", InternalMemStart, InternalMemEnd);
 	logInfoF("External memory: #%08X to #%08X", ExternalMemStart, InternalMemStart + ramSize);
 	// TODO we're not showing the ROM memory range here.
+}
+
+void showPlatform() {
+    logInfo("Platform:");
+#if defined(PLATFORM_WINDOWS)
+    logInfo("WINDOWS");
+#endif
+#if defined(PLATFORM_OSX)
+    logInfo("OSX");
+#endif
+#if defined(PLATFORM_LINUX)
+    logInfo("LINUX");
+#endif
+#if defined(PLATFORM_PICO)
+    logInfo("PICO");
+#endif
+#if defined(PLATFORM_BITS_64)
+    logInfo("64 bits");
+#endif
+#if defined(PLATFORM_BITS_32)
+    logInfo("32 bits");
+#endif
 }
 
 bool processCommandLine(int argc, char *argv[]) {
@@ -127,6 +131,9 @@ bool processCommandLine(int argc, char *argv[]) {
 				case '?':
 				    usage();
 				    return 0;
+                case 'p':
+                    showPlatform();
+                    exit(0);
 				case 'c':
 					showConf = true;
 					break;
