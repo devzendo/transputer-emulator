@@ -531,13 +531,16 @@ void ProtocolHandler::reqPuts() {
         WORD16 size = data.size();
         logDebugF("Writing %d bytes to stream #%d", size, streamId);
         WORD16 wrote = (size > 0) ? myPlatform.writeStream(streamId, size, (BYTE8 *) data.data()) : 0;
+        logDebugF("Wrote %d bytes from request to stream #%d", wrote, streamId);
 #if defined(PLATFORM_WINDOWS)
+        logDebugF("Writing CRLF bytes to stream #%d", streamId);
         wrote += myPlatform.writeStream(streamId, 2, (BYTE8 *) "\r\n");
 #endif
 #if defined(PLATFORM_OSX) || defined(PLATFORM_LINUX)
+        logDebugF("Writing LF byte to stream #%d", streamId);
         wrote += myPlatform.writeStream(streamId, 1, (BYTE8 *) "\n");
 #endif
-        logDebugF("Wrote %d bytes to stream #%d", wrote, streamId);
+        logDebugF("Wrote %d bytes in total to stream #%d", wrote, streamId);
         // There is no automatic flushing of the stream, with:
         // myPlatform.flushStream(streamId);
         // - there is a separate flush call.
