@@ -87,6 +87,25 @@ void usage() {
 	logInfo("         these must include stack symbols)");
 	logInfo("  -tvs  program-file optional-input-file output-file");
 	logInfo("        Run a program from Mike Brüstle's validation suite");
+    logDebug("Platform:");
+#if defined(PLATFORM_WINDOWS)
+    logDebug("WINDOWS");
+#endif
+#if defined(PLATFORM_OSX)
+    logDebug("OSX");
+#endif
+#if defined(PLATFORM_LINUX)
+    logDebug("LINUX");
+#endif
+#if defined(PLATFORM_PICO)
+    logDebug("PICO");
+#endif
+#if defined(PLATFORM_BITS_64)
+    logDebug("64 bits");
+#endif
+#if defined(PLATFORM_BITS_32)
+    logDebug("32 bits");
+#endif
 }
 
 void showConfiguration() {
