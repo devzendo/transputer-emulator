@@ -390,11 +390,11 @@ Prerequisites:
   - Python (prefer 3.x but 2.x is fine; required by the GoogleTest build). Command line interpreter python needs to be
     on the PATH.
   - Java 17 JDK (for Maven).
-  - Apache Maven. I use 3.6.0+. (You can build without it, it's just doing some preprocessing, running cmake in various
+  - Apache Maven. I use 3.9.0. (You can build without it, it's just doing some preprocessing, running cmake in various
     stages, and is used for packaging and overall build control. It's just much easier with it.) Command line tool mvn
     needs to be on the PATH. It's recommended to download the latest binary release from https://maven.apache.org/download.cgi
     and unzip it, placing its bin directory on the PATH.
-  - CMake. I use 3.10.3+. Command line tool cmake needs to be on the PATH. 
+  - CMake. I use 3.10.3+ .. 3.25.1. Command line tool cmake needs to be on the PATH. 
   - If you want to build the client-examples programs, you'll need the
     <a href="https://bitbucket.org/devzendo/transputer-macro-assembler">DevZendo.org Transputer Macro Assembler</a>
     installed and on your PATH.
