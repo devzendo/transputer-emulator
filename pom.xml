@@ -67,6 +67,11 @@
          [INFO] Maven Version: 3.6.0
          [INFO] JDK Version: 1.8.0_65 normalized as: 1.8.0-65
          [INFO] OS Info: Arch: arm Family: unix Name: linux Version: 4.9.35+
+         Debian 12 Raspberry Pi:
+         [INFO] Maven Version: 3.6.3
+         [INFO] JDK Version: 17.0.12 normalized as: 17.0.12
+         [INFO] Java Vendor: Debian
+         [INFO] OS Info - Arch: aarch64, Family: unix, Name: linux, Version: 6.6.20+rpt-rpi-v8
          Mac OS High Sierra:
          [INFO] Maven Version: 3.6.0
          [INFO] JDK Version: 1.8.0_25 normalized as: 1.8.0-25
@@ -313,6 +318,32 @@
                 <cmake.generator>Unix Makefiles</cmake.generator>
                 <!-- The classifier of the current platform. One of [windows-x86_32, windows-x86_64, linux-x86_32, linux-x86_64, linux-arm_32, mac-x86_64]. -->
                 <cmake.classifier>linux-arm_32</cmake.classifier>
+
+                <install.dir>/opt/parachute</install.dir>
+                <binary.suffix></binary.suffix>
+                <assembly.name>linux-distribution</assembly.name>
+                <!-- This isn't being sensed in CMakeLists.txt but there has to be some option -->
+                <cmake.option>NOCROSS=true</cmake.option>
+            </properties>
+            <build>
+            </build>
+        </profile>
+        <profile>
+            <id>linux-aarch64</id>
+            <activation>
+                <os>
+                    <name>linux</name>
+                    <arch>aarch64</arch>
+                </os>
+            </activation>
+            <properties>
+                <!-- The CMake maven plugin understands cmake.root.dir -->
+                <cmake.root.dir>/opt/cmake</cmake.root.dir>
+
+                <!-- One of the generators defined at https://cmake.org/cmake/help/v3.7/manual/cmake-generators.7.html -->
+                <cmake.generator>Unix Makefiles</cmake.generator>
+                <!-- The classifier of the current platform. One of [windows-x86_32, windows-x86_64, linux-x86_32, linux-x86_64, linux-arm_32, mac-x86_64]. -->
+                <cmake.classifier>linux-aarch_64</cmake.classifier>
 
                 <install.dir>/opt/parachute</install.dir>
                 <binary.suffix></binary.suffix>
