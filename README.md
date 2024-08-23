@@ -5,13 +5,14 @@
 This is a portable, open source emulator of the 32-bit Inmos T414/T800/T801/T805 Transputer family, and a host/file
 I/O Server that interfaces it to a host OS, providing boot/debug/IO facilities.
 
-It runs on Apple macOS (From El Capitan to Catalina), Windows 10, CentOS 7.6, Ubuntu 16.04/18.04, Linux Mint 21.2,
-and Raspbian Stretch. An embedded version of the emulator component is also available for the Raspberry Pi Pico.
+It runs on Apple macOS Catalina, Windows 10, Ubuntu 24.02, Linux Mint 21.3, and Raspberry Pi Debian 12.
+An embedded version of the emulator component is also available for the Raspberry Pi Pico.
 
 It is part of the [Parachute Project](https://devzendo.github.io/parachute).
 
 It is written in C++14 - the Raspbian Stretch distribution provides Clang 3.5.0, which does not support
-more recent C++ standards.
+more recent C++ standards. (It used to build on Raspbian Stretch, the oldest OS I had, which limited
+the C++ standard I could support. I think I'll keep it at this C++ version.)
 
 
 ## Project Status
@@ -103,6 +104,8 @@ Fifth release:
   lshl, lshr, lsub, lsum, mul, rem, shl, shr, sub, wcnt, xdble, xword.
 * Implemented the instructions from "Transputer Instruction Set - Appendix".
 * Add a build of the emulator for the Raspberry Pi Pico.
+* Bugfix: protocol handler - open file - was inadvertantly broken on some
+  platforms.
 
 0.0.1 First Release
 * Versioning and build now controlled by Maven and CMake.
