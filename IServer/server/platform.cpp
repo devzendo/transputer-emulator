@@ -357,6 +357,7 @@ void Platform::flushStream(int streamId) noexcept(false) {
 bool Platform::isBinaryStream(int streamId) noexcept(false) {
     // precondition: all the validity checks have been done in the call that called this.. ie it is an open stream.
     std::unique_ptr<Stream> &pStream = myFiles[streamId];
+    logDebugF("Stream #%d binary state %d underlying iostream binary %d", streamId, pStream->isBinary, pStream->getIOStream().binary);
     return pStream->isBinary;
 }
 
