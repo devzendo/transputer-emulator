@@ -39,6 +39,7 @@ public:
     int streamId;
     bool isReadable = false;
     bool isWritable = false;
+    bool isBinary = false;
     InputOutputOperation lastIOOperation = IO_NONE;
 };
 
@@ -57,7 +58,7 @@ public:
         logDebugF("After open, is_open is %s", fstream.is_open() ? "open" : "closed");
         isReadable = ((mode & std::ios_base::in) != 0);
         isWritable = ((mode & std::ios_base::out) != 0);
-        bool isBinary = ((mode & std::ios_base::binary) != 0);
+        isBinary = ((mode & std::ios_base::binary) != 0);
 
         logInfoF("isReadable: %s, isWritable: %s, isBinary: %s",
                 isReadable ? "true" : "false",
@@ -156,7 +157,7 @@ Stream::Stream(const int _streamId) {
 
 WORD16 Stream::write(WORD16 size, BYTE8 *buffer) {
     std::iostream & stream = getIOStream();
-    // WOZERE I bet this isn't honouring text translation on Windows...
+    // This isn't honouring text translation on Windows...
 
     // "Use the C++ iostream abstraction from the standard library", they said. "It's quality reusable code", they said.
     // But when you write to a stream, you can't determine how many bytes are read. Quality, indeed.
@@ -348,6 +349,12 @@ void Platform::flushStream(int streamId) noexcept(false) {
     std::unique_ptr<Stream> &pStream = myFiles[streamId];
     pStream->getIOStream().flush();
     // Not implementing the last IO operation check at the moment - this is currently just used to flush after putchar
+}
+
+bool Platform::isBinaryStream(int streamId) noexcept(false) {
+    // precondition: all the validity checks have been done in the call that called this.. ie it is an open stream.
+    std::unique_ptr<Stream> &pStream = myFiles[streamId];
+    return pStream->isBinary;
 }
 
 WORD16 Platform::openFileStream(const std::string & filePath, const std::ios_base::openmode mode) {

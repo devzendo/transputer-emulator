@@ -397,6 +397,24 @@ TEST_F(TestPlatform, CloseFails) {
     EXPECT_EQ(platform->closeStream(fileStreamId), false);
 }
 
+TEST_F(TestPlatform, TextFileIsNotBinary) {
+    createTempFile(testFilePath, "irrelevant");
+    const int fileStreamId = platform->openFileStream(testFilePath, std::ios_base::out);
+    bool isBinary = platform->isBinaryStream(fileStreamId);
+    platform->closeStream(fileStreamId);
+
+    EXPECT_EQ(isBinary, false);
+}
+
+TEST_F(TestPlatform, BinaryFileIsNotBinary) {
+    createTempFile(testFilePath, "irrelevant");
+    const int fileStreamId = platform->openFileStream(testFilePath, std::ios_base::out|std::ios_base::binary);
+    bool isBinary = platform->isBinaryStream(fileStreamId);
+    platform->closeStream(fileStreamId);
+
+    EXPECT_EQ(isBinary, true);
+}
+
 TEST_F(TestPlatform, CommandLineAll) {
 	platform->setCommandLines("iserver -ld xyz", "xyz");
 	std::vector<BYTE8> full = platform->getCommandLineAll();

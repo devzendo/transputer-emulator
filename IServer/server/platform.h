@@ -90,6 +90,7 @@ public:
     WORD16 writeStream(int streamId, WORD16 size, BYTE8* buffer) noexcept(false);
     WORD16 readStream(int streamId, WORD16 size, BYTE8* buffer) noexcept(false);
     void flushStream(int streamId);
+    bool isBinaryStream(int streamId);
 
     WORD16 openFileStream(const std::string & filePath, std::ios_base::openmode mode);
     bool closeStream(int streamId); // true => close succeeded

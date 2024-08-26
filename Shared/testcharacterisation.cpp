@@ -42,10 +42,14 @@ TEST_F(TestCharacterisation, CharacteriseCPlusPlusTextHandlingOnWindowsLFtoCRLF)
     std::string testFilePath = writeHelloWorldWithParticularLineEndings("hello\nworld\n");
     EXPECT_EQ(readFileContents(testFilePath), "hello\r\nworld\r\n");
 }
-TEST_F(TestCharacterisation, CharacteriseCPlusPlusTextHandlingOnWindowsCRLFtoCRLF)
+TEST_F(TestCharacterisation, CharacteriseCPlusPlusTextHandlingOnWindowsCRLFtoCRCRLF)
 {
+    // This may seem weird, but it's right. CR is passed through on write, but LF is expanded
+    // to CRLF. So in text mode, just write \n on any OS, and on Windows, you'll get CRLF and
+    // on non-Windows, you'll get LF. ie the platform-specific line ending.
+    // There are other oddities - see https://stackoverflow.com/questions/26993086/what-the-point-of-using-stdios-basebinary
     std::string testFilePath = writeHelloWorldWithParticularLineEndings("hello\r\nworld\r\n");
-    EXPECT_EQ(readFileContents(testFilePath), "hello\r\nworld\r\n");
+    EXPECT_EQ(readFileContents(testFilePath), "hello\r\r\nworld\r\r\n");
 }
 #endif
 
@@ -57,3 +61,15 @@ TEST_F(TestCharacterisation, CharacteriseCPlusPlusTextHandlingOnNonWindows)
 }
 #endif
 
+TEST_F(TestCharacterisation, StdoutBinaryness)
+{
+    bool cin_binary = std::cin.binary != 0;
+    std::cout << "stdin  binaryness is " << cin_binary << std::endl;
+    bool cout_binary = std::cout.binary != 0;
+    std::cout << "stdout binaryness is " << cout_binary << std::endl;
+    bool cerr_binary = std::cerr.binary != 0;
+    std::cout << "stderr binaryness is " << cerr_binary << std::endl;
+    EXPECT_EQ(cin_binary, true);
+    EXPECT_EQ(cout_binary, true);
+    EXPECT_EQ(cerr_binary, true);
+}

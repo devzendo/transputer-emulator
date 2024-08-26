@@ -532,9 +532,18 @@ void ProtocolHandler::reqPuts() {
         logDebugF("Writing %d bytes to stream #%d", size, streamId);
         WORD16 wrote = (size > 0) ? myPlatform.writeStream(streamId, size, (BYTE8 *) data.data()) : 0;
         logDebugF("Wrote %d bytes from request to stream #%d", wrote, streamId);
+        // If this is a TEXT stream (on Windows) we can just write \n and Windows will translate it to \r\n.
+        // If this is a BINARY stream (on Windows), we'll have to write \r\n to get the right endings.
+        // You probably wouldn't be calling REQ_PUTS on a binary file - but let's do the right thing.
 #if defined(PLATFORM_WINDOWS)
-        logDebugF("Writing CRLF bytes to stream #%d", streamId);
-        wrote += myPlatform.writeStream(streamId, 2, (BYTE8 *) "\r\n");
+        if (myPlatform->isBinaryStream(streamId)) {
+            logDebugF("Writing CRLF bytes to binary stream #%d", streamId);
+            wrote += myPlatform.writeStream(streamId, 2, (BYTE8 *) "\r\n");
+        } else {
+            logDebugF("Writing LF bytes to (translating) text stream #%d", streamId);
+            wrote += myPlatform.writeStream(streamId, 1, (BYTE8 *) "\n");
+            // This will be translated by C++ to \r\n.
+        }
 #endif
 #if defined(PLATFORM_OSX) || defined(PLATFORM_LINUX)
         logDebugF("Writing LF byte to stream #%d", streamId);

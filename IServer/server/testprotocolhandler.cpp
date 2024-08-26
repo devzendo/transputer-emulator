@@ -572,8 +572,8 @@ TEST_F(TestProtocolHandler, OpenInputCannotBeWrittenTo)
     EXPECT_EQ(written, 0);
 }
 
-// Text files only make a distinction on Windows; text and binary processing is identical on OSX/Linux
-// Also see tests in testcharacterisation.cpp
+// Text files only make a distinction on Windows; text and binary processing is identical on OSX/Linux.
+// See tests in testcharacterisation.cpp for explanation.
 
 #if defined(PLATFORM_WINDOWS)
 TEST_F(TestProtocolHandler, OpenTextTranslatesLineFeedToCarriageReturnLineFeedOnWindows)
@@ -1238,7 +1238,7 @@ TEST_F(TestProtocolHandler, PutsOk)
 #endif
 }
 
-TEST_F(TestProtocolHandler, PutsOkToRealFile)
+TEST_F(TestProtocolHandler, PutsOkToRealBinaryFile)
 {
     const std::pair<std::string, std::string> &testFilePathAndName = createRandomTempFilePathContaining();
     const std::string &testFilePath = testFilePathAndName.first;
@@ -1275,6 +1275,56 @@ TEST_F(TestProtocolHandler, PutsOkToRealFile)
     checkResponseFrameSize(closeResponse, 2); // RES_SUCCESS + 0-pad
 
     // Expect redirected data...
+    // On Windows, REQ_PUTS on a binary or text file will add \r\n.
+    // On non-Windows, it'll add \n.
+#if defined(PLATFORM_WINDOWS)
+    EXPECT_EQ(readFileContents(testFilePath), "ABCD\r\n");
+#endif
+#if defined(PLATFORM_OSX) || defined(PLATFORM_LINUX)
+    EXPECT_EQ(readFileContents(testFilePath), "ABCD\n");
+#endif
+}
+
+TEST_F(TestProtocolHandler, PutsOkToRealTextFile)
+{
+    const std::pair<std::string, std::string> &testFilePathAndName = createRandomTempFilePathContaining();
+    const std::string &testFilePath = testFilePathAndName.first;
+    const std::string &testFileName = testFilePathAndName.second;
+
+    // Open
+    std::vector<BYTE8> openFrame = {REQ_OPEN};
+    appendString(openFrame, testFileName);
+    append8(openFrame, REQ_OPEN_TYPE_TEXT);
+    append8(openFrame, REQ_OPEN_MODE_OUTPUT);
+    padAndSendFrame(openFrame);
+
+    const std::vector<unsigned char> &openResponse = readResponseFrame();
+    checkResponseFrameTag(openResponse, RES_SUCCESS);
+    WORD32 streamId = get32(openResponse, 3);
+
+    // Now REQ_PUTS...
+    std::vector<BYTE8> putsFrame = {REQ_PUTS};
+    append32(putsFrame, streamId);
+    appendString(putsFrame, "ABCD");
+    padAndSendFrame(putsFrame);
+
+    std::vector<BYTE8> writeResponse = readResponseFrame();
+    checkResponseFrameTag(writeResponse, RES_SUCCESS);
+    checkResponseFrameSize(writeResponse, 2); // RES_SUCCESS + 0-pad
+
+    // Close
+    std::vector<BYTE8> closeFrame = {REQ_CLOSE};
+    append32(closeFrame, streamId);
+    sendFrame(padFrame(closeFrame));
+
+    std::vector<BYTE8> closeResponse = readResponseFrame();
+    checkResponseFrameTag(closeResponse, RES_SUCCESS);
+    checkResponseFrameSize(closeResponse, 2); // RES_SUCCESS + 0-pad
+
+    // Expect redirected data...
+    // REQ_PUTS will add a \n to the line, and for TEXT files, the underlying C++ iostream
+    // library will turn this into \r\n for Windows, and \n for non-Windows. For BINARY
+    // files, Windows will add \r\n and non-Windows will add \n.
 #if defined(PLATFORM_WINDOWS)
     EXPECT_EQ(readFileContents(testFilePath), "ABCD\r\n");
 #endif
@@ -1292,6 +1342,10 @@ TEST_F(TestProtocolHandler, PutsTruncated)
 
     const int outputStreamId = 1;
     stubPlatform._setStreamBuf(outputStreamId, &mbuf);
+
+    // If this was a stream we opened, we control its TEXT/BINARY nature. But this is stdout;
+    // it's binary by default. You wouldn't usually call REQ_PUTS on a binary file, but if
+    // you do, you'll get the right platform line ending.
 
     // Now REQ_WRITE...
     std::vector<BYTE8> putsFrame = {REQ_PUTS};
