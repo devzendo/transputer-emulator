@@ -55,7 +55,8 @@
 
     <properties>
         <cmake.binary.dir>cmake-build-debug</cmake.binary.dir>
-        <download.cmake>false</download.cmake>
+        <download.cmake>false</download.cmake> <!-- old setting -->
+        <cmake.download>false</cmake.download> <!-- new setting -->
     </properties>
 
     <!-- use mvn enforcer:display-info to find platform name/family values -->
