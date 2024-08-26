@@ -133,6 +133,7 @@ namespace {
         std::unique_ptr<ConsoleStream> pStream { std::make_unique<ConsoleStream>(FILE_STDIN, buf) };
         pStream->isWritable = false;
         pStream->isReadable = true;
+        pStream->isBinary = true;
         return std::move(pStream);
     }
     std::unique_ptr<Stream> initStdout() {
@@ -140,6 +141,7 @@ namespace {
         std::unique_ptr<ConsoleStream> pStream { std::make_unique<ConsoleStream>(FILE_STDOUT, buf) };
         pStream->isWritable = true;
         pStream->isReadable = false;
+        pStream->isBinary = true;
         return std::move(pStream);
     }
     std::unique_ptr<Stream> initStderr() {
@@ -147,6 +149,7 @@ namespace {
         std::unique_ptr<ConsoleStream> pStream { std::make_unique<ConsoleStream>(FILE_STDERR, buf) };
         pStream->isWritable = true;
         pStream->isReadable = false;
+        pStream->isBinary = true;
         return std::move(pStream);
     }
 }
