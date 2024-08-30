@@ -376,9 +376,11 @@ void ProtocolHandler::reqOpen() {
     bool error = false;
     switch (openType) {
         case REQ_OPEN_TYPE_BINARY:
+            logDebugF("Opening %s for type BINARY", filePath.c_str());
             iosOpenMode |= std::ios_base::binary;
             break;
         case REQ_OPEN_TYPE_TEXT:
+            logDebugF("Opening %s for type TEXT", filePath.c_str());
             // Text by virtue of it not having binary bit set.
             break;
         // Unsure what to do for these types, so log and continue...
@@ -542,7 +544,7 @@ void ProtocolHandler::reqPuts() {
         } else {
             logDebugF("Writing LF bytes to (translating) text stream #%d", streamId);
             wrote += myPlatform.writeStream(streamId, 1, (BYTE8 *) "\n");
-            // This will be translated by C++ to \r\n.
+            // This will be translated by C++ to \r\n but will return 1 written byte.
         }
 #endif
 #if defined(PLATFORM_OSX) || defined(PLATFORM_LINUX)

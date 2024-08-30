@@ -264,7 +264,7 @@ TEST_F(TestPlatform, FileOpenStreamFailure) {
 #if defined(PLATFORM_WINDOWS)
     EXPECT_THROW_WITH_MESSAGE({
         platform->openFileStream(nonExistantTempFile, std::ios_base::in);
-    }, std::system_error, "Failed to open " + nonExistantTempFile + ": The system cannot find the file specified.\r\n");
+    }, std::system_error, "Failed to open " + nonExistantTempFile + ": The system cannot find the file specified.");
 #endif
 #if defined(PLATFORM_OSX) || defined(PLATFORM_LINUX)
     EXPECT_THROW_WITH_MESSAGE({
@@ -406,7 +406,7 @@ TEST_F(TestPlatform, TextFileIsNotBinary) {
     EXPECT_EQ(isBinary, false);
 }
 
-TEST_F(TestPlatform, BinaryFileIsNotBinary) {
+TEST_F(TestPlatform, BinaryFileIsBinary) {
     createTempFile(testFilePath, "irrelevant");
     const int fileStreamId = platform->openFileStream(testFilePath, std::ios_base::out|std::ios_base::binary);
     bool isBinary = platform->isBinaryStream(fileStreamId);
@@ -414,6 +414,20 @@ TEST_F(TestPlatform, BinaryFileIsNotBinary) {
 
     EXPECT_EQ(isBinary, true);
 }
+
+#if defined(PLATFORM_WINDOWS)
+// Contrast this with TestCharacterisation::CharacteriseCPlusPlusTextHandlingOnWindowsLFtoCRLFRdbufSputn
+TEST_F(TestPlatform, TextFileTranslation) {
+    createTempFile(testFilePath, ""); // first it's empty
+    const int fileStreamId = platform->openFileStream(testFilePath, std::ios_base::out); // NB: no ios_base::binary, so, text.
+    std::vector<BYTE8> writeBuffer = {'A', '\n', 'B'};
+    auto written = platform->writeStream(fileStreamId, writeBuffer.size(), writeBuffer.data());
+    platform->closeStream(fileStreamId);
+
+    EXPECT_EQ(written, 3); // Yes, you told me you only wrote 3... but 4 are written.
+    EXPECT_EQ("A\r\nB", readFileContents(testFilePath));
+}
+#endif
 
 TEST_F(TestPlatform, CommandLineAll) {
 	platform->setCommandLines("iserver -ld xyz", "xyz");

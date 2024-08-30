@@ -241,7 +241,7 @@ protected:
     }
 
     // Common test code for testing \n translation in 'open text for output' tests
-    std::string openTextOutputTranslation(const std::string &writtenString, const WORD16 expectedWrittenBytes, const std::string &readString) {
+    std::string openTextOutputTranslation(const std::string& writtenString, const unsigned short expectedWrittenBytes) {
         std::string testFileName = createRandomTempFileName();
         std::string testFilePath = pathJoin(tempdir(), testFileName);
 
@@ -580,16 +580,17 @@ TEST_F(TestProtocolHandler, OpenTextTranslatesLineFeedToCarriageReturnLineFeedOn
 {
     std::string writtenString = "A\nB";
 
-    // A\nB is expanded to A\r\nB
-    WORD16 expectedWrittenBytes = 4;
-    // Text mode should expand the written \n to \r\n on Windows
-    std::string readString = "A\r\nB";
+    // A\nB is expanded to A\r\nB in the file, but from the iostream API's perspective,
+    // we only write 3 bytes.
+    WORD16 expectedWrittenBytes = 3;
 
-    std::string testFilePath = openTextOutputTranslation(writtenString, expectedWrittenBytes, readString);
+    std::string testFilePath = openTextOutputTranslation(writtenString, expectedWrittenBytes);
 
     const std::string &contents = readFileContents(testFilePath);
-    logDebug("The read data is:");
+    logDebugF("The read data is (%d bytes):", contents.size());
     hexdump((unsigned char *) contents.c_str(), contents.size());
+    // Text mode should expand the written \n to \r\n on Windows
+    std::string readString = "A\r\nB";
     EXPECT_EQ(contents, readString);
 }
 #endif
@@ -1338,7 +1339,7 @@ TEST_F(TestProtocolHandler, PutsTruncated)
     // Redirect stdout stream to a membuf... the REQ_PUTS will write there...
     uint8_t buf[] = { 0x00, 0x01, 0x02, 0x03 };
     uint8_t overflow[] = { 0xDE, 0xAD, 0xCA, 0xFE };
-    membuf mbuf(buf, 3);
+    membuf mbuf(buf, 4);
 
     const int outputStreamId = 1;
     stubPlatform._setStreamBuf(outputStreamId, &mbuf);

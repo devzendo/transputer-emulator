@@ -21,9 +21,14 @@
 
 class TestCharacterisation : public TestTempFiles, public ::testing::Test {
 public:
-    std::string writeHelloWorldWithParticularLineEndings(const char* toWrite) {
+    std::string createTempTestFile() {
         std::string testFileName = createRandomTempFileName();
         std::string testFilePath = pathJoin(tempdir(), testFileName);
+
+        return testFilePath;
+    }
+    std::string writeHelloWorldWithParticularLineEndings(const char* toWrite) {
+        std::string testFilePath = createTempTestFile();
         std::ios::openmode iosOpenMode = (std::ios_base::out | std::ios_base::trunc);
         // Note: not std::ios_base::binary so it's opened in text mode.
         std::fstream fs(testFilePath, iosOpenMode);
@@ -37,19 +42,40 @@ public:
 
 
 #if defined(PLATFORM_WINDOWS)
-TEST_F(TestCharacterisation, CharacteriseCPlusPlusTextHandlingOnWindowsLFtoCRLF)
+TEST_F(TestCharacterisation, CharacteriseCPlusPlusTextHandlingOnWindowsLFtoCRLFStreamInsertion)
 {
     std::string testFilePath = writeHelloWorldWithParticularLineEndings("hello\nworld\n");
+
     EXPECT_EQ(readFileContents(testFilePath), "hello\r\nworld\r\n");
 }
-TEST_F(TestCharacterisation, CharacteriseCPlusPlusTextHandlingOnWindowsCRLFtoCRCRLF)
+TEST_F(TestCharacterisation, CharacteriseCPlusPlusTextHandlingOnWindowsCRLFtoCRCRLFStreamInsertion)
 {
     // This may seem weird, but it's right. CR is passed through on write, but LF is expanded
     // to CRLF. So in text mode, just write \n on any OS, and on Windows, you'll get CRLF and
     // on non-Windows, you'll get LF. ie the platform-specific line ending.
     // There are other oddities - see https://stackoverflow.com/questions/26993086/what-the-point-of-using-stdios-basebinary
     std::string testFilePath = writeHelloWorldWithParticularLineEndings("hello\r\nworld\r\n");
+
     EXPECT_EQ(readFileContents(testFilePath), "hello\r\r\nworld\r\r\n");
+}
+
+// Contrast this with TestPlatform::TextFileTranslation, which does exactly the same thing, but via the
+// Platform API.
+TEST_F(TestCharacterisation, CharacteriseCPlusPlusTextHandlingOnWindowsLFtoCRLFRdbufSputn)
+{
+    std::string testFilePath = createTempTestFile();
+    std::ios::openmode iosOpenMode = (std::ios_base::out | std::ios_base::trunc);
+    // Note: not std::ios_base::binary so it's opened in text mode.
+    std::fstream fstream(testFilePath, iosOpenMode);
+    // How the platform layer does it...
+    std::iostream & stream = fstream;
+    WORD16 written = stream.rdbuf()->sputn(reinterpret_cast<const char *>("hello\nworld\n"), 12);
+    fstream.flush();
+    fstream.close();
+
+    EXPECT_EQ(written, 12);
+    // And yet the file contains 14 bytes... which is "correct".
+    EXPECT_EQ(readFileContents(testFilePath), "hello\r\nworld\r\n");
 }
 #endif
 
@@ -61,7 +87,7 @@ TEST_F(TestCharacterisation, CharacteriseCPlusPlusTextHandlingOnNonWindows)
 }
 #endif
 
-TEST_F(TestCharacterisation, StdoutBinaryness)
+TEST_F(TestCharacterisation, StdInOutErrBinaryness)
 {
     bool cin_binary = std::cin.binary != 0;
     std::cout << "stdin  binaryness is " << cin_binary << std::endl;

@@ -54,7 +54,7 @@ public:
             logError(message.c_str());
             throw std::system_error(errno, std::system_category(), message);
         }
-        logInfoF("Opened file %s with mode %d", filePath.c_str(), mode); // TODO does this get here if the file open fails?
+        logInfoF("Opened file %s with mode %d", filePath.c_str(), mode);
         logDebugF("After open, is_open is %s", fstream.is_open() ? "open" : "closed");
         isReadable = ((mode & std::ios_base::in) != 0);
         isWritable = ((mode & std::ios_base::out) != 0);
