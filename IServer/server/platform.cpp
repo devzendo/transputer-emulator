@@ -163,7 +163,7 @@ WORD16 Stream::write(WORD16 size, BYTE8 *buffer) {
     // This isn't honouring text translation on Windows...
 
     // "Use the C++ iostream abstraction from the standard library", they said. "It's quality reusable code", they said.
-    // But when you write to a stream, you can't determine how many bytes are read. Quality, indeed.
+    // But when you write to a stream, you can't determine how many bytes are written. Quality, indeed.
     // So, you can do this...
 
     // Original that gets the written length but doesn't honour text translation:

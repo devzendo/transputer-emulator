@@ -605,7 +605,7 @@ TEST_F(TestProtocolHandler, OpenTextDoesNotTranslateLineFeedToCarriageReturnLine
     // Text mode should not expand the written \n to \r\n on Non-Windows
     std::string readString = "A\nB";
 
-    std::string testFilePath = openTextOutputTranslation(writtenString, expectedWrittenBytes, readString);
+    std::string testFilePath = openTextOutputTranslation(writtenString, expectedWrittenBytes);
 
     const std::string &contents = readFileContents(testFilePath);
     logDebug("The read data is:");
