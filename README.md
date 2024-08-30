@@ -450,6 +450,10 @@ Prerequisites:
   - Clang 3.5.0
   - It's recommended to unzip cmake under /opt - the maven build expects it there. Add a symlink 
     /opt/cmake -> /opt/cmake-3.27.7-linux-x86_64 and add /opt/cmake/bin to the PATH.
+- Debian 12 Raspberry Pi:
+  - G++ 11 etc:
+    apt-get install build-essential g++-11 make cmake
+ 
 - Raspberry Pi Pico (build on Linux Mint)
   - The Pico SDK and toolchain:
     apt install gcc-arm-none-eabi libnewlib-arm-none-eabi build-essential
