@@ -264,12 +264,12 @@ TEST_F(TestPlatform, FileOpenStreamFailure) {
 #if defined(PLATFORM_WINDOWS)
     EXPECT_THROW_WITH_MESSAGE({
         platform->openFileStream(nonExistantTempFile, std::ios_base::in);
-    }, std::system_error, "Failed to open " + nonExistantTempFile + ": The system cannot find the file specified.");
+    }, std::runtime_error, "Failed to open " + nonExistantTempFile + ": No such file or directory");
 #endif
 #if defined(PLATFORM_OSX) || defined(PLATFORM_LINUX)
     EXPECT_THROW_WITH_MESSAGE({
         platform->openFileStream(nonExistantTempFile, std::ios_base::in);
-    }, std::system_error, "Failed to open " + nonExistantTempFile + ": No such file or directory");
+    }, std::runtime_error, "Failed to open " + nonExistantTempFile + ": No such file or directory");
 #endif
 
 }

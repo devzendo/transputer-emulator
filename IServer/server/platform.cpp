@@ -52,7 +52,8 @@ public:
         if (!fstream) {
             const std::string message = "Failed to open " + filePath;
             logError(message.c_str());
-            throw std::system_error(errno, std::system_category(), message);
+            // Use the formatter to get a consistent message without random \r\n being thrown in on Windows.
+            throw std::runtime_error(Formatter() << message << ": " << strerror(errno));
         }
         logInfoF("Opened file %s with mode %d", filePath.c_str(), mode);
         logDebugF("After open, is_open is %s", fstream.is_open() ? "open" : "closed");
