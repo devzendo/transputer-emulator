@@ -199,7 +199,8 @@
                             </execution>
                         </executions>
                     </plugin>
-
+                    <!-- For reasons I cannot fathom, the executable this runs on Windows exists but won't run. If you
+                         package it, then unzip the package, it runs. Why does anyone use this toy 'OS'?
                     <plugin>
                         <groupId>org.codehaus.mojo</groupId>
                         <artifactId>exec-maven-plugin</artifactId>
@@ -207,7 +208,7 @@
                         <executions>
                             <execution>
                                 <id>which-platform</id>
-                                <phase>process-classes</phase> <!-- Just after compiling, before testing -->
+                                <phase>process-classes</phase>  Just after compiling, before testing
                                 <goals>
                                     <goal>exec</goal>
                                 </goals>
@@ -222,6 +223,7 @@
                             <timeout>10000</timeout>
                         </configuration>
                     </plugin>
+                    -->
 
                     <plugin>
                         <artifactId>maven-assembly-plugin</artifactId>
