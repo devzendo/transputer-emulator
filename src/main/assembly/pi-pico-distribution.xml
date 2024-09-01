@@ -1,0 +1,28 @@
+<assembly xmlns="http://maven.apache.org/ASSEMBLY/2.0.0"
+          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+          xsi:schemaLocation="http://maven.apache.org/ASSEMBLY/2.0.0 http://maven.apache.org/xsd/assembly-2.0.0.xsd">
+    <id>${os.detected.release}-${os.detected.release.version}-${cmake.classifier}</id>
+    <formats>
+        <format>tar.gz</format>
+    </formats>
+    <baseDirectory>/</baseDirectory>
+    <includeBaseDirectory>true</includeBaseDirectory>
+
+    <fileSets>
+        <fileSet>
+            <directory>${project.basedir}/${cmake.binary.dir}/Emulator</directory>
+            <includes>
+                <include>temulate</include>
+            </includes>
+            <outputDirectory>bin</outputDirectory>
+        </fileSet>
+    </fileSets>
+    <files>
+        <file>
+            <source>${project.basedir}/README.md</source>
+            <outputDirectory>./</outputDirectory>
+            <destName>README-transputer-emulator.md</destName>
+        </file>
+    </files>
+
+</assembly>

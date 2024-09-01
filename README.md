@@ -162,7 +162,8 @@ Fifth release:
 * Unfinished: resetch when given a link not a memory channel
 
 ## Build/Releases
-* None known.
+* The debug/release configuration switch does not appear to be doing anything other than setting an appropriate build
+  directory.
 
 ## Bugs
 * None known.
@@ -444,12 +445,13 @@ Prerequisites:
   - G++ 11 etc:
     apt-get install build-essential g++-11 make cmake
  
-- Raspberry Pi Pico (build on Linux Mint)
+- Raspberry Pi Pico (build on Ubuntu 24.04)
   - The Pico SDK and toolchain:
-    apt install gcc-arm-none-eabi libnewlib-arm-none-eabi build-essential
+    `apt install gcc-arm-none-eabi libnewlib-arm-none-eabi build-essential`
     The Pico SDK should be cloned from https://github.com/raspberrypi/pico-sdk
     Set the `PICO_SDK_PATH` environment variable to point to this copy of the Pico SDK.
     The Pico Extras should be cloned into the directory alongside the SDK from https://github.com/raspberrypi/pico-extras
+    Set the `PICO_EXTRAS_PATH` environment variable to point to this copy of the Pico Extras.
     i.e. the pico-sdk and pico-extras clones are siblings.
     CMake can be installed from apt, no need for a manual install.
 
