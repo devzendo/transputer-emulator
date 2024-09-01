@@ -60,23 +60,26 @@
     </properties>
 
     <!-- use mvn enforcer:display-info to find platform name/family values -->
-    <!-- CentOS 7:
-         [INFO] Maven Version: 3.6.0
-         [INFO] JDK Version: 1.8.0_201 normalized as: 1.8.0-201
-         [INFO] OS Info: Arch: amd64 Family: unix Name: linux Version: 3.10.0-957.5.1.el7.x86_64
-         Raspbian:
-         [INFO] Maven Version: 3.6.0
-         [INFO] JDK Version: 1.8.0_65 normalized as: 1.8.0-65
-         [INFO] OS Info: Arch: arm Family: unix Name: linux Version: 4.9.35+
+    <!-- Ubuntu 24.04:
+         [INFO] Maven Version: 3.9.9
+         [INFO] JDK Version: 17.0.12 normalized as: 17.0.12
+         [INFO] Java Vendor: Ubuntu
+         [INFO] OS Info - Arch: amd64, Family: unix, Name: linux, Version: 6.8.0-41-generic
          Debian 12 Raspberry Pi:
          [INFO] Maven Version: 3.6.3
          [INFO] JDK Version: 17.0.12 normalized as: 17.0.12
          [INFO] Java Vendor: Debian
          [INFO] OS Info - Arch: aarch64, Family: unix, Name: linux, Version: 6.6.20+rpt-rpi-v8
-         Mac OS High Sierra:
-         [INFO] Maven Version: 3.6.0
-         [INFO] JDK Version: 1.8.0_25 normalized as: 1.8.0-25
-         [INFO] OS Info: Arch: x86_64 Family: mac Name: mac os x Version: 10.11.6
+         Mac OS Catalina:
+         [INFO] Maven Version: 3.9.9
+         [INFO] JDK Version: 17.0.12 normalized as: 17.0.12
+         [INFO] Java Vendor: Eclipse Adoptium
+         [INFO] OS Info - Arch: x86_64, Family: mac, Name: mac os x, Version: 10.15.7
+         Windows 10:
+         [INFO] Maven Version: 3.9.9
+         [INFO] JDK Version: 17.0.12 normalized as: 17.0.12
+         [INFO] Java Vendor: Eclipse Adoptium
+         [INFO] OS Info - Arch: amd64, Family: windows, Name: windows 10, Version: 10.0
     -->
     <profiles>
         <!-- There are two main profiles, build and deploy.

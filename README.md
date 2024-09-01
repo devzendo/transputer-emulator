@@ -1,40 +1,47 @@
 # transputer-emulator
 
 ## What is this?
-
 This is a portable, open source emulator of the 32-bit Inmos T414/T800/T801/T805 Transputer family, and a host/file
 I/O Server that interfaces it to a host OS, providing boot/debug/IO facilities.
 
 It runs on Apple macOS Catalina, Windows 10, Ubuntu 24.02, Linux Mint 21.3, and Raspberry Pi Debian 12.
-An embedded version of the emulator component is also available for the Raspberry Pi Pico.
+An embedded version of the emulator component is also available for the Raspberry Pi Pico 1.
+I do not have Mac hardware to support porting beyond Catalina; specifically no M1/M2/Mx.
+Due to lack of compatible TPM hardware, I cannot build on Windows 11 or later.
 
 It is part of the [Parachute Project](https://devzendo.github.io/parachute).
 
-It is written in C++14 - the Raspbian Stretch distribution provides Clang 3.5.0, which does not support
-more recent C++ standards. (It used to build on Raspbian Stretch, the oldest OS I had, which limited
-the C++ standard I could support. I think I'll keep it at this C++ version.)
+It is written in C++14. I do not intend to move beyond this C++ version.
+
+It used to build on Raspbian Stretch, the oldest OS I had when I started automated builds. This had Clang 3.5.0, which
+limited the C++ standard I could support.
 
 
 ## Project Status
+Actively in development.
+
+Currently working on compatibility with the aid of Mike Brüstle's Transputer Validation Suite.
+
+Also adding debugging facilities to aid the completion of the eForth Transputer port, and adding a build
+for the Raspberry Pi Pico.
+
+Attempting to run other typical Transputer software such as the Inmos occam and C compilers, and the port of Minix. 
+
 First release 0.0.1 Midsummer 2019 (13 June 2019) as part of Parachute 0.0.1.
 
-Project started around 19/08/2005, with a long hiatus. Another hiatus from Sep 2021 to Dec 2022.
+Project started around 19/08/2005, with a long hiatus.
+Another hiatus from Sep 2021 to Dec 2022.
 Another hiatus from Dec 2022 to Jul 2023.
+Another hiatus from Dec 2023 to Aug 2024.
 
-Currently working on compatibility with the aid of Mike Brüstle's Transputer
-Validation Suite, and attempting to run other typical Transputer software such
-as the Inmos occam and C compilers, and the port of Minix. Also adding debugging
-facilities to aid the completion of the eForth Transputer port, and adding a build
-for the Raspberry Pi Pico.
 
 ## Roadmap
 First release:
-* Ported to macOS (El Capitan +), Linux (Ubuntu 16.04, Ubuntu 18.04, CentOS 7.6, Raspbian Stretch), Windows 10.
 * A Cross Platform system that can run "Hello World" (via my NodeServer (custom protocol) implementation).
 
 Second release (work in progress):
 * Convert the NodeServer to be IServer compatible, implementing all frame types needed by "Hello World" and
-  eForth. Similarly, convert "Hello World" to be IServer compatible.
+  eForth. Similarly, convert "Hello World" and eForth to be IServer compatible.
 * IServer is unfinished; it implements the following frame types:
   * Id (Version)
   * Exit
@@ -48,10 +55,8 @@ Second release (work in progress):
   * Command Line
 * It implements the following "extended" frame types, not part of the original IServer, for performance purposes:
   * Put Char (to the console stream)
-* Note that the IServer's file handling does not yet prevent directory traversal vulnerabilities. Also line feed
-  handling on Windows is broken. To be corrected.
+* Note that the IServer's file handling does not yet prevent directory traversal vulnerabilities.
 * Converting older C code (that's not very portable) to C++14 (that hopefully is more portable).
-* Upgrade macOS build from El Capitan to Catalina.
 * eForth requires the following facilities of IServer (it originally accessed a UART; these routines have been
   changed to use IServer protocol on Link 0):
   * URD: Read and wait (odd return system)
@@ -61,28 +66,30 @@ Second release (work in progress):
 * Allow validation using Mike's TVS and pass tests for all implemented instructions
 * Add the start of a build for the Raspberry Pi Pico - that can run Hello World booted from a link; that has a single
   core, and single link over CDC-USB Serial. The memory/flash use is quantified.
-* Builds are now for Ubuntu 24.04, macOS Catalina, Raspberry Pi Debian, Windows 10, Rasperry Pi Pico.
   
 Third release:
 * Capable of running eForth.
-* Note that the IServer's file handling does not yet prevent directory traversal vulnerabilities. Also line feed
-  handling on Windows is broken. To be corrected.
+* Note that the IServer's file handling does not yet prevent directory traversal vulnerabilities.
 
 Fourth release:
 * More IServer implementation.
 * Prevent directory-traversal vulnerabilities in IServer's file handling - limit operations to under its root directory.
-* Correct IServer translation of line feeds when dealing with text files (on Windows).
 * Complete Integer functionality.
 
 Fifth release:
 * Complete Floating Point functionality.
 * Complete IServer implementation.
 
+
 # Release Notes
 0.0.2 Second Release (work in progress)
 * Converting the NodeServer to be IServer compatible. Similarly, "Hello World"
   (see IServer/client-examples/hello-world-iserver).
-* Release for macOS is upgraded from El Capitan to Mojave. Untested on Catalina.
+* Release for macOS is upgraded from El Capitan to Catalina.
+* Release for Intel Linux is now done only on Ubuntu 24.04.
+* Release for Raspberry Pi is now done only on Debian 12.
+* Release for Windows 10 is now done on Windows 10 22H2.
+* Removed versions for older OSs (macOS El Capitan, Ubuntu 16.04, 18.04, CentOS 7.6, Raspbian Stretch).
 * IServer -df (full debug) now enables all parts of the debug output.
 * Successfully runs hello.asm !
 * IServer now supports FPuts and the extended PutChar frame (used by eForth); it 
@@ -103,7 +110,7 @@ Fifth release:
   adc, bitrevnbits, bitrevword, csngl, cword, div, ladd, ldiff, ldiv, lmul,
   lshl, lshr, lsub, lsum, mul, rem, shl, shr, sub, wcnt, xdble, xword.
 * Implemented the instructions from "Transputer Instruction Set - Appendix".
-* Add a build of the emulator for the Raspberry Pi Pico.
+* Add a build of the emulator for the Raspberry Pi Pico 1.
 * Bugfix: protocol handler - open file - was inadvertantly broken on some
   platforms.
 
@@ -117,7 +124,8 @@ Fifth release:
   Added the -j flag to enable 'j 0' breakpoints.
 * Described current implementation/missing status in the above section.
 * The T810 instructions from "The IMS T810 - A Preliminary Survey" are not implemented.
-* Builds using Maven/CMake/CLion on macOS, Windows 10, CentOS 7, Ubuntu LTS, Raspbian Stretch.
+* Builds using Maven/CMake/CLion on macOS (El Capitan +), Linux (Ubuntu 16.04, Ubuntu 18.04, CentOS 7.6, Raspbian
+  Stretch), Windows 10.
 * Added Boot-from-ROM, fixed Wdesc bug after boot from link.
 * Fixes: xword, call, j & scheduling (with assistance from Michael Brüstle), locations of TPtrLoc1, TPtrLoc0.
   csngl and xdble: correct detection of sign of Areg
@@ -142,11 +150,11 @@ Fifth release:
 * j and cj - resolve the operand into an address that would be jumped to, display it
 * Emulate multiple Transputers on 1-N physical cores
 * Link topology management
-* Investigate Benes networks
 * Develop debug interface
 * Write debugger program
 * Add memory-mapped frame buffer via SDL
 * Add mouse interface for same
+* Investigate Benes networks
 
 ## Correctness
 * Remove potential buffer overflows in cpu.cpp (what were these?)
@@ -154,7 +162,7 @@ Fifth release:
 * Unfinished: resetch when given a link not a memory channel
 
 ## Build/Releases
-* Upgrade to C++14
+* None known.
 
 ## Bugs
 * None known.
@@ -364,24 +372,32 @@ Emulator - the T414/T800/T801/T805 emulator.
 # Building and Installing
 The distribution currently builds under the following systems:
 * Apple macOS - Intel only
-  * 'Mojave' 10.14 
   * 'Catalina' 10.15 
   * (untested on more recent versions)
 * Linux
-  * Linux Mint 21.12 Intel x86-64
+  * Linux Mint 21.3 Intel x86-64
   * Ubuntu Linux 24.04 LTS Intel x86-64
   * Raspberry Pi Debian 12
 * Microsoft Windows
-  * Windows 10 64-bit
+  * Windows 10 22H2
   * (untested on earlier versions e.g. XP, 7, 8, 8.1)
   * Due to lack of compatible TPM hardware, I cannot build on Windows 11 or later.
 * Embedded microcontrollers
-  * Raspberry Pi Pico (cross-compiled on Linux Mint and Pop!_OS)
+  * Raspberry Pi Pico (cross-compiled on Ubuntu Linux 24.04)
+
+The build is controlled by CMake, with a Maven wrapper around this to work with my CI server, and to make the main
+build commands a little easier to use (standard mvn lifecycle commands vs CMake oddities). Maven is just doing some
+preprocessing (the version number of the project is set in the pom.xml; mvn extracts this and embeds it in the C++ code),
+running cmake in various stages, and is used for packaging and overall build control. It's just much easier with it..
+
+You can ignore the Maven side completely, you'll just have to use arcane commands.
+
+Both types of build are shown below.
 
 C++ Dependencies:
+* These are all downloaded and built by CMake External Projects:
 * Google Test and Google Mock
 * gsl-lite (C++ Guidelines Support Library from https://github.com/gsl-lite/gsl-lite#as-cmake-package)
-* .. all taken care of by CMake External Project.
 
 Prerequisites:
 - All Operating Systems:
@@ -390,20 +406,17 @@ Prerequisites:
   - Python (prefer 3.x but 2.x is fine; required by the GoogleTest build). Command line interpreter python needs to be
     on the PATH.
   - Java 17 JDK (for Maven).
-  - Apache Maven. I use 3.9.0. (You can build without it, it's just doing some preprocessing, running cmake in various
-    stages, and is used for packaging and overall build control. It's just much easier with it.) Command line tool mvn
-    needs to be on the PATH. It's recommended to download the latest binary release from https://maven.apache.org/download.cgi
-    and unzip it, placing its bin directory on the PATH.
+  - Optional: Apache Maven. I use 3.9.9. Command line tool mvn needs to be on the PATH. It's recommended to download
+    the latest binary release from https://maven.apache.org/download.cgi and unzip it, placing its bin directory on the PATH.
   - CMake. I use 3.10.3+ .. 3.25.1. Command line tool cmake needs to be on the PATH. 
   - If you want to build the client-examples programs, you'll need the
     <a href="https://bitbucket.org/devzendo/transputer-macro-assembler">DevZendo.org Transputer Macro Assembler</a>
     installed and on your PATH.
   - The TMPDIR environment variable must be set to something on all POSIX systems, or some tests will fail.
-- macOS 'Mojave' 10.14.6:
-  - CMake 3.15.5 (from MacPorts) and 3.14.3 (from CLion)
-  - GNU Make. I use 4.2.1.
-  - clang (e.g. via XCode Developer tools, or MacPorts). Apple LLVM version 11.0.0 (clang-1100.0.33.8) on
-  - Untested on more recent versions of macOS
+- macOS 'Catalina' 10.15:
+  - CMake 3.29.5 (from MacPorts)
+  - GNU Make 3.81 (from XCode command line tools)
+  - clang (e.g. via XCode Developer tools). Apple clang version 12.0.0 (clang-1200.0.32.29)
   - If you see messages like this in a build failure:
     "Ignoring CMAKE_OSX_SYSROOT value:
     /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.15.sdk
@@ -418,38 +431,15 @@ Prerequisites:
     "C:\Program Files (x86)\Microsoft Visual Studio\2017\BuildTools\VC\Auxiliary\Build\vcvarsall.bat" x86_amd64
     prior to running other commands.
   - CMake is installed in C:\Program Files\CMake
-  - Maven is installed in C:\Program Files\apache-maven-3.6.0
+  - Maven is installed in C:\Program Files\apache-maven-3.9.9
   - (these locations are noted in the pom.xml).
   - Note if you're using CLion, set your Visual Studio Toolchain architecture to amd64. Otherwise you'll get errors
     saying your compiler can't create a simple executable.
-- Ubuntu 16.04:
-  - Clang etc.:
-    apt-get install build-essential clang-6.0 make clang
-  - It's recommended to unzip cmake under /opt - the maven build expects it there. Add a symlink 
-    /opt/cmake -> /opt/cmake-3.27.7-linux-x86_64 and add /opt/cmake/bin to the PATH.
-- Ubuntu 18.04:
-  - Clang etc.:
-    apt-get install build-essential clang-7 make clang
-  - It's recommended to unzip cmake under /opt - the maven build expects it there. Add a symlink 
-    /opt/cmake -> /opt/cmake-3.27.7-linux-x86_64 and add /opt/cmake/bin to the PATH.
-- Linux Mint 21.12, Pop!_OS 22.04, Ubuntu 24.04:
+- Ubuntu 24.04, Linux Mint 21.3:
   - G++ 11 etc:
-    apt-get install build-essential g++-11 make
-  - It's recommended to unzip cmake under /opt - the maven build expects it there. Add a symlink 
-    /opt/cmake -> /opt/cmake-3.27.7-linux-x86_64 and add /opt/cmake/bin to the PATH.
-  - Or just install it via apt, and create symlinks /opt/cmake/bin/cmake -> /usr/bin/cmake and
+    apt-get install build-essential g++-11 make cmake
+  - CMake: install it via apt, and create symlinks /opt/cmake/bin/cmake -> /usr/bin/cmake and
     /opt/cmake/bin/ctest -> /usr/bin/ctest .
-- CentOS 7.6.1810:
-  - Clang/LLVM 7:
-    yum install centos-release-scl-rh
-    yum --enablerepo=centos-sclo-rh-testing install devtoolset-7 devtoolset-7-llvm
-    (Clang 5.0.1)
-  - It's recommended to unzip cmake under /opt - the maven build expects it there. Add a symlink 
-    /opt/cmake -> /opt/cmake-3.27.7-linux-x86_64 and add /opt/cmake/bin to the PATH.
-- Raspbian Stretch:
-  - Clang 3.5.0
-  - It's recommended to unzip cmake under /opt - the maven build expects it there. Add a symlink 
-    /opt/cmake -> /opt/cmake-3.27.7-linux-x86_64 and add /opt/cmake/bin to the PATH.
 - Debian 12 Raspberry Pi:
   - G++ 11 etc:
     apt-get install build-essential g++-11 make cmake
@@ -471,17 +461,41 @@ The typical install location is:
 ## Building
 To build, cd to the top level directory (where this README.md is) and do:
 
-On windows: `vcvarsall.bat` as shown above
+On windows: `vcvarsall.bat` as shown above.
 
-Then for all desktop builds:
-`mvn clean compile -P build`
+Then for desktop builds (e.g. macOS - adjust for Windows):
+
+Using CMake directly:
+setup:
+  `mkdir -p target/classes`
+  `cp src/main/resources/* target/classes`
+  edit `target/classes/version.cpp` and change `${project.version}` to the version shown near the top of pom.xml
+generate:
+  `mkdir cmake-build-debug`
+  `cd cmake-build-debug`
+  `cmake -G "Unix Makefiles" -D NOCROSS=true /path/to/transputer-emulator`
+  `cd ..`
+compile:
+  `cmake --build cmake-build-debug --target all`
+test:
+  `ctest --test-action Test --parallel 8 --verbose`
+  
+  
+Using the Maven wrapper:
+setup/generate/compile:
+  `mvn clean compile -P build`
+test:
+  `mvn test -P build`
+package:
+  `mvn package -P build`
+
 
 NOTE: if you have a test failure from testfilesystem, set the TMPDIR environment variable to /tmp.
 
 For Raspberry Pi Pico:
-`mvn -DCROSS=PICO clean compile -P build`
+  `mvn -DCROSS=PICO clean compile -P build`
 
-This will:
+The Maven build will:
  * download all dependencies and plugins (quite a few of these), 
  * create the version number header (the version is controlled by the maven pom.xml)
  * creates the shared library code that contains the project version, in the target/classes directory, then
@@ -496,23 +510,24 @@ This doesn't install it on your system - see below.
 
 ## Cleaning the Build Tree
 To clean:
-mvn clean
-rm -rf cmake-build-debug
+  `mvn clean`
 
 ## Installing the Built Code
 To install into the default install location, you'll need to have permission to create it and
 write files there. 
 e.g. on macOS/Linux:
+```
 $ sudo mkdir /opt/parachute
 Password: <enter your password, assuming you have sudo rights>
-$ sudo chown myuser:myuser /opt/parachute # e.g. Linux
+$ `sudo chown myuser:myuser /opt/parachute # e.g. Linux
 $ sudo chown myuser:staff /opt/parachute  # e.g. macOS
+```
 
 e.g. on Windows:
 In File Explorer, create C:\parachute and set it writable by your user account, however you do this.
 
 Then to copy the built software there:
-mvn -P local-install prepare-package 
+  `mvn -P local-install prepare-package`
 
 This installation location is defined in the operating-system-specific profile sections of the pom.xml.
 
@@ -594,13 +609,11 @@ bootstrap code, object and executable file format and loader.
 # License, Copyright & Contact info
 This code is released under the Apache 2.0 License: http://www.apache.org/licenses/LICENSE-2.0.html.
 
-(C) 2005-2023 Matt J. Gumbley
+(C) 2005-2024 Matt J. Gumbley
 
 matt.gumbley@devzendo.org
 
 Mastodon: @M0CUV@mastodon.radio
-
-Twitter: (abandoned) @mattgumbley @devzendo
 
 http://devzendo.github.io/parachute
 
