@@ -5,6 +5,11 @@ set(CMAKE_CXX_STANDARD 14)
 set(CMAKE_CXX_STANDARD_REQUIRED ON) # Don't fall back to an earlier standard if the one declared isn't available
 set(CMAKE_CXX_EXTENSIONS OFF)
 
+if(NOT CMAKE_BUILD_TYPE)
+    set(CMAKE_BUILD_TYPE "Release" CACHE STRING "Choose Release or Debug" FORCE)
+endif()
+
+
 # Most (maven-invoked) builds set NOCROSS=true, since an option must be given
 # (due to maven cmake plugin inflexibility). We ignore that here. But if CROSS
 # is set, it defines a toolchain/SDK and otherwise modifies the build.

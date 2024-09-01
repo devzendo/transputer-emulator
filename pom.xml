@@ -54,7 +54,10 @@
     </distributionManagement>
 
     <properties>
+        <!-- These three are modified by the RELEASE profile -->
         <cmake.binary.dir>cmake-build-debug</cmake.binary.dir>
+        <cmake.build.type.d>-DCMAKE_BUILD_TYPE=Debug</cmake.build.type.d>
+        <cmake.build.type>Debug</cmake.build.type>
         <download.cmake>false</download.cmake> <!-- old setting -->
         <cmake.download>false</cmake.download> <!-- new setting -->
     </properties>
@@ -160,7 +163,11 @@
                                     <targetPath>${project.basedir}/${cmake.binary.dir}</targetPath>
                                     <generator>${cmake.generator}</generator>
                                     <classifier>${cmake.classifier}</classifier>
-                                    <options><option>-D</option><option>${cmake.option}</option></options>
+                                    <options>
+                                        <option>-D</option>
+                                        <option>CMAKE_BUILD_TYPE:STRING=${cmake.build.type}</option>
+                                        <option>-D</option><option>${cmake.option}</option>
+                                    </options>
                                 </configuration>
                             </execution>
 
@@ -174,6 +181,8 @@
                                     <!-- "targetPath" from the "generate" goal: -->
                                     <projectDirectory>${project.basedir}/${cmake.binary.dir}</projectDirectory>
                                     <classifier>${cmake.classifier}</classifier>
+                                    <options>
+                                    </options>
                                 </configuration>
                             </execution>
 
@@ -247,6 +256,21 @@
                         </executions>
                     </plugin>
                 </plugins>
+            </build>
+        </profile>
+        <profile>
+            <id>release</id>
+            <activation>
+                <property>
+                    <name>RELEASE</name> <!-- M2_RELEASE? -->
+                    <value>1</value>
+                </property>
+            </activation>
+            <properties>
+                <cmake.binary.dir>cmake-build-release</cmake.binary.dir>
+                <cmake.build.type>Release</cmake.build.type>
+            </properties>
+            <build>
             </build>
         </profile>
         <profile>

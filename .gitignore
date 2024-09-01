@@ -5,6 +5,7 @@
 **/*.*~
 **/*.swp
 cmake-build-debug
+cmake-build-release
 Testing/
 Reference/
 target
