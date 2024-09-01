@@ -56,7 +56,6 @@
     <properties>
         <!-- These three are modified by the RELEASE profile -->
         <cmake.binary.dir>cmake-build-debug</cmake.binary.dir>
-        <cmake.build.type.d>-DCMAKE_BUILD_TYPE=Debug</cmake.build.type.d>
         <cmake.build.type>Debug</cmake.build.type>
         <download.cmake>false</download.cmake> <!-- old setting -->
         <cmake.download>false</cmake.download> <!-- new setting -->
