@@ -5,7 +5,7 @@
 // License     : Apache License v2.0 - see LICENSE.txt for more details
 // Created     : 19/08/2005
 //
-// (C) 2005-2023 Matt J. Gumbley
+// (C) 2005-2024 Matt J. Gumbley
 // matt.gumbley@devzendo.org
 // http://devzendo.github.io/parachute
 //
@@ -65,7 +65,7 @@ static std::string programCommandLine;
 
 void usage() {
 	logInfoF("Parachute v%s IServer " __DATE__, projectVersion);
-	logInfo(" (C) 2005-2023 Matt J. Gumbley");
+	logInfo(" (C) 2005-2024 Matt J. Gumbley");
 	logInfo("  http://devzendo.github.io/parachute");
 	logInfo("Usage:");
 	logInfoF("%s: [options] [bootfile]", progName);

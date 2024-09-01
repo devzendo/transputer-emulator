@@ -5,7 +5,7 @@
 // License     : Apache License v2.0 - see LICENSE.txt for more details
 // Created     : 15/01/2020
 // Thanks to https://tuttlem.github.io/2014/08/18/getting-istream-to-work-off-a-byte-array.html
-// (C) 2005-2023 Matt J. Gumbley
+// (C) 2005-2024 Matt J. Gumbley
 // matt.gumbley@devzendo.org
 // http://devzendo.github.io/parachute
 //
