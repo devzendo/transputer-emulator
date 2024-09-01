@@ -54,9 +54,10 @@
     </distributionManagement>
 
     <properties>
-        <!-- These three are modified by the RELEASE profile -->
+        <!-- These two are modified by the release profile (does not currently work) -->
         <cmake.binary.dir>cmake-build-debug</cmake.binary.dir>
         <cmake.build.type>Debug</cmake.build.type>
+
         <download.cmake>false</download.cmake> <!-- old setting -->
         <cmake.download>false</cmake.download> <!-- new setting -->
     </properties>
@@ -120,9 +121,15 @@
                         <artifactId>maven-clean-plugin</artifactId>
                         <version>3.1.0</version>
                         <configuration>
+                            <!-- Used to use ${cmake.binary.dir} but that doesn't clear out the 'debug' dir when
+                                 switching to 'release' and vice versa -->
                             <filesets>
                                 <fileset>
-                                    <directory>${cmake.binary.dir}</directory>
+                                    <directory>cmake-build-debug</directory>
+                                    <followSymlinks>false</followSymlinks>
+                                </fileset>
+                                <fileset>
+                                    <directory>cmake-build-release</directory>
                                     <followSymlinks>false</followSymlinks>
                                 </fileset>
                             </filesets>
@@ -162,9 +169,11 @@
                                     <targetPath>${project.basedir}/${cmake.binary.dir}</targetPath>
                                     <generator>${cmake.generator}</generator>
                                     <classifier>${cmake.classifier}</classifier>
+                                    <!-- Release mechanism does not work yet - see release profile -->
+                                    <environmentVariables>
+                                        <CMAKE_BUILD_TYPE>${cmake.build.type}</CMAKE_BUILD_TYPE>
+                                    </environmentVariables>
                                     <options>
-                                        <option>-D</option>
-                                        <option>CMAKE_BUILD_TYPE:STRING=${cmake.build.type}</option>
                                         <option>-D</option><option>${cmake.option}</option>
                                     </options>
                                 </configuration>
@@ -257,11 +266,15 @@
                 </plugins>
             </build>
         </profile>
+        <!-- This 'release' profile is intended to make CMake produce a stripped set of executables with no symbols
+             and debug information. It does not work - CMake refuses to do the right thing. Leave it in for now, and
+             come back to it when I have more time to devote to it...
+             It does cause the appropriate cmake-build-xxx directory to be used. -->
         <profile>
             <id>release</id>
             <activation>
                 <property>
-                    <name>RELEASE</name> <!-- M2_RELEASE? -->
+                    <name>RELEASE</name> <!-- Could trigger on M2_RELEASE? -->
                     <value>1</value>
                 </property>
             </activation>
