@@ -151,10 +151,6 @@ add_subdirectory(target/classes)
 add_subdirectory(Shared)
 add_subdirectory(Emulator)
 
-if(PICO)
-  pico_add_extra_outputs(Emulator/temulate)
-endif()
-
 if(NOT(EMBEDDED))
   add_subdirectory(IServer)
 endif()
