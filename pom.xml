@@ -402,6 +402,10 @@
                 <os>
                     <name>mac os x</name>
                 </os>
+                <!-- The main PICO build is done on Ubuntu, but allow it on macOS too -->
+                <property>
+                    <name>!CROSS</name>
+                </property>
             </activation>
             <properties>
                 <!-- The CMake maven plugin understands cmake.root.dir -->

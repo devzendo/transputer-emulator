@@ -571,6 +571,10 @@ https://github.com/blackjetrock/picoputer
 
 Henry S. Warren, for "Hacker's Delight".
 
+Pete Warden for his investigation and documentation into the Raspberry Pi Pico
+memory layout at
+https://petewarden.com/2024/01/16/understanding-the-raspberry-pi-picos-memory-layout/
+
 Yury Shevchuk and Roman Pozlevich for the gcc-t800 port, ttools and libxputer
 packages.  These were used throughout an earlier version of the project, for
 bootstrap code, object and executable file format and loader.
@@ -606,7 +610,6 @@ bootstrap code, object and executable file format and loader.
 
 "Hacker's Delight, second edition, Henry S. Warren"
   https://www.pearson.com/en-us/subject-catalog/p/hackers-delight/P200000000672/9780321842688
-
 
 # License, Copyright & Contact info
 This code is released under the Apache 2.0 License: http://www.apache.org/licenses/LICENSE-2.0.html.
