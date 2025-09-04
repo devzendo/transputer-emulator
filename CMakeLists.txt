@@ -22,7 +22,7 @@ if(DEFINED CACHE{CROSS})
         set(PICO ON) # Now sense this for ease with if(PICO) ... endif()
     endif()
 else()
-    message(STATUS "Not cross-compiling, this is a full build")
+    message(STATUS "Not cross-compiling, this is a full desktop build")
 endif()
 
 # Convenience CMake variables, and analogues of them as C++ preprocessor definitions.

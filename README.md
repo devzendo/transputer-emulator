@@ -19,6 +19,7 @@ limited the C++ standard I could support.
 
 ## Project Status
 Actively in development.
+Last changes in September 2025.
 
 Currently working on compatibility with the aid of Mike Brüstle's Transputer Validation Suite.
 
@@ -33,6 +34,7 @@ Project started around 19/08/2005, with a long hiatus.
 Another hiatus from Sep 2021 to Dec 2022.
 Another hiatus from Dec 2022 to Jul 2023.
 Another hiatus from Dec 2023 to Aug 2024.
+Another hiatus from Sep 2023 to Sep 2025.
 
 
 ## Roadmap
