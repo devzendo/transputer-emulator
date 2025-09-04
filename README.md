@@ -18,7 +18,6 @@ limited the C++ standard I could support.
 
 
 ## Project Status
-Actively in development.
 Last changes in September 2025.
 
 Currently working on compatibility with the aid of Mike Brüstle's Transputer Validation Suite.
