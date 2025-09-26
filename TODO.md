@@ -10,7 +10,15 @@
   * Need a Pico USB Serial link, supported on the IServer side by a FIFO that works with a serial device.
   * Logging needs to be recorded to a memory area, that can be probed by an analyser when the emulator
     is in boot mode. 
-  * Asynchronous link abstraction using GPIO.
+  * Asynchronous link abstraction using GPIO:
+    * Lowest level: TxRxPin, represents a pair of abstract pins. GPIOTxRxPin would use Pi Pico
+      GPIO pins. Tests would use a CrosswiredTxRxPinPair, which gives a pair of TxRxPins, A and B,
+      where setting A's Tx pin enables B's Rx pin. Setting B's Tx enables A's Rx. An AsyncLink
+      would take a TxRxPin, and tests would create two AsyncLinks with the two TxRxPins back-to-back.
+    * Medium level: DataAckSender, state machine that uses the Tx half of a TxRxPin to clock out an
+      Ack or Data frame and can be queried for its state. DataAckReceiver, a state machine that
+      senses the Rx half of a TxRxPin to clock in any received Ack and/or Data frame.
+    * High level: AsyncLink.
   * Use the Maker Pi Pico's NeoRGB LEDs as a boot/run/error state indicator?
 * The TVS tests currently run in the emulator but it would be useful to have a server that can work
   with the embedded emulator to send/collect program/input and output.
