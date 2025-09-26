@@ -49,3 +49,7 @@ void NullLink::resetLink(void) {
 int NullLink::getLinkType() {
     return LinkType_Null;
 }
+
+void NullLink::poll(void) {
+	// no-op
+}

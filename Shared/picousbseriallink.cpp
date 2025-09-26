@@ -21,7 +21,7 @@ PicoUSBSerialLink::PicoUSBSerialLink(int linkNo, bool isServer) :
     logDebugF("Constructing Pico USB Serial link %d for %s", myLinkNo, isServer ? "server" : "cpu client");
 }
 
-void PicoUSBSerialLink::initialise(void) throw (std::exception) {
+void PicoUSBSerialLink::initialise(void) {
     myWriteSequence = myReadSequence = 0;
 }
 
@@ -29,23 +29,27 @@ PicoUSBSerialLink::~PicoUSBSerialLink() {
     logDebugF("Destroying Pico USB Serial link %d", myLinkNo);
 }
 
-BYTE8 PicoUSBSerialLink::readByte() throw (std::exception) {
+BYTE8 PicoUSBSerialLink::readByte() {
     if (bDebug) {
         logDebugF("Link %d R #%08X 00 (.)", myLinkNo, myReadSequence++);
     }
     return 0;
 }
 
-void PicoUSBSerialLink::writeByte(BYTE8 buf) throw (std::exception) {
+void PicoUSBSerialLink::writeByte(BYTE8 buf) {
     if (bDebug) {
         logDebugF("Link %d W #%08X 00 (.)", myLinkNo, myWriteSequence++);
     }
 }
 
-void PicoUSBSerialLink::resetLink(void) throw (std::exception) {
+void PicoUSBSerialLink::resetLink(void) {
     // TODO
 }
 
 int PicoUSBSerialLink::getLinkType() {
-    return LinkType_FIFO;
+    return LinkType_USBCDC;
+}
+
+void PicoUSBSerialLink::poll(void) {
+	// no-op
 }

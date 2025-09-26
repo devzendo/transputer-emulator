@@ -167,3 +167,7 @@ void FIFOLink::resetLink(void) {
 int FIFOLink::getLinkType() {
     return LinkType_FIFO;
 }
+
+void FIFOLink::poll(void) {
+	// no-op
+}

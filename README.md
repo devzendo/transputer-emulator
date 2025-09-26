@@ -22,8 +22,9 @@ Last changes in September 2025.
 
 Currently working on compatibility with the aid of Mike Brüstle's Transputer Validation Suite.
 
-Also adding debugging facilities to aid the completion of the eForth Transputer port, and adding a build
-for the Raspberry Pi Pico.
+Also adding debugging facilities to aid the completion of the eForth Transputer port.
+Adding a build for the Raspberry Pi Pico, using USB CDC for diagnostic and link 0 I/O. 
+Starting a GPIO-based asynchronous link abstraction, for eventual use on the Pi Pico.
 
 Attempting to run other typical Transputer software such as the Inmos occam and C compilers, and the port of Minix. 
 

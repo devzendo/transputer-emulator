@@ -5,6 +5,9 @@ if(UNIX AND NOT(PICO))
     set(platform_sources fifolink.cpp fifolink.h)
 endif(UNIX AND NOT(PICO))
 if(PICO)
+    # Links can throw, perhaps review that.
+    set(PICO_CXX_ENABLE_EXCEPTIONS 1)
+
     # TEST
     set(platform_sources fifolink.cpp fifolink.h)
     #set(platform_sources picousbseriallink.cpp picousbseriallink.h)
@@ -24,8 +27,10 @@ add_library(parachutedev STATIC log.h log.cpp misc.h misc.cpp hexdump.h hexdump.
         linkfactory.h linkfactory.cpp constants.h emuquery.h memloc.h platformdetection.h types.h
         nulllink.cpp nulllink.h
         ringbuffer.cpp ringbuffer.h
+        asynclink.h asynclink.cpp
         "${non_embedded_sources}"
 )
+# asynclink is intended for embedded, but am developing it on desktop for now
 
 if(NOT(EMBEDDED))
   add_library(testfixtures STATIC tempfilesfixture.h tempfilesfixture.cpp exceptionfixture.h)
@@ -38,6 +43,10 @@ if(NOT(EMBEDDED))
   add_executable(testlink testlink.cpp)
   target_link_libraries(testlink parachutedev gtest gmock_main)
   add_test(NAME testlink COMMAND testlink)
+
+  add_executable(testasynclink testasynclink.cpp)
+  target_link_libraries(testasynclink parachutedev gtest gmock_main)
+  add_test(NAME testasynclink COMMAND testasynclink)
 
   add_executable(testfilesystem testfilesystem.cpp)
   target_link_libraries(testfilesystem testfixtures parachutedev gtest gmock_main gsl)

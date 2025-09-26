@@ -29,6 +29,8 @@ const int LinkType_NamedPipe = 3;
 const int LinkType_Stub = 4; // for testing
 const int LinkType_TVS = 5;
 const int LinkType_Null = 6;
+const int LinkType_Async = 7;
+const int LinkType_USBCDC = 8;
 
 class Link {
 public:
@@ -54,6 +56,11 @@ public:
 	int getLinkNo(void);
 	void setDebug(bool newDebug);
 	virtual int getLinkType(void) = 0;
+
+	// Async support functions.
+	virtual void poll() = 0; // called under interrupt
+	// writeStatus? (idle, writing, acknowledged, not-acknowledged)
+	// readStatus? (idle, ack-received, reading, read-available)
 protected:
 	int myLinkNo;
 	bool bServer;

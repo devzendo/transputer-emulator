@@ -220,3 +220,7 @@ void NamedPipeLink::resetLink(void) {
 int NamedPipeLink::getLinkType() {
     return LinkType_NamedPipe;
 }
+
+void NamedPipeLink::poll(void) {
+	// no-op
+}

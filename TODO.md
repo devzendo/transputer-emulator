@@ -10,6 +10,7 @@
   * Need a Pico USB Serial link, supported on the IServer side by a FIFO that works with a serial device.
   * Logging needs to be recorded to a memory area, that can be probed by an analyser when the emulator
     is in boot mode. 
+  * Asynchronous link abstraction using GPIO.
   * Use the Maker Pi Pico's NeoRGB LEDs as a boot/run/error state indicator?
 * The TVS tests currently run in the emulator but it would be useful to have a server that can work
   with the embedded emulator to send/collect program/input and output.

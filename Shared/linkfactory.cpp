@@ -45,7 +45,7 @@ LinkFactory::LinkFactory(bool isServer, bool isDebug) {
 	bDebug = isDebug;
 	bTVS = false;
 #if defined(PLATFORM_PICO)
-	myLinkTypes[0] = LinkType_FIFO;
+	myLinkTypes[0] = LinkType_FIFO; // TODO LinkType_USBCDC
 	for (int i = 1; i < 4; i++) {
 		myLinkTypes[i] = LinkType_Null; // for now, until we have PIO links
 	}

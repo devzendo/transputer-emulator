@@ -1,36 +1,37 @@
 //------------------------------------------------------------------------------
 //
-// File        : picousbseriallink.h
-// Description : A Link over the Pi Pico's USB Serial connection.
+// File        : asynclink.h
+// Description : An asynchronous link that works with a pair of (abstract)
+//               GPIO pins.
 // License     : Apache License v2.0 - see LICENSE.txt for more details
-// Created     : 07/10/2023
+// Created     : 26/09/2025
 //
-// (C) 2005-2024 Matt J. Gumbley
+// (C) 2005-2025 Matt J. Gumbley
 // matt.gumbley@devzendo.org
 // http://devzendo.github.io/parachute
 //
 //------------------------------------------------------------------------------
 
-#ifndef _PICOUSBSERIALLINK_H
-#define _PICOUSBSERIALLINK_H
+#ifndef _ASYNCLINK_H
+#define _ASYNCLINK_H
 
 #include <exception>
 
 #include "types.h"
 #include "link.h"
 
-class PicoUSBSerialLink : public Link {
+class AsyncLink : public Link {
 public:
-    PicoUSBSerialLink(int linkNo, bool isServer);
+    AsyncLink(int linkNo, bool isServer);
     void initialise(void);
-    ~PicoUSBSerialLink(void);
+    ~AsyncLink(void);
     BYTE8 readByte(void);
     void writeByte(BYTE8 b);
     void resetLink(void);
     int getLinkType(void);
-	void poll(void);
+    void poll(void);
 private:
     WORD32 myWriteSequence, myReadSequence;
 };
 
-#endif // _PICOUSBSERIALLINK_H
+#endif // _ASYNCLINK_H
