@@ -482,8 +482,9 @@ generate:
   `cd ..`
 compile:
   `cmake --build cmake-build-debug --target all`
+  `(cd cmake-build-debug; make)`
 test:
-  `ctest --test-action Test --parallel 8 --verbose`
+  `export TMPDIR=/tmp; (cd cmake-build-debug; ctest --test-action Test --parallel 8 --verbose)`
   
   
 Using the Maven wrapper:
