@@ -618,7 +618,7 @@ bootstrap code, object and executable file format and loader.
 # License, Copyright & Contact info
 This code is released under the Apache 2.0 License: http://www.apache.org/licenses/LICENSE-2.0.html.
 
-(C) 2005-2024 Matt J. Gumbley
+(C) 2005-2025 Matt J. Gumbley
 
 matt.gumbley@devzendo.org
 

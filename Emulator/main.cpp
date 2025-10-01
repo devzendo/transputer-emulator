@@ -5,7 +5,7 @@
 // License     : Apache License v2.0 - see LICENSE.txt for more details
 // Created     : 29/06/2005
 //
-// (C) 2005-2024 Matt J. Gumbley
+// (C) 2005-2025 Matt J. Gumbley
 // matt.gumbley@devzendo.org
 // http://devzendo.github.io/parachute
 //
@@ -60,7 +60,7 @@ WORD32 SPP, RPP;
 
 void usage() {
 	logInfoF("Parachute v%s Portable Transputer Emulator " __DATE__, projectVersion);
-	logInfo("  (C) 2005-2024 Matt J. Gumbley");
+	logInfo("  (C) 2005-2025 Matt J. Gumbley");
 	logInfo("  http://devzendo.github.io/parachute");
 	logInfo("Usage:");
 	logInfoF("%s: [options] [romfile]", progName);
