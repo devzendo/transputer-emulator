@@ -7,10 +7,7 @@ endif(UNIX AND NOT(PICO))
 if(PICO)
     # Links can throw, perhaps review that.
     set(PICO_CXX_ENABLE_EXCEPTIONS 1)
-
-    # TEST
-    set(platform_sources fifolink.cpp fifolink.h)
-    #set(platform_sources picousbseriallink.cpp picousbseriallink.h)
+    set(platform_sources picousbseriallink.cpp picousbseriallink.h)
 endif(PICO)
 if(EMBEDDED)
     set(non_embedded_sources ) # nothing

@@ -73,7 +73,7 @@
 #endif
 
 
-#if defined(__linux__) && defined(PICO)
+#if defined(PICO)
 #define PLATFORM_PICO
 #endif
 

@@ -29,14 +29,17 @@ endif()
 if(PICO) # OR TEENSY OR ADAFRUIT_FEATHER .. or whatever
   set(EMBEDDED ON)
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DPICO")
+  message(STATUS "Setting an embedded build with -DPICO in the CXX flags...")
 endif()
 
 # It's either embedded, or desktop.
 if(EMBEDDED)
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DEMBEDDED")
+  message(STATUS "Setting -DEMBEDDED in the CXX flags")
 else()
   set(DESKTOP ON)
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DDESKTOP")
+  message(STATUS "Setting -DDESKTOP in the CXX flags")
 endif()
 
 # So you'll either have DESKTOP or EMBEDDED, and then Shared/platformdetection.h will give you

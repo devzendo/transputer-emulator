@@ -24,7 +24,15 @@ const int BOOL_FALSE = 0;
 
 const int Kilo=1024;
 const int Mega=(Kilo * Kilo);
+// The T800 had 4KB of internal RAM...
+#ifdef DESKTOP
 const int DefaultMemSize=(4 * Mega);          // Emulator has a 4MB address space
+#endif
+#ifdef PICO
+// Total heap: 246916 bytes; free heap: 244784 bytes (around 239KB) - measured
+// during early builds' startup.
+const int DefaultMemSize=(200 * Kilo);      // Emulator has a 200KB address space
+#endif
 const int BitsPerWord=32;                       // For use in instruction timings
 const int ByteSelectMask=0x03;                    // Mask to check word alignment
 const WORD32 WordMask=0xFFFFFFFC;             // ~ByteSelectMask to get word part

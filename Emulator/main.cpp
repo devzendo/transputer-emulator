@@ -11,14 +11,23 @@
 //
 //------------------------------------------------------------------------------
 
-#include <iostream>
-#include <cstdio>
-#include <cstring>
-#include <cstdlib>
-#include <fstream>
-#include <sstream>
-#include <map>
-#include <set>
+#ifdef PICO
+#include <stdio.h> // Pico USB Serial STDIO
+#include "pico/stdlib.h"
+#include <malloc.h>
+#endif
+
+#include <string>
+
+// May be needed only for desktop builds...
+//#include <iostream>
+//#include <cstdio>
+//#include <cstring>
+//#include <cstdlib>
+//#include <fstream>
+//#include <sstream>
+//#include <map>
+//#include <set>
 
 using namespace std;
 
@@ -352,10 +361,21 @@ void interruptHandler(int sig) {
 	fflush(stdout);
 	SET_FLAGS(EmulatorState_Terminate);
 }
-
 #endif // UNIX
 
 #endif // DESKTOP
+
+#ifdef PICO
+uint32_t getTotalHeap(void) {
+	extern char __StackLimit, __bss_end__;
+	return &__StackLimit  - &__bss_end__;
+}
+
+uint32_t getFreeHeap(void) {
+	struct mallinfo m = mallinfo();
+	return getTotalHeap() - m.uordblks;
+}
+#endif
 
 
 #ifdef DESKTOP
@@ -363,6 +383,34 @@ int main(int argc, char *argv[]) {
 #else
 int main() {
 #endif
+
+#if defined(PLATFORM_PICO)
+	// Initialise USB Serial STDIO...
+	bool ok = stdio_init_all();
+	printf("Hello from temulate.uf2 %d\r\n", ok);
+	gpio_init(25);
+	gpio_set_dir(25, GPIO_OUT);
+	int delay = 1000;
+	while (1) {
+		gpio_put(25, 1);
+		printf("p LED ON\n");
+
+		logInfo("LED ON\n");
+		sleep_ms(delay);
+		gpio_put(25, 0);
+		printf("p LED OFF\n");
+
+		logInfo("LED OFF\n");
+		sleep_ms(delay);
+		delay -= 50;
+		if (delay < 0) {
+			delay = 1000;
+			break;
+		}
+	}
+	printf("Total heap 0x%08X Free heap 0x%08X\n", getTotalHeap(), getFreeHeap());
+#endif
+
 	Memory *memory;
 	CPU *cpu;
 #ifdef DESKTOP
@@ -377,6 +425,13 @@ int main() {
 #ifdef EMBEDDED
 	int logLevel = LOGLEVEL_DEBUG;
 	setLogLevel(logLevel);
+	SET_FLAGS((Debug_OprCodes |
+				MemAccessDebug_ReadWriteData | // Full is too much
+				DebugFlags_TerminateOnMemViol |
+				DebugFlags_LinkComms |
+				DebugFlags_Clocks |
+				DebugFlags_Queues |
+				DebugFlags_IDiag));
 #endif
 
 
@@ -432,6 +487,7 @@ int main() {
 #endif
 	if (!memory->initialise(ramSize)) {
 		delete linkFactory;
+		logInfo("END");
 		exit(1);
 	}
 	cpu = new CPU();
@@ -442,6 +498,7 @@ int main() {
 		logFatal("CPU setup failed");
 		delete linkFactory;
 		delete memory;
+		logInfo("END");
 		exit(1);
 	}
 
@@ -454,18 +511,20 @@ int main() {
 		cpu->seteForthStackAddresses(SPP, RPP);
 	}
 #endif
+	logInfo("Start of emulation");
 
 #if defined(DESKTOP)
 	cpu->emulate(romFile);
 	fflush(stdout);
 #else
 	cpu->emulate(false);
+	logInfo("End of emulation");
 #endif
 
 	delete linkFactory;
 	delete memory;
 	delete cpu;
-	
+	logInfo("END");
 	return 0;
 }
 

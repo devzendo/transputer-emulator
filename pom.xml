@@ -311,6 +311,8 @@
                 <binary.suffix></binary.suffix>
                 <assembly.name>pi-pico-distribution</assembly.name>
                 <cmake.option>CROSS=PICO</cmake.option>
+                <cmake.binary.dir>cmake-build-release</cmake.binary.dir>
+                <cmake.build.type>Release</cmake.build.type>
             </properties>
             <build>
             </build>

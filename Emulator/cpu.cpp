@@ -136,6 +136,7 @@ bool CPU::initialise(Memory *memory, LinkFactory *linkFactory) {
 		if ((myLinks[i] = linkFactory->createLink(i)) == NULL) {
 			logFatalF("Could not create link %d", i);
 			allLinksOK = false;
+			break;
 		}
 		try {
 			myLinks[i]->initialise();

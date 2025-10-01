@@ -123,11 +123,14 @@ bool LinkFactory::processCommandLine(int argc, char *argv[]) {
 
 Link *LinkFactory::createLink(int linkNo) {
 	Link *newLink = NULL;
+	logDebugF("Creating Link %d of type %d...", linkNo, myLinkTypes[linkNo]);
 	switch (myLinkTypes[linkNo]) {
 		case LinkType_FIFO:
 #if defined(PLATFORM_OSX) || defined(PLATFORM_LINUX)
+			logDebugF("Link %d FIFO", linkNo);
 			newLink = new FIFOLink(linkNo, bServer);
 #elif defined(PLATFORM_WINDOWS)
+			logDebugF("Link %d Named Pipe", linkNo);
 			newLink = new NamedPipeLink(linkNo, bServer);
 #elif defined(PLATFORM_PICO)
 			newLink = new PicoUSBSerialLink(linkNo, bServer);
@@ -141,6 +144,7 @@ Link *LinkFactory::createLink(int linkNo) {
 			return NULL;
 		case LinkType_TVS:
 #if defined(PLATFORM_OSX) || defined(PLATFORM_LINUX) || defined(PLATFORM_WINDOWS)
+			logDebugF("Link %d TVS", linkNo);
 			newLink = new TVSLink(linkNo, tvsProgram, tvsInput, tvsOutput);
 #else
 			logFatal("TVS links not implemented on this platform");
@@ -148,6 +152,7 @@ Link *LinkFactory::createLink(int linkNo) {
 #endif
 			break;
 		case LinkType_Null:
+			logDebugF("Link %d Null", linkNo);
 			newLink = new NullLink(linkNo, bServer);
 			break;
 		default:

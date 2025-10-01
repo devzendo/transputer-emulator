@@ -11,6 +11,10 @@
 //
 //------------------------------------------------------------------------------
 
+#ifdef PICO
+#include <stdio.h> // Pico USB Serial STDIO
+#endif
+
 #include <cstdlib>
 #include <cstdarg> // vsnprintf is supposed to be in here, but is in cstdio in RH73
 #include <cstdio>
@@ -50,6 +54,9 @@ void logFlush(void) {
 #ifdef DESKTOP
     myOutputStream->flush();
 #endif
+#ifdef PICO
+	fflush(stdout);
+#endif
 }
 
 static int myLogLevel = LOGLEVEL_INFO;
@@ -61,6 +68,14 @@ void _logDebug(int l, const char *f, const char *s) {
 	if (myLogLevel <= LOGLEVEL_DEBUG) {
 #ifdef DESKTOP
 		*myOutputStream << tags[LOGLEVEL_DEBUG] << f << ":" << l << " " << s << std::endl;
+#endif
+#ifdef PICO
+		fputs(tags[LOGLEVEL_DEBUG], stdout);
+		//fputs(f, stdout);
+		//putchar(':');
+		//printf("%d ", l);
+		fputs(s, stdout);
+		fputs("\n", stdout);
 #endif
 	}
 }
@@ -82,6 +97,14 @@ void _logDebugF(int l, const char *f, const char *fmt, ...) {
 			if (n >= -1 && n < size) {
 #ifdef DESKTOP
 				*myOutputStream << tags[LOGLEVEL_DEBUG] << f << ":" << l << " " << buf << std::endl;
+#endif
+#ifdef PICO
+				fputs(tags[LOGLEVEL_DEBUG], stdout);
+				//fputs(f, stdout);
+				//putchar(':');
+				//printf("%d ", l);
+				fputs(buf, stdout);
+				fputs("\n", stdout);
 #endif
 				free(buf);
 				return;
@@ -119,6 +142,11 @@ void logFormat(int level, const char *fmt, ...) {
 #ifdef DESKTOP
 				*myOutputStream << tags[level] << buf << std::endl;
 #endif
+#ifdef PICO
+				fputs(tags[level], stdout);
+				fputs(buf, stdout);
+				fputs("\n", stdout);
+#endif
 				free(buf);
 				return;
 			}
@@ -140,6 +168,11 @@ void logLevel(const int level, const char *s) {
 	if (myLogLevel <= level) {
 #ifdef DESKTOP
 		*myOutputStream << tags[level] << s << std::endl;
+#endif
+#ifdef PICO
+		fputs(tags[level], stdout);
+		fputs(s, stdout);
+		fputs("\n", stdout);
 #endif
 	}
 }
@@ -164,6 +197,11 @@ void logBug(const char *s) {
 #ifdef DESKTOP
 	*myOutputStream << "*BUG* " << s << std::endl;
 #endif
+#ifdef PICO
+	fputs("*BUG* ", stdout);
+	fputs(s, stdout);
+	fputs("\n", stdout);
+#endif
 }
 
 void logPrompt(void) {
@@ -173,6 +211,7 @@ void logPrompt(void) {
 #endif
 }
 
+// TODO Isn't this desktop only?
 void getInput(char *buf, int buflen) {
 	if (fgets(buf, buflen, stdin) == NULL) {
 		// do nothing. casting fgets' output to void still causes warnings
