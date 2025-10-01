@@ -19,13 +19,15 @@
 
 #include <string>
 
+#ifdef DESKTOP
+#include <fstream>
+#include <sstream>
+#endif
 // May be needed only for desktop builds...
 //#include <iostream>
 //#include <cstdio>
 //#include <cstring>
 //#include <cstdlib>
-//#include <fstream>
-//#include <sstream>
 //#include <map>
 //#include <set>
 
