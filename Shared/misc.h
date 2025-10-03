@@ -75,5 +75,8 @@ extern std::string stripTrailing(char toStrip, const std::string &from);
 // Return the original string if it's empty or needs no stripping, otherwise, returns a stripped version.
 extern std::string stripLeading(char toStrip, const std::string &from);
 
+extern const char *byte_to_binary(BYTE8 x);
+extern const char *word_to_binary(WORD16 x);
+
 #endif // _MISC_H
 

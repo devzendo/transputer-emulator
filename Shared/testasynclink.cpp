@@ -205,9 +205,12 @@ TEST_F(AsyncLinkTest, AckCanBeSent) {
     sender.sendAck(); // Needs clocking to send the signals out. 16 clock pulses/bit.
 
     // An ack is a 1 followed by a 0.
+    const int expected_bits = 2;
+    const int expected_samples = expected_bits * 16;
     EXPECT_EQ(sender.state(), SENDING);
     EXPECT_EQ(sender._queueLength(), 2);
-    for (int i=0; i<32; i++) {
+    EXPECT_EQ(sender._data(), 0x0001);
+    for (int i=0; i<expected_samples; i++) {
         EXPECT_EQ(sender.state(), SENDING);
 
         sender.clock();
@@ -216,9 +219,41 @@ TEST_F(AsyncLinkTest, AckCanBeSent) {
     EXPECT_EQ(sender.state(), IDLE);
     EXPECT_EQ(sender._queueLength(), 0);
     const std::vector<bool> heard = trace.heard();
-    EXPECT_EQ(heard.size(), 32);
-    const int expected_ack_bits[2] = { 1, 0 };
-    const std::vector<bool> expected = generate_sample_vector_from_bits(expected_ack_bits, 2);
+    EXPECT_EQ(heard.size(), expected_samples);
+    const int expected_ack_bits[expected_bits] = { 1, 0 };
+    const std::vector<bool> expected = generate_sample_vector_from_bits(expected_ack_bits, expected_bits);
+    EXPECT_EQ(heard, expected);
+}
+
+TEST_F(AsyncLinkTest, DataCanBeSent) {
+    CrosswiredTxRxPinPair pair;
+    TxRxPin & pairA = pair.pairA();
+    TxRxPin & pairB = pair.pairB();
+    ClockingPinTracer trace(pairB);
+    DataAckSender sender(pairA);
+    EXPECT_EQ(sender.state(), IDLE);
+
+    sender.sendData(0xC9); // Needs clocking to send the signals out. 16 clock pulses/bit.
+
+    // Data is two start bits (1), the data bits, then a stop bit (0).
+    const int expected_bits = 11;
+    const int expected_samples = expected_bits * 16;
+    EXPECT_EQ(sender.state(), SENDING);
+    EXPECT_EQ(sender._queueLength(), expected_bits);
+    EXPECT_EQ(sender._data(), 0x0327);
+    logDebug("Data to be clocked out looks right with framing");
+    for (int i=0; i<expected_samples; i++) {
+        EXPECT_EQ(sender.state(), SENDING);
+
+        sender.clock();
+        trace.clock();
+    }
+    EXPECT_EQ(sender.state(), IDLE);
+    EXPECT_EQ(sender._queueLength(), 0);
+    const std::vector<bool> heard = trace.heard();
+    EXPECT_EQ(heard.size(), expected_samples);   //       vvv note LSB first vvv
+    const int expected_ack_bits[expected_bits] = { 1, 1,  1, 0, 0, 1, 0, 0, 1, 1,  0 };
+    const std::vector<bool> expected = generate_sample_vector_from_bits(expected_ack_bits, expected_bits);
     EXPECT_EQ(heard, expected);
 }
 

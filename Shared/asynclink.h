@@ -17,6 +17,7 @@
 
 #include "types.h"
 #include "link.h"
+#include "misc.h"
 #include "log.h"
 
 /*
@@ -55,6 +56,32 @@ public:
 private:
     WORD32 myWriteSequence, myReadSequence;
 };
+// Only one byte needed to buffer in the receiving link (DataAckReceiver).
+// Ack can be sent as soon as reception of a data byte starts, if there's room to buffer another - need state to store
+// whether an ack needs sending (start bits of data received). Need state to indicate whether the data buffer is full
+// that gets cleared when it's read.
+// Receiver:
+// If rising edge of start bits received:
+//   if buffer empty:
+//     sender.sendAck()
+//   else
+//     ack required = true
+//
+// Data buffer clear:
+//   buffer = 0x00
+//   data available = false
+//   if ack required:
+//     ack required = false
+//     sender.sendAck()
+
+// Sender:
+//   Initial tx pin state = 0
+
+// Needs to notify clients:
+// For a sender:
+// * That an ack has been received - the emulator only reschedules the sending process when the ack for the final byte
+//   has been received.
+
 
 /* Medium level abstraction: DataAckSender/Receiver, a state machine that uses the Tx half of
  * a TxRxPin to clock out an Ack or Data frame and can be queried for its state. DataAckReceiver,
@@ -89,6 +116,31 @@ public:
         // TODO }
     }
 
+    void sendData(BYTE8 byte) {
+        // TODO if m_state != IDLE throw up
+        // TODO mutex {
+        BYTE8 origByte = byte;
+        m_sampleCount = 0;
+        m_bits = 11;
+        // Data is shifted out from the LSB of m_data. After the start bits (1 1), 'byte' is sent, starting with the
+        // least significant bit of 'byte' then one stop bit (0).
+        m_data = (byte << 2) | 0x0003; // A stop bit (implied), 'byte', then two start bits.
+        logDebugF("sendData orig byte 0b%s", byte_to_binary(origByte));
+        logDebugF("sendData data 0b%s", word_to_binary(m_data));
+        // 1
+        // 0 5 2 1
+        // 2 1 5 2 6 3 1
+        // 4 2 6 8 4 2 6 8 4 2 1
+        // ---------------------
+        // 0 b b b b b b b b 1 1  <-- m_data
+        // 0 7 6 5 4 3 2 1 0 1 1
+        // e.g. byte == C9
+        // 0 1 1 0 0 1 0 0 1 1 1
+        // 3     2       7
+        m_state = SENDING;
+        // TODO }
+    }
+
     void clock() {
         //logDebugF("clock > %d sample count %d bits %d data 0x%04X", m_state, m_sampleCount, m_bits, m_data);
         // TODO mutex {
@@ -96,6 +148,7 @@ public:
             case IDLE:
                 break;
             case SENDING:
+                // Send the least significant bit of m_data.
                 const bool one = m_data & 0x0001;
                 m_pin.setTx(one);
                 m_sampleCount ++;
@@ -115,6 +168,10 @@ public:
 
     int _queueLength() {
         return m_bits;
+    }
+
+    WORD16 _data() {
+        return m_data;
     }
 
 private:

@@ -100,3 +100,27 @@ std::string stripLeading(const char toStrip, const std::string &from) {
         return ret;
     }
 }
+
+
+const char *byte_to_binary(BYTE8 x) {
+    static char buffer[9]; // 8 bits + null terminator
+    buffer[0] = '\0';
+
+    int z;
+    for (z = 128; z > 0; z >>= 1) {
+        strcat(buffer, ((x & z) == z) ? "1" : "0");
+    }
+    return buffer;
+}
+
+
+const char *word_to_binary(WORD16 x) {
+    static char buffer[17]; // 16 bits + null terminator
+    buffer[0] = '\0';
+
+    int z;
+    for (z = 32768; z > 0; z >>= 1) {
+        strcat(buffer, ((x & z) == z) ? "1" : "0");
+    }
+    return buffer;
+}
