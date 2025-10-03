@@ -16,6 +16,7 @@
 
 #include <string>
 #include "platformdetection.h"
+#include "types.h"
 
 #if defined(PLATFORM_WINDOWS)
 extern std::string GetLastErrorStdStr();
