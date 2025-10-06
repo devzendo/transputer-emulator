@@ -45,8 +45,8 @@
 
 
 
-AsyncLink::AsyncLink(int linkNo, bool isServer) :
-    Link(linkNo, isServer) {
+AsyncLink::AsyncLink(int linkNo, bool isServer, TxRxPin& tx_rx_pin) :
+    Link(linkNo, isServer), m_pin(tx_rx_pin) {
     logDebugF("Constructing async link %d for %s", myLinkNo, isServer ? "server" : "cpu client");
     myWriteSequence = myReadSequence = 0;
 }
@@ -92,6 +92,9 @@ void AsyncLink::poll(void) {
  *        xxx
  * Only samples 7, 8 and 9 are read, and a majority vote taken to determine the actual value of the
  * transmitted bit.
+ *
+ * Note: Patrick H. Stakem's book states that 'The incoming data was sampled at five times the bit
+ * frequency.'
  */
 
 

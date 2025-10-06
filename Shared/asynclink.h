@@ -32,11 +32,12 @@ public:
     virtual void setTx(bool state) = 0;
 };
 
-/* Highest level abstraction: AsyncLink, a state machine that uses the DataAckSender/Receiver
+/* Highest level abstraction: AsyncLink, a state machine that uses the DataAckSender/Receiver (see asynclink.cpp)
+ * to handle the send/receive over a TxRxPin.
  */
 class AsyncLink : public Link {
 public:
-    AsyncLink(int linkNo, bool isServer); // TODO add a TxRxPin!
+    AsyncLink(int linkNo, bool isServer, TxRxPin& tx_rx_pin);
     void initialise(void);
     ~AsyncLink(void);
     BYTE8 readByte(void);
@@ -45,6 +46,7 @@ public:
     int getLinkType(void);
     void poll(void);
 private:
+    TxRxPin & m_pin;
     WORD32 myWriteSequence, myReadSequence;
 };
 

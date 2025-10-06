@@ -18,71 +18,6 @@
 #include "asynclink.h"
 #include "log.h"
 
-class AsyncLinkTest : public ::testing::Test {
-protected:
-
-    void SetUp() override {
-        setLogLevel(LOGLEVEL_DEBUG);
-        logDebug("SetUp start");
-
-        logDebug("Creating Link A");
-        linkA = new AsyncLink(0, false);
-        linkA->setDebug(true);
-        logDebug("Initialising Link A");
-        linkA->initialise();
-
-        logDebug("Creating Link B");
-        linkB = new AsyncLink(0, false);
-        linkB->setDebug(true);
-        logDebug("Initialising Link B");
-        linkB->initialise();
-
-        logDebug("Setup complete");
-        logFlush();
-    }
-
-    void TearDown() override {
-        logDebug("TearDown start");
-        if (linkA != nullptr) {
-            logDebug("Resetting Link A");
-            linkA->resetLink();
-	        delete linkA;
-        }
-        if (linkB != nullptr) {
-            logDebug("Resetting Link B");
-            linkB->resetLink();
-	        delete linkB;
-        }
-        logDebug("TearDown complete");
-        logFlush();
-    }
-
-    AsyncLink *linkA = nullptr;
-    AsyncLink *linkB = nullptr;
-};
-
-/*
-TEST_F(AsyncLinkTest, WriteAndReadByte) {
-    linkA->writeByte(16);
-    EXPECT_EQ(linkB->readByte(), 16);
-}
-
-TEST_F(AsyncLinkTest, WriteAndReadBytes) {
-    BYTE8 writeBuf[4] = { 0xff, 0x7f, 0x60, 0x21 };
-    int bytesWritten = linkA->writeBytes(writeBuf, 4);
-    EXPECT_EQ(bytesWritten, 4);
-
-    BYTE8 readBuf[4];
-    int bytesRead = linkB->readBytes(readBuf, 4);
-    EXPECT_EQ(bytesRead, 4);
-
-    EXPECT_EQ(readBuf[0], 0xff);
-    EXPECT_EQ(readBuf[1], 0x7f);
-    EXPECT_EQ(readBuf[2], 0x60);
-    EXPECT_EQ(readBuf[3], 0x21);
-}
-*/
-
 class CrosswiredTxRxPinPair {
     bool aPin = false;
     bool bPin = false;
@@ -90,7 +25,7 @@ class CrosswiredTxRxPinPair {
     class CrosswiredPin: TxRxPin {
     public:
         CrosswiredPin(const char *side, bool *rxstate, bool *txstate) : m_rxstate(rxstate), m_txstate(txstate) {
-           m_side = *side;
+            m_side = *side;
         }
 
         ~CrosswiredPin() override {}
@@ -127,10 +62,80 @@ public:
     }
 };
 
-TEST_F(AsyncLinkTest, CrosswiredTxRxPinPairExecise) {
+
+class AsyncLinkTest : public ::testing::Test {
+protected:
+
+    void SetUp() override {
+        setLogLevel(LOGLEVEL_DEBUG);
+        logDebug("SetUp start");
+
+        TxRxPin &pairA = pair.pairA();
+        TxRxPin &pairB = pair.pairB();
+
+        logDebug("Creating Link A");
+        linkA = new AsyncLink(0, false, pairA);
+        linkA->setDebug(true);
+        logDebug("Initialising Link A");
+        linkA->initialise();
+
+        logDebug("Creating Link B");
+        linkB = new AsyncLink(0, false, pairB);
+        linkB->setDebug(true);
+        logDebug("Initialising Link B");
+        linkB->initialise();
+
+        logDebug("Setup complete");
+        logFlush();
+    }
+
+    void TearDown() override {
+        logDebug("TearDown start");
+        if (linkA != nullptr) {
+            logDebug("Resetting Link A");
+            linkA->resetLink();
+	        delete linkA;
+        }
+        if (linkB != nullptr) {
+            logDebug("Resetting Link B");
+            linkB->resetLink();
+	        delete linkB;
+        }
+        logDebug("TearDown complete");
+        logFlush();
+    }
+
     CrosswiredTxRxPinPair pair;
-    TxRxPin & pairA = pair.pairA();
-    TxRxPin & pairB = pair.pairB();
+    AsyncLink *linkA = nullptr;
+    AsyncLink *linkB = nullptr;
+};
+
+/*
+TEST_F(AsyncLinkTest, WriteAndReadByte) {
+    linkA->writeByte(16);
+    EXPECT_EQ(linkB->readByte(), 16);
+}
+
+TEST_F(AsyncLinkTest, WriteAndReadBytes) {
+    BYTE8 writeBuf[4] = { 0xff, 0x7f, 0x60, 0x21 };
+    int bytesWritten = linkA->writeBytes(writeBuf, 4);
+    EXPECT_EQ(bytesWritten, 4);
+
+    BYTE8 readBuf[4];
+    int bytesRead = linkB->readBytes(readBuf, 4);
+    EXPECT_EQ(bytesRead, 4);
+
+    EXPECT_EQ(readBuf[0], 0xff);
+    EXPECT_EQ(readBuf[1], 0x7f);
+    EXPECT_EQ(readBuf[2], 0x60);
+    EXPECT_EQ(readBuf[3], 0x21);
+}
+*/
+
+
+TEST_F(AsyncLinkTest, CrosswiredTxRxPinPairExecise) {
+    TxRxPin &pairA = pair.pairA();
+    TxRxPin &pairB = pair.pairB();
 
     // Initial state
     logInfo("Checking initial state");
@@ -195,7 +200,6 @@ std::vector<bool> generate_sample_vector_from_bits(const int *bits, const int le
 }
 
 TEST_F(AsyncLinkTest, AckCanBeSent) {
-    CrosswiredTxRxPinPair pair;
     TxRxPin & pairA = pair.pairA();
     TxRxPin & pairB = pair.pairB();
     ClockingPinTracer trace(pairB);
@@ -226,7 +230,6 @@ TEST_F(AsyncLinkTest, AckCanBeSent) {
 }
 
 TEST_F(AsyncLinkTest, DataCanBeSent) {
-    CrosswiredTxRxPinPair pair;
     TxRxPin & pairA = pair.pairA();
     TxRxPin & pairB = pair.pairB();
     ClockingPinTracer trace(pairB);
