@@ -219,6 +219,15 @@ std::vector<bool> generate_sample_vector_from_bits(const int *bits, const int le
     return out;
 }
 
+std::string send_input_get_output(TxRxPin &input_pin, const std::string &input_samples, TxRxPin &output_pin) {
+    std::string out;
+    for (const char input_sample : input_samples) {
+        input_pin.setTx(input_sample == '1');
+        out.push_back(output_pin.getRx() ? '1' : '0');
+    }
+    return out;
+}
+
 TEST_F(TxRxPinTest, OversampledTxRxPinStraightThroughTx) {
     TxRxPin &pairA = pair.pairA();
     OversampledTxRxPin o_pin(pairA); // can Rx the majority-voted signal via o_pin
@@ -231,6 +240,18 @@ TEST_F(TxRxPinTest, OversampledTxRxPinStraightThroughTx) {
 
     o_pin.setTx(false);
     EXPECT_EQ(pairB.getRx(), false);
+}
+
+TEST_F(TxRxPinTest, OversampledTxRxPinAllFalseInput) {
+    TxRxPin &pairA = pair.pairA();
+    OversampledTxRxPin o_pin(pairA); // can Rx the majority-voted signal via o_pin
+    TxRxPin &pairB = pair.pairB();
+
+    const std::string input_bits = "00000000000000000000000000000000";
+    const std::string received = send_input_get_output(pairB, input_bits, reinterpret_cast<TxRxPin&>(o_pin));
+
+    EXPECT_EQ(received, "00000000000000000000000000000000");
+    EXPECT_EQ(o_pin._resync_in_samples(), 0);
 }
 
 

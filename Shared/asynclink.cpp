@@ -34,17 +34,22 @@
  *
  * The majority vote result is not known until bit 9, when this knowledge will be made available via getRx().
 */
-OversampledTxRxPin::OversampledTxRxPin(TxRxPin& tx_rx_pin) : m_pin(tx_rx_pin) {
+OversampledTxRxPin::OversampledTxRxPin(TxRxPin& tx_rx_pin) : m_pin(tx_rx_pin), m_resync_in_samples(0) {
 }
 
 bool OversampledTxRxPin::getRx() {
-    return true;
+    return false;
 }
 
-// setTx passes its value striaght through to the underlying pin.
-void OversampledTxRxPin::setTx(bool state) {
+// setTx passes its value straight through to the underlying pin.
+void OversampledTxRxPin::setTx(const bool state) {
     m_pin.setTx(state);
 }
+
+int OversampledTxRxPin::_resync_in_samples() const {
+    return m_resync_in_samples;
+}
+
 
 // Only one byte needed to buffer in the receiving link (DataAckReceiver).
 // Ack can be sent as soon as reception of a data byte starts, if there's room to buffer another - need state to store

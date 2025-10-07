@@ -30,8 +30,10 @@
  *
  * We are using oversampling to take multiple samples per bit, with samples 7, 8 and 9 being used to facilitate
  * majority voting in determining the actual state of a bit. This is achieved by the decorator implementation
- * OversampledTxRxPin which is uses an underlying TxRxPin as input and whose output gives solid bit-long values
+ * OversampledTxRxPin which uses an underlying TxRxPin as input and whose output gives solid bit-long values
  * based on the majority vote. There are some small trade-offs in this approach documented in its implementation.
+ * Note that TxRxPin has no explicit clock()/poll() method, but it's Rx/Tx methods will be called by higher level
+ * abstractions during a clock poll.
  */
 class TxRxPin {
 public:
@@ -47,8 +49,12 @@ public:
     bool getRx() override;
     void setTx(bool state) override;
 
+    // Used by tests - internal, do not use.
+    int _resync_in_samples() const;
+
 private:
     TxRxPin & m_pin;
+    int m_resync_in_samples;
 };
 
 
