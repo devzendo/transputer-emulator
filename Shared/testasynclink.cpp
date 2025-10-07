@@ -28,7 +28,7 @@ class CrosswiredTxRxPinPair {
             m_side = *side;
         }
 
-        ~CrosswiredPin() override {}
+        ~CrosswiredPin() override = default;
 
         bool getRx() override {
             bool retval = (bool) *m_rxstate;
@@ -132,8 +132,28 @@ TEST_F(AsyncLinkTest, WriteAndReadBytes) {
 }
 */
 
+class TxRxPinTest : public ::testing::Test {
+protected:
 
-TEST_F(AsyncLinkTest, CrosswiredTxRxPinPairExecise) {
+    void SetUp() override {
+        setLogLevel(LOGLEVEL_DEBUG);
+        logDebug("SetUp start");
+
+        logDebug("Setup complete");
+        logFlush();
+    }
+
+    void TearDown() override {
+        logDebug("TearDown start");
+        logDebug("TearDown complete");
+        logFlush();
+    }
+
+    CrosswiredTxRxPinPair pair;
+};
+
+
+TEST_F(TxRxPinTest, CrosswiredTxRxPinPairExecise) {
     TxRxPin &pairA = pair.pairA();
     TxRxPin &pairB = pair.pairB();
 
@@ -199,7 +219,22 @@ std::vector<bool> generate_sample_vector_from_bits(const int *bits, const int le
     return out;
 }
 
-TEST_F(AsyncLinkTest, AckCanBeSent) {
+TEST_F(TxRxPinTest, OversampledTxRxPinStraightThroughTx) {
+    TxRxPin &pairA = pair.pairA();
+    OversampledTxRxPin o_pin(pairA); // can Rx the majority-voted signal via o_pin
+    TxRxPin &pairB = pair.pairB();
+
+    EXPECT_EQ(pairB.getRx(), false);
+
+    o_pin.setTx(true);
+    EXPECT_EQ(pairB.getRx(), true);
+
+    o_pin.setTx(false);
+    EXPECT_EQ(pairB.getRx(), false);
+}
+
+
+TEST_F(TxRxPinTest, AckCanBeSent) {
     TxRxPin & pairA = pair.pairA();
     TxRxPin & pairB = pair.pairB();
     ClockingPinTracer trace(pairB);
@@ -229,7 +264,7 @@ TEST_F(AsyncLinkTest, AckCanBeSent) {
     EXPECT_EQ(heard, expected);
 }
 
-TEST_F(AsyncLinkTest, DataCanBeSent) {
+TEST_F(TxRxPinTest, DataCanBeSent) {
     TxRxPin & pairA = pair.pairA();
     TxRxPin & pairB = pair.pairB();
     ClockingPinTracer trace(pairB);

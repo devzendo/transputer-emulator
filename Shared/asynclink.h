@@ -20,17 +20,37 @@
 #include "misc.h"
 #include "log.h"
 
-/* Lowest level abstraction: TxRxPin, represents a pair of abstract pins. GPIOTxRxPin would use Pi Pico
- * GPIO pins. Tests would use a CrosswiredTxRxPinPair, which gives a pair of TxRxPins, A and B,
+/* Lowest level abstraction: TxRxPin, represents a pair of abstract pins.
+ *
+ * GPIOTxRxPin would use Pi Pico GPIO pins.
+ *
+ * Tests would use a CrosswiredTxRxPinPair, which gives a pair of TxRxPins, A and B,
  * where setting A's Tx pin enables B's Rx pin. Setting B's Tx enables A's Rx. An AsyncLink
  * would take a TxRxPin, and tests would create two AsyncLinks with the two TxRxPins back-to-back.
+ *
+ * We are using oversampling to take multiple samples per bit, with samples 7, 8 and 9 being used to facilitate
+ * majority voting in determining the actual state of a bit. This is achieved by the decorator implementation
+ * OversampledTxRxPin which is uses an underlying TxRxPin as input and whose output gives solid bit-long values
+ * based on the majority vote. There are some small trade-offs in this approach documented in its implementation.
  */
 class TxRxPin {
 public:
-    virtual ~TxRxPin() {}
+    virtual ~TxRxPin() = default;
     virtual bool getRx() = 0;
     virtual void setTx(bool state) = 0;
 };
+
+class OversampledTxRxPin final : TxRxPin {
+public:
+    explicit OversampledTxRxPin(TxRxPin& tx_rx_pin);
+    ~OversampledTxRxPin() override = default;
+    bool getRx() override;
+    void setTx(bool state) override;
+
+private:
+    TxRxPin & m_pin;
+};
+
 
 /* Highest level abstraction: AsyncLink, a state machine that uses the DataAckSender/Receiver (see asynclink.cpp)
  * to handle the send/receive over a TxRxPin.
@@ -50,12 +70,16 @@ private:
     WORD32 myWriteSequence, myReadSequence;
 };
 
-/* Medium level abstraction: DataAckSender/Receiver, a state machine that uses the Tx half of
- * a TxRxPin to clock out an Ack or Data frame and can be queried for its state. DataAckReceiver,
- * a state machine that senses the Rx half of a TxRxPin to clock in any received Ack and/or Data frame.
+/* Medium level abstraction: DataAckSender/Receiver. Internally used by AsyncLink.
+ *
+ * DataAckSender is a state machine that uses the Tx half of a TxRxPin to clock out an Ack or Data frame, can be
+ * queried for its state and will notify a client (the AsyncLink) that sent Data has been Acked, or the send has timed
+ * out.
+ *
+ * DataAckReceiver is a state machine that senses the Rx half of a TxRxPin to clock in any received Ack and/or Data
+ * frame. It notifies a client (the DataAckSender) of any received Ack, and notifies a client (the DataAckSender) of any
+ * received Data (so it can initiate sending an Ack).
  */
-
-
 enum DataAckSenderState { IDLE, SENDING };
 
 class DataAckSender {

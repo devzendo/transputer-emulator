@@ -17,6 +17,35 @@
 #include "asynclink.h"
 #include "log.h"
 
+/*
+ * A TxRxPin decorator that performs majority voting to provide solid bit-long true/false values for all the samples
+ * in a bit.
+ *
+ * setTx() is passed straight through to the underlying TxRxPin - this class is used for its function in reception.
+ *
+ * Samples 7, 8 and 9 of a bit form the majority vote.
+ *
+ * Rising edge is used to detect the start of a bit. Needs knowledge of ack and data frame lengths to know when an ack
+ * or data frame has finished, so it can re-sync its start-of-bit detection. There could be a delay between Data and a
+ * following Ack, or there may be no delay at all. The start of bit detection must take place on every Data or Ack.
+ *
+ * The majority vote result is not known until bit 9, but this knowledge is not visible via getRx() until the end of the
+ * bit - this is BECAUSE DAMMIT WHY WAS THIS?
+ *
+ * The majority vote result is not known until bit 9, when this knowledge will be made available via getRx().
+*/
+OversampledTxRxPin::OversampledTxRxPin(TxRxPin& tx_rx_pin) : m_pin(tx_rx_pin) {
+}
+
+bool OversampledTxRxPin::getRx() {
+    return true;
+}
+
+// setTx passes its value striaght through to the underlying pin.
+void OversampledTxRxPin::setTx(bool state) {
+    m_pin.setTx(state);
+}
+
 // Only one byte needed to buffer in the receiving link (DataAckReceiver).
 // Ack can be sent as soon as reception of a data byte starts, if there's room to buffer another - need state to store
 // whether an ack needs sending (start bits of data received). Need state to indicate whether the data buffer is full
