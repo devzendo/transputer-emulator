@@ -55,6 +55,7 @@ public:
 private:
     TxRxPin & m_pin;
     int m_resync_in_samples;
+    bool m_previous_rx;
 };
 
 

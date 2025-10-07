@@ -247,13 +247,53 @@ TEST_F(TxRxPinTest, OversampledTxRxPinAllFalseInput) {
     OversampledTxRxPin o_pin(pairA); // can Rx the majority-voted signal via o_pin
     TxRxPin &pairB = pair.pairB();
 
+    //                              0123456789ABCDEF0123456789ABCDEF
     const std::string input_bits = "00000000000000000000000000000000";
     const std::string received = send_input_get_output(pairB, input_bits, reinterpret_cast<TxRxPin&>(o_pin));
 
-    EXPECT_EQ(received, "00000000000000000000000000000000");
-    EXPECT_EQ(o_pin._resync_in_samples(), 0);
+    //                              0123456789ABCDEF0123456789ABCDEF
+    EXPECT_EQ(received,            "00000000000000000000000000000000");
+    EXPECT_EQ(o_pin._resync_in_samples(), 0); // No sync pulse received, resync at next sample (0).
 }
 
+TEST_F(TxRxPinTest, OversampledTxRxPinSyncPulseDetection) {
+    TxRxPin &pairA = pair.pairA();
+    OversampledTxRxPin o_pin(pairA); // can Rx the majority-voted signal via o_pin
+    TxRxPin &pairB = pair.pairB();
+
+    const std::string input_bits = "1";
+    const std::string received = send_input_get_output(pairB, input_bits, reinterpret_cast<TxRxPin&>(o_pin));
+
+    EXPECT_EQ(received,            "0"); // there's a 9-bit delay before we'll see the majority voted bit - but not enough input data here.
+    EXPECT_EQ(o_pin._resync_in_samples(), 15); // don't yet know the next two bits so we can determine the frame length,
+    // so resync at end of this bit, in 15 samples time
+}
+
+TEST_F(TxRxPinTest, OversampledTxRxPinRisingEdgeAfterSyncPulseDetectionDoesNotResetResync) {
+    TxRxPin &pairA = pair.pairA();
+    OversampledTxRxPin o_pin(pairA); // can Rx the majority-voted signal via o_pin
+    TxRxPin &pairB = pair.pairB();
+
+    const std::string input_bits = "101";
+    const std::string received = send_input_get_output(pairB, input_bits, reinterpret_cast<TxRxPin&>(o_pin));
+
+    EXPECT_EQ(received,            "000"); // there's a 9-bit delay before we'll see the majority voted bit - but not enough input data here.
+    EXPECT_EQ(o_pin._resync_in_samples(), 13); // don't yet know the next two bits so we can determine the frame length,
+    // so resync at end of this bit, in 13 samples time
+}
+
+TEST_F(TxRxPinTest, OversampledTxRxPinSyncPulseInput) {
+    TxRxPin &pairA = pair.pairA();
+    OversampledTxRxPin o_pin(pairA); // can Rx the majority-voted signal via o_pin
+    TxRxPin &pairB = pair.pairB();
+    //                              0123456789ABCDEF0123456789ABCDEF
+    const std::string input_bits = "10000000000000000000000000000000";
+    const std::string received = send_input_get_output(pairB, input_bits, reinterpret_cast<TxRxPin&>(o_pin));
+
+    //                              0123456789ABCDEF0123456789ABCDEF
+    EXPECT_EQ(received,            "00000000000000000000000000000000");
+    EXPECT_EQ(o_pin._resync_in_samples(), 0); // two bits were not 1,1 (data) or 1,0 (ack) - so resync at next sample (0)
+}
 
 TEST_F(TxRxPinTest, AckCanBeSent) {
     TxRxPin & pairA = pair.pairA();

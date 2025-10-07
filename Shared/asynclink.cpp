@@ -23,7 +23,7 @@
  *
  * setTx() is passed straight through to the underlying TxRxPin - this class is used for its function in reception.
  *
- * Samples 7, 8 and 9 of a bit form the majority vote.
+ * Samples 7, 8 and 9 of a bit (after a sync point) form the majority vote.
  *
  * Rising edge is used to detect the start of a bit. Needs knowledge of ack and data frame lengths to know when an ack
  * or data frame has finished, so it can re-sync its start-of-bit detection. There could be a delay between Data and a
@@ -33,11 +33,29 @@
  * bit - this is BECAUSE DAMMIT WHY WAS THIS?
  *
  * The majority vote result is not known until bit 9, when this knowledge will be made available via getRx().
+ *
+ * Consider: whether majority voting should be used to detect the initial rising edge, rather than syncing on the first
+ * rising edge sample (which could be noise).
 */
-OversampledTxRxPin::OversampledTxRxPin(TxRxPin& tx_rx_pin) : m_pin(tx_rx_pin), m_resync_in_samples(0) {
+OversampledTxRxPin::OversampledTxRxPin(TxRxPin& tx_rx_pin) :
+    m_pin(tx_rx_pin), m_resync_in_samples(0), m_previous_rx(false) {
 }
 
 bool OversampledTxRxPin::getRx() {
+    const bool rx = m_pin.getRx();
+    // detect rising edge, so we can count samples for majority vote detection
+    const bool rising_edge = !m_previous_rx && rx;
+    if (m_resync_in_samples == 0 && rising_edge) {
+        logDebug("Synchronising majority vote detection on rising edge");
+        // Don't know what the first two bits are yet, so be pessimistic and sync again asap at start of next bit.
+        m_resync_in_samples = 16;
+        
+    }
+
+    if (m_resync_in_samples > 0) {
+        m_resync_in_samples--;
+    }
+    m_previous_rx = rx;
     return false;
 }
 
