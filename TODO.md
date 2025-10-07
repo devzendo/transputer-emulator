@@ -1,19 +1,20 @@
 # Current Development Activities
 
-* Need to remove use of C++ exceptions? Linux Mint 21 build is warning about it.
 * Adding support for the Pi Pico: 
-  * Need a Pico USB CDC link, supported on the IServer side by a FIFO that works with a serial device.
-  * Logging should also go out on a USB CDC port. 
   * Asynchronous link abstraction using GPIO:
     * Lowest level: TxRxPin, represents a pair of abstract pins. GPIOTxRxPin would use Pi Pico
       GPIO pins. Tests would use a CrosswiredTxRxPinPair, which gives a pair of TxRxPins, A and B,
       where setting A's Tx pin enables B's Rx pin. Setting B's Tx enables A's Rx. An AsyncLink
       would take a TxRxPin, and tests would create two AsyncLinks with the two TxRxPins back-to-back.
+    * OversampledTxRxPin handles the potentially noisy input and performs majority voting on it to yield
+      a cleaner set of bit-long samples to the next layer...
     * Medium level: DataAckSender, state machine that uses the Tx half of a TxRxPin to clock out an
       Ack or Data frame and can be queried for its state. DataAckReceiver, a state machine that
       senses the Rx half of a TxRxPin to clock in any received Ack and/or Data frame.
     * High level: AsyncLink.
-  * Use the Maker Pi Pico's NeoRGB LEDs as a boot/run/error state indicator?
+  * Need a Pico USB CDC link, supported on the IServer side by a FIFO that works with a serial device.
+  * Also need logging to go out on a second USB CDC port.
+* Need to remove use of C++ exceptions? Linux Mint 21 build is warning about it.
 * Finishing all protocol frames of the IServer (ongoing; led by what eForth and examples need).
 * Testing with the Transputer Validation Suite: all implemented instructions
   pass; need to assess whether the other instructions testable via the TVS but
