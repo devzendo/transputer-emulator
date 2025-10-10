@@ -14,12 +14,20 @@
     * High level: AsyncLink.
   * Need a Pico USB CDC link, supported on the IServer side by a FIFO that works with a serial device.
   * Also need logging to go out on a second USB CDC port.
-* Need to remove use of C++ exceptions? Linux Mint 21 build is warning about it.
-* Finishing all protocol frames of the IServer (ongoing; led by what eForth and examples need).
+  * Make use of both ARM cores:
+    * Inter-core link: Core 0's Link 1 could be connected to Core 1's Link 0.
+    * Links:
+      * Core 0:
+        * Link 0: USB CDC
+        * Link 1: To Core 1 Link 0
+        * Link 2: 10MHz original Transputer Async link protocol
+        * Link 3: Faster Async link protocol
 * Testing with the Transputer Validation Suite: all implemented instructions
   pass; need to assess whether the other instructions testable via the TVS but
   not yet currently implemented are required, and implement them.
 * Debugging eForth port.
+* Finishing all protocol frames of the IServer (ongoing; led by what eForth and examples need).
+* Need to remove use of C++ exceptions? Linux Mint 21 build is warning about it.
 * The TVS tests currently run in the emulator but it would be useful to have a server that can work
   with the embedded emulator to send/collect program/input and output.
 * Do all TVS programs end with a start instruction? If not, how will the embedded run of all tests
