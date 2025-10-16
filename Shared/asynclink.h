@@ -54,8 +54,12 @@ public:
 
 private:
     TxRxPin & m_pin;
-    int m_resync_in_samples;
+    int m_resync_in_samples, m_sample_index, m_data_bits_length;
+    WORD16 m_data_samples;
+    WORD16 m_data_bits;
+
     bool m_previous_rx;
+    bool m_latched_output_rx;
 };
 
 
@@ -92,14 +96,14 @@ enum DataAckSenderState { IDLE, SENDING };
 class DataAckSender {
 public:
     explicit DataAckSender(TxRxPin& tx_rx_pin);
-    DataAckSenderState state();
+    DataAckSenderState state() const;
     void sendAck();
     void sendData(BYTE8 byte);
     void clock();
 
     // Used by tests - internal, do not use.
-    int _queueLength();
-    WORD16 _data();
+    int _queueLength() const;
+    WORD16 _data() const;
 
 private:
     TxRxPin & m_pin;

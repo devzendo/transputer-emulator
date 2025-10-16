@@ -38,25 +38,74 @@
  * rising edge sample (which could be noise).
 */
 OversampledTxRxPin::OversampledTxRxPin(TxRxPin& tx_rx_pin) :
-    m_pin(tx_rx_pin), m_resync_in_samples(0), m_previous_rx(false) {
+    m_pin(tx_rx_pin), m_resync_in_samples(0), m_sample_index(0), m_data_samples(0),
+    m_data_bits(0), m_data_bits_length(0),
+    m_previous_rx(false), m_latched_output_rx(false) {
 }
 
 bool OversampledTxRxPin::getRx() {
     const bool rx = m_pin.getRx();
-    // detect rising edge, so we can count samples for majority vote detection
+
+    // Majority vote taken on the rightmost 3 of m_data. 011, 101, 110 = 3,5,6
+    m_data_samples <<= 1;
+    m_data_samples |= rx;
+    logDebugF("rx %d m_data_samples 0b%s sample index %d resync %d", rx, word_to_binary(m_data_samples), m_sample_index,
+        m_resync_in_samples);
+
+    // Detect rising edge, so we can count samples for majority vote detection
     const bool rising_edge = !m_previous_rx && rx;
     if (m_resync_in_samples == 0 && rising_edge) {
-        logDebug("Synchronising majority vote detection on rising edge");
-        // Don't know what the first two bits are yet, so be pessimistic and sync again asap at start of next bit.
-        m_resync_in_samples = 16;
-        
+        m_data_bits = 0;
+        m_data_bits_length = 0;
+        // Don't know what the first two bits are yet (we'll collect them in m_data_bits), but the shortest resync could
+        // be after an ack, so be pessimistic and sync again after a potential ack.
+        m_resync_in_samples = 31 + 1; // +1 since we'll decrement below
+        logDebug("Synchronising majority vote detection on rising edge; setting resync at end of possible ack");
+        m_sample_index = 0;
+    }
+
+    if (m_sample_index == 8) {
+        WORD16 majority_samples = m_data_samples & 0x0007;
+        m_latched_output_rx = (majority_samples == 3 || majority_samples == 5 || majority_samples == 6 || majority_samples == 7);
+        logDebugF("majority vote is %d = 0b%s : latched output %d", majority_samples,
+            word_to_binary(majority_samples), m_latched_output_rx);
+        m_data_bits <<= 1;
+        m_data_bits |= m_latched_output_rx;
+        m_data_bits_length++;
+        logDebugF("m_data_bits 0b%s length %d", word_to_binary(m_data_bits), m_data_bits_length);
+        // Got 2 bits? Can set resync correctly now - we know whether it's ack/data/unknown.
+        if (m_data_bits_length == 2) {
+            switch (m_data_bits) {
+                case 0x0003:
+                    // data (full frame 11 bits [ 1 1 x x x x x x x x 0 ], so 16x11=176 samples)
+                    // but we're at the end of the majority vote bits of the second lot of 16 samples, so we've seen 25 samples,
+                    // so take those off: 176-25=151.
+                    // 0123456789ABCDEF0123456789ABCDEF
+                    // xxxxxx|||xxxxxxxyyyyyy|||yyyyyyy
+                    m_resync_in_samples = 151 + 1; // +1 since we'll decrement below;
+                    logDebug("Data detected; setting resync at end of data");
+                    break;
+                default:
+                    logInfo("Start of frame was not ack or data");
+                    break;
+            }
+        }
+        // TODO bit received callback would get called here
+    }
+
+    m_sample_index++;
+
+    if (m_sample_index == 16) {
+        logDebug("Resetting sample index");
+        m_sample_index = 0;
     }
 
     if (m_resync_in_samples > 0) {
         m_resync_in_samples--;
     }
-    m_previous_rx = rx;
-    return false;
+    m_previous_rx = rx; // For rising edge detection.
+    logDebugF("rx input %d output %d, resync in %d samples", rx, m_latched_output_rx, m_resync_in_samples);
+    return m_latched_output_rx;
 }
 
 // setTx passes its value straight through to the underlying pin.
@@ -103,7 +152,7 @@ AsyncLink::AsyncLink(int linkNo, bool isServer, TxRxPin& tx_rx_pin) :
     myWriteSequence = myReadSequence = 0;
 }
 
-void AsyncLink::initialise(void) {
+void AsyncLink::initialise() {
     
 }
 
@@ -124,7 +173,7 @@ void AsyncLink::writeByte(BYTE8 buf) {
     }
 }
 
-void AsyncLink::resetLink(void) {
+void AsyncLink::resetLink() {
     // TODO
 }
 
@@ -132,7 +181,7 @@ int AsyncLink::getLinkType() {
     return LinkType_Async;
 }
 
-void AsyncLink::poll(void) {
+void AsyncLink::poll() {
 	// no-op
 }
 
@@ -151,13 +200,13 @@ void AsyncLink::poll(void) {
 
 
 
-DataAckSender::DataAckSender(TxRxPin& tx_rx_pin) : m_pin(tx_rx_pin) {
+DataAckSender::DataAckSender(TxRxPin& tx_rx_pin) : m_pin(tx_rx_pin), m_sampleCount(0), m_bits(0), m_data(0) {
     // TODO mutex {
     m_state = IDLE;
     // TODO }
 }
 
-DataAckSenderState DataAckSender::state() {
+DataAckSenderState DataAckSender::state() const {
     // TODO mutex {
     return m_state;
     // TODO }
@@ -173,10 +222,10 @@ void DataAckSender::sendAck() {
     // TODO }
 }
 
-void DataAckSender::sendData(BYTE8 byte) {
+void DataAckSender::sendData(const BYTE8 byte) {
     // TODO if m_state != IDLE throw up
     // TODO mutex {
-    BYTE8 origByte = byte;
+    const BYTE8 origByte = byte;
     m_sampleCount = 0;
     m_bits = 11;
     // Data is shifted out from the LSB of m_data. After the start bits (1 1), 'byte' is sent, starting with the
@@ -223,10 +272,10 @@ void DataAckSender::clock() {
     //logDebugF("clock < %d sample count %d bits %d data 0x%04X", m_state, m_sampleCount, m_bits, m_data);
 }
 
-int DataAckSender::_queueLength() {
+int DataAckSender::_queueLength() const {
     return m_bits;
 }
 
-WORD16 DataAckSender::_data() {
+WORD16 DataAckSender::_data() const {
     return m_data;
 }
