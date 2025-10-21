@@ -52,36 +52,13 @@ In the middle of the stack is `DataAckSender` which is a state machine that uses
 out an Ack or Data frame, can be queried for its state and will notify a client (the `AsyncLink`) that sent Data has
 been Acked, or that the transmission of data has timed out.
 
-```mermaid
-stateDiagram-v2
-    direction LR
-    idle: IDLE
-    sending_data: SENDING DATA
-    ack_wait: ACK WAIT
-    dar: DataAckReceiver
-    [*] --> idle: send_ack = 0, ack_rxed = 0
-    idle --> idle: enter [ack_rxed == 1]/ack_rxed = 0
-    idle --> sending_data: send(data)/set up data tx, ack_rxed = 0, timeout = 0, return true
-    sending_data --> sending_data: clock[not finished]/timeout++, shift data out
-    sending_data --> ack_wait: clock[finished]/timeout++
-    sending_data --> sending_data: send(data)/log, return false (busy)
-    sending_data --> sending_data: data received callback called/send_ack = 1
-    ack_wait --> ack_wait: clock[timeout < max]/timeout++
-    ack_wait --> ack_wait: send(data)/log,return false (busy)
-    ack_wait --> idle: clock[timeout == max]/call timeout callback
-    ack_wait --> idle: entry[ack_rxed == 1]
-    ack_wait --> idle: ack received/ack_rxed = 1
-    dar 
-```
+![DataAckSender](DataAckSender.png)
 
-`DataAckReceiver` is a state machine that senses the Rx half of a `TxRxPin`. It uses the `OversampledTxRxPin`, to see
-the cleaned-up majority-voted bits, rather than individual samples. With the incoming bit stream, it clocks in any
-received Ack and/or Data frame. It notifies a client (the `DataAckSender`, above) of any received Ack, and notifies 
-another client (the `DataAckSender`) of any received Data (so it can initiate sending an Ack).
 
-```mermaid
 
-```
+The `DataAckReceiver`...
+
+![DataAckReceiver](DataAckReceiver.png)
 
 ## The AsyncLink
 
