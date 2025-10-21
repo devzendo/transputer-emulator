@@ -32,7 +32,7 @@
  * majority voting in determining the actual state of a bit. This is achieved by the decorator implementation
  * OversampledTxRxPin which uses an underlying TxRxPin as input and whose output gives solid bit-long values
  * based on the majority vote. There are some small trade-offs in this approach documented in its implementation.
- * Note that TxRxPin has no explicit clock()/poll() method, but it's Rx/Tx methods will be called by higher level
+ * Note that TxRxPin has no explicit clock()/poll() method, but its Rx/Tx methods will be called by higher level
  * abstractions during a clock poll.
  */
 class TxRxPin {
