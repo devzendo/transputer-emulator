@@ -38,9 +38,10 @@
  * rising edge sample (which could be noise).
 */
 OversampledTxRxPin::OversampledTxRxPin(TxRxPin& tx_rx_pin) :
-    m_pin(tx_rx_pin), m_resync_in_samples(0), m_sample_index(0), m_data_samples(0),
-    m_data_bits(0), m_data_bits_length(0),
-    m_previous_rx(false), m_latched_output_rx(false) {
+    m_pin(tx_rx_pin), m_resync_in_samples(0), m_sample_index(0), m_data_bits_length(0),
+    m_data_samples(0), m_data_bits(0),
+    m_previous_rx(false), m_latched_output_rx(false),
+    m_rx_bit_receiver(nullptr) {
 }
 
 bool OversampledTxRxPin::getRx() {
@@ -90,7 +91,10 @@ bool OversampledTxRxPin::getRx() {
                     break;
             }
         }
-        // TODO bit received callback would get called here
+        // Notify the bit receiver, if there is one.
+        if (m_rx_bit_receiver != nullptr) {
+            m_rx_bit_receiver->bitStateReceived(m_latched_output_rx);
+        }
     }
 
     m_sample_index++;
@@ -111,6 +115,16 @@ bool OversampledTxRxPin::getRx() {
 // setTx passes its value straight through to the underlying pin.
 void OversampledTxRxPin::setTx(const bool state) {
     m_pin.setTx(state);
+}
+
+// Register the receiver listener
+void OversampledTxRxPin::registerRxBitReceiver(RxBitReceiver& rxBitReceiver) const {
+    m_rx_bit_receiver = &rxBitReceiver;
+}
+
+// Unregister the receiver listener
+void OversampledTxRxPin::unregisterRxBitReceiver() const {
+     m_rx_bit_receiver = nullptr;
 }
 
 int OversampledTxRxPin::_resync_in_samples() const {

@@ -18,7 +18,7 @@ limited the C++ standard I could support.
 
 
 ## Project Status
-Last changes in early October 2025.
+Last changes in late October 2025.
 
 Currently adding a build for the Raspberry Pi Pico, using USB CDC for diagnostic and link 0 I/O.
 Starting a GPIO-based asynchronous link abstraction, for eventual use on the Pi Pico.

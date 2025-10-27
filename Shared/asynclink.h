@@ -42,12 +42,24 @@ public:
     virtual void setTx(bool state) = 0;
 };
 
+/*
+ * The OversampledTxRxPin will emit majority-voted bit states via an instance of this interface that can be registered.
+ */
+class RxBitReceiver {
+public:
+    virtual ~RxBitReceiver() = default;
+    virtual void bitStateReceived(bool state) = 0;
+};
+
 class OversampledTxRxPin final : TxRxPin {
 public:
     explicit OversampledTxRxPin(TxRxPin& tx_rx_pin);
     ~OversampledTxRxPin() override = default;
     bool getRx() override;
     void setTx(bool state) override;
+
+    void registerRxBitReceiver(RxBitReceiver& rxBitReceiver) const;
+    void unregisterRxBitReceiver() const;
 
     // Used by tests - internal, do not use.
     int _resync_in_samples() const;
@@ -60,6 +72,8 @@ private:
 
     bool m_previous_rx;
     bool m_latched_output_rx;
+
+    mutable RxBitReceiver* m_rx_bit_receiver;
 };
 
 

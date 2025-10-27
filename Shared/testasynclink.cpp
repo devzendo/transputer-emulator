@@ -227,9 +227,10 @@ std::string send_input_get_output(TxRxPin &input_pin, const std::string &input_s
     return out;
 }
 
-class OversampledTxRxPinTest : public ::testing::Test {
+class OversampledTxRxPinTest : public ::testing::Test, RxBitReceiver {
 public:
     OversampledTxRxPinTest() : pairA(pair.pairA()), pairB(pair.pairB()), o_pin(pairA) {
+        o_pin.registerRxBitReceiver(*this); // dereference this to get a reference
     }
 protected:
 
@@ -246,6 +247,11 @@ protected:
         logFlush();
     }
 
+    void bitStateReceived(const bool state) override {
+        logDebugF("Received bit: %d", state);
+        received_bits.push_back(state ? '1' : '0');
+    }
+
     CrosswiredTxRxPinPair pair;
     TxRxPin &pairA;
     TxRxPin &pairB;
@@ -253,6 +259,10 @@ protected:
     OversampledTxRxPin o_pin;
     // Tx straight through; can Rx the majority-voted signal via o_pin
     // can Rx the majority-voted signal via o_pin
+
+    // Bit states received by the RxBitReceiver implementation append to this
+    // string as ASCII 1 / 0.
+    std::string received_bits;
 };
 
 TEST_F(OversampledTxRxPinTest, StraightThroughTx) {
@@ -343,13 +353,16 @@ TEST_F(OversampledTxRxPinTest, SyncPulseInputZeroOne) {
 
 // One Zero is an ack, so test this with the majority detection cases...
 
-void expect_ack(const std::string& received, int resync_in_samples) {
+void expect_ack(const std::string& received, int resync_in_samples, const std::string& received_bits) {
     //                                 0123456789ABCDEF0123456789ABCDEF
     //                                 xxxxxx|||xxxxxxxyyyyyy|||yyyyyyy
     //                                 0123456789ABCDEF0123456789ABCDEF
     //                                         xxxxxxxxxxxxxxxxyyyyyyyyyyyyyyyy
     EXPECT_EQ(received,               "00000000111111111111111100000000000000000");
     EXPECT_EQ(resync_in_samples, 0); // two bits were 1,0 (ack) - so resync at next sample (0)
+
+    EXPECT_EQ(received_bits, "100"); // Ack is 1, 0, then there's padding to ensure that the right
+    // output appears and this appears as an extra 0.
 }
 
 TEST_F(OversampledTxRxPinTest, PerfectInputAck) {
@@ -357,7 +370,7 @@ TEST_F(OversampledTxRxPinTest, PerfectInputAck) {
     //                                 xxxxxx|||xxxxxxxyyyyyy|||yyyyyyy
     const std::string input_samples = "11111111111111110000000000000000000000000";
     const std::string received = send_input_get_output(pairB, input_samples, reinterpret_cast<TxRxPin&>(o_pin));
-    expect_ack(received, o_pin._resync_in_samples());
+    expect_ack(received, o_pin._resync_in_samples(), received_bits);
 }
 
 TEST_F(OversampledTxRxPinTest, MajorityVote7Ack) { // Also all-bits majority test
@@ -365,7 +378,7 @@ TEST_F(OversampledTxRxPinTest, MajorityVote7Ack) { // Also all-bits majority tes
     //                                 xxxxxx|||xxxxxxxyyyyyy|||yyyyyyy
     const std::string input_samples = "10000011100000000000000000000000000000000";
     const std::string received = send_input_get_output(pairB, input_samples, reinterpret_cast<TxRxPin&>(o_pin));
-    expect_ack(received, o_pin._resync_in_samples());
+    expect_ack(received, o_pin._resync_in_samples(), received_bits);
 }
 
 TEST_F(OversampledTxRxPinTest, MajorityVote3Ack) {
@@ -373,7 +386,7 @@ TEST_F(OversampledTxRxPinTest, MajorityVote3Ack) {
     //                                 xxxxxx|||xxxxxxxyyyyyy|||yyyyyyy
     const std::string input_samples = "10000001100000000000000000000000000000000";
     const std::string received = send_input_get_output(pairB, input_samples, reinterpret_cast<TxRxPin&>(o_pin));
-    expect_ack(received, o_pin._resync_in_samples());
+    expect_ack(received, o_pin._resync_in_samples(), received_bits);
 }
 
 TEST_F(OversampledTxRxPinTest, MajorityVote6Ack) {
@@ -381,7 +394,7 @@ TEST_F(OversampledTxRxPinTest, MajorityVote6Ack) {
     //                                 xxxxxx|||xxxxxxxyyyyyy|||yyyyyyy
     const std::string input_samples = "10000011000000000000000000000000000000000";
     const std::string received = send_input_get_output(pairB, input_samples, reinterpret_cast<TxRxPin&>(o_pin));
-    expect_ack(received, o_pin._resync_in_samples());
+    expect_ack(received, o_pin._resync_in_samples(), received_bits);
 }
 
 TEST_F(OversampledTxRxPinTest, MajorityVote5Ack) {
@@ -389,7 +402,7 @@ TEST_F(OversampledTxRxPinTest, MajorityVote5Ack) {
     //                                 xxxxxx|||xxxxxxxyyyyyy|||yyyyyyy
     const std::string input_samples = "10000010100000000000000000000000000000000";
     const std::string received = send_input_get_output(pairB, input_samples, reinterpret_cast<TxRxPin&>(o_pin));
-    expect_ack(received, o_pin._resync_in_samples());
+    expect_ack(received, o_pin._resync_in_samples(), received_bits);
 }
 
 // One One - This is the start of a data frame; want to ensure the resync is at the end of the data...
@@ -430,6 +443,7 @@ TEST_F(OversampledTxRxPinTest, PerfectInputData) {
 
     EXPECT_EQ(received, delay_padding + stretch_16("11110010010"));
     EXPECT_EQ(o_pin._resync_in_samples(), 0); // have been waiting for the next rising edge but then there was padding...
+    EXPECT_EQ(received_bits, "11110010010");
 }
 
 TEST_F(OversampledTxRxPinTest, ResyncAtEndOfData_OneBitShort) {
@@ -460,6 +474,18 @@ TEST_F(OversampledTxRxPinTest, ResyncAtEndOfData_FullDataFrame) {
     send_input_get_output(pairB, input_samples, reinterpret_cast<TxRxPin&>(o_pin));
 
     EXPECT_EQ(o_pin._resync_in_samples(), 0); // just started waiting for the next rising edge
+}
+
+TEST_F(OversampledTxRxPinTest, PerfectInputAckNoListener) {
+    // Knock out the listener (the test setup always installs one)
+    // Test that the listener is only called if it's not nullptr.
+    // Without that check, this test crashes.
+    o_pin.unregisterRxBitReceiver();
+    //                                 0123456789ABCDEF0123456789ABCDEF
+    //                                 xxxxxx|||xxxxxxxyyyyyy|||yyyyyyy
+    const std::string input_samples = "11111111111111110000000000000000000000000";
+    send_input_get_output(pairB, input_samples, reinterpret_cast<TxRxPin&>(o_pin));
+    EXPECT_EQ(received_bits, ""); // Tested as 100 when we listen.
 }
 
 // TODO there's much duplication in these test cases - should just have input, expected and a function.
