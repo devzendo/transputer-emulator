@@ -216,7 +216,7 @@ void AsyncLink::poll() {
 
 DataAckSender::DataAckSender(TxRxPin& tx_rx_pin) : m_pin(tx_rx_pin), m_sampleCount(0), m_bits(0), m_data(0) {
     // TODO mutex {
-    m_state = IDLE;
+    m_state = DataAckSenderState::IDLE;
     // TODO }
 }
 
@@ -232,7 +232,7 @@ void DataAckSender::sendAck() {
     m_sampleCount = 0;
     m_bits = 2;
     m_data = 0x01;
-    m_state = SENDING;
+    m_state = DataAckSenderState::SENDING;
     // TODO }
 }
 
@@ -257,7 +257,7 @@ void DataAckSender::sendData(const BYTE8 byte) {
     // e.g. byte == C9
     // 0 1 1 0 0 1 0 0 1 1 1
     // 3     2       7
-    m_state = SENDING;
+    m_state = DataAckSenderState::SENDING;
     // TODO }
 }
 
@@ -265,22 +265,22 @@ void DataAckSender::clock() {
     //logDebugF("clock > %d sample count %d bits %d data 0x%04X", m_state, m_sampleCount, m_bits, m_data);
     // TODO mutex {
     switch (m_state) {
-    case IDLE:
-        break;
-    case SENDING:
-        // Send the least significant bit of m_data.
-        const bool one = m_data & 0x0001;
-        m_pin.setTx(one);
-        m_sampleCount ++;
-        if (m_sampleCount == 16) {
-            m_sampleCount = 0;
-            m_bits--;
-            m_data >>= 1;
-            if (m_bits == 0) {
-                m_state = IDLE;
+        case DataAckSenderState::IDLE:
+            break;
+        case DataAckSenderState::SENDING:
+            // Send the least significant bit of m_data.
+            const bool one = m_data & 0x0001;
+            m_pin.setTx(one);
+            m_sampleCount ++;
+            if (m_sampleCount == 16) {
+                m_sampleCount = 0;
+                m_bits--;
+                m_data >>= 1;
+                if (m_bits == 0) {
+                    m_state = DataAckSenderState::IDLE;
+                }
             }
-        }
-        break;
+            break;
     }
     // TODO }
     //logDebugF("clock < %d sample count %d bits %d data 0x%04X", m_state, m_sampleCount, m_bits, m_data);
@@ -293,3 +293,49 @@ int DataAckSender::_queueLength() const {
 WORD16 DataAckSender::_data() const {
     return m_data;
 }
+
+
+
+DataAckReceiver::DataAckReceiver(TxRxPin& tx_rx_pin) : m_pin(tx_rx_pin) {
+    m_state = DataAckReceiverState::IDLE;
+}
+
+DataAckReceiverState DataAckReceiver::state() const {
+    return m_state;
+}
+
+void DataAckReceiver::bitStateReceived(const bool state) {
+    switch (m_state) {
+        case DataAckReceiverState::IDLE:
+            if (state) {
+                m_state = DataAckReceiverState::START_BIT_2;
+            }
+            break;
+        case DataAckReceiverState::START_BIT_2:
+            if (state) {
+                // TODO -> DATA
+            } else {
+                if (m_ack_receiver != nullptr) {
+                    m_ack_receiver->ackReceived();
+                }
+                m_state = DataAckReceiverState::IDLE;
+            }
+            break;
+        case DataAckReceiverState::DATA:
+            break;
+        case DataAckReceiverState::STOP_BIT:
+            break;
+    }
+}
+
+// Register the ack listener
+void DataAckReceiver::registerAckReceiver(AckReceiver& ackReceiver) const {
+    m_ack_receiver = &ackReceiver;
+}
+
+// Unregister the ack listener
+void DataAckReceiver::unregisterAckReceiver() const {
+    m_ack_receiver = nullptr;
+}
+
+

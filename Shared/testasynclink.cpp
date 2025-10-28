@@ -491,28 +491,50 @@ TEST_F(OversampledTxRxPinTest, PerfectInputAckNoListener) {
 // TODO there's much duplication in these test cases - should just have input, expected and a function.
 // TODO noisy cases of majority voting, all boundary cases
 
-TEST_F(TxRxPinTest, AckCanBeSent) {
+class DataAckSenderTest : public ::testing::Test {
+protected:
+
+    void SetUp() override {
+        setLogLevel(LOGLEVEL_DEBUG);
+        logDebug("SetUp start");
+
+        logDebug("Setup complete");
+        logFlush();
+    }
+
+    void TearDown() override {
+        logDebug("TearDown start");
+        logDebug("TearDown complete");
+        logFlush();
+    }
+
+    CrosswiredTxRxPinPair pair;
+};
+
+// TODO these tests will be rewritten in terms of the new design....
+
+TEST_F(DataAckSenderTest, AckCanBeSent) {
     TxRxPin & pairA = pair.pairA();
     TxRxPin & pairB = pair.pairB();
     ClockingPinTracer trace(pairB);
     DataAckSender sender(pairA);
-    EXPECT_EQ(sender.state(), IDLE);
+    EXPECT_EQ(sender.state(), DataAckSenderState::IDLE);
 
     sender.sendAck(); // Needs clocking to send the signals out. 16 clock pulses/bit.
 
     // An ack is a 1 followed by a 0.
     const int expected_bits = 2;
     const int expected_samples = expected_bits * 16;
-    EXPECT_EQ(sender.state(), SENDING);
+    EXPECT_EQ(sender.state(), DataAckSenderState::SENDING);
     EXPECT_EQ(sender._queueLength(), 2);
     EXPECT_EQ(sender._data(), 0x0001);
     for (int i=0; i<expected_samples; i++) {
-        EXPECT_EQ(sender.state(), SENDING);
+        EXPECT_EQ(sender.state(), DataAckSenderState::SENDING);
 
         sender.clock();
         trace.clock();
     }
-    EXPECT_EQ(sender.state(), IDLE);
+    EXPECT_EQ(sender.state(), DataAckSenderState::IDLE);
     EXPECT_EQ(sender._queueLength(), 0);
     const std::vector<bool> heard = trace.heard();
     EXPECT_EQ(heard.size(), expected_samples);
@@ -521,29 +543,29 @@ TEST_F(TxRxPinTest, AckCanBeSent) {
     EXPECT_EQ(heard, expected);
 }
 
-TEST_F(TxRxPinTest, DataCanBeSent) {
+TEST_F(DataAckSenderTest, DataCanBeSent) {
     TxRxPin & pairA = pair.pairA();
     TxRxPin & pairB = pair.pairB();
     ClockingPinTracer trace(pairB);
     DataAckSender sender(pairA);
-    EXPECT_EQ(sender.state(), IDLE);
+    EXPECT_EQ(sender.state(), DataAckSenderState::IDLE);
 
     sender.sendData(0xC9); // Needs clocking to send the signals out. 16 clock pulses/bit.
 
     // Data is two start bits (1), the data bits, then a stop bit (0).
     const int expected_bits = 11;
     const int expected_samples = expected_bits * 16;
-    EXPECT_EQ(sender.state(), SENDING);
+    EXPECT_EQ(sender.state(), DataAckSenderState::SENDING);
     EXPECT_EQ(sender._queueLength(), expected_bits);
     EXPECT_EQ(sender._data(), 0x0327);
     logDebug("Data to be clocked out looks right with framing");
     for (int i=0; i<expected_samples; i++) {
-        EXPECT_EQ(sender.state(), SENDING);
+        EXPECT_EQ(sender.state(), DataAckSenderState::SENDING);
 
         sender.clock();
         trace.clock();
     }
-    EXPECT_EQ(sender.state(), IDLE);
+    EXPECT_EQ(sender.state(), DataAckSenderState::IDLE);
     EXPECT_EQ(sender._queueLength(), 0);
     const std::vector<bool> heard = trace.heard();
     EXPECT_EQ(heard.size(), expected_samples);   //       vvv note LSB first vvv
@@ -553,3 +575,75 @@ TEST_F(TxRxPinTest, DataCanBeSent) {
 }
 
 // TODO how to signal you can't ack or send data in a non-idle state
+
+
+
+class DataAckReceiverTest : public ::testing::Test, AckReceiver {
+protected:
+
+    void SetUp() override {
+        setLogLevel(LOGLEVEL_DEBUG);
+        logDebug("SetUp start");
+        TxRxPin & pairA = pair.pairA();
+        TxRxPin & pairB = pair.pairB();
+        receiver = new DataAckReceiver(pairA);
+        receiver->registerAckReceiver(*this); // dereference this to get a reference
+
+        logDebug("Setup complete");
+        logFlush();
+    }
+
+    void TearDown() override {
+        logDebug("TearDown start");
+        logDebug("TearDown complete");
+        logFlush();
+    }
+
+    void ackReceived() override {
+        logDebug("Ack received");
+        acks_received++;
+    }
+
+    CrosswiredTxRxPinPair pair;
+    DataAckReceiver *receiver = nullptr;
+    int acks_received = 0;
+};
+
+TEST_F(DataAckReceiverTest, ReceiverInitialConditions) {
+    EXPECT_EQ(receiver->state(), DataAckReceiverState::IDLE);
+    EXPECT_EQ(acks_received, 0);
+}
+
+TEST_F(DataAckReceiverTest, ReceiverIdleReceivesHighGoesToStartBit2) {
+    receiver->bitStateReceived(true);
+    EXPECT_EQ(receiver->state(), DataAckReceiverState::START_BIT_2);
+}
+
+TEST_F(DataAckReceiverTest, ReceiverStartBit2ReceivesLowAcksGoesToIdle) {
+    // Enter START_BIT_2
+    receiver->bitStateReceived(true);
+
+    // Back to IDLE - that should have generated an ack; our callback
+    // would have been called, incrementing the count.
+    receiver->bitStateReceived(false);
+
+    EXPECT_EQ(receiver->state(), DataAckReceiverState::IDLE);
+    EXPECT_EQ(acks_received, 1);
+}
+
+TEST_F(DataAckReceiverTest, ReceiverStartBit2ReceivesLowNoAckReceiverGoesToIdle) {
+    // Knock out the listener (the test setup always installs one)
+    // Test that the listener is only called if it's not nullptr.
+    // Without that check, this test crashes.
+    receiver->unregisterAckReceiver();
+
+    // Enter START_BIT_2
+    receiver->bitStateReceived(true);
+
+    // Back to IDLE - that should have generated an ack; our callback
+    // would have been called, if we had one.
+    receiver->bitStateReceived(false);
+
+    EXPECT_EQ(receiver->state(), DataAckReceiverState::IDLE);
+    EXPECT_EQ(acks_received, 0);
+}

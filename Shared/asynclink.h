@@ -105,7 +105,7 @@ private:
  * frame. It notifies a client (the DataAckSender) of any received Ack, and notifies a client (the DataAckSender) of any
  * received Data (so it can initiate sending an Ack).
  */
-enum DataAckSenderState { IDLE, SENDING };
+enum class DataAckSenderState { IDLE, SENDING };
 
 class DataAckSender {
 public:
@@ -127,5 +127,28 @@ private:
     WORD16 m_data;
 };
 
+// The DataAckReceiver will call a registered instance of AckReceiver when it detects
+// an incoming ack.
+class AckReceiver {
+public:
+    virtual ~AckReceiver() = default;
+    virtual void ackReceived() = 0;
+};
+
+enum class DataAckReceiverState { IDLE, START_BIT_2, DATA, STOP_BIT };
+
+class DataAckReceiver : public RxBitReceiver {
+public:
+    explicit DataAckReceiver(TxRxPin& tx_rx_pin);
+    DataAckReceiverState state() const;
+    void bitStateReceived(bool state) override;
+    void registerAckReceiver(AckReceiver& ackReceiver) const;
+    void unregisterAckReceiver() const;
+
+private:
+    TxRxPin & m_pin;
+    DataAckReceiverState m_state;
+    mutable AckReceiver *m_ack_receiver = nullptr;
+};
 
 #endif // _ASYNCLINK_H
