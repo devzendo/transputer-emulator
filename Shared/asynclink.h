@@ -135,6 +135,15 @@ public:
     virtual void ackReceived() = 0;
 };
 
+// The DataAckReceiver will call a registered instance of SendAckReceiver's requestSendAck() when it
+// starts to receive data bits. The receiver is responsible for notifying of overrun (if it does not
+// have space in its receive buffer.
+class SendAckReceiver {
+public:
+    virtual ~SendAckReceiver() = default;
+    virtual void requestSendAck() = 0;
+};
+
 enum class DataAckReceiverState { IDLE, START_BIT_2, DATA, STOP_BIT };
 
 class DataAckReceiver : public RxBitReceiver {
@@ -142,13 +151,24 @@ public:
     explicit DataAckReceiver(TxRxPin& tx_rx_pin);
     DataAckReceiverState state() const;
     void bitStateReceived(bool state) override;
+
     void registerAckReceiver(AckReceiver& ackReceiver) const;
     void unregisterAckReceiver() const;
+    void registerSendAckReceiver(SendAckReceiver& sendAckReceiver) const;
+    void unregisterSendAckReceiver() const;
+
+    // Internal, used by tests, do not use
+    int _bit_count();
+    BYTE8 _buffer();
 
 private:
     TxRxPin & m_pin;
     DataAckReceiverState m_state;
+    int m_bit_count;
+    BYTE8 m_buffer;
+
     mutable AckReceiver *m_ack_receiver = nullptr;
+    mutable SendAckReceiver *m_send_ack_receiver = nullptr;
 };
 
 #endif // _ASYNCLINK_H

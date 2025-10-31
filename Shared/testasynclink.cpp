@@ -489,6 +489,10 @@ TEST_F(OversampledTxRxPinTest, PerfectInputAckNoListener) {
     EXPECT_EQ(m_received_bits, ""); // Tested as 100 when we listen.
 }
 
+// TODO better start bit detection in the OversampledTxRxPin - on receipt of the rising edge,
+// only start detection if the majority vote of the start bit is correct. This will prevent noise
+// at the starting sample triggering detection. (As mentioned in the Serial Communications book)
+
 // TODO there's much duplication in these test cases - should just have input, expected and a function.
 // TODO noisy cases of majority voting, all boundary cases
 
@@ -579,7 +583,7 @@ TEST_F(DataAckSenderTest, DataCanBeSent) {
 
 
 
-class DataAckReceiverTest : public ::testing::Test, AckReceiver {
+class DataAckReceiverTest : public ::testing::Test, AckReceiver, SendAckReceiver {
 protected:
 
     void SetUp() override {
@@ -589,7 +593,7 @@ protected:
         TxRxPin & pairB = m_pair.pairB();
         m_receiver = new DataAckReceiver(pairA);
         m_receiver->registerAckReceiver(*this); // dereference this to get a reference
-
+        m_receiver->registerSendAckReceiver(*this);
         logDebug("Setup complete");
         logFlush();
     }
@@ -600,19 +604,43 @@ protected:
         logFlush();
     }
 
+    // AckReceiver
     void ackReceived() override {
         logDebug("Ack received");
         m_acks_received++;
     }
 
+    // SendAckReceiver
+    void requestSendAck() override {
+        logDebug("Send Ack requested");
+        m_send_acks_received++;
+    }
+
+    void receiverOverrun() override {
+        logWarn("*** RECEIVER OVERRUN ***");
+        m_receiver_overruns++;
+    }
+
+    void goToStartBit2() {
+        // Enter START_BIT_2
+        m_receiver->bitStateReceived(true);
+    }
+
     CrosswiredTxRxPinPair m_pair;
     DataAckReceiver *m_receiver = nullptr;
     int m_acks_received = 0;
+    int m_send_acks_received = 0;
+    int m_receiver_overruns = 0;
 };
 
 TEST_F(DataAckReceiverTest, InitialConditions) {
     EXPECT_EQ(m_receiver->state(), DataAckReceiverState::IDLE);
+    EXPECT_EQ(m_receiver->_bit_count(), 0);
+    EXPECT_EQ(m_receiver->_buffer(), 0x00);
+
     EXPECT_EQ(m_acks_received, 0);
+    EXPECT_EQ(m_send_acks_received, 0);
+    EXPECT_EQ(m_receiver_overruns, 0);
 }
 
 TEST_F(DataAckReceiverTest, IdleReceivesHighGoesToStartBit2) {
@@ -637,8 +665,7 @@ TEST_F(DataAckReceiverTest, StartBit2ReceivesLowNoAckReceiverGoesToIdle) {
     // Test that the listener is only called if it's not nullptr.
     // Without that check, this test crashes.
     m_receiver->unregisterAckReceiver();
-    // Enter START_BIT_2
-    m_receiver->bitStateReceived(true);
+    goToStartBit2();
 
     // Back to IDLE - that should have generated an ack; our callback
     // would have been called, if we had one.
@@ -647,3 +674,30 @@ TEST_F(DataAckReceiverTest, StartBit2ReceivesLowNoAckReceiverGoesToIdle) {
     EXPECT_EQ(m_receiver->state(), DataAckReceiverState::IDLE);
     EXPECT_EQ(m_acks_received, 0); // no ack listener
 }
+
+TEST_F(DataAckReceiverTest, StartBit2ReceivesHighCallsSendAckGoesToData) {
+    goToStartBit2();
+
+    // Bodge these values as we want to sense their initialisation after
+    // the bit received...
+    m_receiver->m_bit_count = 4;
+    m_receiver->m_buffer = 0xC9;
+
+    // The receiver will call the internal 'send ack' callback, notifying
+    // the DataAckSender to send an ack as we can receive this data.
+    m_receiver->bitStateReceived(true);
+
+    EXPECT_EQ(m_receiver->state(), DataAckReceiverState::DATA);
+    EXPECT_EQ(m_send_acks_received, 1);
+    EXPECT_EQ(m_receiver->m_bit_count, 0);
+    EXPECT_EQ(m_receiver->m_buffer, 0x00);
+}
+
+// TODO send ack callback not called if unregistered.
+
+// TODO need to know whether the previous data has been read by the client, and
+// if not, do not call the callback to send the ack, and signal an
+// overrun to the client. Overrun only happens after a byte has been read.
+
+// TODO another case of overrun detection - on initialisation, there's no
+// previous data that the client should read, so no overrun initially.

@@ -313,7 +313,8 @@ void DataAckReceiver::bitStateReceived(const bool state) {
             break;
         case DataAckReceiverState::START_BIT_2:
             if (state) {
-                // TODO -> DATA
+                m_send_ack_receiver->requestSendAck();
+                m_state = DataAckReceiverState::DATA;
             } else {
                 if (m_ack_receiver != nullptr) {
                     m_ack_receiver->ackReceived();
@@ -337,5 +338,24 @@ void DataAckReceiver::registerAckReceiver(AckReceiver& ackReceiver) const {
 void DataAckReceiver::unregisterAckReceiver() const {
     m_ack_receiver = nullptr;
 }
+
+// Register the send ack listener
+void DataAckReceiver::registerSendAckReceiver(SendAckReceiver& sendAckReceiver) const {
+    m_send_ack_receiver = &sendAckReceiver;
+}
+
+// Unregister the send ack listener
+void DataAckReceiver::unregisterSendAckReceiver() const {
+    m_send_ack_receiver = nullptr;
+}
+
+int DataAckReceiver::_bit_count() {
+    return m_bit_count;
+}
+
+BYTE8 DataAckReceiver::_buffer() {
+    return m_buffer;
+}
+
 
 
