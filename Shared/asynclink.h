@@ -127,6 +127,8 @@ private:
     WORD16 m_data;
 };
 
+// TODO CONSIDER: do we need two interfaces for the DAR's notifications? Could they be merged?
+
 // The DataAckReceiver will call a registered instance of AckReceiver when it detects
 // an incoming ack.
 class AckReceiver {
@@ -136,8 +138,10 @@ public:
 };
 
 // The DataAckReceiver will call a registered instance of SendAckReceiver's requestSendAck() when it
-// starts to receive data bits. The receiver is responsible for notifying of overrun (if it does not
-// have space in its receive buffer.
+// starts to receive data bits. The receiver will return true if there is sufficient space in its
+// receive buffer (and in the case of the DataAckSender, will start to send an ack), or false if
+// there is not (if no client has read a previously-received byte: an overrun) (in which case,
+// this will be notified to the DataAckSender's client, the AsyncLink).
 class SendAckReceiver {
 public:
     virtual ~SendAckReceiver() = default;

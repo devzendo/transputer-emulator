@@ -298,6 +298,10 @@ WORD16 DataAckSender::_data() const {
 
 DataAckReceiver::DataAckReceiver(TxRxPin& tx_rx_pin) : m_pin(tx_rx_pin) {
     m_state = DataAckReceiverState::IDLE;
+    // These nonsense values are reset when data reception starts and are set to this, to ensure this
+    // reset happens.
+    m_bit_count = -1;
+    m_buffer = 0x69;
 }
 
 DataAckReceiverState DataAckReceiver::state() const {
@@ -313,7 +317,11 @@ void DataAckReceiver::bitStateReceived(const bool state) {
             break;
         case DataAckReceiverState::START_BIT_2:
             if (state) {
-                m_send_ack_receiver->requestSendAck();
+                m_bit_count = 0;
+                m_buffer = 0x00;
+                if (m_send_ack_receiver != nullptr) {
+                    m_send_ack_receiver->requestSendAck();
+                }
                 m_state = DataAckReceiverState::DATA;
             } else {
                 if (m_ack_receiver != nullptr) {

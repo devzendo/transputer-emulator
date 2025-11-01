@@ -616,11 +616,6 @@ protected:
         m_send_acks_received++;
     }
 
-    void receiverOverrun() override {
-        logWarn("*** RECEIVER OVERRUN ***");
-        m_receiver_overruns++;
-    }
-
     void goToStartBit2() {
         // Enter START_BIT_2
         m_receiver->bitStateReceived(true);
@@ -630,17 +625,15 @@ protected:
     DataAckReceiver *m_receiver = nullptr;
     int m_acks_received = 0;
     int m_send_acks_received = 0;
-    int m_receiver_overruns = 0;
 };
 
 TEST_F(DataAckReceiverTest, InitialConditions) {
     EXPECT_EQ(m_receiver->state(), DataAckReceiverState::IDLE);
-    EXPECT_EQ(m_receiver->_bit_count(), 0);
-    EXPECT_EQ(m_receiver->_buffer(), 0x00);
+    EXPECT_EQ(m_receiver->_bit_count(), -1);
+    EXPECT_EQ(m_receiver->_buffer(), 0x69);
 
     EXPECT_EQ(m_acks_received, 0);
     EXPECT_EQ(m_send_acks_received, 0);
-    EXPECT_EQ(m_receiver_overruns, 0);
 }
 
 TEST_F(DataAckReceiverTest, IdleReceivesHighGoesToStartBit2) {
@@ -678,21 +671,32 @@ TEST_F(DataAckReceiverTest, StartBit2ReceivesLowNoAckReceiverGoesToIdle) {
 TEST_F(DataAckReceiverTest, StartBit2ReceivesHighCallsSendAckGoesToData) {
     goToStartBit2();
 
-    // Bodge these values as we want to sense their initialisation after
-    // the bit received...
-    m_receiver->m_bit_count = 4;
-    m_receiver->m_buffer = 0xC9;
-
     // The receiver will call the internal 'send ack' callback, notifying
     // the DataAckSender to send an ack as we can receive this data.
     m_receiver->bitStateReceived(true);
 
     EXPECT_EQ(m_receiver->state(), DataAckReceiverState::DATA);
     EXPECT_EQ(m_send_acks_received, 1);
-    EXPECT_EQ(m_receiver->m_bit_count, 0);
-    EXPECT_EQ(m_receiver->m_buffer, 0x00);
+    EXPECT_EQ(m_receiver->_bit_count(), 0);
+    EXPECT_EQ(m_receiver->_buffer(), 0x00);
 }
 
+TEST_F(DataAckReceiverTest, StartBit2ReceivesHighNoSendAckReceiverGoesToData) {
+    // Knock out the listener (the test setup always installs one)
+    // Test that the listener is only called if it's not nullptr.
+    // Without that check, this test crashes.
+    m_receiver->unregisterSendAckReceiver();
+    goToStartBit2();
+
+    // This should generate a send ack request; our callback
+    // would have been called, if we had one.
+    m_receiver->bitStateReceived(true);
+
+    EXPECT_EQ(m_receiver->state(), DataAckReceiverState::DATA);
+    EXPECT_EQ(m_send_acks_received, 0);
+    EXPECT_EQ(m_receiver->_bit_count(), 0);
+    EXPECT_EQ(m_receiver->_buffer(), 0x00);
+}
 // TODO send ack callback not called if unregistered.
 
 // TODO need to know whether the previous data has been read by the client, and
