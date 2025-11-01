@@ -138,17 +138,21 @@ public:
 };
 
 // The DataAckReceiver will call a registered instance of SendAckReceiver's requestSendAck() when it
-// starts to receive data bits. The receiver will return true if there is sufficient space in its
-// receive buffer (and in the case of the DataAckSender, will start to send an ack), or false if
+// starts to receive data bits. The implementation of SendAckReceiver will return true if there is sufficient space
+// in its receive buffer (and in the case of the DataAckSender, will start to send an ack), or false if
 // there is not (if no client has read a previously-received byte: an overrun) (in which case,
 // this will be notified to the DataAckSender's client, the AsyncLink).
 class SendAckReceiver {
 public:
     virtual ~SendAckReceiver() = default;
-    virtual void requestSendAck() = 0;
+    /**
+     * Data is being received, is there enough room in the receive buffer to hold it? Return true if so, and send an
+     * ack. If not enough space, return false and do not send an ack.
+     */
+    virtual bool requestSendAck() = 0;
 };
 
-enum class DataAckReceiverState { IDLE, START_BIT_2, DATA, STOP_BIT };
+enum class DataAckReceiverState { IDLE, START_BIT_2, DATA, DISCARD, STOP_BIT };
 
 class DataAckReceiver : public RxBitReceiver {
 public:

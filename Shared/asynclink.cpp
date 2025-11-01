@@ -307,6 +307,7 @@ DataAckReceiver::DataAckReceiver(TxRxPin& tx_rx_pin) : m_pin(tx_rx_pin) {
 DataAckReceiverState DataAckReceiver::state() const {
     return m_state;
 }
+// TODO have a method that logs state changes, instead of changing m_state directly.
 
 void DataAckReceiver::bitStateReceived(const bool state) {
     switch (m_state) {
@@ -319,10 +320,16 @@ void DataAckReceiver::bitStateReceived(const bool state) {
             if (state) {
                 m_bit_count = 0;
                 m_buffer = 0x00;
+                bool space_available = false;
                 if (m_send_ack_receiver != nullptr) {
-                    m_send_ack_receiver->requestSendAck();
+                    space_available = m_send_ack_receiver->requestSendAck();
                 }
-                m_state = DataAckReceiverState::DATA;
+                if (space_available) {
+                    // An ack would be being sent now.
+                    m_state = DataAckReceiverState::DATA;
+                } else {
+                    m_state = DataAckReceiverState::DISCARD;
+                }
             } else {
                 if (m_ack_receiver != nullptr) {
                     m_ack_receiver->ackReceived();

@@ -611,9 +611,10 @@ protected:
     }
 
     // SendAckReceiver
-    void requestSendAck() override {
-        logDebug("Send Ack requested");
+    bool requestSendAck() override {
+        logDebugF("Send Ack requested - returning %d", m_request_send_ack_response);
         m_send_acks_received++;
+        return m_request_send_ack_response;
     }
 
     void goToStartBit2() {
@@ -621,10 +622,15 @@ protected:
         m_receiver->bitStateReceived(true);
     }
 
+    void setRequestSendAckResponse(const bool response) {
+        m_request_send_ack_response = response;
+    }
+
     CrosswiredTxRxPinPair m_pair;
     DataAckReceiver *m_receiver = nullptr;
     int m_acks_received = 0;
     int m_send_acks_received = 0;
+    bool m_request_send_ack_response = true;
 };
 
 TEST_F(DataAckReceiverTest, InitialConditions) {
@@ -672,7 +678,9 @@ TEST_F(DataAckReceiverTest, StartBit2ReceivesHighCallsSendAckGoesToData) {
     goToStartBit2();
 
     // The receiver will call the internal 'send ack' callback, notifying
-    // the DataAckSender to send an ack as we can receive this data.
+    // the DataAckSender to send an ack as we can receive this data. This
+    // will return true (the test fixture default), so there is enough
+    // space to receive.
     m_receiver->bitStateReceived(true);
 
     EXPECT_EQ(m_receiver->state(), DataAckReceiverState::DATA);
@@ -681,27 +689,40 @@ TEST_F(DataAckReceiverTest, StartBit2ReceivesHighCallsSendAckGoesToData) {
     EXPECT_EQ(m_receiver->_buffer(), 0x00);
 }
 
-TEST_F(DataAckReceiverTest, StartBit2ReceivesHighNoSendAckReceiverGoesToData) {
+TEST_F(DataAckReceiverTest, StartBit2ReceivesHighNoSendAckReceiverGoesToDiscard) {
     // Knock out the listener (the test setup always installs one)
     // Test that the listener is only called if it's not nullptr.
     // Without that check, this test crashes.
     m_receiver->unregisterSendAckReceiver();
     goToStartBit2();
 
-    // This should generate a send ack request; our callback
-    // would have been called, if we had one.
+    // The receiver would call the internal 'send ack' callback, notifying
+    // the DataAckSender to send an ack as we can receive this data. But we
+    // don't have one, so have to assume there's no space to receive this
+    // data, and no ability to ack. So, reject the data by going into
+    // DISCARD.
     m_receiver->bitStateReceived(true);
 
-    EXPECT_EQ(m_receiver->state(), DataAckReceiverState::DATA);
+    EXPECT_EQ(m_receiver->state(), DataAckReceiverState::DISCARD);
     EXPECT_EQ(m_send_acks_received, 0);
     EXPECT_EQ(m_receiver->_bit_count(), 0);
     EXPECT_EQ(m_receiver->_buffer(), 0x00);
 }
-// TODO send ack callback not called if unregistered.
 
-// TODO need to know whether the previous data has been read by the client, and
-// if not, do not call the callback to send the ack, and signal an
-// overrun to the client. Overrun only happens after a byte has been read.
+TEST_F(DataAckReceiverTest, StartBit2ReceivesHighCallsSendAckGoesToDiscard) {
+    goToStartBit2();
+
+    // The receiver will call the internal 'send ack' callback, requesting
+    // the DataAckSender to send an ack - but this
+    // will return false to indicate no available space to receive.
+    setRequestSendAckResponse(false);
+    m_receiver->bitStateReceived(true);
+
+    EXPECT_EQ(m_receiver->state(), DataAckReceiverState::DISCARD);
+    EXPECT_EQ(m_send_acks_received, 1); // The callback was called.
+    EXPECT_EQ(m_receiver->_bit_count(), 0); // Discard needs this zeroing.
+    EXPECT_EQ(m_receiver->_buffer(), 0x00);
+}
 
 // TODO another case of overrun detection - on initialisation, there's no
 // previous data that the client should read, so no overrun initially.
