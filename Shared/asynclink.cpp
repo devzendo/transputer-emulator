@@ -372,7 +372,10 @@ void DataAckReceiver::bitStateReceived(const bool state) {
                 }
                 changeState(DataAckReceiverState::IDLE);
             } else {
-
+                if (m_data_receiver != nullptr) {
+                    m_data_receiver->dataReceived(m_buffer);
+                }
+                changeState(DataAckReceiverState::IDLE);
             }
             break;
     }
@@ -406,6 +409,16 @@ void DataAckReceiver::registerFramingErrorReceiver(FramingErrorReceiver& framing
 // Unregister the framing error listener
 void DataAckReceiver::unregisterFramingErrorReceiver() const {
     m_framing_error_receiver = nullptr;
+}
+
+// Register the data listener
+void DataAckReceiver::registerDataReceiver(DataReceiver& dataReceiver) const {
+    m_data_receiver = &dataReceiver;
+}
+
+// Unregister the data listener
+void DataAckReceiver::unregisterDataReceiver() const {
+    m_data_receiver = nullptr;
 }
 
 

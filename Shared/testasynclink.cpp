@@ -17,6 +17,7 @@
 #include "link.h"
 #include "asynclink.h"
 #include "log.h"
+#include "misc.h"
 
 class CrosswiredTxRxPinPair {
     bool aPin = false;
@@ -582,7 +583,7 @@ TEST_F(DataAckSenderTest, DataCanBeSent) {
 
 
 
-class DataAckReceiverTest : public ::testing::Test, AckReceiver, SendAckReceiver, FramingErrorReceiver {
+class DataAckReceiverTest : public ::testing::Test, AckReceiver, SendAckReceiver, FramingErrorReceiver, DataReceiver {
 protected:
 
     void SetUp() override {
@@ -594,6 +595,7 @@ protected:
         m_receiver->registerAckReceiver(*this); // dereference this to get a reference
         m_receiver->registerSendAckReceiver(*this);
         m_receiver->registerFramingErrorReceiver(*this);
+        m_receiver->registerDataReceiver(*this);
         logDebug("Setup complete");
         logFlush();
     }
@@ -621,6 +623,13 @@ protected:
     void framingError() override {
         logWarn("Framing error");
         m_framing_errors_received++;
+    }
+
+    // DataReceiver
+    void dataReceived(BYTE8 data) {
+        logInfoF("Data received: 0b%s", byte_to_binary(data));
+        m_data = data;
+        m_data_received++;
     }
 
 
@@ -654,6 +663,8 @@ protected:
     int m_acks_received = 0;
     int m_send_acks_received = 0;
     int m_framing_errors_received = 0;
+    int m_data_received = 0;
+    BYTE8 m_data = 0;
     bool m_request_send_ack_response = true;
 };
 
@@ -665,6 +676,8 @@ TEST_F(DataAckReceiverTest, InitialConditions) {
     EXPECT_EQ(m_acks_received, 0);
     EXPECT_EQ(m_send_acks_received, 0);
     EXPECT_EQ(m_framing_errors_received, 0);
+    EXPECT_EQ(m_data_received, 0);
+    EXPECT_EQ(m_data, 0);
 }
 
 TEST_F(DataAckReceiverTest, IdleReceivesHighGoesToStartBit2) {
@@ -842,5 +855,45 @@ TEST_F(DataAckReceiverTest, StopBitFramingErrorNoFramingErrorReceiver) {
     // A proper stop bit is a false...
     m_receiver->bitStateReceived(true);
     EXPECT_EQ(m_framing_errors_received, 0);
+    EXPECT_EQ(m_receiver->state(), DataAckReceiverState::IDLE);
+}
+
+TEST_F(DataAckReceiverTest, StopBitSendsDataGoesToIdle) {
+    goToData();
+
+    m_receiver->bitStateReceived(true);
+    m_receiver->bitStateReceived(true);
+    m_receiver->bitStateReceived(false);
+    m_receiver->bitStateReceived(false);
+    m_receiver->bitStateReceived(false);
+    m_receiver->bitStateReceived(false);
+    m_receiver->bitStateReceived(true);
+    m_receiver->bitStateReceived(true);
+    EXPECT_EQ(m_receiver->state(), DataAckReceiverState::STOP_BIT);
+
+    // A proper stop bit is a false...
+    m_receiver->bitStateReceived(false);
+    EXPECT_EQ(m_data_received, 1);
+    EXPECT_EQ(m_data, 0b11000011);
+    EXPECT_EQ(m_receiver->state(), DataAckReceiverState::IDLE);
+}
+
+TEST_F(DataAckReceiverTest, StopBitDataReceivedGoesToIdleNoDataReceiver) {
+    goToData();
+    m_receiver->unregisterDataReceiver();
+
+    m_receiver->bitStateReceived(true);
+    m_receiver->bitStateReceived(true);
+    m_receiver->bitStateReceived(false);
+    m_receiver->bitStateReceived(false);
+    m_receiver->bitStateReceived(false);
+    m_receiver->bitStateReceived(false);
+    m_receiver->bitStateReceived(true);
+    m_receiver->bitStateReceived(true);
+    EXPECT_EQ(m_receiver->state(), DataAckReceiverState::STOP_BIT);
+
+    // A proper stop bit is a false...
+    m_receiver->bitStateReceived(false);
+    EXPECT_EQ(m_data_received, 0);
     EXPECT_EQ(m_receiver->state(), DataAckReceiverState::IDLE);
 }
