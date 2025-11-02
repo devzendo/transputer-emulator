@@ -366,6 +366,14 @@ void DataAckReceiver::bitStateReceived(const bool state) {
             }
             break;
         case DataAckReceiverState::STOP_BIT:
+            if (state) {
+                if (m_framing_error_receiver != nullptr) {
+                    m_framing_error_receiver->framingError();
+                }
+                changeState(DataAckReceiverState::IDLE);
+            } else {
+
+            }
             break;
     }
 }
@@ -389,6 +397,17 @@ void DataAckReceiver::registerSendAckReceiver(SendAckReceiver& sendAckReceiver) 
 void DataAckReceiver::unregisterSendAckReceiver() const {
     m_send_ack_receiver = nullptr;
 }
+
+// Register the framing error listener
+void DataAckReceiver::registerFramingErrorReceiver(FramingErrorReceiver& framingErrorReceiver) const {
+    m_framing_error_receiver = &framingErrorReceiver;
+}
+
+// Unregister the framing error listener
+void DataAckReceiver::unregisterFramingErrorReceiver() const {
+    m_framing_error_receiver = nullptr;
+}
+
 
 void DataAckReceiver::changeState(const DataAckReceiverState newState) {
     logDebugF("Changing state from %s to %s", DataAckReceiverStateToString(m_state), DataAckReceiverStateToString(newState));

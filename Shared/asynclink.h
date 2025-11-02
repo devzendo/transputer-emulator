@@ -152,6 +152,17 @@ public:
     virtual bool requestSendAck() = 0;
 };
 
+// The DataAckReceiver will call a registered instance of FramingErrorReceiver's framingError() when it receiver
+// a high input when in STOP_BIT state.
+class FramingErrorReceiver {
+public:
+    virtual ~FramingErrorReceiver() = default;
+    /**
+     * A framing error (bad stop bit) has occurred.
+     */
+    virtual void framingError() = 0;
+};
+
 enum class DataAckReceiverState { IDLE, START_BIT_2, DATA, DISCARD, STOP_BIT };
 
 class DataAckReceiver : public RxBitReceiver {
@@ -164,6 +175,8 @@ public:
     void unregisterAckReceiver() const;
     void registerSendAckReceiver(SendAckReceiver& sendAckReceiver) const;
     void unregisterSendAckReceiver() const;
+    void registerFramingErrorReceiver(FramingErrorReceiver& framingErrorReceiver) const;
+    void unregisterFramingErrorReceiver() const;
 
     void changeState(DataAckReceiverState newState);
 
@@ -179,6 +192,7 @@ private:
 
     mutable AckReceiver *m_ack_receiver = nullptr;
     mutable SendAckReceiver *m_send_ack_receiver = nullptr;
+    mutable FramingErrorReceiver *m_framing_error_receiver = nullptr;
 };
 
 #endif // _ASYNCLINK_H
