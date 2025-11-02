@@ -165,9 +165,11 @@ public:
     void registerSendAckReceiver(SendAckReceiver& sendAckReceiver) const;
     void unregisterSendAckReceiver() const;
 
+    void changeState(DataAckReceiverState newState);
+
     // Internal, used by tests, do not use
-    int _bit_count();
-    BYTE8 _buffer();
+    int _bit_count() const;
+    BYTE8 _buffer() const;
 
 private:
     TxRxPin & m_pin;

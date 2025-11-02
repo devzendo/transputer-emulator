@@ -295,6 +295,17 @@ WORD16 DataAckSender::_data() const {
 }
 
 
+constexpr const char* DataAckReceiverStateToString(DataAckReceiverState s) noexcept
+{
+    switch (s)
+    {
+        case DataAckReceiverState::IDLE: return "IDLE";
+        case DataAckReceiverState::START_BIT_2: return "START_BIT_2";
+        case DataAckReceiverState::DATA: return "DATA";
+        case DataAckReceiverState::DISCARD: return "DISCARD";
+        case DataAckReceiverState::STOP_BIT: return "STOP_BIT";
+    }
+}
 
 DataAckReceiver::DataAckReceiver(TxRxPin& tx_rx_pin) : m_pin(tx_rx_pin) {
     m_state = DataAckReceiverState::IDLE;
@@ -307,13 +318,12 @@ DataAckReceiver::DataAckReceiver(TxRxPin& tx_rx_pin) : m_pin(tx_rx_pin) {
 DataAckReceiverState DataAckReceiver::state() const {
     return m_state;
 }
-// TODO have a method that logs state changes, instead of changing m_state directly.
 
 void DataAckReceiver::bitStateReceived(const bool state) {
     switch (m_state) {
         case DataAckReceiverState::IDLE:
             if (state) {
-                m_state = DataAckReceiverState::START_BIT_2;
+                changeState(DataAckReceiverState::START_BIT_2);
             }
             break;
         case DataAckReceiverState::START_BIT_2:
@@ -326,18 +336,20 @@ void DataAckReceiver::bitStateReceived(const bool state) {
                 }
                 if (space_available) {
                     // An ack would be being sent now.
-                    m_state = DataAckReceiverState::DATA;
+                    changeState(DataAckReceiverState::DATA);
                 } else {
-                    m_state = DataAckReceiverState::DISCARD;
+                    changeState(DataAckReceiverState::DISCARD);
                 }
             } else {
                 if (m_ack_receiver != nullptr) {
                     m_ack_receiver->ackReceived();
                 }
-                m_state = DataAckReceiverState::IDLE;
+                changeState(DataAckReceiverState::IDLE);
             }
             break;
         case DataAckReceiverState::DATA:
+            break;
+        case DataAckReceiverState::DISCARD:
             break;
         case DataAckReceiverState::STOP_BIT:
             break;
@@ -364,11 +376,16 @@ void DataAckReceiver::unregisterSendAckReceiver() const {
     m_send_ack_receiver = nullptr;
 }
 
-int DataAckReceiver::_bit_count() {
+void DataAckReceiver::changeState(const DataAckReceiverState newState) {
+    logDebugF("Changing state from %s to %s", DataAckReceiverStateToString(m_state), DataAckReceiverStateToString(newState));
+    m_state = newState;
+}
+
+int DataAckReceiver::_bit_count() const {
     return m_bit_count;
 }
 
-BYTE8 DataAckReceiver::_buffer() {
+BYTE8 DataAckReceiver::_buffer() const {
     return m_buffer;
 }
 
