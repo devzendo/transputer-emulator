@@ -218,15 +218,6 @@ std::vector<bool> generate_sample_vector_from_bits(const int *bits, const int le
     return out;
 }
 
-std::string send_input_get_output(TxRxPin &input_pin, const std::string &input_samples, TxRxPin &output_pin) {
-    std::string out;
-    for (const char input_sample : input_samples) {
-        input_pin.setTx(input_sample == '1');
-        out.push_back(output_pin.getRx() ? '1' : '0');
-    }
-    return out;
-}
-
 class OversampledTxRxPinTest : public ::testing::Test, RxBitReceiver {
 public:
     OversampledTxRxPinTest() : m_pairA(m_pair.pairA()), m_pairB(m_pair.pairB()),
@@ -251,6 +242,15 @@ protected:
     void bitStateReceived(const bool state) override {
         logDebugF("Received bit: %d", state);
         m_received_bits.push_back(state ? '1' : '0');
+    }
+
+    std::string send_input_get_output(const std::string &input_samples) {
+        std::string out;
+        for (const char input_sample : input_samples) {
+            m_pairB.setTx(input_sample == '1');
+            out.push_back(m_o_pin.getRx() ? '1' : '0');
+        }
+        return out;
     }
 
     CrosswiredTxRxPinPair m_pair;
@@ -279,7 +279,7 @@ TEST_F(OversampledTxRxPinTest, StraightThroughTx) {
 TEST_F(OversampledTxRxPinTest, AllFalseInput) {
     //                                 0123456789ABCDEF0123456789ABCDEF
     const std::string input_samples = "00000000000000000000000000000000";
-    const std::string received = send_input_get_output(m_pairB, input_samples, reinterpret_cast<TxRxPin&>(m_o_pin));
+    const std::string received = send_input_get_output(input_samples);
 
     //                                 0123456789ABCDEF0123456789ABCDEF
     EXPECT_EQ(received,               "00000000000000000000000000000000");
@@ -288,7 +288,7 @@ TEST_F(OversampledTxRxPinTest, AllFalseInput) {
 
 TEST_F(OversampledTxRxPinTest, SyncPulseDetection) {
     const std::string input_samples = "1";
-    const std::string received = send_input_get_output(m_pairB, input_samples, reinterpret_cast<TxRxPin&>(m_o_pin));
+    const std::string received = send_input_get_output(input_samples);
 
     EXPECT_EQ(received,               "0"); // there's a 9-bit delay before we'll see the majority voted bit - but not enough input data here.
     EXPECT_EQ(m_o_pin._resync_in_samples(), 31); // don't yet know the next two bits so we can determine the frame length,
@@ -297,7 +297,7 @@ TEST_F(OversampledTxRxPinTest, SyncPulseDetection) {
 
 TEST_F(OversampledTxRxPinTest, RisingEdgeAfterSyncPulseDetectionDoesNotResetResync) {
     const std::string input_samples = "101";
-    const std::string received = send_input_get_output(m_pairB, input_samples, reinterpret_cast<TxRxPin&>(m_o_pin));
+    const std::string received = send_input_get_output(input_samples);
 
     EXPECT_EQ(received,               "000"); // there's a 9-bit delay before we'll see the majority voted bit - but not enough input data here.
     EXPECT_EQ(m_o_pin._resync_in_samples(), 29); // don't yet know the next two bits so we can determine the frame length,
@@ -307,7 +307,7 @@ TEST_F(OversampledTxRxPinTest, RisingEdgeAfterSyncPulseDetectionDoesNotResetResy
 TEST_F(OversampledTxRxPinTest, SyncPulseInputZero) {
     //                                 0123456789ABCDEF
     const std::string input_samples = "1000000000000000";
-    const std::string received = send_input_get_output(m_pairB, input_samples, reinterpret_cast<TxRxPin&>(m_o_pin));
+    const std::string received = send_input_get_output(input_samples);
 
     //                                 0123456789ABCDEF
     EXPECT_EQ(received,               "0000000000000000");
@@ -315,10 +315,10 @@ TEST_F(OversampledTxRxPinTest, SyncPulseInputZero) {
     // so resync at start of a potential ack
 
     // finish the ack...
-    send_input_get_output(m_pairB, "0000000000000000", reinterpret_cast<TxRxPin&>(m_o_pin));
+    send_input_get_output("0000000000000000");
     EXPECT_EQ(m_o_pin._resync_in_samples(), 0);
     // another ack...
-    send_input_get_output(m_pairB, "10000000000000000000000000000000", reinterpret_cast<TxRxPin&>(m_o_pin));
+    send_input_get_output("10000000000000000000000000000000");
     EXPECT_EQ(m_o_pin._resync_in_samples(), 0);
 }
 
@@ -332,7 +332,7 @@ TEST_F(OversampledTxRxPinTest, SyncPulseInputZeroZero) {
     //                                 0123456789ABCDEF0123456789ABCDEF
     //                                 xxxxxx|||xxxxxxxyyyyyy|||yyyyyyy
     const std::string input_samples = "10000000000000000000000000000000000000000";
-    const std::string received = send_input_get_output(m_pairB, input_samples, reinterpret_cast<TxRxPin&>(m_o_pin));
+    const std::string received = send_input_get_output(input_samples);
 
     //                                 0123456789ABCDEF0123456789ABCDEF
     //                                          xxxxxxxxxxxxxxxxyyyyyyyyyyyyyyyy
@@ -344,7 +344,7 @@ TEST_F(OversampledTxRxPinTest, SyncPulseInputZeroOne) {
     //                                 0123456789ABCDEF0123456789ABCDEF
     //                                 xxxxxx|||xxxxxxxyyyyyy|||yyyyyyy
     const std::string input_samples = "1000000000000000000000111000000000000000";
-    const std::string received = send_input_get_output(m_pairB, input_samples, reinterpret_cast<TxRxPin&>(m_o_pin));
+    const std::string received = send_input_get_output(input_samples);
 
     //                                 0123456789ABCDEF0123456789ABCDEF
     //                                         xxxxxxxxxxxxxxxxyyyyyyyyyyyyyyyy
@@ -370,7 +370,7 @@ TEST_F(OversampledTxRxPinTest, PerfectInputAck) {
     //                                 0123456789ABCDEF0123456789ABCDEF
     //                                 xxxxxx|||xxxxxxxyyyyyy|||yyyyyyy
     const std::string input_samples = "11111111111111110000000000000000000000000";
-    const std::string received = send_input_get_output(m_pairB, input_samples, reinterpret_cast<TxRxPin&>(m_o_pin));
+    const std::string received = send_input_get_output(input_samples);
     expect_ack(received, m_o_pin._resync_in_samples(), m_received_bits);
 }
 
@@ -378,7 +378,7 @@ TEST_F(OversampledTxRxPinTest, MajorityVote7Ack) { // Also all-bits majority tes
     //                                 0123456789ABCDEF0123456789ABCDEF
     //                                 xxxxxx|||xxxxxxxyyyyyy|||yyyyyyy
     const std::string input_samples = "10000011100000000000000000000000000000000";
-    const std::string received = send_input_get_output(m_pairB, input_samples, reinterpret_cast<TxRxPin&>(m_o_pin));
+    const std::string received = send_input_get_output(input_samples);
     expect_ack(received, m_o_pin._resync_in_samples(), m_received_bits);
 }
 
@@ -386,7 +386,7 @@ TEST_F(OversampledTxRxPinTest, MajorityVote3Ack) {
     //                                 0123456789ABCDEF0123456789ABCDEF
     //                                 xxxxxx|||xxxxxxxyyyyyy|||yyyyyyy
     const std::string input_samples = "10000001100000000000000000000000000000000";
-    const std::string received = send_input_get_output(m_pairB, input_samples, reinterpret_cast<TxRxPin&>(m_o_pin));
+    const std::string received = send_input_get_output(input_samples);
     expect_ack(received, m_o_pin._resync_in_samples(), m_received_bits);
 }
 
@@ -394,7 +394,7 @@ TEST_F(OversampledTxRxPinTest, MajorityVote6Ack) {
     //                                 0123456789ABCDEF0123456789ABCDEF
     //                                 xxxxxx|||xxxxxxxyyyyyy|||yyyyyyy
     const std::string input_samples = "10000011000000000000000000000000000000000";
-    const std::string received = send_input_get_output(m_pairB, input_samples, reinterpret_cast<TxRxPin&>(m_o_pin));
+    const std::string received = send_input_get_output(input_samples);
     expect_ack(received, m_o_pin._resync_in_samples(), m_received_bits);
 }
 
@@ -402,7 +402,7 @@ TEST_F(OversampledTxRxPinTest, MajorityVote5Ack) {
     //                                 0123456789ABCDEF0123456789ABCDEF
     //                                 xxxxxx|||xxxxxxxyyyyyy|||yyyyyyy
     const std::string input_samples = "10000010100000000000000000000000000000000";
-    const std::string received = send_input_get_output(m_pairB, input_samples, reinterpret_cast<TxRxPin&>(m_o_pin));
+    const std::string received = send_input_get_output(input_samples);
     expect_ack(received, m_o_pin._resync_in_samples(), m_received_bits);
 }
 
@@ -412,7 +412,7 @@ TEST_F(OversampledTxRxPinTest, SyncPulseInputOneOne) {
     //                                 0123456789ABCDEF0123456789ABCDEF
     //                                 xxxxxx|||xxxxxxxyyyyyy|||yyyyyyy
     const std::string input_samples = "1000001110000000000000111000000000000000";
-    const std::string received = send_input_get_output(m_pairB, input_samples, reinterpret_cast<TxRxPin&>(m_o_pin));
+    const std::string received = send_input_get_output(input_samples);
 
     //                                 0123456789ABCDEF0123456789ABCDEF
     //                                         xxxxxxxxxxxxxxxxyyyyyyyyyyyyyyyy
@@ -440,7 +440,7 @@ TEST_F(OversampledTxRxPinTest, PerfectInputData) {
     // majority vote 'delay'.
     const std::string delay_padding = "00000000";
     const std::string input_samples = stretch_16("11110010010") + delay_padding;
-    const std::string received = send_input_get_output(m_pairB, input_samples, reinterpret_cast<TxRxPin&>(m_o_pin));
+    const std::string received = send_input_get_output(input_samples);
 
     EXPECT_EQ(received, delay_padding + stretch_16("11110010010"));
     EXPECT_EQ(m_o_pin._resync_in_samples(), 0); // have been waiting for the next rising edge but then there was padding...
@@ -451,7 +451,7 @@ TEST_F(OversampledTxRxPinTest, ResyncAtEndOfData_OneBitShort) {
     const std::string input_samples = stretch_16("1111001001"); // one bit short
     EXPECT_EQ(input_samples.size(), 160);
 
-    send_input_get_output(m_pairB, input_samples, reinterpret_cast<TxRxPin&>(m_o_pin));
+    send_input_get_output(input_samples);
 
     EXPECT_EQ(m_o_pin._resync_in_samples(), 16); // just about to start waiting for the next rising edge
 }
@@ -462,7 +462,7 @@ TEST_F(OversampledTxRxPinTest, ResyncAtEndOfData_OneSampleShort) {
     // data (full frame 11 bits [ 1 1 x x x x x x x x 0 ], so 16x11=176 samples)
     EXPECT_EQ(input_samples.size(), 175);
 
-    send_input_get_output(m_pairB, input_samples, reinterpret_cast<TxRxPin&>(m_o_pin));
+    send_input_get_output(input_samples);
 
     EXPECT_EQ(m_o_pin._resync_in_samples(), 1); // about to start waiting for the next rising edge after next sample
 }
@@ -472,7 +472,7 @@ TEST_F(OversampledTxRxPinTest, ResyncAtEndOfData_FullDataFrame) {
     // data (full frame 11 bits [ 1 1 x x x x x x x x 0 ], so 16x11=176 samples)
     EXPECT_EQ(input_samples.size(), 176);
 
-    send_input_get_output(m_pairB, input_samples, reinterpret_cast<TxRxPin&>(m_o_pin));
+    send_input_get_output(input_samples);
 
     EXPECT_EQ(m_o_pin._resync_in_samples(), 0); // just started waiting for the next rising edge
 }
@@ -485,7 +485,7 @@ TEST_F(OversampledTxRxPinTest, PerfectInputAckNoListener) {
     //                                 0123456789ABCDEF0123456789ABCDEF
     //                                 xxxxxx|||xxxxxxxyyyyyy|||yyyyyyy
     const std::string input_samples = "11111111111111110000000000000000000000000";
-    send_input_get_output(m_pairB, input_samples, reinterpret_cast<TxRxPin&>(m_o_pin));
+    send_input_get_output(input_samples);
     EXPECT_EQ(m_received_bits, ""); // Tested as 100 when we listen.
 }
 
@@ -493,7 +493,6 @@ TEST_F(OversampledTxRxPinTest, PerfectInputAckNoListener) {
 // only start detection if the majority vote of the start bit is correct. This will prevent noise
 // at the starting sample triggering detection. (As mentioned in the Serial Communications book)
 
-// TODO there's much duplication in these test cases - should just have input, expected and a function.
 // TODO noisy cases of majority voting, all boundary cases
 
 class DataAckSenderTest : public ::testing::Test {
