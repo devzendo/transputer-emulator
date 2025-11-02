@@ -722,6 +722,3 @@ TEST_F(DataAckReceiverTest, StartBit2ReceivesHighCallsSendAckGoesToDiscard) {
     EXPECT_EQ(m_receiver->_bit_count(), 0); // Discard needs this zeroing.
     EXPECT_EQ(m_receiver->_buffer(), 0x00);
 }
-
-// TODO another case of overrun detection - on initialisation, there's no
-// previous data that the client should read, so no overrun initially.
