@@ -621,6 +621,14 @@ protected:
         m_receiver->bitStateReceived(true);
     }
 
+    void goToData() {
+        goToStartBit2();
+        // Enter DATA
+        setRequestSendAckResponse(true); // there is space to receive
+        m_receiver->bitStateReceived(true);
+        EXPECT_EQ(m_receiver->state(), DataAckReceiverState::DATA);
+    }
+
     void setRequestSendAckResponse(const bool response) {
         m_request_send_ack_response = response;
     }
@@ -721,4 +729,42 @@ TEST_F(DataAckReceiverTest, StartBit2ReceivesHighCallsSendAckGoesToDiscard) {
     EXPECT_EQ(m_send_acks_received, 1); // The callback was called.
     EXPECT_EQ(m_receiver->_bit_count(), 0); // Discard needs this zeroing.
     EXPECT_EQ(m_receiver->_buffer(), 0x00);
+}
+
+TEST_F(DataAckReceiverTest, DataToStopBit) {
+    goToData();
+
+    m_receiver->bitStateReceived(true);
+    EXPECT_EQ(m_receiver->_bit_count(), 1);
+    EXPECT_EQ(m_receiver->_buffer(), 0b00000001);
+
+    m_receiver->bitStateReceived(true);
+    EXPECT_EQ(m_receiver->_bit_count(), 2);
+    EXPECT_EQ(m_receiver->_buffer(), 0b00000011);
+
+    m_receiver->bitStateReceived(false);
+    EXPECT_EQ(m_receiver->_bit_count(), 3);
+    EXPECT_EQ(m_receiver->_buffer(), 0b00000110);
+
+    m_receiver->bitStateReceived(false);
+    EXPECT_EQ(m_receiver->_bit_count(), 4);
+    EXPECT_EQ(m_receiver->_buffer(), 0b00001100);
+
+    m_receiver->bitStateReceived(false);
+    EXPECT_EQ(m_receiver->_bit_count(), 5);
+    EXPECT_EQ(m_receiver->_buffer(), 0b00011000);
+
+    m_receiver->bitStateReceived(false);
+    EXPECT_EQ(m_receiver->_bit_count(), 6);
+    EXPECT_EQ(m_receiver->_buffer(), 0b00110000);
+
+    m_receiver->bitStateReceived(true);
+    EXPECT_EQ(m_receiver->_bit_count(), 7);
+    EXPECT_EQ(m_receiver->_buffer(), 0b01100001);
+    EXPECT_EQ(m_receiver->state(), DataAckReceiverState::DATA);
+
+    m_receiver->bitStateReceived(true);
+    EXPECT_EQ(m_receiver->_bit_count(), 8);
+    EXPECT_EQ(m_receiver->_buffer(), 0b11000011);
+    EXPECT_EQ(m_receiver->state(), DataAckReceiverState::STOP_BIT);
 }

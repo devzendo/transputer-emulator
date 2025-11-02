@@ -348,6 +348,14 @@ void DataAckReceiver::bitStateReceived(const bool state) {
             }
             break;
         case DataAckReceiverState::DATA:
+            if (m_bit_count < 8) {
+                m_buffer <<= 1;
+                m_buffer |= state;
+                m_bit_count ++;
+            }
+            if (m_bit_count == 8) {
+                changeState(DataAckReceiverState::STOP_BIT);
+            }
             break;
         case DataAckReceiverState::DISCARD:
             break;
