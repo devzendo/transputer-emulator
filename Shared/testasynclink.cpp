@@ -629,6 +629,14 @@ protected:
         EXPECT_EQ(m_receiver->state(), DataAckReceiverState::DATA);
     }
 
+    void goToDiscard() {
+        goToStartBit2();
+        // Enter DISCARD
+        setRequestSendAckResponse(false); // there is no space
+        m_receiver->bitStateReceived(true);
+        EXPECT_EQ(m_receiver->state(), DataAckReceiverState::DISCARD);
+    }
+
     void setRequestSendAckResponse(const bool response) {
         m_request_send_ack_response = response;
     }
@@ -767,4 +775,17 @@ TEST_F(DataAckReceiverTest, DataToStopBit) {
     EXPECT_EQ(m_receiver->_bit_count(), 8);
     EXPECT_EQ(m_receiver->_buffer(), 0b11000011);
     EXPECT_EQ(m_receiver->state(), DataAckReceiverState::STOP_BIT);
+}
+
+TEST_F(DataAckReceiverTest, DiscardToIdle) {
+    goToDiscard();
+
+    for (int i=0; i<8; i++) {
+        m_receiver->bitStateReceived(true);
+        EXPECT_EQ(m_receiver->_bit_count(), i + 1);
+        EXPECT_EQ(m_receiver->state(), DataAckReceiverState::DISCARD);
+    }
+    m_receiver->bitStateReceived(true);
+    EXPECT_EQ(m_receiver->_bit_count(), 9);
+    EXPECT_EQ(m_receiver->state(), DataAckReceiverState::IDLE);
 }
