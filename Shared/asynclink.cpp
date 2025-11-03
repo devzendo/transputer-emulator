@@ -214,10 +214,10 @@ void AsyncLink::poll() {
 
 constexpr const char* DataAckSenderStateToString(const DataAckSenderState s) noexcept
 {
-    switch (s)
-    {
-    case DataAckSenderState::IDLE: return "IDLE";
-    case DataAckSenderState::SENDING: return "SENDING";
+    switch (s) {
+        case DataAckSenderState::IDLE: return "IDLE";
+        case DataAckSenderState::SENDING_ACK: return "SENDING_ACK";
+        case DataAckSenderState::SENDING: return "SENDING";
     }
     // return "UNKNOWN";
 }
@@ -245,6 +245,21 @@ void DataAckSender::ackReceived() {
             break;
         default:
             logDebug("Ack received");
+            break;
+    }
+}
+
+// DataReceiver
+void DataAckSender::dataReceived(const BYTE8 data) {
+    logDebugF("Data received 0b%s", byte_to_binary(data));
+    switch (m_state) {
+        case DataAckSenderState::IDLE:
+            m_sampleCount = 0;
+            m_bits = 2;
+            m_data = 0x01;
+            changeState(DataAckSenderState::SENDING_ACK);
+            break;
+        default:
             break;
     }
 }
@@ -291,6 +306,7 @@ void DataAckSender::clock() {
     switch (m_state) {
         case DataAckSenderState::IDLE:
             break;
+        case DataAckSenderState::SENDING_ACK:
         case DataAckSenderState::SENDING:
             // Send the least significant bit of m_data.
             const bool one = m_data & 0x0001;

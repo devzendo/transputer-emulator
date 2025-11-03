@@ -156,9 +156,9 @@ public:
  * frame. It notifies a client (the DataAckSender) of any received Ack, and notifies a client (the DataAckSender) of any
  * received Data (so it can initiate sending an Ack).
  */
-enum class DataAckSenderState { IDLE, SENDING };
+enum class DataAckSenderState { IDLE, SENDING_ACK, SENDING };
 
-class DataAckSender: public AckReceiver {
+class DataAckSender: public AckReceiver, DataReceiver {
 public:
     explicit DataAckSender(TxRxPin& tx_rx_pin);
     DataAckSenderState state() const;
@@ -168,6 +168,7 @@ public:
 
     void changeState(DataAckSenderState newState);
     void ackReceived() override;
+    void dataReceived(BYTE8 data) override;
 
     // Used by tests - internal, do not use.
     int _queueLength() const;
