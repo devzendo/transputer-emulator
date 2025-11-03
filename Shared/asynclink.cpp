@@ -295,7 +295,7 @@ WORD16 DataAckSender::_data() const {
 }
 
 
-constexpr const char* DataAckReceiverStateToString(DataAckReceiverState s) noexcept
+constexpr const char* DataAckReceiverStateToString(const DataAckReceiverState s) noexcept
 {
     switch (s)
     {
@@ -305,6 +305,7 @@ constexpr const char* DataAckReceiverStateToString(DataAckReceiverState s) noexc
         case DataAckReceiverState::DISCARD: return "DISCARD";
         case DataAckReceiverState::STOP_BIT: return "STOP_BIT";
     }
+    return "UNKNOWN";
 }
 
 DataAckReceiver::DataAckReceiver(TxRxPin& tx_rx_pin) : m_pin(tx_rx_pin) {
