@@ -95,43 +95,9 @@ private:
     WORD32 myWriteSequence, myReadSequence;
 };
 
-/* Medium level abstraction: DataAckSender/Receiver. Internally used by AsyncLink.
- *
- * DataAckSender is a state machine that uses the Tx half of a TxRxPin to clock out an Ack or Data frame, can be
- * queried for its state and will notify a client (the AsyncLink) that sent Data has been Acked, or the send has timed
- * out.
- *
- * DataAckReceiver is a state machine that senses the Rx half of a TxRxPin to clock in any received Ack and/or Data
- * frame. It notifies a client (the DataAckSender) of any received Ack, and notifies a client (the DataAckSender) of any
- * received Data (so it can initiate sending an Ack).
+/*
+ * Callbacks used between DataAckSender/Receiver
  */
-enum class DataAckSenderState { IDLE, SENDING };
-
-class DataAckSender {
-public:
-    explicit DataAckSender(TxRxPin& tx_rx_pin);
-    DataAckSenderState state() const;
-    void sendAck();
-    void sendData(BYTE8 byte);
-    void clock();
-
-    void changeState(DataAckSenderState newState);
-
-    // Used by tests - internal, do not use.
-    int _queueLength() const;
-    WORD16 _data() const;
-    bool _send_ack() const;
-    bool _ack_rxed() const;
-
-private:
-    TxRxPin & m_pin;
-    DataAckSenderState m_state;
-    bool m_send_ack;
-    bool m_ack_rxed;
-    int m_sampleCount;
-    int m_bits;
-    WORD16 m_data;
-};
 
 // TODO CONSIDER: do we need two interfaces for the DAR's notifications? Could they be merged?
 
@@ -177,7 +143,45 @@ public:
     /**
      * A byte of data has been received.
      */
-     virtual void dataReceived(BYTE8 data) = 0;
+    virtual void dataReceived(BYTE8 data) = 0;
+};
+
+/* Medium level abstraction: DataAckSender/Receiver. Internally used by AsyncLink.
+ *
+ * DataAckSender is a state machine that uses the Tx half of a TxRxPin to clock out an Ack or Data frame, can be
+ * queried for its state and will notify a client (the AsyncLink) that sent Data has been Acked, or the send has timed
+ * out.
+ *
+ * DataAckReceiver is a state machine that senses the Rx half of a TxRxPin to clock in any received Ack and/or Data
+ * frame. It notifies a client (the DataAckSender) of any received Ack, and notifies a client (the DataAckSender) of any
+ * received Data (so it can initiate sending an Ack).
+ */
+enum class DataAckSenderState { IDLE, SENDING };
+
+class DataAckSender {
+public:
+    explicit DataAckSender(TxRxPin& tx_rx_pin);
+    DataAckSenderState state() const;
+    void sendAck();
+    void sendData(BYTE8 byte);
+    void clock();
+
+    void changeState(DataAckSenderState newState);
+
+    // Used by tests - internal, do not use.
+    int _queueLength() const;
+    WORD16 _data() const;
+    bool _send_ack() const;
+    bool _ack_rxed() const;
+
+private:
+    TxRxPin & m_pin;
+    DataAckSenderState m_state;
+    bool m_send_ack;
+    bool m_ack_rxed;
+    int m_sampleCount;
+    int m_bits;
+    WORD16 m_data;
 };
 
 enum class DataAckReceiverState { IDLE, START_BIT_2, DATA, DISCARD, STOP_BIT };
