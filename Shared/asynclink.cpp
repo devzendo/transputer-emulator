@@ -264,17 +264,6 @@ void DataAckSender::dataReceived(const BYTE8 data) {
     }
 }
 
-
-void DataAckSender::sendAck() {
-    // TODO if m_state != IDLE throw up
-    // TODO mutex {
-    m_sampleCount = 0;
-    m_bits = 2;
-    m_data = 0x01;
-    m_state = DataAckSenderState::SENDING_DATA;
-    // TODO }
-}
-
 void DataAckSender::sendData(const BYTE8 byte) {
     // TODO mutex {
     if (m_state == DataAckSenderState::SENDING_ACK) {
