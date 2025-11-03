@@ -158,7 +158,7 @@ public:
  */
 enum class DataAckSenderState { IDLE, SENDING };
 
-class DataAckSender {
+class DataAckSender: public AckReceiver {
 public:
     explicit DataAckSender(TxRxPin& tx_rx_pin);
     DataAckSenderState state() const;
@@ -167,6 +167,7 @@ public:
     void clock();
 
     void changeState(DataAckSenderState newState);
+    void ackReceived() override;
 
     // Used by tests - internal, do not use.
     int _queueLength() const;

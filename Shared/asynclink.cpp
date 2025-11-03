@@ -237,6 +237,19 @@ DataAckSenderState DataAckSender::state() const {
     // TODO }
 }
 
+// AckReceiver
+void DataAckSender::ackReceived() {
+    switch (m_state) {
+        case DataAckSenderState::IDLE:
+            logWarn("Ack received in IDLE state");
+            break;
+        default:
+            logDebug("Ack received");
+            break;
+    }
+}
+
+
 void DataAckSender::sendAck() {
     // TODO if m_state != IDLE throw up
     // TODO mutex {
