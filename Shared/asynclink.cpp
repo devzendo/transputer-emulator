@@ -217,14 +217,14 @@ constexpr const char* DataAckSenderStateToString(const DataAckSenderState s) noe
     switch (s) {
         case DataAckSenderState::IDLE: return "IDLE";
         case DataAckSenderState::SENDING_ACK: return "SENDING_ACK";
-        case DataAckSenderState::SENDING: return "SENDING";
+        case DataAckSenderState::SENDING_DATA: return "SENDING_DATA";
     }
     // return "UNKNOWN";
 }
 
 
 DataAckSender::DataAckSender(TxRxPin& tx_rx_pin) : m_pin(tx_rx_pin), m_sampleCount(0), m_bits(0), m_data(0),
-    m_ack_rxed(false), m_send_ack(false) {
+    m_ack_rxed(false), m_send_ack(false), m_data_enqueued(false), m_data_enqueued_buffer(0x00) {
 
     // TODO mutex {
     m_state = DataAckSenderState::IDLE;
@@ -271,11 +271,23 @@ void DataAckSender::sendAck() {
     m_sampleCount = 0;
     m_bits = 2;
     m_data = 0x01;
-    m_state = DataAckSenderState::SENDING;
+    m_state = DataAckSenderState::SENDING_DATA;
     // TODO }
 }
 
 void DataAckSender::sendData(const BYTE8 byte) {
+    // TODO mutex {
+    if (m_state == DataAckSenderState::SENDING_ACK) {
+        logDebugF("Enqueueing data to send 0b%s", byte_to_binary(byte));
+        m_data_enqueued = true;
+        m_data_enqueued_buffer = byte;
+        return;
+    }
+    sendDataInternal(byte);
+    // TODO }
+}
+
+void DataAckSender::sendDataInternal(const BYTE8 byte) {
     // TODO if m_state != IDLE throw up
     // TODO mutex {
     const BYTE8 origByte = byte;
@@ -296,7 +308,7 @@ void DataAckSender::sendData(const BYTE8 byte) {
     // e.g. byte == C9
     // 0 1 1 0 0 1 0 0 1 1 1
     // 3     2       7
-    m_state = DataAckSenderState::SENDING;
+    changeState(DataAckSenderState::SENDING_DATA);
     // TODO }
 }
 
@@ -307,7 +319,7 @@ void DataAckSender::clock() {
         case DataAckSenderState::IDLE:
             break;
         case DataAckSenderState::SENDING_ACK:
-        case DataAckSenderState::SENDING:
+        case DataAckSenderState::SENDING_DATA:
             // Send the least significant bit of m_data.
             const bool one = m_data & 0x0001;
             m_pin.setTx(one);
@@ -317,7 +329,14 @@ void DataAckSender::clock() {
                 m_bits--;
                 m_data >>= 1;
                 if (m_bits == 0) {
-                    m_state = DataAckSenderState::IDLE;
+                    if (m_data_enqueued && m_state == DataAckSenderState::SENDING_ACK) {
+                        m_ack_rxed = false;
+                        sendDataInternal(m_data_enqueued_buffer); // Will change to SENDING_DATA.
+                        m_data_enqueued = false;
+                        m_data_enqueued_buffer = 0x00;
+                    } else {
+                        changeState(DataAckSenderState::IDLE);
+                    }
                 }
             }
             break;
@@ -345,6 +364,14 @@ bool DataAckSender::_send_ack() const {
 
 bool DataAckSender::_ack_rxed() const {
     return m_ack_rxed;
+}
+
+bool DataAckSender::_data_enqueued() const {
+    return m_data_enqueued;
+}
+
+BYTE8 DataAckSender::_data_enqueued_buffer() const {
+    return m_data_enqueued_buffer;
 }
 
 

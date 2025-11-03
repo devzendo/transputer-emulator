@@ -156,7 +156,7 @@ public:
  * frame. It notifies a client (the DataAckSender) of any received Ack, and notifies a client (the DataAckSender) of any
  * received Data (so it can initiate sending an Ack).
  */
-enum class DataAckSenderState { IDLE, SENDING_ACK, SENDING };
+enum class DataAckSenderState { IDLE, SENDING_ACK, SENDING_DATA };
 
 class DataAckSender: public AckReceiver, DataReceiver {
 public:
@@ -175,6 +175,8 @@ public:
     WORD16 _data() const;
     bool _send_ack() const;
     bool _ack_rxed() const;
+    bool _data_enqueued() const;
+    BYTE8 _data_enqueued_buffer() const;
 
 private:
     TxRxPin & m_pin;
@@ -184,6 +186,9 @@ private:
     int m_sampleCount;
     int m_bits;
     WORD16 m_data;
+    bool m_data_enqueued;
+    BYTE8 m_data_enqueued_buffer;
+    void sendDataInternal(BYTE8 data);
 };
 
 enum class DataAckReceiverState { IDLE, START_BIT_2, DATA, DISCARD, STOP_BIT };
