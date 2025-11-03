@@ -115,13 +115,19 @@ public:
     void sendData(BYTE8 byte);
     void clock();
 
+    void changeState(DataAckSenderState newState);
+
     // Used by tests - internal, do not use.
     int _queueLength() const;
     WORD16 _data() const;
+    bool _send_ack() const;
+    bool _ack_rxed() const;
 
 private:
     TxRxPin & m_pin;
     DataAckSenderState m_state;
+    bool m_send_ack;
+    bool m_ack_rxed;
     int m_sampleCount;
     int m_bits;
     WORD16 m_data;

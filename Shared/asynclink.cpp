@@ -212,9 +212,20 @@ void AsyncLink::poll() {
  * frequency.'
  */
 
+constexpr const char* DataAckSenderStateToString(const DataAckSenderState s) noexcept
+{
+    switch (s)
+    {
+    case DataAckSenderState::IDLE: return "IDLE";
+    case DataAckSenderState::SENDING: return "SENDING";
+    }
+    // return "UNKNOWN";
+}
 
 
-DataAckSender::DataAckSender(TxRxPin& tx_rx_pin) : m_pin(tx_rx_pin), m_sampleCount(0), m_bits(0), m_data(0) {
+DataAckSender::DataAckSender(TxRxPin& tx_rx_pin) : m_pin(tx_rx_pin), m_sampleCount(0), m_bits(0), m_data(0),
+    m_ack_rxed(false), m_send_ack(false) {
+
     // TODO mutex {
     m_state = DataAckSenderState::IDLE;
     // TODO }
@@ -286,12 +297,25 @@ void DataAckSender::clock() {
     //logDebugF("clock < %d sample count %d bits %d data 0x%04X", m_state, m_sampleCount, m_bits, m_data);
 }
 
+void DataAckSender::changeState(const DataAckSenderState newState) {
+    logDebugF("Changing state from %s to %s", DataAckSenderStateToString(m_state), DataAckSenderStateToString(newState));
+    m_state = newState;
+}
+
 int DataAckSender::_queueLength() const {
     return m_bits;
 }
 
 WORD16 DataAckSender::_data() const {
     return m_data;
+}
+
+bool DataAckSender::_send_ack() const {
+    return m_send_ack;
+}
+
+bool DataAckSender::_ack_rxed() const {
+    return m_ack_rxed;
 }
 
 

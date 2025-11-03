@@ -523,6 +523,11 @@ protected:
 };
 
 // TODO these tests will be rewritten in terms of the new design....
+TEST_F(DataAckSenderTest, InitialConditions) {
+    EXPECT_EQ(m_sender->state(), DataAckSenderState::IDLE);
+    EXPECT_EQ(m_sender->_ack_rxed(), false);
+    EXPECT_EQ(m_sender->_send_ack(), false);
+}
 
 TEST_F(DataAckSenderTest, AckCanBeSent) {
     EXPECT_EQ(m_sender->state(), DataAckSenderState::IDLE);
