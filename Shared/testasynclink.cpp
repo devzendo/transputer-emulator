@@ -566,7 +566,7 @@ TEST_F(DataAckSenderTest, DataEnqueuedSendingAckClocksAckOutGoesSendingData) {
 
     EXPECT_EQ(m_sender->state(), DataAckSenderState::SENDING_ACK);
     // Enqueue some data while we're sending the ack...
-    m_sender->sendData(0xC9);
+    EXPECT_EQ(m_sender->sendData(0xC9), true);
     EXPECT_EQ(m_sender->_data_enqueued(), true);
     EXPECT_EQ(m_sender->_data_enqueued_buffer(), 0xC9);
 
@@ -597,7 +597,7 @@ TEST_F(DataAckSenderTest, DataEnqueuedSendingAckClocksAckOutGoesSendingData) {
 TEST_F(DataAckSenderTest, DataCanBeSent) {
     EXPECT_EQ(m_sender->state(), DataAckSenderState::IDLE);
 
-    m_sender->sendData(0xC9); // Needs clocking to send the signals out. 16 clock pulses/bit.
+    EXPECT_EQ(m_sender->sendData(0xC9), true); // Needs clocking to send the signals out. 16 clock pulses/bit.
 
     // Data is two start bits (1), the data bits, then a stop bit (0).
     const int expected_bits = 11;
@@ -619,6 +619,22 @@ TEST_F(DataAckSenderTest, DataCanBeSent) {
     const int expected_ack_bits[expected_bits] = { 1, 1,  1, 0, 0, 1, 0, 0, 1, 1,  0 };
     const std::vector<bool> expected = generate_sample_vector_from_bits(expected_ack_bits, expected_bits);
     EXPECT_EQ(heard, expected);
+    EXPECT_EQ(m_sender->_ack_rxed(), false);
+}
+
+TEST_F(DataAckSenderTest, DataCantBeSentWhileAlreadySending) {
+    EXPECT_EQ(m_sender->sendData(0xC9), true);
+    // Needs clocking to send the signals out. 16 clock pulses/bit.
+    const int expected_bits = 11;
+    const int expected_samples = expected_bits * 16 - 1; // -1 so we're still in SENDING_DATA
+    for (int i=0; i<expected_samples; i++) {
+        m_sender->clock();
+        m_trace->clock();
+    }
+    EXPECT_EQ(m_sender->state(), DataAckSenderState::SENDING_DATA);
+
+    EXPECT_EQ(m_sender->sendData(0xAA), false);
+
 }
 
 // TODO how to signal you can't ack or send data in a non-idle state

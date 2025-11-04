@@ -219,7 +219,7 @@ constexpr const char* DataAckSenderStateToString(const DataAckSenderState s) noe
         case DataAckSenderState::SENDING_ACK: return "SENDING_ACK";
         case DataAckSenderState::SENDING_DATA: return "SENDING_DATA";
     }
-    // return "UNKNOWN";
+    return "UNKNOWN";
 }
 
 
@@ -264,15 +264,25 @@ void DataAckSender::dataReceived(const BYTE8 data) {
     }
 }
 
-void DataAckSender::sendData(const BYTE8 byte) {
+bool DataAckSender::sendData(const BYTE8 byte) {
     // TODO mutex {
-    if (m_state == DataAckSenderState::SENDING_ACK) {
-        logDebugF("Enqueueing data to send 0b%s", byte_to_binary(byte));
-        m_data_enqueued = true;
-        m_data_enqueued_buffer = byte;
-        return;
+    switch (m_state) {
+        case DataAckSenderState::IDLE:
+            sendDataInternal(byte);
+            m_ack_rxed = false;
+            return true;
+            break;
+        case DataAckSenderState::SENDING_ACK:
+            logDebugF("Enqueueing data to send 0b%s", byte_to_binary(byte));
+            m_data_enqueued = true;
+            m_data_enqueued_buffer = byte;
+            return true;
+        case DataAckSenderState::SENDING_DATA:
+            // DROP THROUGH
+        default:
+            logWarnF("Sending data in %s state", DataAckSenderStateToString(m_state));
+            return false;
     }
-    sendDataInternal(byte);
     // TODO }
 }
 

@@ -162,7 +162,12 @@ class DataAckSender: public AckReceiver, DataReceiver {
 public:
     explicit DataAckSender(TxRxPin& tx_rx_pin);
     DataAckSenderState state() const;
-    void sendData(BYTE8 byte);
+    /**
+     * Send data
+     * @param byte data to send
+     * @return true iff we are in a state where data can be sent.
+     */
+    bool sendData(BYTE8 byte);
     void clock();
 
     void changeState(DataAckSenderState newState);
