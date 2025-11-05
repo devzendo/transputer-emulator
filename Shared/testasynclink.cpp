@@ -561,9 +561,10 @@ TEST_F(DataAckSenderTest, NoDataEnqueuedSendingAckClocksAckOutGoesIdle) {
     EXPECT_EQ(heard, expected);
 }
 
-TEST_F(DataAckSenderTest, DataEnqueuedSendingAckClocksAckOutGoesSendingData) {
+TEST_F(DataAckSenderTest, DataEnqueuedWhenSendingAckClocksAckOutThenGoesSendingData) {
     m_sender->dataReceived(0xc9);
 
+    EXPECT_EQ(m_sender->_data_enqueued(), false);
     EXPECT_EQ(m_sender->state(), DataAckSenderState::SENDING_ACK);
     // Enqueue some data while we're sending the ack...
     EXPECT_EQ(m_sender->sendData(0xC9), true);
