@@ -539,6 +539,15 @@ TEST_F(DataAckSenderTest, InitialConditions) {
     EXPECT_EQ(m_sender->_data_enqueued(), false);
 }
 
+// C
+TEST_F(DataAckSenderTest, SendAckReceivedInIdleGoesToSendingAck) {
+    m_sender->requestSendAck(); // TODO should not return a bool.
+
+    EXPECT_EQ(m_sender->state(), DataAckSenderState::SENDING_ACK);
+    EXPECT_EQ(m_sender->_queueLength(), 2);
+    EXPECT_EQ(m_sender->_data(), 0x0001);
+}
+
 // D
 TEST_F(DataAckSenderTest, DataReceivedInIdleGoesToSendingAck) {
     m_sender->dataReceived(0xc9);
@@ -693,6 +702,7 @@ TEST_F(DataAckSenderTest, DataSentAndAckReceived) {
     EXPECT_EQ(heard, expected);
 }
 
+// R A K (null safety)
 TEST_F(DataAckSenderTest, DataSentAndAckReceivedButNoAckReceiver) {
     m_sender->unregisterAckReceiver();
     m_sender->sendData(0xC9);

@@ -269,6 +269,22 @@ void DataAckSender::dataReceived(const BYTE8 data) {
     }
 }
 
+// SendAckReceiver
+bool DataAckSender::requestSendAck() {
+    logDebug("The sending of an ack has been requested");
+    switch (m_state) {
+        case DataAckSenderState::IDLE:
+            m_sampleCount = 0;
+            m_bits = 2;
+            m_data = 0x01;
+            changeState(DataAckSenderState::SENDING_ACK);
+            break;
+        default:
+            break;
+    }
+    return true; // this return value will disappear
+}
+
 bool DataAckSender::sendData(const BYTE8 byte) {
     // TODO mutex {
     switch (m_state) {

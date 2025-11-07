@@ -120,6 +120,9 @@ public:
     /**
      * Data is being received, is there enough room in the receive buffer to hold it? Return true if so, and send an
      * ack. If not enough space, return false and do not send an ack.
+     * TODO this needs to change - the sender doesn't know of the AsyncLink's buffer state.
+     * This should be called after AsyncLink is queried, if we have space, and can ack the data.
+     * Should not return a bool.
      */
     virtual bool requestSendAck() = 0;
 };
@@ -158,7 +161,7 @@ public:
  */
 enum class DataAckSenderState { IDLE, SENDING_ACK, SENDING_DATA, ACK_TIMEOUT };
 
-class DataAckSender: public AckReceiver, DataReceiver {
+class DataAckSender: public AckReceiver, DataReceiver, SendAckReceiver {
 public:
     explicit DataAckSender(TxRxPin& tx_rx_pin);
     DataAckSenderState state() const;
@@ -176,6 +179,7 @@ public:
     void changeState(DataAckSenderState newState);
     void ackReceived() override;
     void dataReceived(BYTE8 data) override;
+    bool requestSendAck() override;
 
     // Used by tests - internal, do not use.
     int _queueLength() const;
