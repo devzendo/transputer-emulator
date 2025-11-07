@@ -496,7 +496,9 @@ TEST_F(OversampledTxRxPinTest, PerfectInputAckNoListener) {
 
 // TODO noisy cases of majority voting, all boundary cases
 
-class DataAckSenderTest : public ::testing::Test {
+// Single-letter comments relate the test to the labelled transitions on the statechart.
+// ABcDEfGhIjKlMNoPQRstuv
+class DataAckSenderTest : public ::testing::Test, AckReceiver {
 protected:
 
     void SetUp() override {
@@ -506,6 +508,7 @@ protected:
         TxRxPin & pairB = m_pair.pairB();
         m_trace = new ClockingPinTracer(pairB);
         m_sender = new DataAckSender(pairA);
+        m_sender->registerAckReceiver(*this); // dereference this to get a reference
 
         logDebug("Setup complete");
         logFlush();
@@ -517,12 +520,18 @@ protected:
         logFlush();
     }
 
+    // AckReceiver
+    void ackReceived() override {
+        logDebug("Ack received");
+        m_acks_received++;
+    }
+
     CrosswiredTxRxPinPair m_pair;
     ClockingPinTracer *m_trace = nullptr;
     DataAckSender *m_sender = nullptr;
+    int m_acks_received = 0;
 };
 
-// TODO these tests will be rewritten in terms of the new design....
 TEST_F(DataAckSenderTest, InitialConditions) {
     EXPECT_EQ(m_sender->state(), DataAckSenderState::IDLE);
     EXPECT_EQ(m_sender->_ack_rxed(), false);
@@ -530,6 +539,7 @@ TEST_F(DataAckSenderTest, InitialConditions) {
     EXPECT_EQ(m_sender->_data_enqueued(), false);
 }
 
+// D
 TEST_F(DataAckSenderTest, DataReceivedInIdleGoesToSendingAck) {
     m_sender->dataReceived(0xc9);
 
@@ -538,6 +548,7 @@ TEST_F(DataAckSenderTest, DataReceivedInIdleGoesToSendingAck) {
     EXPECT_EQ(m_sender->_data(), 0x0001);
 }
 
+// N, E
 TEST_F(DataAckSenderTest, NoDataEnqueuedSendingAckClocksAckOutGoesIdle) {
     m_sender->dataReceived(0xc9);
     EXPECT_EQ(m_sender->_data_enqueued(), false);
@@ -561,6 +572,7 @@ TEST_F(DataAckSenderTest, NoDataEnqueuedSendingAckClocksAckOutGoesIdle) {
     EXPECT_EQ(heard, expected);
 }
 
+// M, G
 TEST_F(DataAckSenderTest, DataEnqueuedWhenSendingAckClocksAckOutThenGoesSendingData) {
     m_sender->dataReceived(0xc9);
 
@@ -595,34 +607,34 @@ TEST_F(DataAckSenderTest, DataEnqueuedWhenSendingAckClocksAckOutThenGoesSendingD
     EXPECT_EQ(m_sender->_data_enqueued_buffer(), 0x00);
 }
 
-TEST_F(DataAckSenderTest, DataCanBeSent) {
+// B, Q, I
+TEST_F(DataAckSenderTest, DataSentButNoAckReceived) {
     EXPECT_EQ(m_sender->state(), DataAckSenderState::IDLE);
-
     EXPECT_EQ(m_sender->sendData(0xC9), true); // Needs clocking to send the signals out. 16 clock pulses/bit.
-
     // Data is two start bits (1), the data bits, then a stop bit (0).
     const int expected_bits = 11;
     const int expected_samples = expected_bits * 16;
     EXPECT_EQ(m_sender->state(), DataAckSenderState::SENDING_DATA);
     EXPECT_EQ(m_sender->_queueLength(), expected_bits);
     EXPECT_EQ(m_sender->_data(), 0x0327);
+    EXPECT_EQ(m_sender->_ack_rxed(), false);
     logDebug("Data to be clocked out looks right with framing");
     for (int i=0; i<expected_samples; i++) {
         EXPECT_EQ(m_sender->state(), DataAckSenderState::SENDING_DATA);
-
         m_sender->clock();
         m_trace->clock();
     }
-    EXPECT_EQ(m_sender->state(), DataAckSenderState::IDLE);
+    EXPECT_EQ(m_sender->state(), DataAckSenderState::ACK_TIMEOUT);
     EXPECT_EQ(m_sender->_queueLength(), 0);
     const std::vector<bool> heard = m_trace->heard();
     EXPECT_EQ(heard.size(), expected_samples);   //       vvv note LSB first vvv
-    const int expected_ack_bits[expected_bits] = { 1, 1,  1, 0, 0, 1, 0, 0, 1, 1,  0 };
-    const std::vector<bool> expected = generate_sample_vector_from_bits(expected_ack_bits, expected_bits);
+    const int expected_data_bits[expected_bits] = { 1, 1,  1, 0, 0, 1, 0, 0, 1, 1,  0 };
+    const std::vector<bool> expected = generate_sample_vector_from_bits(expected_data_bits, expected_bits);
     EXPECT_EQ(heard, expected);
     EXPECT_EQ(m_sender->_ack_rxed(), false);
 }
 
+// P
 TEST_F(DataAckSenderTest, DataCantBeSentWhileAlreadySending) {
     EXPECT_EQ(m_sender->sendData(0xC9), true);
     // Needs clocking to send the signals out. 16 clock pulses/bit.
@@ -634,8 +646,51 @@ TEST_F(DataAckSenderTest, DataCantBeSentWhileAlreadySending) {
     }
     EXPECT_EQ(m_sender->state(), DataAckSenderState::SENDING_DATA);
 
-    EXPECT_EQ(m_sender->sendData(0xAA), false);
+    EXPECT_EQ(m_sender->sendData(0xAA), false); // Can't send if busy
+}
 
+// R, A, K
+TEST_F(DataAckSenderTest, DataSentAndAckReceived) {
+    EXPECT_EQ(m_sender->state(), DataAckSenderState::IDLE);
+    EXPECT_EQ(m_sender->sendData(0xC9), true); // Needs clocking to send the signals out. 16 clock pulses/bit.
+    // Data is two start bits (1), the data bits, then a stop bit (0).
+    const int expected_bits = 11;
+    const int expected_samples = expected_bits * 16;
+    EXPECT_EQ(m_sender->state(), DataAckSenderState::SENDING_DATA);
+    EXPECT_EQ(m_sender->_queueLength(), expected_bits);
+    EXPECT_EQ(m_sender->_data(), 0x0327);
+    EXPECT_EQ(m_sender->_ack_rxed(), false);
+    logDebug("Data to be clocked out looks right with framing");
+    for (int i=0; i<expected_samples - 1; i++) { // -1 to sense ack_rxed flag before going IDLE and resetting
+        EXPECT_EQ(m_sender->state(), DataAckSenderState::SENDING_DATA);
+        m_sender->clock();
+        m_trace->clock();
+
+        // Ack would be signalled after the receiver has detected the second start bit,
+        // so after 16 (first bit) + 9 (end of majority detection of second bit) = 25.
+        if (i == 25) {
+            logDebug("Pretend an ack has been seen");
+            m_sender->ackReceived();
+        }
+    }
+    // Just before going idle, has the sender seen that ack?
+    EXPECT_EQ(m_sender->_ack_rxed(), true);
+    // The external ack rx cb should not have been called yet.
+    EXPECT_EQ(m_acks_received, 0);
+    // bit more clocking...
+    m_sender->clock();
+    m_trace->clock();
+
+    EXPECT_EQ(m_sender->state(), DataAckSenderState::IDLE);
+    EXPECT_EQ(m_sender->_queueLength(), 0);
+    EXPECT_EQ(m_sender->_ack_rxed(), false);
+    // And we have been notified (ie the AsyncLink can set its ready-to-send flag).
+    EXPECT_EQ(m_acks_received, 1);
+    const std::vector<bool> heard = m_trace->heard();
+    EXPECT_EQ(heard.size(), expected_samples);   //       vvv note LSB first vvv
+    const int expected_data_bits[expected_bits] = { 1, 1,  1, 0, 0, 1, 0, 0, 1, 1,  0 };
+    const std::vector<bool> expected = generate_sample_vector_from_bits(expected_data_bits, expected_bits);
+    EXPECT_EQ(heard, expected);
 }
 
 // TODO how to signal you can't ack or send data in a non-idle state

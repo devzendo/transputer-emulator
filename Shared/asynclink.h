@@ -102,7 +102,7 @@ private:
 // TODO CONSIDER: do we need two interfaces for the DAR's notifications? Could they be merged?
 
 // The DataAckReceiver will call a registered instance of AckReceiver when it detects
-// an incoming ack.
+// an incoming ack. The DataAckSender will call one in response - this will be the AsyncLink.
 class AckReceiver {
 public:
     virtual ~AckReceiver() = default;
@@ -156,7 +156,7 @@ public:
  * frame. It notifies a client (the DataAckSender) of any received Ack, and notifies a client (the DataAckSender) of any
  * received Data (so it can initiate sending an Ack).
  */
-enum class DataAckSenderState { IDLE, SENDING_ACK, SENDING_DATA };
+enum class DataAckSenderState { IDLE, SENDING_ACK, SENDING_DATA, ACK_TIMEOUT };
 
 class DataAckSender: public AckReceiver, DataReceiver {
 public:
@@ -169,6 +169,9 @@ public:
      */
     bool sendData(BYTE8 byte);
     void clock();
+
+    void registerAckReceiver(AckReceiver& ackReceiver) const;
+    void unregisterAckReceiver() const;
 
     void changeState(DataAckSenderState newState);
     void ackReceived() override;
@@ -193,6 +196,7 @@ private:
     bool m_data_enqueued;
     BYTE8 m_data_enqueued_buffer;
     void sendDataInternal(BYTE8 data);
+    mutable AckReceiver *m_ack_receiver = nullptr;
 };
 
 enum class DataAckReceiverState { IDLE, START_BIT_2, DATA, DISCARD, STOP_BIT };

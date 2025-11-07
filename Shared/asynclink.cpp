@@ -218,6 +218,7 @@ constexpr const char* DataAckSenderStateToString(const DataAckSenderState s) noe
         case DataAckSenderState::IDLE: return "IDLE";
         case DataAckSenderState::SENDING_ACK: return "SENDING_ACK";
         case DataAckSenderState::SENDING_DATA: return "SENDING_DATA";
+        case DataAckSenderState::ACK_TIMEOUT: return "ACK_TIMEOUT";
     }
     return "UNKNOWN";
 }
@@ -242,6 +243,10 @@ void DataAckSender::ackReceived() {
     switch (m_state) {
         case DataAckSenderState::IDLE:
             logWarn("Ack received in IDLE state");
+            break;
+        case DataAckSenderState::SENDING_DATA:
+            logDebug("Data being sent has been acked");
+            m_ack_rxed = true;
             break;
         default:
             logDebug("Ack received");
@@ -328,14 +333,23 @@ void DataAckSender::clock() {
                 m_bits--;
                 m_data >>= 1;
                 if (m_bits == 0) {
-                    if (m_data_enqueued && m_state == DataAckSenderState::SENDING_ACK) {
-                        m_ack_rxed = false;
-                        sendDataInternal(m_data_enqueued_buffer); // Will change to SENDING_DATA.
-                        m_data_enqueued = false;
-                        m_data_enqueued_buffer = 0x00;
+                    if (m_state == DataAckSenderState::SENDING_ACK) {
+                        if (m_data_enqueued) {
+                            m_ack_rxed = false;
+                            sendDataInternal(m_data_enqueued_buffer); // Will change to SENDING_DATA.
+                            m_data_enqueued = false;
+                            m_data_enqueued_buffer = 0x00;
+                        } else {
+                            changeState(DataAckSenderState::IDLE);
+                        }
                     } else {
-                        changeState(DataAckSenderState::IDLE);
+                        if (m_ack_rxed) {
+                            changeState(DataAckSenderState::IDLE);
+                        } else {
+                            changeState(DataAckSenderState::ACK_TIMEOUT);
+                        }
                     }
+
                 }
             }
             break;
@@ -344,8 +358,34 @@ void DataAckSender::clock() {
     //logDebugF("clock < %d sample count %d bits %d data 0x%04X", m_state, m_sampleCount, m_bits, m_data);
 }
 
+// Register the ack listener
+void DataAckSender::registerAckReceiver(AckReceiver& ackReceiver) const {
+    m_ack_receiver = &ackReceiver;
+}
+
+// Unregister the ack listener
+void DataAckSender::unregisterAckReceiver() const {
+    m_ack_receiver = nullptr;
+}
+
 void DataAckSender::changeState(const DataAckSenderState newState) {
     logDebugF("Changing state from %s to %s", DataAckSenderStateToString(m_state), DataAckSenderStateToString(newState));
+    // State entry actions
+    switch (newState) {
+        case DataAckSenderState::IDLE:
+            if (m_ack_rxed) {
+                m_ack_rxed = false;
+                // TODO null checks
+                m_ack_receiver->ackReceived();
+            }
+            break;
+
+        case DataAckSenderState::SENDING_ACK:
+        case DataAckSenderState::SENDING_DATA:
+        case DataAckSenderState::ACK_TIMEOUT:
+            break;
+    }
+
     m_state = newState;
 }
 
