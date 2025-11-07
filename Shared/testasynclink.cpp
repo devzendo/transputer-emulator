@@ -693,6 +693,27 @@ TEST_F(DataAckSenderTest, DataSentAndAckReceived) {
     EXPECT_EQ(heard, expected);
 }
 
+TEST_F(DataAckSenderTest, DataSentAndAckReceivedButNoAckReceiver) {
+    m_sender->unregisterAckReceiver();
+    m_sender->sendData(0xC9);
+    const int expected_bits = 11;
+    const int expected_samples = expected_bits * 16;
+    for (int i=0; i<expected_samples; i++) {
+        EXPECT_EQ(m_sender->state(), DataAckSenderState::SENDING_DATA);
+        m_sender->clock();
+        m_trace->clock();
+
+        // Ack would be signalled after the receiver has detected the second start bit,
+        // so after 16 (first bit) + 9 (end of majority detection of second bit) = 25.
+        if (i == 25) {
+            logDebug("Pretend an ack has been seen");
+            m_sender->ackReceived();
+        }
+    }
+    // The external ack rx cb should not have been called as we're unregistered.
+    EXPECT_EQ(m_acks_received, 0);
+}
+
 // TODO how to signal you can't ack or send data in a non-idle state
 
 

@@ -375,8 +375,9 @@ void DataAckSender::changeState(const DataAckSenderState newState) {
         case DataAckSenderState::IDLE:
             if (m_ack_rxed) {
                 m_ack_rxed = false;
-                // TODO null checks
-                m_ack_receiver->ackReceived();
+                if (m_ack_receiver != nullptr) {
+                    m_ack_receiver->ackReceived();
+                }
             }
             break;
 
