@@ -238,7 +238,7 @@ DataAckSenderState DataAckSender::state() const {
     // TODO }
 }
 
-// AckReceiver
+// ReceiverToSender
 void DataAckSender::ackReceived() {
     switch (m_state) {
         case DataAckSenderState::IDLE:
@@ -254,6 +254,8 @@ void DataAckSender::ackReceived() {
     }
 }
 
+/*
+ * Old transition D
 // DataReceiver
 void DataAckSender::dataReceived(const BYTE8 data) {
     logDebugF("Data received 0b%s", byte_to_binary(data));
@@ -268,9 +270,10 @@ void DataAckSender::dataReceived(const BYTE8 data) {
             break;
     }
 }
+*/
 
-// SendAckReceiver
-bool DataAckSender::requestSendAck() {
+// ReceiverToSender
+void DataAckSender::sendAck() {
     logDebug("The sending of an ack has been requested");
     switch (m_state) {
         case DataAckSenderState::IDLE:
@@ -282,17 +285,19 @@ bool DataAckSender::requestSendAck() {
         default:
             break;
     }
-    return true; // this return value will disappear
 }
 
 bool DataAckSender::sendData(const BYTE8 byte) {
     // TODO mutex {
     switch (m_state) {
         case DataAckSenderState::IDLE:
-            sendDataInternal(byte);
-            m_ack_rxed = false;
-            return true;
-            break;
+            if (m_sender_to_link != nullptr && m_sender_to_link->queryReadyToSend()) {
+                m_ack_rxed = false;
+                m_sender_to_link->clearReadyToSend();
+                sendDataInternal(byte);
+                return true;
+            }
+            return false;
         case DataAckSenderState::SENDING_ACK:
             logDebugF("Enqueueing data to send 0b%s", byte_to_binary(byte));
             m_data_enqueued = true;
@@ -374,14 +379,15 @@ void DataAckSender::clock() {
     //logDebugF("clock < %d sample count %d bits %d data 0x%04X", m_state, m_sampleCount, m_bits, m_data);
 }
 
-// Register the ack listener
-void DataAckSender::registerAckReceiver(AckReceiver& ackReceiver) const {
-    m_ack_receiver = &ackReceiver;
+// Register the SenderToLink
+void DataAckSender::registerSenderToLink(SenderToLink& senderToLink) const {
+    m_sender_to_link = &senderToLink;
+    m_sender_to_link->setReadyToSend();
 }
 
-// Unregister the ack listener
-void DataAckSender::unregisterAckReceiver() const {
-    m_ack_receiver = nullptr;
+// Unregister the SenderToLink
+void DataAckSender::unregisterSenderToLink() const {
+    m_sender_to_link = nullptr;
 }
 
 void DataAckSender::changeState(const DataAckSenderState newState) {
@@ -391,8 +397,8 @@ void DataAckSender::changeState(const DataAckSenderState newState) {
         case DataAckSenderState::IDLE:
             if (m_ack_rxed) {
                 m_ack_rxed = false;
-                if (m_ack_receiver != nullptr) {
-                    m_ack_receiver->ackReceived();
+                if (m_sender_to_link != nullptr) {
+                    m_sender_to_link->setReadyToSend();
                 }
             }
             break;
@@ -467,19 +473,24 @@ void DataAckReceiver::bitStateReceived(const bool state) {
             if (state) {
                 m_bit_count = 0;
                 m_buffer = 0x00;
-                bool space_available = false;
-                if (m_send_ack_receiver != nullptr) {
-                    space_available = m_send_ack_receiver->requestSendAck();
-                }
-                if (space_available) {
-                    // An ack would be being sent now.
-                    changeState(DataAckReceiverState::DATA);
+                if (m_receiver_to_link != nullptr) {
+                    if (m_receiver_to_link->queryReadDataAvailable()) {
+                        m_receiver_to_link->overrunError();
+                        changeState(DataAckReceiverState::DISCARD);
+                    } else {
+                        if (m_receiver_to_sender != nullptr) {
+                            m_receiver_to_sender->sendAck();
+                            changeState(DataAckReceiverState::DATA);
+                        } else {
+                            changeState(DataAckReceiverState::DISCARD);
+                        }
+                    }
                 } else {
                     changeState(DataAckReceiverState::DISCARD);
                 }
             } else {
-                if (m_ack_receiver != nullptr) {
-                    m_ack_receiver->ackReceived();
+                if (m_receiver_to_sender != nullptr) {
+                    m_receiver_to_sender->ackReceived();
                 }
                 changeState(DataAckReceiverState::IDLE);
             }
@@ -504,13 +515,13 @@ void DataAckReceiver::bitStateReceived(const bool state) {
             break;
         case DataAckReceiverState::STOP_BIT:
             if (state) {
-                if (m_framing_error_receiver != nullptr) {
-                    m_framing_error_receiver->framingError();
+                if (m_receiver_to_link != nullptr) {
+                    m_receiver_to_link->framingError();
                 }
                 changeState(DataAckReceiverState::IDLE);
             } else {
-                if (m_data_receiver != nullptr) {
-                    m_data_receiver->dataReceived(m_buffer);
+                if (m_receiver_to_link != nullptr) {
+                    m_receiver_to_link->dataReceived(m_buffer);
                 }
                 changeState(DataAckReceiverState::IDLE);
             }
@@ -518,46 +529,25 @@ void DataAckReceiver::bitStateReceived(const bool state) {
     }
 }
 
-// Register the ack listener
-void DataAckReceiver::registerAckReceiver(AckReceiver& ackReceiver) const {
-    m_ack_receiver = &ackReceiver;
+// Register the ReceiverToSender
+void DataAckReceiver::registerReceiverToSender(ReceiverToSender& receiverToSender) const {
+    m_receiver_to_sender = &receiverToSender;
 }
 
-// Unregister the ack listener
-void DataAckReceiver::unregisterAckReceiver() const {
-    m_ack_receiver = nullptr;
+// Unregister the ReceiverToSender
+void DataAckReceiver::unregisterReceiverToSender() const {
+    m_receiver_to_sender = nullptr;
 }
 
-// Register the send ack listener
-void DataAckReceiver::registerSendAckReceiver(SendAckReceiver& sendAckReceiver) const {
-    m_send_ack_receiver = &sendAckReceiver;
+// Register the ReceiverToLink
+void DataAckReceiver::registerReceiverToLink(ReceiverToLink& receiverToLink) const {
+    m_receiver_to_link = &receiverToLink;
 }
 
-// Unregister the send ack listener
-void DataAckReceiver::unregisterSendAckReceiver() const {
-    m_send_ack_receiver = nullptr;
+// Unregister the ReceiverToLink
+void DataAckReceiver::unregisterReceiverToLink() const {
+    m_receiver_to_link = nullptr;
 }
-
-// Register the framing error listener
-void DataAckReceiver::registerFramingErrorReceiver(FramingErrorReceiver& framingErrorReceiver) const {
-    m_framing_error_receiver = &framingErrorReceiver;
-}
-
-// Unregister the framing error listener
-void DataAckReceiver::unregisterFramingErrorReceiver() const {
-    m_framing_error_receiver = nullptr;
-}
-
-// Register the data listener
-void DataAckReceiver::registerDataReceiver(DataReceiver& dataReceiver) const {
-    m_data_receiver = &dataReceiver;
-}
-
-// Unregister the data listener
-void DataAckReceiver::unregisterDataReceiver() const {
-    m_data_receiver = nullptr;
-}
-
 
 void DataAckReceiver::changeState(const DataAckReceiverState newState) {
     logDebugF("Changing state from %s to %s", DataAckReceiverStateToString(m_state), DataAckReceiverStateToString(newState));

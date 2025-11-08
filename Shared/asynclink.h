@@ -96,58 +96,95 @@ private:
 };
 
 /*
- * Callbacks used between DataAckSender/Receiver
+ * Callbacks/facades used between DataAckSender->AsyncLink and DataAckReceiver->DataAckSender and
+ * DataAckReceiver->AsyncLink.
  */
 
-// TODO CONSIDER: do we need two interfaces for the DAR's notifications? Could they be merged?
 
-// The DataAckReceiver will call a registered instance of AckReceiver when it detects
-// an incoming ack. The DataAckSender will call one in response - this will be the AsyncLink.
-class AckReceiver {
+/**
+ * The DataAckSender will call a registered instance of SenderToLink to query/set/clear the AsyncLink's Ready To Send
+ * flag, and to set the timeout error flag.
+ */
+class SenderToLink {
 public:
-    virtual ~AckReceiver() = default;
+    virtual ~SenderToLink() = default;
+
+    /**
+     * The DataAckSender needs to know the state of the AsyncLink's Ready To Send flag.
+     */
+    virtual bool queryReadyToSend() = 0;
+
+    /**
+     * The DataAckSender needs to set and clear the AsyncLink's Ready To Send flag.
+     */
+    virtual void setReadyToSend() = 0;
+    virtual void clearReadyToSend() = 0;
+
+    /**
+     * The DataAckSender has sent some data, but has not received an ack, so the send has timed out: set this flag in
+     * the AsyncLink.
+     */
+    virtual void setTimeoutError() = 0;
+};
+
+/**
+ * The DataAckReceiver will call a registered instance of ReceiverToSender's sendAck() when it
+ * starts to receive data bits, and if the Link's Read Data Available flag is true (i.e. there's space in the receive
+ * buffer).
+ * The ackReceived() method will be called when an ack has been detected. This will eventually cause the Link's Ready To
+ * Send flag to be cleared, indicating that more data can be sent.
+ */
+class ReceiverToSender {
+public:
+    virtual ~ReceiverToSender() = default;
+
+    /**
+     * Data is being received, and there is room in the receive buffer to hold it, so send an
+     * ack.
+     */
+    virtual void sendAck() = 0;
+
+    /**
+     * An ack has been received.
+     */
     virtual void ackReceived() = 0;
 };
 
-// The DataAckReceiver will call a registered instance of SendAckReceiver's requestSendAck() when it
-// starts to receive data bits. The implementation of SendAckReceiver will return true if there is sufficient space
-// in its receive buffer (and in the case of the DataAckSender, will start to send an ack), or false if
-// there is not (if no client has read a previously-received byte: an overrun) (in which case,
-// this will be notified to the DataAckSender's client, the AsyncLink).
-class SendAckReceiver {
+/**
+ * The DataAckReceiver has this facade on to the AsyncLink to inform it of events.
+ */
+class ReceiverToLink {
 public:
-    virtual ~SendAckReceiver() = default;
+    virtual ~ReceiverToLink() = default;
     /**
-     * Data is being received, is there enough room in the receive buffer to hold it? Return true if so, and send an
-     * ack. If not enough space, return false and do not send an ack.
-     * TODO this needs to change - the sender doesn't know of the AsyncLink's buffer state.
-     * This should be called after AsyncLink is queried, if we have space, and can ack the data.
-     * Should not return a bool.
-     */
-    virtual bool requestSendAck() = 0;
-};
-
-// The DataAckReceiver will call a registered instance of FramingErrorReceiver's framingError() when it receives
-// a high input when in STOP_BIT state.
-class FramingErrorReceiver {
-public:
-    virtual ~FramingErrorReceiver() = default;
-    /**
-     * A framing error (bad stop bit) has occurred.
+     * The DataAckReceiver has detected a framing error (high input when in STOP_BIT state), and informs the AsyncLink
+     * via this method.
      */
     virtual void framingError() = 0;
-};
 
-// The DataAckReceiver will call a registered instance of DataReceiver's dataReceived() when it receives a byte of data
-// followed by a valid stop bit.
-class DataReceiver {
-public:
-    virtual ~DataReceiver() = default;
     /**
-     * A byte of data has been received.
+     * The DataAckReceiver has detected an overrun error (data was being received but the receive buffer is full: the
+     * Read Data Available flag is true), so informs the AsyncLink via this method.
+     */
+    virtual void overrunError() = 0;
+
+    /**
+     * The DataAckReceiver has received a byte of data (followed by a valid stop bit) to give to the AsyncLink. This
+     * will cause the AsyncLink to set its Read Data Available flag.
      */
     virtual void dataReceived(BYTE8 data) = 0;
+
+    /**
+     * The DataAckReceiver needs to know the state of the AsyncLink's Read Data Available flag.
+     */
+    virtual bool queryReadDataAvailable() = 0;
+
+    /**
+     * The DataAckReceiver wants to clear the AsyncLink's Read Data Available flag - it does this on initialisation.
+     */
+    virtual void clearReadDataAvailable() = 0;
 };
+
 
 /* Medium level abstraction: DataAckSender/Receiver. Internally used by AsyncLink.
  *
@@ -161,27 +198,33 @@ public:
  */
 enum class DataAckSenderState { IDLE, SENDING_ACK, SENDING_DATA, ACK_TIMEOUT };
 
-class DataAckSender: public AckReceiver, DataReceiver, SendAckReceiver {
+class DataAckSender: public ReceiverToSender {
 public:
     explicit DataAckSender(TxRxPin& tx_rx_pin);
-    DataAckSenderState state() const;
+
     /**
      * Send data
      * @param byte data to send
      * @return true iff we are in a state where data can be sent.
      */
     bool sendData(BYTE8 byte);
+
+    /**
+     * Clock pulse - clock data or ack out.
+     */
     void clock();
 
-    void registerAckReceiver(AckReceiver& ackReceiver) const;
-    void unregisterAckReceiver() const;
+    void registerSenderToLink(SenderToLink& senderToLink) const;
+    void unregisterSenderToLink() const;
 
     void changeState(DataAckSenderState newState);
+
+    // ReceiverToSender: the Receiver will inform us of these.
+    void sendAck() override;
     void ackReceived() override;
-    void dataReceived(BYTE8 data) override;
-    bool requestSendAck() override;
 
     // Used by tests - internal, do not use.
+    DataAckSenderState state() const;
     int _queueLength() const;
     WORD16 _data() const;
     bool _send_ack() const;
@@ -200,7 +243,7 @@ private:
     bool m_data_enqueued;
     BYTE8 m_data_enqueued_buffer;
     void sendDataInternal(BYTE8 data);
-    mutable AckReceiver *m_ack_receiver = nullptr;
+    mutable SenderToLink *m_sender_to_link = nullptr;
 };
 
 enum class DataAckReceiverState { IDLE, START_BIT_2, DATA, DISCARD, STOP_BIT };
@@ -211,14 +254,10 @@ public:
     DataAckReceiverState state() const;
     void bitStateReceived(bool state) override;
 
-    void registerAckReceiver(AckReceiver& ackReceiver) const;
-    void unregisterAckReceiver() const;
-    void registerSendAckReceiver(SendAckReceiver& sendAckReceiver) const;
-    void unregisterSendAckReceiver() const;
-    void registerFramingErrorReceiver(FramingErrorReceiver& framingErrorReceiver) const;
-    void unregisterFramingErrorReceiver() const;
-    void registerDataReceiver(DataReceiver& dataReceiver) const;
-    void unregisterDataReceiver() const;
+    void registerReceiverToLink(ReceiverToLink& receiverToLink) const;
+    void unregisterReceiverToLink() const;
+    void registerReceiverToSender(ReceiverToSender& receiverToSender) const;
+    void unregisterReceiverToSender() const;
 
     void changeState(DataAckReceiverState newState);
 
@@ -232,10 +271,8 @@ private:
     int m_bit_count;
     BYTE8 m_buffer;
 
-    mutable AckReceiver *m_ack_receiver = nullptr;
-    mutable SendAckReceiver *m_send_ack_receiver = nullptr;
-    mutable FramingErrorReceiver *m_framing_error_receiver = nullptr;
-    mutable DataReceiver *m_data_receiver = nullptr;
+    mutable ReceiverToSender *m_receiver_to_sender = nullptr;
+    mutable ReceiverToLink *m_receiver_to_link = nullptr;
 };
 
 #endif // _ASYNCLINK_H

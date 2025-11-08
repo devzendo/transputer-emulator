@@ -497,8 +497,9 @@ TEST_F(OversampledTxRxPinTest, PerfectInputAckNoListener) {
 // TODO noisy cases of majority voting, all boundary cases
 
 // Single-letter comments relate the test to the labelled transitions on the statechart.
-// ABcDEfGhIjKlMNoPQRstuv
-class DataAckSenderTest : public ::testing::Test, AckReceiver {
+// Lower case letters are not implemented / covered by tests yet.
+// ABCDEfGhIjKlMNoPQRstuv
+class DataAckSenderTest : public ::testing::Test, SenderToLink {
 protected:
 
     void SetUp() override {
@@ -508,7 +509,7 @@ protected:
         TxRxPin & pairB = m_pair.pairB();
         m_trace = new ClockingPinTracer(pairB);
         m_sender = new DataAckSender(pairA);
-        m_sender->registerAckReceiver(*this); // dereference this to get a reference
+        m_sender->registerSenderToLink(*this); // dereference this to get a reference
 
         logDebug("Setup complete");
         logFlush();
@@ -520,16 +521,28 @@ protected:
         logFlush();
     }
 
-    // AckReceiver
-    void ackReceived() override {
-        logDebug("Ack received");
-        m_acks_received++;
+    // SenderToLink
+    bool queryReadyToSend() override {
+        return m_ready_to_send;
+    }
+
+    void setReadyToSend() override {
+        m_ready_to_send = true;
+    }
+
+    void clearReadyToSend() override {
+        m_ready_to_send = false;
+    }
+
+    void setTimeoutError() override {
+        m_timeout = true;
     }
 
     CrosswiredTxRxPinPair m_pair;
     ClockingPinTracer *m_trace = nullptr;
     DataAckSender *m_sender = nullptr;
-    int m_acks_received = 0;
+    bool m_ready_to_send = false;
+    bool m_timeout = false;
 };
 
 TEST_F(DataAckSenderTest, InitialConditions) {
@@ -537,11 +550,13 @@ TEST_F(DataAckSenderTest, InitialConditions) {
     EXPECT_EQ(m_sender->_ack_rxed(), false);
     EXPECT_EQ(m_sender->_send_ack(), false);
     EXPECT_EQ(m_sender->_data_enqueued(), false);
+    // Instantiating (registering) sets RTS
+    EXPECT_EQ(m_ready_to_send, true);
 }
 
 // C
 TEST_F(DataAckSenderTest, SendAckReceivedInIdleGoesToSendingAck) {
-    m_sender->requestSendAck(); // TODO should not return a bool.
+    m_sender->sendAck();
 
     EXPECT_EQ(m_sender->state(), DataAckSenderState::SENDING_ACK);
     EXPECT_EQ(m_sender->_queueLength(), 2);
@@ -549,17 +564,16 @@ TEST_F(DataAckSenderTest, SendAckReceivedInIdleGoesToSendingAck) {
 }
 
 // D
-TEST_F(DataAckSenderTest, DataReceivedInIdleGoesToSendingAck) {
-    m_sender->dataReceived(0xc9);
+TEST_F(DataAckSenderTest, DataReceivedInIdleWithFalseRTSStaysIdle) {
+    clearReadyToSend();
+    EXPECT_EQ(m_sender->sendData(0xc9), false);
 
-    EXPECT_EQ(m_sender->state(), DataAckSenderState::SENDING_ACK);
-    EXPECT_EQ(m_sender->_queueLength(), 2);
-    EXPECT_EQ(m_sender->_data(), 0x0001);
+    EXPECT_EQ(m_sender->state(), DataAckSenderState::IDLE);
 }
 
-// N, E
+// C, N, E
 TEST_F(DataAckSenderTest, NoDataEnqueuedSendingAckClocksAckOutGoesIdle) {
-    m_sender->dataReceived(0xc9);
+    m_sender->sendAck();
     EXPECT_EQ(m_sender->_data_enqueued(), false);
 
     // Needs clocking to send the signals out. 16 clock pulses/bit.
@@ -581,9 +595,9 @@ TEST_F(DataAckSenderTest, NoDataEnqueuedSendingAckClocksAckOutGoesIdle) {
     EXPECT_EQ(heard, expected);
 }
 
-// M, G
+// M, G (N)
 TEST_F(DataAckSenderTest, DataEnqueuedWhenSendingAckClocksAckOutThenGoesSendingData) {
-    m_sender->dataReceived(0xc9);
+    m_sender->sendAck();
 
     EXPECT_EQ(m_sender->_data_enqueued(), false);
     EXPECT_EQ(m_sender->state(), DataAckSenderState::SENDING_ACK);
@@ -618,8 +632,12 @@ TEST_F(DataAckSenderTest, DataEnqueuedWhenSendingAckClocksAckOutThenGoesSendingD
 
 // B, Q, I
 TEST_F(DataAckSenderTest, DataSentButNoAckReceived) {
+    setReadyToSend();
     EXPECT_EQ(m_sender->state(), DataAckSenderState::IDLE);
+
     EXPECT_EQ(m_sender->sendData(0xC9), true); // Needs clocking to send the signals out. 16 clock pulses/bit.
+
+    EXPECT_EQ(queryReadyToSend(), false); // We're sending now, so disallow further until it's acked.
     // Data is two start bits (1), the data bits, then a stop bit (0).
     const int expected_bits = 11;
     const int expected_samples = expected_bits * 16;
@@ -645,6 +663,7 @@ TEST_F(DataAckSenderTest, DataSentButNoAckReceived) {
 
 // P
 TEST_F(DataAckSenderTest, DataCantBeSentWhileAlreadySending) {
+    setReadyToSend();
     EXPECT_EQ(m_sender->sendData(0xC9), true);
     // Needs clocking to send the signals out. 16 clock pulses/bit.
     const int expected_bits = 11;
@@ -658,10 +677,13 @@ TEST_F(DataAckSenderTest, DataCantBeSentWhileAlreadySending) {
     EXPECT_EQ(m_sender->sendData(0xAA), false); // Can't send if busy
 }
 
-// R, A, K
+// B, Q, R, A, K
 TEST_F(DataAckSenderTest, DataSentAndAckReceived) {
+    setReadyToSend();
     EXPECT_EQ(m_sender->state(), DataAckSenderState::IDLE);
+
     EXPECT_EQ(m_sender->sendData(0xC9), true); // Needs clocking to send the signals out. 16 clock pulses/bit.
+
     // Data is two start bits (1), the data bits, then a stop bit (0).
     const int expected_bits = 11;
     const int expected_samples = expected_bits * 16;
@@ -684,8 +706,8 @@ TEST_F(DataAckSenderTest, DataSentAndAckReceived) {
     }
     // Just before going idle, has the sender seen that ack?
     EXPECT_EQ(m_sender->_ack_rxed(), true);
-    // The external ack rx cb should not have been called yet.
-    EXPECT_EQ(m_acks_received, 0);
+    // RTS should be clear (we're sending)
+    EXPECT_EQ(m_ready_to_send, false);
     // bit more clocking...
     m_sender->clock();
     m_trace->clock();
@@ -693,8 +715,8 @@ TEST_F(DataAckSenderTest, DataSentAndAckReceived) {
     EXPECT_EQ(m_sender->state(), DataAckSenderState::IDLE);
     EXPECT_EQ(m_sender->_queueLength(), 0);
     EXPECT_EQ(m_sender->_ack_rxed(), false);
-    // And we have been notified (ie the AsyncLink can set its ready-to-send flag).
-    EXPECT_EQ(m_acks_received, 1);
+    // And the AsyncLink can set its ready-to-send flag.
+    EXPECT_EQ(m_ready_to_send, true);
     const std::vector<bool> heard = m_trace->heard();
     EXPECT_EQ(heard.size(), expected_samples);   //       vvv note LSB first vvv
     const int expected_data_bits[expected_bits] = { 1, 1,  1, 0, 0, 1, 0, 0, 1, 1,  0 };
@@ -702,33 +724,19 @@ TEST_F(DataAckSenderTest, DataSentAndAckReceived) {
     EXPECT_EQ(heard, expected);
 }
 
-// R A K (null safety)
-TEST_F(DataAckSenderTest, DataSentAndAckReceivedButNoAckReceiver) {
-    m_sender->unregisterAckReceiver();
-    m_sender->sendData(0xC9);
-    const int expected_bits = 11;
-    const int expected_samples = expected_bits * 16;
-    for (int i=0; i<expected_samples; i++) {
-        EXPECT_EQ(m_sender->state(), DataAckSenderState::SENDING_DATA);
-        m_sender->clock();
-        m_trace->clock();
-
-        // Ack would be signalled after the receiver has detected the second start bit,
-        // so after 16 (first bit) + 9 (end of majority detection of second bit) = 25.
-        if (i == 25) {
-            logDebug("Pretend an ack has been seen");
-            m_sender->ackReceived();
-        }
-    }
-    // The external ack rx cb should not have been called as we're unregistered.
-    EXPECT_EQ(m_acks_received, 0);
+// D or B (null safety)
+TEST_F(DataAckSenderTest, DataSendButNoListener) {
+    m_sender->unregisterSenderToLink();
+    EXPECT_EQ(m_sender->sendData(0xC9), false);
 }
 
 // TODO how to signal you can't ack or send data in a non-idle state
 
 
-
-class DataAckReceiverTest : public ::testing::Test, AckReceiver, SendAckReceiver, FramingErrorReceiver, DataReceiver {
+// Single-letter comments relate the test to the labelled transitions on the statechart.
+// Lower case letters are not implemented / covered by tests yet.
+// ABcDEFGHIJkl
+class DataAckReceiverTest : public ::testing::Test, ReceiverToSender, ReceiverToLink {
 protected:
 
     void SetUp() override {
@@ -737,10 +745,8 @@ protected:
         TxRxPin & pairA = m_pair.pairA();
         TxRxPin & pairB = m_pair.pairB();
         m_receiver = new DataAckReceiver(pairA);
-        m_receiver->registerAckReceiver(*this); // dereference this to get a reference
-        m_receiver->registerSendAckReceiver(*this);
-        m_receiver->registerFramingErrorReceiver(*this);
-        m_receiver->registerDataReceiver(*this);
+        m_receiver->registerReceiverToLink(*this); // dereference this to get a reference
+        m_receiver->registerReceiverToSender(*this);
         logDebug("Setup complete");
         logFlush();
     }
@@ -751,42 +757,57 @@ protected:
         logFlush();
     }
 
-    // AckReceiver
+    // ReceiverToSender
+    void sendAck() override {
+        logDebug("Send Ack requested");
+        m_send_acks_received++;
+    }
+
     void ackReceived() override {
         logDebug("Ack received");
         m_acks_received++;
     }
 
-    // SendAckReceiver
-    bool requestSendAck() override {
-        logDebugF("Send Ack requested - returning %d", m_request_send_ack_response);
-        m_send_acks_received++;
-        return m_request_send_ack_response;
-    }
-
-    // FramingErrorReceiver
+    // ReceiverToLink
     void framingError() override {
         logWarn("Framing error");
         m_framing_errors_received++;
     }
 
-    // DataReceiver
+    void overrunError() override {
+        logWarn("Overrun error");
+        m_overrun_errors_received++;
+    }
+
     void dataReceived(const BYTE8 data) override {
         logInfoF("Data received: 0b%s", byte_to_binary(data));
         m_data = data;
         m_data_received++;
+        logInfo("Setting read data available");
+        m_read_data_available = true;
+    }
+
+    bool queryReadDataAvailable() override {
+        logInfoF("Query read data available %d", m_read_data_available);
+        return m_read_data_available;
+    }
+
+    void clearReadDataAvailable() override {
+        logInfo("Clear read data available");
+        m_read_data_available = false;
     }
 
 
     void goToStartBit2() const {
         // Enter START_BIT_2
         m_receiver->bitStateReceived(true);
+        EXPECT_EQ(m_receiver->state(), DataAckReceiverState::START_BIT_2);
     }
 
     void goToData() {
         goToStartBit2();
         // Enter DATA
-        setRequestSendAckResponse(true); // there is space to receive
+        m_read_data_available = false;
         m_receiver->bitStateReceived(true);
         EXPECT_EQ(m_receiver->state(), DataAckReceiverState::DATA);
     }
@@ -794,13 +815,23 @@ protected:
     void goToDiscard() {
         goToStartBit2();
         // Enter DISCARD
-        setRequestSendAckResponse(false); // there is no space
+        m_read_data_available = true;
         m_receiver->bitStateReceived(true);
         EXPECT_EQ(m_receiver->state(), DataAckReceiverState::DISCARD);
     }
 
-    void setRequestSendAckResponse(const bool response) {
-        m_request_send_ack_response = response;
+    void goToStopBit() {
+        goToData();
+
+        m_receiver->bitStateReceived(true);
+        m_receiver->bitStateReceived(true);
+        m_receiver->bitStateReceived(false);
+        m_receiver->bitStateReceived(false);
+        m_receiver->bitStateReceived(false);
+        m_receiver->bitStateReceived(false);
+        m_receiver->bitStateReceived(true);
+        m_receiver->bitStateReceived(true);
+        EXPECT_EQ(m_receiver->state(), DataAckReceiverState::STOP_BIT);
     }
 
     CrosswiredTxRxPinPair m_pair;
@@ -808,9 +839,10 @@ protected:
     int m_acks_received = 0;
     int m_send_acks_received = 0;
     int m_framing_errors_received = 0;
+    int m_overrun_errors_received = 0;
     int m_data_received = 0;
     BYTE8 m_data = 0;
-    bool m_request_send_ack_response = true;
+    bool m_read_data_available = false;
 };
 
 TEST_F(DataAckReceiverTest, InitialConditions) {
@@ -823,16 +855,18 @@ TEST_F(DataAckReceiverTest, InitialConditions) {
     EXPECT_EQ(m_framing_errors_received, 0);
     EXPECT_EQ(m_data_received, 0);
     EXPECT_EQ(m_data, 0);
+    EXPECT_EQ(m_read_data_available, false); // on registration
 }
 
+// A
 TEST_F(DataAckReceiverTest, IdleReceivesHighGoesToStartBit2) {
     m_receiver->bitStateReceived(true);
     EXPECT_EQ(m_receiver->state(), DataAckReceiverState::START_BIT_2);
 }
 
+// B
 TEST_F(DataAckReceiverTest, StartBit2ReceivesLowAcksGoesToIdle) {
-    // Enter START_BIT_2
-    m_receiver->bitStateReceived(true);
+    goToStartBit2();
 
     // Back to IDLE - that should have generated an ack; our callback
     // would have been called, incrementing the count.
@@ -842,11 +876,12 @@ TEST_F(DataAckReceiverTest, StartBit2ReceivesLowAcksGoesToIdle) {
     EXPECT_EQ(m_acks_received, 1);
 }
 
+// B (null safety)
 TEST_F(DataAckReceiverTest, StartBit2ReceivesLowNoAckReceiverGoesToIdle) {
     // Knock out the listener (the test setup always installs one)
     // Test that the listener is only called if it's not nullptr.
     // Without that check, this test crashes.
-    m_receiver->unregisterAckReceiver();
+    m_receiver->unregisterReceiverToSender();
     goToStartBit2();
 
     // Back to IDLE - that should have generated an ack; our callback
@@ -857,13 +892,14 @@ TEST_F(DataAckReceiverTest, StartBit2ReceivesLowNoAckReceiverGoesToIdle) {
     EXPECT_EQ(m_acks_received, 0); // no ack listener
 }
 
-TEST_F(DataAckReceiverTest, StartBit2ReceivesHighCallsSendAckGoesToData) {
+// D, F
+TEST_F(DataAckReceiverTest, StartBit2ReceivesHighRDAFalseGoesToData) {
     goToStartBit2();
 
-    // The receiver will call the internal 'send ack' callback, notifying
-    // the DataAckSender to send an ack as we can receive this data. This
-    // will return true (the test fixture default), so there is enough
-    // space to receive.
+    // The receiver will query the Read Data Available which is false (space in
+    // receiver buffer). It will call the 'send ack' callback, notifying
+    // the DataAckSender to send an ack as we can receive this data.
+    m_read_data_available = false;
     m_receiver->bitStateReceived(true);
 
     EXPECT_EQ(m_receiver->state(), DataAckReceiverState::DATA);
@@ -872,15 +908,15 @@ TEST_F(DataAckReceiverTest, StartBit2ReceivesHighCallsSendAckGoesToData) {
     EXPECT_EQ(m_receiver->_buffer(), 0x00);
 }
 
-TEST_F(DataAckReceiverTest, StartBit2ReceivesHighNoSendAckReceiverGoesToDiscard) {
-    // Knock out the listener (the test setup always installs one)
+// D (null safety #1)
+TEST_F(DataAckReceiverTest, StartBit2ReceivesHighRDAFalseNoLinkToLinkGoesToDiscard) {
+    // Knock out the link listener (the test setup always installs one)
     // Test that the listener is only called if it's not nullptr.
     // Without that check, this test crashes.
-    m_receiver->unregisterSendAckReceiver();
+    m_receiver->unregisterReceiverToLink();
     goToStartBit2();
 
-    // The receiver would call the internal 'send ack' callback, notifying
-    // the DataAckSender to send an ack as we can receive this data. But we
+    // The receiver would call the 'query RDA' method, to see if we can receive, but we
     // don't have one, so have to assume there's no space to receive this
     // data, and no ability to ack. So, reject the data by going into
     // DISCARD.
@@ -892,21 +928,42 @@ TEST_F(DataAckReceiverTest, StartBit2ReceivesHighNoSendAckReceiverGoesToDiscard)
     EXPECT_EQ(m_receiver->_buffer(), 0x00);
 }
 
-TEST_F(DataAckReceiverTest, StartBit2ReceivesHighCallsSendAckGoesToDiscard) {
+// D (null safety #2)
+TEST_F(DataAckReceiverTest, StartBit2ReceivesHighRDAFalseNoServerToLinkGoesToDiscard) {
+    // Knock out the server listener (the test setup always installs one)
+    // Test that the listener is only called if it's not nullptr.
+    // Without that check, this test crashes.
+    m_receiver->unregisterReceiverToSender();
     goToStartBit2();
 
-    // The receiver will call the internal 'send ack' callback, requesting
-    // the DataAckSender to send an ack - but this
-    // will return false to indicate no available space to receive.
-    setRequestSendAckResponse(false);
+    m_read_data_available = false;
+    // The receiver would call the 'send ack' method, but we
+    // don't have one, so have to assume there's no space to receive this
+    // data, and no ability to ack. So, reject the data by going into
+    // DISCARD.
     m_receiver->bitStateReceived(true);
 
     EXPECT_EQ(m_receiver->state(), DataAckReceiverState::DISCARD);
-    EXPECT_EQ(m_send_acks_received, 1); // The callback was called.
+    EXPECT_EQ(m_send_acks_received, 0);
+    EXPECT_EQ(m_receiver->_bit_count(), 0);
+    EXPECT_EQ(m_receiver->_buffer(), 0x00);
+}
+
+// D, E
+TEST_F(DataAckReceiverTest, StartBit2ReceivesHighRDATrueCallsOverrunGoesToDiscard) {
+    goToStartBit2();
+    m_read_data_available = true;
+    // The receiver will query the Read Data Available which is true (no space in
+    // receiver buffer).
+    m_receiver->bitStateReceived(true);
+
+    EXPECT_EQ(m_receiver->state(), DataAckReceiverState::DISCARD);
+    EXPECT_EQ(m_send_acks_received, 0);
     EXPECT_EQ(m_receiver->_bit_count(), 0); // Discard needs this zeroing.
     EXPECT_EQ(m_receiver->_buffer(), 0x00);
 }
 
+// G
 TEST_F(DataAckReceiverTest, DataToStopBit) {
     goToData();
 
@@ -945,6 +1002,7 @@ TEST_F(DataAckReceiverTest, DataToStopBit) {
     EXPECT_EQ(m_receiver->state(), DataAckReceiverState::STOP_BIT);
 }
 
+// H
 TEST_F(DataAckReceiverTest, DiscardToIdle) {
     goToDiscard();
 
@@ -964,18 +1022,9 @@ TEST_F(DataAckReceiverTest, DiscardToIdle) {
     EXPECT_EQ(m_receiver->state(), DataAckReceiverState::IDLE);
 }
 
+// I
 TEST_F(DataAckReceiverTest, StopBitFramingError) {
-    goToData();
-
-    m_receiver->bitStateReceived(true);
-    m_receiver->bitStateReceived(true);
-    m_receiver->bitStateReceived(false);
-    m_receiver->bitStateReceived(false);
-    m_receiver->bitStateReceived(false);
-    m_receiver->bitStateReceived(false);
-    m_receiver->bitStateReceived(true);
-    m_receiver->bitStateReceived(true);
-    EXPECT_EQ(m_receiver->state(), DataAckReceiverState::STOP_BIT);
+    goToStopBit();
 
     // A proper stop bit is a false...
     m_receiver->bitStateReceived(true);
@@ -983,19 +1032,10 @@ TEST_F(DataAckReceiverTest, StopBitFramingError) {
     EXPECT_EQ(m_receiver->state(), DataAckReceiverState::IDLE);
 }
 
-TEST_F(DataAckReceiverTest, StopBitFramingErrorNoFramingErrorReceiver) {
-    goToData();
-    m_receiver->unregisterFramingErrorReceiver();
-
-    m_receiver->bitStateReceived(true);
-    m_receiver->bitStateReceived(true);
-    m_receiver->bitStateReceived(false);
-    m_receiver->bitStateReceived(false);
-    m_receiver->bitStateReceived(false);
-    m_receiver->bitStateReceived(false);
-    m_receiver->bitStateReceived(true);
-    m_receiver->bitStateReceived(true);
-    EXPECT_EQ(m_receiver->state(), DataAckReceiverState::STOP_BIT);
+// I (null safety)
+TEST_F(DataAckReceiverTest, StopBitFramingErrorNoLinkListener) {
+    goToStopBit();
+    m_receiver->unregisterReceiverToLink();
 
     // A proper stop bit is a false...
     m_receiver->bitStateReceived(true);
@@ -1003,39 +1043,24 @@ TEST_F(DataAckReceiverTest, StopBitFramingErrorNoFramingErrorReceiver) {
     EXPECT_EQ(m_receiver->state(), DataAckReceiverState::IDLE);
 }
 
+// J
 TEST_F(DataAckReceiverTest, StopBitSendsDataGoesToIdle) {
-    goToData();
+    goToStopBit();
 
-    m_receiver->bitStateReceived(true);
-    m_receiver->bitStateReceived(true);
-    m_receiver->bitStateReceived(false);
-    m_receiver->bitStateReceived(false);
-    m_receiver->bitStateReceived(false);
-    m_receiver->bitStateReceived(false);
-    m_receiver->bitStateReceived(true);
-    m_receiver->bitStateReceived(true);
-    EXPECT_EQ(m_receiver->state(), DataAckReceiverState::STOP_BIT);
-
+    // The 'data rx' cb will set RDA.
+    EXPECT_EQ(m_read_data_available, false);
     // A proper stop bit is a false...
     m_receiver->bitStateReceived(false);
     EXPECT_EQ(m_data_received, 1);
     EXPECT_EQ(m_data, 0b11000011);
     EXPECT_EQ(m_receiver->state(), DataAckReceiverState::IDLE);
+    EXPECT_EQ(m_read_data_available, true);
 }
 
-TEST_F(DataAckReceiverTest, StopBitDataReceivedGoesToIdleNoDataReceiver) {
-    goToData();
-    m_receiver->unregisterDataReceiver();
-
-    m_receiver->bitStateReceived(true);
-    m_receiver->bitStateReceived(true);
-    m_receiver->bitStateReceived(false);
-    m_receiver->bitStateReceived(false);
-    m_receiver->bitStateReceived(false);
-    m_receiver->bitStateReceived(false);
-    m_receiver->bitStateReceived(true);
-    m_receiver->bitStateReceived(true);
-    EXPECT_EQ(m_receiver->state(), DataAckReceiverState::STOP_BIT);
+// J (null safety)
+TEST_F(DataAckReceiverTest, StopBitDataNoListenerGoesToIdle) {
+    goToStopBit();
+    m_receiver->unregisterReceiverToLink();
 
     // A proper stop bit is a false...
     m_receiver->bitStateReceived(false);
