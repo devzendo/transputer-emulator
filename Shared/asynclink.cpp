@@ -248,6 +248,10 @@ void DataAckSender::ackReceived() {
             logDebug("Data being sent has been acked");
             m_ack_rxed = true;
             break;
+        case DataAckSenderState::SENDING_ACK:
+            logDebug("Ack being sent has been acked");
+            m_ack_rxed = true;
+            break;
         default:
             logDebug("Ack received");
             break;

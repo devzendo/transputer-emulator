@@ -498,7 +498,7 @@ TEST_F(OversampledTxRxPinTest, PerfectInputAckNoListener) {
 
 // Single-letter comments relate the test to the labelled transitions on the statechart.
 // Lower case letters are not implemented / covered by tests yet.
-// ABCDEfGhIjKlMNoPQRstuv
+// ABCDEFGHIjKlMNoPQRstuv
 class DataAckSenderTest : public ::testing::Test, SenderToLink {
 protected:
 
@@ -789,6 +789,32 @@ TEST_F(DataAckSenderTest, DataSendThenSendAck) {
     const std::vector<bool> expected = generate_sample_vector_from_bits(expected_bits, num_expected_data_ack_bits);
     EXPECT_EQ(heard, expected);
 
+    EXPECT_EQ(m_sender->state(), DataAckSenderState::IDLE);
+}
+
+// F
+TEST_F(DataAckSenderTest, SendingAckAndAckReceived) {
+    m_sender->sendAck();
+    EXPECT_EQ(m_sender->state(), DataAckSenderState::SENDING_ACK);
+    // Needs clocking to send the signals out. 16 clock pulses/bit.
+    // An ack is a 1 followed by a 0.
+    const int expected_bits = 2;
+    const int expected_samples = expected_bits * 16;
+    for (int i=0; i<expected_samples - 1; i++) { // -1 to stay in SENDING_ACK while we receive an ack.
+        EXPECT_EQ(m_sender->state(), DataAckSenderState::SENDING_ACK);
+        m_sender->clock();
+        m_trace->clock();
+    }
+    // Have we received an ack yet?
+    EXPECT_EQ(m_sender->_ack_rxed(), false);
+    // Here it is!
+    m_sender->ackReceived();
+    EXPECT_EQ(m_sender->_ack_rxed(), true);
+    // One more clock to get out of SENDING_ACK
+    m_sender->clock();
+    m_trace->clock();
+
+    // There's no data_enqueued so back to idle.
     EXPECT_EQ(m_sender->state(), DataAckSenderState::IDLE);
 }
 
