@@ -212,7 +212,7 @@ void AsyncLink::poll() {
  * frequency.'
  */
 
-constexpr const char* DataAckSenderStateToString(const DataAckSenderState s) noexcept
+const char* DataAckSenderStateToString(const DataAckSenderState s) noexcept
 {
     switch (s) {
         case DataAckSenderState::IDLE: return "IDLE";
@@ -282,6 +282,10 @@ void DataAckSender::sendAck() {
             m_data = 0x01;
             changeState(DataAckSenderState::SENDING_ACK);
             break;
+        case DataAckSenderState::SENDING_DATA:
+            m_send_ack = true;
+            // The data/bits for the ack is set up (as above) when we detect m_send_ack in clock...
+            break;
         default:
             break;
     }
@@ -343,6 +347,8 @@ void DataAckSender::clock() {
     switch (m_state) {
         case DataAckSenderState::IDLE:
             break;
+        case DataAckSenderState::ACK_TIMEOUT:
+            break;
         case DataAckSenderState::SENDING_ACK:
         case DataAckSenderState::SENDING_DATA:
             // Send the least significant bit of m_data.
@@ -363,11 +369,18 @@ void DataAckSender::clock() {
                         } else {
                             changeState(DataAckSenderState::IDLE);
                         }
-                    } else {
+                    } else { // SENDING_DATA
                         if (m_ack_rxed) {
                             changeState(DataAckSenderState::IDLE);
                         } else {
-                            changeState(DataAckSenderState::ACK_TIMEOUT);
+                            if (m_send_ack) {
+                                m_sampleCount = 0;
+                                m_bits = 2;
+                                m_data = 0x01;
+                                changeState(DataAckSenderState::SENDING_ACK);
+                            } else {
+                                changeState(DataAckSenderState::ACK_TIMEOUT);
+                            }
                         }
                     }
 

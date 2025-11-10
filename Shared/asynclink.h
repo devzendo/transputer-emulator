@@ -197,6 +197,7 @@ public:
  * received Data (so it can initiate sending an Ack).
  */
 enum class DataAckSenderState { IDLE, SENDING_ACK, SENDING_DATA, ACK_TIMEOUT };
+const char* DataAckSenderStateToString(DataAckSenderState s) noexcept;
 
 class DataAckSender: public ReceiverToSender {
 public:

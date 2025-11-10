@@ -730,12 +730,74 @@ TEST_F(DataAckSenderTest, DataSendButNoListener) {
     EXPECT_EQ(m_sender->sendData(0xC9), false);
 }
 
+// H
+TEST_F(DataAckSenderTest, DataSendThenSendAck) {
+    EXPECT_EQ(m_sender->_send_ack(), false);
+    setReadyToSend();
+    EXPECT_EQ(m_sender->state(), DataAckSenderState::IDLE);
+
+    EXPECT_EQ(m_sender->sendData(0xC9), true); // Needs clocking to send the signals out. 16 clock pulses/bit.
+
+    // Data is two start bits (1), the data bits, then a stop bit (0).
+    const int num_expected_data_bits = 11;
+    const int num_expected_data_samples = num_expected_data_bits * 16;
+    EXPECT_EQ(m_sender->state(), DataAckSenderState::SENDING_DATA);
+    EXPECT_EQ(m_sender->_queueLength(), num_expected_data_bits);
+    EXPECT_EQ(m_sender->_data(), 0x0327);
+    EXPECT_EQ(m_sender->_ack_rxed(), false);
+    logDebug("Data to be clocked out looks right with framing");
+    for (int i=0; i<num_expected_data_samples - 1; i++) { // -1 to sense ack_rxed flag before going IDLE and resetting
+        EXPECT_EQ(m_sender->state(), DataAckSenderState::SENDING_DATA);
+        m_sender->clock();
+        m_trace->clock();
+
+        // If the receiver is receiving data, and asks the sender to send an ack.
+        // Ack would be requested after the receiver has detected the second start bit,
+        // so after 16 (first bit) + 9 (end of majority detection of second bit) = 25.
+        if (i == 25) {
+            logDebug("Please ack imaginary received data");
+            m_sender->sendAck();
+        }
+    }
+    EXPECT_EQ(m_sender->state(), DataAckSenderState::SENDING_DATA);
+
+    // Has the sender registered it needs to send the ack?
+    EXPECT_EQ(m_sender->_send_ack(), true);
+    // Seeing ack_rxed at the same time - probably need to revise design for this?
+    EXPECT_EQ(m_sender->_ack_rxed(), false);
+    // bit more clocking...
+    m_sender->clock();
+    m_trace->clock();
+
+    logInfoF("the state is now %s", DataAckSenderStateToString(m_sender->state()));
+    EXPECT_EQ(m_sender->state(), DataAckSenderState::SENDING_ACK);
+    const int num_expected_ack_bits = 2;
+    const int num_expected_ack_samples = num_expected_ack_bits * 16;
+    EXPECT_EQ(m_sender->_queueLength(), num_expected_ack_bits);
+    EXPECT_EQ(m_sender->_data(), 0x01);
+    for (int i=0; i<num_expected_ack_samples; i++) {
+        EXPECT_EQ(m_sender->state(), DataAckSenderState::SENDING_ACK);
+        m_sender->clock();
+        m_trace->clock();
+    }
+
+    const std::vector<bool> heard = m_trace->heard();
+    const int num_expected_data_ack_bits = num_expected_data_bits + num_expected_ack_bits;
+    const int num_expected_data_ack_samples = num_expected_data_ack_bits * 16;
+    EXPECT_EQ(heard.size(), num_expected_data_ack_samples); //        vvv note LSB first vvv        ack
+    const int expected_bits[num_expected_data_ack_bits] = { 1, 1,  1, 0, 0, 1, 0, 0, 1, 1,  0,     1, 0 };
+    const std::vector<bool> expected = generate_sample_vector_from_bits(expected_bits, num_expected_data_ack_bits);
+    EXPECT_EQ(heard, expected);
+
+    EXPECT_EQ(m_sender->state(), DataAckSenderState::IDLE);
+}
+
 // TODO how to signal you can't ack or send data in a non-idle state
 
 
 // Single-letter comments relate the test to the labelled transitions on the statechart.
 // Lower case letters are not implemented / covered by tests yet.
-// ABcDEFGHIJkl
+// ABCDEFGHIJKL
 class DataAckReceiverTest : public ::testing::Test, ReceiverToSender, ReceiverToLink {
 protected:
 
@@ -963,7 +1025,7 @@ TEST_F(DataAckReceiverTest, StartBit2ReceivesHighRDATrueCallsOverrunGoesToDiscar
     EXPECT_EQ(m_receiver->_buffer(), 0x00);
 }
 
-// G
+// G, K
 TEST_F(DataAckReceiverTest, DataToStopBit) {
     goToData();
 
@@ -1002,7 +1064,7 @@ TEST_F(DataAckReceiverTest, DataToStopBit) {
     EXPECT_EQ(m_receiver->state(), DataAckReceiverState::STOP_BIT);
 }
 
-// H
+// H, L
 TEST_F(DataAckReceiverTest, DiscardToIdle) {
     goToDiscard();
 
@@ -1065,5 +1127,16 @@ TEST_F(DataAckReceiverTest, StopBitDataNoListenerGoesToIdle) {
     // A proper stop bit is a false...
     m_receiver->bitStateReceived(false);
     EXPECT_EQ(m_data_received, 0);
+    EXPECT_EQ(m_receiver->state(), DataAckReceiverState::IDLE);
+}
+
+// C
+TEST_F(DataAckReceiverTest, IdleLowStaysIdle) {
+    EXPECT_EQ(m_receiver->state(), DataAckReceiverState::IDLE);
+    m_receiver->bitStateReceived(false);
+    EXPECT_EQ(m_receiver->state(), DataAckReceiverState::IDLE);
+    m_receiver->bitStateReceived(false);
+    EXPECT_EQ(m_receiver->state(), DataAckReceiverState::IDLE);
+    m_receiver->bitStateReceived(false);
     EXPECT_EQ(m_receiver->state(), DataAckReceiverState::IDLE);
 }
