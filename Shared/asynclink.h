@@ -77,24 +77,6 @@ private:
 };
 
 
-/* Highest level abstraction: AsyncLink, a state machine that uses the DataAckSender/Receiver (see asynclink.cpp)
- * to handle the send/receive over a TxRxPin.
- */
-class AsyncLink : public Link {
-public:
-    AsyncLink(int linkNo, bool isServer, TxRxPin& tx_rx_pin);
-    void initialise(void);
-    ~AsyncLink(void);
-    BYTE8 readByte(void);
-    void writeByte(BYTE8 b);
-    void resetLink(void);
-    int getLinkType(void);
-    void clock(void);
-private:
-    TxRxPin & m_pin;
-    WORD32 myWriteSequence, myReadSequence;
-};
-
 /*
  * Callbacks/facades used between DataAckSender->AsyncLink and DataAckReceiver->DataAckSender and
  * DataAckReceiver->AsyncLink.
@@ -186,6 +168,41 @@ public:
 };
 
 
+
+/* Highest level abstraction: AsyncLink uses the DataAckSender & DataAckReceiver state machines,
+ * and an OversampledTxRxPin to handle the send/receive over an underlying TxRxPin.
+ */
+class AsyncLink : public Link, SenderToLink, ReceiverToLink {
+public:
+    AsyncLink(int linkNo, bool isServer, TxRxPin& tx_rx_pin);
+    void initialise() override;
+    ~AsyncLink() override;
+    BYTE8 readByte() override;
+    void writeByte(BYTE8 b) override;
+    void resetLink() override;
+    int getLinkType() override;
+    void clock() override;
+
+    // SenderToLink
+    bool queryReadyToSend() override;
+    void setReadyToSend() override;
+    void clearReadyToSend() override;
+    void setTimeoutError() override;
+
+    // ReceiverToLink
+    void framingError() override;
+    void overrunError() override;
+    void dataReceived(BYTE8 data) override;
+    bool queryReadDataAvailable() override;
+    void clearReadDataAvailable() override;
+
+private:
+    TxRxPin & m_pin;
+    OversampledTxRxPin * m_o_pin;
+    WORD32 myWriteSequence, myReadSequence;
+};
+
+
 /* Medium level abstraction: DataAckSender/Receiver. Internally used by AsyncLink.
  *
  * DataAckSender is a state machine that uses the Tx half of a TxRxPin to clock out an Ack or Data frame, can be
@@ -251,7 +268,7 @@ enum class DataAckReceiverState { IDLE, START_BIT_2, DATA, DISCARD, STOP_BIT };
 
 class DataAckReceiver : public RxBitReceiver {
 public:
-    explicit DataAckReceiver(TxRxPin& tx_rx_pin);
+    explicit DataAckReceiver();
     DataAckReceiverState state() const;
     void bitStateReceived(bool state) override;
 
@@ -267,7 +284,6 @@ public:
     BYTE8 _buffer() const;
 
 private:
-    TxRxPin & m_pin;
     DataAckReceiverState m_state;
     int m_bit_count;
     BYTE8 m_buffer;

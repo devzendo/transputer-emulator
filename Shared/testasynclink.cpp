@@ -1287,7 +1287,7 @@ protected:
         logDebug("SetUp start");
         TxRxPin & pairA = m_pair.pairA();
         TxRxPin & pairB = m_pair.pairB();
-        m_receiver = new DataAckReceiver(pairA);
+        m_receiver = new DataAckReceiver();
         m_receiver->registerReceiverToLink(*this); // dereference this to get a reference
         m_receiver->registerReceiverToSender(*this);
         logDebug("Setup complete");
