@@ -50,6 +50,6 @@ int NullLink::getLinkType() {
     return LinkType_Null;
 }
 
-void NullLink::poll(void) {
+void NullLink::clock(void) {
 	// no-op
 }

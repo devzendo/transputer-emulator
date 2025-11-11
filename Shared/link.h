@@ -58,7 +58,7 @@ public:
 	virtual int getLinkType(void) = 0;
 
 	// Async support functions.
-	virtual void poll() = 0; // called under interrupt
+	virtual void clock() = 0; // called under interrupt
 	// writeStatus? (idle, writing, acknowledged, not-acknowledged)
 	// readStatus? (idle, ack-received, reading, read-available)
 protected:

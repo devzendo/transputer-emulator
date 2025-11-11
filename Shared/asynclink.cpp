@@ -195,7 +195,7 @@ int AsyncLink::getLinkType() {
     return LinkType_Async;
 }
 
-void AsyncLink::poll() {
+void AsyncLink::clock() {
 	// no-op
 }
 

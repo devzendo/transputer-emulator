@@ -50,6 +50,6 @@ int PicoUSBSerialLink::getLinkType() {
     return LinkType_USBCDC;
 }
 
-void PicoUSBSerialLink::poll(void) {
+void PicoUSBSerialLink::clock(void) {
 	// no-op
 }

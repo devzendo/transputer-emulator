@@ -32,7 +32,7 @@ public:
     void writeByte(BYTE8 b);
     void resetLink(void);
     int getLinkType(void);
-	void poll(void);
+	void clock(void);
 private:
     std::string myTVSProgram;
     std::ifstream myTVSProgramStream;

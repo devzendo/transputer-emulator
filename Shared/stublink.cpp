@@ -81,6 +81,6 @@ int StubLink::getLinkType() {
     return LinkType_Stub;
 }
 
-void StubLink::poll(void) {
+void StubLink::clock(void) {
 	// no-op
 }

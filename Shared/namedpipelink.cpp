@@ -221,6 +221,6 @@ int NamedPipeLink::getLinkType() {
     return LinkType_NamedPipe;
 }
 
-void NamedPipeLink::poll(void) {
+void NamedPipeLink::clock(void) {
 	// no-op
 }

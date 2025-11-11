@@ -125,6 +125,6 @@ int TVSLink::getLinkType() {
     return LinkType_TVS;
 }
 
-void TVSLink::poll(void) {
+void TVSLink::clock(void) {
 	// no-op
 }

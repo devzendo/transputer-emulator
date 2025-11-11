@@ -33,7 +33,7 @@ public:
     std::vector<BYTE8> getWrittenBytes();
     void setReadableBytes(std::vector<BYTE8> bytes);
     int getLinkType(void);
-    void poll(void);
+    void clock(void);
 private:
     // These are relative to the CPU, so it reads from the read queue.
     // The IServer reads from the write queue.

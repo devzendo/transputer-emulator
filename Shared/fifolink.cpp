@@ -168,6 +168,6 @@ int FIFOLink::getLinkType() {
     return LinkType_FIFO;
 }
 
-void FIFOLink::poll(void) {
+void FIFOLink::clock(void) {
 	// no-op
 }

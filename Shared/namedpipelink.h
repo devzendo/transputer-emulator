@@ -30,7 +30,7 @@ public:
     void writeByte(BYTE b);
     void resetLink(void);
     int getLinkType(void);
-	void poll(void);
+	void clock(void);
 private:
     void connect(void);
     bool myConnected = false;
