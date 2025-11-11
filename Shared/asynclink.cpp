@@ -159,7 +159,22 @@ int OversampledTxRxPin::_resync_in_samples() const {
 // * That an ack has been received - the emulator only reschedules the sending process when the ack for the final byte
 //   has been received.
 
-
+/*
+ * Status word bits.
+ * 15       | 14       | 13        | 12        | 11        | 10        | 9         | 8
+ * FRAMING  | OVERRUN  | READ DATA | READY TO  | DATA SENT | ......... | ......... | ......... |
+ *          |          | AVAILABLE | SEND      | NOT ACKED |           |           |           |
+ *          |          |           |           | (TIMEOUT) |           |           |           |
+ * ---------------------------------------------------------------------------------------------
+ * 7        | 6        | 5         | 4         | 3         | 2         | 1         | 0
+ * DATA RECEIVED IF READ DATA AVAILABLE (BIT 13) IS TRUE
+ */
+const WORD16 ST_FRAMING = 0x8000;
+const WORD16 ST_OVERRUN = 0x4000;
+const WORD16 ST_READ_DATA_AVAILABLE = 0x2000;
+const WORD16 ST_READY_TO_SEND = 0x1000;
+const WORD16 ST_DATA_SENT_NOT_ACKED = 0x0800;
+const WORD16 ST_DATA_MASK = 0x00FF;
 
 AsyncLink::AsyncLink(int linkNo, bool isServer, TxRxPin& tx_rx_pin) :
     Link(linkNo, isServer), m_pin(tx_rx_pin) {
@@ -172,7 +187,7 @@ AsyncLink::AsyncLink(int linkNo, bool isServer, TxRxPin& tx_rx_pin) :
     m_o_pin->registerRxBitReceiver(receiver);
     // The sender can use the TxRxPin directly - it could use the OversampledTxRxPin
     // which would pass setTx straight through, but direct is quicker.
-    DataAckSender sender(m_pin);
+    DataAckSender sender(tx_rx_pin);
     receiver.registerReceiverToSender(sender);
     sender.registerSenderToLink(*this); // dereference this to get a reference.
 }

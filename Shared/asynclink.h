@@ -197,6 +197,7 @@ public:
 private:
     TxRxPin & m_pin;
     OversampledTxRxPin * m_o_pin;
+    volatile WORD16 m_status_word;
     WORD32 myWriteSequence, myReadSequence;
 };
 
