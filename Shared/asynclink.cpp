@@ -252,6 +252,10 @@ void DataAckSender::ackReceived() {
             logDebug("Ack being sent has been acked");
             m_ack_rxed = true;
             break;
+        case DataAckSenderState::ACK_TIMEOUT:
+            logDebug("Ack being sent has been acked (timeout)");
+            m_ack_rxed = true;
+            break;
         default:
             logDebug("Ack received");
             break;
@@ -310,6 +314,7 @@ bool DataAckSender::sendData(const BYTE8 byte) {
             logDebugF("Enqueueing data to send 0b%s", byte_to_binary(byte));
             m_data_enqueued = true;
             m_data_enqueued_buffer = byte;
+            m_ack_rxed = false;
             return true;
         case DataAckSenderState::SENDING_DATA:
             // DROP THROUGH
@@ -383,14 +388,14 @@ void DataAckSender::clock() {
                             }
                         }
                     } else { // SENDING_DATA
-                        if (m_ack_rxed) {
-                            changeState(DataAckSenderState::IDLE);
+                        if (m_send_ack) {
+                            m_sampleCount = 0;
+                            m_bits = 2;
+                            m_data = 0x01;
+                            changeState(DataAckSenderState::SENDING_ACK);
                         } else {
-                            if (m_send_ack) {
-                                m_sampleCount = 0;
-                                m_bits = 2;
-                                m_data = 0x01;
-                                changeState(DataAckSenderState::SENDING_ACK);
+                            if (m_ack_rxed) {
+                                changeState(DataAckSenderState::IDLE);
                             } else {
                                 changeState(DataAckSenderState::ACK_TIMEOUT);
                             }
@@ -445,10 +450,17 @@ void DataAckSender::changeState(const DataAckSenderState newState) {
             break;
 
         case DataAckSenderState::SENDING_ACK:
+            if (m_sender_to_link != nullptr) {
+                m_sender_to_link->setReadyToSend();
+            }
+            m_ack_rxed = false;
             break;
         case DataAckSenderState::SENDING_DATA:
             break;
         case DataAckSenderState::ACK_TIMEOUT:
+            if (m_sender_to_link != nullptr) {
+                m_sender_to_link->setTimeoutError();
+            }
             break;
     }
 
