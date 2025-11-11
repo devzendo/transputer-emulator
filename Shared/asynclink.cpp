@@ -364,6 +364,7 @@ void DataAckSender::clock() {
                 m_bits--;
                 m_data >>= 1;
                 if (m_bits == 0) {
+                    logDebugF("End of transmission, state is %s, ack_rxed %d data_enqueued %d send_ack %d", DataAckSenderStateToString(m_state), m_ack_rxed, m_data_enqueued, m_send_ack);
                     if (m_state == DataAckSenderState::SENDING_ACK) {
                         if (m_data_enqueued) {
                             m_ack_rxed = false;
@@ -371,7 +372,15 @@ void DataAckSender::clock() {
                             m_data_enqueued = false;
                             m_data_enqueued_buffer = 0x00;
                         } else {
-                            changeState(DataAckSenderState::IDLE);
+                            if (m_send_ack) {
+                                if (m_ack_rxed) {
+                                    changeState(DataAckSenderState::IDLE);
+                                } else {
+                                    changeState(DataAckSenderState::ACK_TIMEOUT);
+                                }
+                            } else {
+                                changeState(DataAckSenderState::IDLE);
+                            }
                         }
                     } else { // SENDING_DATA
                         if (m_ack_rxed) {
@@ -408,8 +417,23 @@ void DataAckSender::unregisterSenderToLink() const {
 }
 
 void DataAckSender::changeState(const DataAckSenderState newState) {
-    logDebugF("Changing state from %s to %s", DataAckSenderStateToString(m_state), DataAckSenderStateToString(newState));
+    // State exit actions
+    logDebugF("Exiting state %s", DataAckSenderStateToString(m_state));
+    switch (m_state) {
+        case DataAckSenderState::IDLE:
+            break;
+        case DataAckSenderState::SENDING_ACK:
+            m_send_ack = false;
+            break;
+        case DataAckSenderState::SENDING_DATA:
+            break;
+        case DataAckSenderState::ACK_TIMEOUT:
+            break;
+    }
+
     // State entry actions
+    logDebugF("Entering state %s", DataAckSenderStateToString(newState));
+    m_state = newState;
     switch (newState) {
         case DataAckSenderState::IDLE:
             if (m_ack_rxed) {
@@ -421,12 +445,13 @@ void DataAckSender::changeState(const DataAckSenderState newState) {
             break;
 
         case DataAckSenderState::SENDING_ACK:
+            break;
         case DataAckSenderState::SENDING_DATA:
+            break;
         case DataAckSenderState::ACK_TIMEOUT:
             break;
     }
 
-    m_state = newState;
 }
 
 int DataAckSender::_queueLength() const {
