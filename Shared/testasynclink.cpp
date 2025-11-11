@@ -540,8 +540,8 @@ protected:
 
     void goToAckTimeout() const {
         m_sender->sendData(0xC9);
-        const int expected_bits = 11;
-        const int expected_samples = expected_bits * 16;
+        constexpr int expected_bits = 11;
+        constexpr int expected_samples = expected_bits * 16;
         for (int i=0; i<expected_samples; i++) {
             m_sender->clock();
             m_trace->clock();
@@ -568,8 +568,8 @@ TEST_F(DataAckSenderTest, InitialConditions) {
 // A
 TEST_F(DataAckSenderTest, DataSentAckReceivedGoesToIdle) {
     EXPECT_EQ(m_sender->sendData(0xC9), true);
-    const int expected_bits = 11;
-    const int expected_samples = expected_bits * 16;
+    constexpr int expected_bits = 11;
+    constexpr int expected_samples = expected_bits * 16;
     logDebug("Data to be clocked out looks right with framing");
     for (int i=0; i<expected_samples - 1; i++) { // -1 to sense ack_rxed flag before going IDLE and resetting
         m_sender->clock();
@@ -631,8 +631,8 @@ TEST_F(DataAckSenderTest, DataSendButNoListener) {
 TEST_F(DataAckSenderTest, NoDataEnqueuedSendingAckClocksAckOutGoesIdle) {
     // data_enqueued is false in initial conditions
     m_sender->sendAck();
-    const int expected_bits = 2;
-    const int expected_samples = expected_bits * 16;
+    constexpr int expected_bits = 2;
+    constexpr int expected_samples = expected_bits * 16;
     for (int i=0; i<expected_samples; i++) {
         EXPECT_EQ(m_sender->state(), DataAckSenderState::SENDING_ACK);
         m_sender->clock();
@@ -647,8 +647,8 @@ TEST_F(DataAckSenderTest, NoDataEnqueuedSendingAckClocksAckOutGoesIdle) {
 TEST_F(DataAckSenderTest, SendingAckDueToSendAckAndAckReceivedGoesToIdle) {
     // Want to get into SENDING_ACK with send_ack true.
     m_sender->sendData(0xC9);
-    const int expected_data_bits = 11;
-    const int expected_data_samples = expected_data_bits * 16;
+    constexpr int expected_data_bits = 11;
+    constexpr int expected_data_samples = expected_data_bits * 16;
     for (int i=0; i<expected_data_samples - 1; i++) { // -1 so we stay in SENDING_DATA while send ack cb called.
         m_sender->clock();
         m_trace->clock();
@@ -662,8 +662,8 @@ TEST_F(DataAckSenderTest, SendingAckDueToSendAckAndAckReceivedGoesToIdle) {
     m_trace->clock();
     EXPECT_EQ(m_sender->state(), DataAckSenderState::SENDING_ACK);
 
-    const int expected_ack_bits = 2;
-    const int expected_ack_samples = expected_ack_bits * 16;
+    constexpr int expected_ack_bits = 2;
+    constexpr int expected_ack_samples = expected_ack_bits * 16;
     for (int i=0; i<expected_ack_samples - 1; i++) { // -1 to stay in SENDING_ACK while we receive an ack.
         m_sender->clock();
         m_trace->clock();
@@ -695,8 +695,8 @@ TEST_F(DataAckSenderTest, DataEnqueuedWhenSendingAckClocksAckOutThenGoesSendingD
 
     // Needs clocking to send the signals out. 16 clock pulses/bit.
     // An ack is a 1 followed by a 0.
-    const int expected_bits = 2;
-    const int expected_samples = expected_bits * 16;
+    constexpr int expected_bits = 2;
+    constexpr int expected_samples = expected_bits * 16;
     for (int i=0; i<expected_samples; i++) {
         EXPECT_EQ(m_sender->state(), DataAckSenderState::SENDING_ACK);
         m_sender->clock();
@@ -704,7 +704,7 @@ TEST_F(DataAckSenderTest, DataEnqueuedWhenSendingAckClocksAckOutThenGoesSendingD
     }
     const std::vector<bool> heard = m_trace->heard();
     EXPECT_EQ(heard.size(), expected_samples);
-    const int expected_ack_bits[expected_bits] = { 1, 0 };
+    constexpr int expected_ack_bits[expected_bits] = { 1, 0 };
     const std::vector<bool> expected = generate_sample_vector_from_bits(expected_ack_bits, expected_bits);
     EXPECT_EQ(heard, expected);
 
@@ -720,8 +720,8 @@ TEST_F(DataAckSenderTest, DataEnqueuedWhenSendingAckClocksAckOutThenGoesSendingD
 // H
 TEST_F(DataAckSenderTest, DataSendThenSendAck) {
     EXPECT_EQ(m_sender->sendData(0xC9), true);
-    const int num_expected_data_bits = 11;
-    const int num_expected_data_samples = num_expected_data_bits * 16;
+    constexpr int num_expected_data_bits = 11;
+    constexpr int num_expected_data_samples = num_expected_data_bits * 16;
     for (int i=0; i<num_expected_data_samples - 1; i++) { // -1 to sense send_ack flag before leaving SENDING_DATA
         m_sender->clock();
         m_trace->clock();
@@ -744,7 +744,7 @@ TEST_F(DataAckSenderTest, DataSendThenSendAck) {
     EXPECT_EQ(m_sender->state(), DataAckSenderState::SENDING_ACK);
     // Still recall you were told to send the ack?
     EXPECT_EQ(m_sender->_send_ack(), true);
-    const int num_expected_ack_bits = 2;
+    constexpr int num_expected_ack_bits = 2;
     EXPECT_EQ(m_sender->_queueLength(), num_expected_ack_bits);
     EXPECT_EQ(m_sender->_data(), 0x01);
 }
@@ -755,8 +755,8 @@ TEST_F(DataAckSenderTest, DataSentButNoAckReceived) {
     EXPECT_EQ(m_sender->state(), DataAckSenderState::SENDING_DATA);
     EXPECT_EQ(m_sender->_ack_rxed(), false);
     EXPECT_EQ(m_sender->_send_ack(), false);
-    const int expected_bits = 11;
-    const int expected_samples = expected_bits * 16;
+    constexpr int expected_bits = 11;
+    constexpr int expected_samples = expected_bits * 16;
     for (int i=0; i<expected_samples; i++) {
         m_sender->clock();
         m_trace->clock();
@@ -769,8 +769,8 @@ TEST_F(DataAckSenderTest, DataSentButNoAckReceived) {
 TEST_F(DataAckSenderTest, SendingAckToTimeout) {
     // Want to get into SENDING_ACK with send_ack true.
     EXPECT_EQ(m_sender->sendData(0xC9), true); // Needs clocking to send the signals out. 16 clock pulses/bit.
-    const int expected_bits = 11;
-    const int expected_samples = expected_bits * 16;
+    constexpr int expected_bits = 11;
+    constexpr int expected_samples = expected_bits * 16;
     for (int i=0; i<expected_samples - 1; i++) { // -1 so we stay in SENDING_DATA while send ack cb called.
         m_sender->clock();
         m_trace->clock();
@@ -784,8 +784,8 @@ TEST_F(DataAckSenderTest, SendingAckToTimeout) {
     EXPECT_EQ(m_sender->state(), DataAckSenderState::SENDING_ACK);
 
     // Now sense the ack we're sending...
-    const int expected_ack_bits = 2;
-    const int expected_ack_samples = expected_ack_bits * 16;
+    constexpr int expected_ack_bits = 2;
+    constexpr int expected_ack_samples = expected_ack_bits * 16;
     for (int i=0; i<expected_ack_samples; i++) {
         EXPECT_EQ(m_sender->state(), DataAckSenderState::SENDING_ACK);
         m_sender->clock();
@@ -801,8 +801,8 @@ TEST_F(DataAckSenderTest, SendingAckToTimeout) {
 // K
 TEST_F(DataAckSenderTest, EnterIdleWithAckRxedClearsItAndSetsRTS) {
     EXPECT_EQ(m_sender->sendData(0xC9), true);
-    const int expected_bits = 11;
-    const int expected_samples = expected_bits * 16;
+    constexpr int expected_bits = 11;
+    constexpr int expected_samples = expected_bits * 16;
     EXPECT_EQ(m_sender->state(), DataAckSenderState::SENDING_DATA);
     EXPECT_EQ(m_sender->_ack_rxed(), false);
     for (int i=0; i<expected_samples - 1; i++) { // -1 to sense ack_rxed flag before going IDLE and resetting
@@ -863,9 +863,9 @@ TEST_F(DataAckSenderTest, AckClockedOutInSendingAck) {
 
     // Needs clocking to send the signals out. 16 clock pulses/bit.
     // An ack is a 1 followed by a 0.
-    const int expected_bits = 2;
-    const int expected_samples = expected_bits * 16;
-    const int num_expected_ack_bits = 2;
+    constexpr int expected_bits = 2;
+    constexpr int expected_samples = expected_bits * 16;
+    constexpr int num_expected_ack_bits = 2;
     EXPECT_EQ(m_sender->_queueLength(), num_expected_ack_bits);
     EXPECT_EQ(m_sender->_data(), 0x01);
     for (int i=0; i<expected_samples; i++) {
@@ -875,7 +875,7 @@ TEST_F(DataAckSenderTest, AckClockedOutInSendingAck) {
     }
     const std::vector<bool> heard = m_trace->heard();
     EXPECT_EQ(heard.size(), expected_samples);
-    const int expected_ack_bits[expected_bits] = { 1, 0 };
+    constexpr int expected_ack_bits[expected_bits] = { 1, 0 };
     const std::vector<bool> expected = generate_sample_vector_from_bits(expected_ack_bits, expected_bits);
     EXPECT_EQ(heard, expected);
 }
@@ -894,8 +894,8 @@ TEST_F(DataAckSenderTest, AckReceivedInSendingAckSetsAckRxed) {
 // P
 TEST_F(DataAckSenderTest, DataCantBeSentWhileAlreadySending) {
     EXPECT_EQ(m_sender->sendData(0xC9), true);
-    const int expected_bits = 11;
-    const int expected_samples = expected_bits * 16 - 1; // -1 so we're still in SENDING_DATA
+    constexpr int expected_bits = 11;
+    constexpr int expected_samples = expected_bits * 16 - 1; // -1 so we're still in SENDING_DATA
     for (int i=0; i<expected_samples; i++) {
         m_sender->clock();
         m_trace->clock();
@@ -910,8 +910,8 @@ TEST_F(DataAckSenderTest, DataClockedOutInSendingData) {
     EXPECT_EQ(m_sender->sendData(0xC9), true); // Needs clocking to send the signals out. 16 clock pulses/bit.
 
     // Data is two start bits (1), the data bits, then a stop bit (0).
-    const int expected_bits = 11;
-    const int expected_samples = expected_bits * 16;
+    constexpr int expected_bits = 11;
+    constexpr int expected_samples = expected_bits * 16;
     EXPECT_EQ(m_sender->state(), DataAckSenderState::SENDING_DATA);
     EXPECT_EQ(m_sender->_queueLength(), expected_bits);
     EXPECT_EQ(m_sender->_data(), 0x0327);
@@ -932,8 +932,8 @@ TEST_F(DataAckSenderTest, DataClockedOutInSendingData) {
 // R
 TEST_F(DataAckSenderTest, AckReceivedInSendingData) {
     EXPECT_EQ(m_sender->sendData(0xC9), true);
-    const int expected_bits = 11;
-    const int expected_samples = expected_bits * 16;
+    constexpr int expected_bits = 11;
+    constexpr int expected_samples = expected_bits * 16;
     EXPECT_EQ(m_sender->_ack_rxed(), false);
     for (int i=0; i<expected_samples - 1; i++) { // -1 so we can receive an ack before leaving state
         EXPECT_EQ(m_sender->state(), DataAckSenderState::SENDING_DATA);
@@ -950,8 +950,8 @@ TEST_F(DataAckSenderTest, AckReceivedInSendingData) {
 // S
 TEST_F(DataAckSenderTest, SendAckRequestedInSendingData) {
     EXPECT_EQ(m_sender->sendData(0xC9), true);
-    const int expected_bits = 11;
-    const int expected_samples = expected_bits * 16;
+    constexpr int expected_bits = 11;
+    constexpr int expected_samples = expected_bits * 16;
     EXPECT_EQ(m_sender->_send_ack(), false);
     for (int i=0; i<expected_samples - 1; i++) { // -1 so we can have a send_ack request before leaving state
         EXPECT_EQ(m_sender->state(), DataAckSenderState::SENDING_DATA);
@@ -978,8 +978,8 @@ TEST_F(DataAckSenderTest, TimeoutEntrySetsTimeoutFlagNoListener) {
     EXPECT_EQ(m_timeout, false);
     EXPECT_EQ(m_sender->_ack_rxed(), false);
     m_sender->sendData(0xC9);
-    const int expected_bits = 11;
-    const int expected_samples = expected_bits * 16;
+    constexpr int expected_bits = 11;
+    constexpr int expected_samples = expected_bits * 16;
     for (int i=0; i<expected_samples - 1; i++) { // -1 so we knock out the listener before state change
         EXPECT_EQ(m_sender->state(), DataAckSenderState::SENDING_DATA);
         m_sender->clock();
@@ -1010,8 +1010,8 @@ TEST_F(DataAckSenderTest, AckReceivedInTimeout) {
 // W
 TEST_F(DataAckSenderTest, EnterSendingAckSetsRTSClearsAckRxed) {
     m_sender->sendData(0xC9);
-    const int expected_bits = 11;
-    const int expected_samples = expected_bits * 16;
+    constexpr int expected_bits = 11;
+    constexpr int expected_samples = expected_bits * 16;
     for (int i=0; i<expected_samples - 1; i++) { // -1 so we set ack_rxed and send_ack before state change
         m_sender->clock();
         m_trace->clock();
@@ -1032,8 +1032,8 @@ TEST_F(DataAckSenderTest, EnterSendingAckSetsRTSClearsAckRxed) {
 // W (null safety)
 TEST_F(DataAckSenderTest, EnterSendingAckDoesNotSetsRTSButClearsAckRxedNoListener) {
     m_sender->sendData(0xC9);
-    const int expected_bits = 11;
-    const int expected_samples = expected_bits * 16;
+    constexpr int expected_bits = 11;
+    constexpr int expected_samples = expected_bits * 16;
     for (int i=0; i<expected_samples - 1; i++) { // -1 so we set ack_rxed and send_ack before state change
         m_sender->clock();
         m_trace->clock();
@@ -1055,8 +1055,8 @@ TEST_F(DataAckSenderTest, EnterSendingAckDoesNotSetsRTSButClearsAckRxedNoListene
 // X
 TEST_F(DataAckSenderTest, ExitSendingAckClearsSendAck) {
     m_sender->sendData(0xC9);
-    const int expected_bits = 11;
-    const int expected_samples = expected_bits * 16;
+    constexpr int expected_bits = 11;
+    constexpr int expected_samples = expected_bits * 16;
     for (int i=0; i<expected_samples - 1; i++) { // -1 so we set send_ack before state change
         m_sender->clock();
         m_trace->clock();
@@ -1068,8 +1068,8 @@ TEST_F(DataAckSenderTest, ExitSendingAckClearsSendAck) {
     m_trace->clock();
 
     EXPECT_EQ(m_sender->state(), DataAckSenderState::SENDING_ACK);
-    const int expected_ack_bits = 2;
-    const int expected_ack_samples = expected_ack_bits * 16;
+    constexpr int expected_ack_bits = 2;
+    constexpr int expected_ack_samples = expected_ack_bits * 16;
     for (int i=0; i<expected_ack_samples; i++) {
         m_sender->clock();
         m_trace->clock();
@@ -1082,8 +1082,8 @@ TEST_F(DataAckSenderTest, ExitSendingAckClearsSendAck) {
 TEST_F(DataAckSenderTest, StoryNoDataEnqueuedSendingAckClocksAckOutGoesIdle) {
     m_sender->sendAck();
     EXPECT_EQ(m_sender->_data_enqueued(), false);
-    const int expected_bits = 2;
-    const int expected_samples = expected_bits * 16;
+    constexpr int expected_bits = 2;
+    constexpr int expected_samples = expected_bits * 16;
     for (int i=0; i<expected_samples; i++) {
         EXPECT_EQ(m_sender->state(), DataAckSenderState::SENDING_ACK);
         m_sender->clock();
@@ -1097,7 +1097,7 @@ TEST_F(DataAckSenderTest, StoryNoDataEnqueuedSendingAckClocksAckOutGoesIdle) {
     EXPECT_EQ(m_sender->_queueLength(), 0);
     const std::vector<bool> heard = m_trace->heard();
     EXPECT_EQ(heard.size(), expected_samples);
-    const int expected_ack_bits[expected_bits] = { 1, 0 };
+    constexpr int expected_ack_bits[expected_bits] = { 1, 0 };
     const std::vector<bool> expected = generate_sample_vector_from_bits(expected_ack_bits, expected_bits);
     EXPECT_EQ(heard, expected);
 }
@@ -1114,8 +1114,8 @@ TEST_F(DataAckSenderTest, StoryDataEnqueuedWhenSendingAckClocksAckOutThenGoesSen
 
     // Needs clocking to send the signals out. 16 clock pulses/bit.
     // An ack is a 1 followed by a 0.
-    const int expected_bits = 2;
-    const int expected_samples = expected_bits * 16;
+    constexpr int expected_bits = 2;
+    constexpr int expected_samples = expected_bits * 16;
     for (int i=0; i<expected_samples; i++) {
         EXPECT_EQ(m_sender->state(), DataAckSenderState::SENDING_ACK);
         m_sender->clock();
@@ -1123,7 +1123,7 @@ TEST_F(DataAckSenderTest, StoryDataEnqueuedWhenSendingAckClocksAckOutThenGoesSen
     }
     const std::vector<bool> heard = m_trace->heard();
     EXPECT_EQ(heard.size(), expected_samples);
-    const int expected_ack_bits[expected_bits] = { 1, 0 };
+    constexpr int expected_ack_bits[expected_bits] = { 1, 0 };
     const std::vector<bool> expected = generate_sample_vector_from_bits(expected_ack_bits, expected_bits);
     EXPECT_EQ(heard, expected);
 
@@ -1145,8 +1145,8 @@ TEST_F(DataAckSenderTest, StoryDataSentButNoAckReceived) {
 
     EXPECT_EQ(queryReadyToSend(), false); // We're sending now, so disallow further until it's acked.
     // Data is two start bits (1), the data bits, then a stop bit (0).
-    const int expected_bits = 11;
-    const int expected_samples = expected_bits * 16;
+    constexpr int expected_bits = 11;
+    constexpr int expected_samples = expected_bits * 16;
     EXPECT_EQ(m_sender->state(), DataAckSenderState::SENDING_DATA);
     EXPECT_EQ(m_sender->_queueLength(), expected_bits);
     EXPECT_EQ(m_sender->_data(), 0x0327);
@@ -1176,8 +1176,8 @@ TEST_F(DataAckSenderTest, StoryDataSentAndAckReceived) {
     EXPECT_EQ(m_sender->sendData(0xC9), true); // Needs clocking to send the signals out. 16 clock pulses/bit.
 
     // Data is two start bits (1), the data bits, then a stop bit (0).
-    const int expected_bits = 11;
-    const int expected_samples = expected_bits * 16;
+    constexpr int expected_bits = 11;
+    constexpr int expected_samples = expected_bits * 16;
     EXPECT_EQ(m_sender->state(), DataAckSenderState::SENDING_DATA);
     EXPECT_EQ(m_sender->_queueLength(), expected_bits);
     EXPECT_EQ(m_sender->_data(), 0x0327);
@@ -1219,8 +1219,8 @@ TEST_F(DataAckSenderTest, StoryDataSentAndAckReceived) {
 // H, J
 TEST_F(DataAckSenderTest, StoryDataSendThenSendAckThenTimeout) {
     EXPECT_EQ(m_sender->sendData(0xC9), true);
-    const int num_expected_data_bits = 11;
-    const int num_expected_data_samples = num_expected_data_bits * 16;
+    constexpr int num_expected_data_bits = 11;
+    constexpr int num_expected_data_samples = num_expected_data_bits * 16;
     EXPECT_EQ(m_sender->state(), DataAckSenderState::SENDING_DATA);
     logDebug("Data to be clocked out looks right with framing");
     for (int i=0; i<num_expected_data_samples - 1; i++) { // -1 to sense send_ack flag before leaving SENDING_DATA
@@ -1247,8 +1247,8 @@ TEST_F(DataAckSenderTest, StoryDataSendThenSendAckThenTimeout) {
     EXPECT_EQ(m_sender->state(), DataAckSenderState::SENDING_ACK);
     // Still recall you were told to send the ack?
     EXPECT_EQ(m_sender->_send_ack(), true);
-    const int num_expected_ack_bits = 2;
-    const int num_expected_ack_samples = num_expected_ack_bits * 16;
+    constexpr int num_expected_ack_bits = 2;
+    constexpr int num_expected_ack_samples = num_expected_ack_bits * 16;
     EXPECT_EQ(m_sender->_queueLength(), num_expected_ack_bits);
     EXPECT_EQ(m_sender->_data(), 0x01);
     for (int i=0; i<num_expected_ack_samples; i++) {
@@ -1258,8 +1258,8 @@ TEST_F(DataAckSenderTest, StoryDataSendThenSendAckThenTimeout) {
     }
 
     const std::vector<bool> heard = m_trace->heard();
-    const int num_expected_data_ack_bits = num_expected_data_bits + num_expected_ack_bits;
-    const int num_expected_data_ack_samples = num_expected_data_ack_bits * 16;
+    constexpr int num_expected_data_ack_bits = num_expected_data_bits + num_expected_ack_bits;
+    constexpr int num_expected_data_ack_samples = num_expected_data_ack_bits * 16;
     EXPECT_EQ(heard.size(), num_expected_data_ack_samples); //        vvv note LSB first vvv        ack
     const int expected_bits[num_expected_data_ack_bits] = { 1, 1,  1, 0, 0, 1, 0, 0, 1, 1,  0,     1, 0 };
     const std::vector<bool> expected = generate_sample_vector_from_bits(expected_bits, num_expected_data_ack_bits);
