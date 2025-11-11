@@ -17,8 +17,6 @@
 
 #include "types.h"
 #include "link.h"
-#include "misc.h"
-#include "log.h"
 
 /* Lowest level abstraction: TxRxPin, represents a pair of abstract pins.
  *

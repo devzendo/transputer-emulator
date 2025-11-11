@@ -538,7 +538,7 @@ protected:
         m_timeout = true;
     }
 
-    void goToAckTimeout() {
+    void goToAckTimeout() const {
         m_sender->sendData(0xC9);
         const int expected_bits = 11;
         const int expected_samples = expected_bits * 16;
@@ -1285,8 +1285,6 @@ protected:
     void SetUp() override {
         setLogLevel(LOGLEVEL_DEBUG);
         logDebug("SetUp start");
-        TxRxPin & pairA = m_pair.pairA();
-        TxRxPin & pairB = m_pair.pairB();
         m_receiver = new DataAckReceiver();
         m_receiver->registerReceiverToLink(*this); // dereference this to get a reference
         m_receiver->registerReceiverToSender(*this);
@@ -1377,7 +1375,6 @@ protected:
         EXPECT_EQ(m_receiver->state(), DataAckReceiverState::STOP_BIT);
     }
 
-    CrosswiredTxRxPinPair m_pair;
     DataAckReceiver *m_receiver = nullptr;
     int m_acks_received = 0;
     int m_send_acks_received = 0;

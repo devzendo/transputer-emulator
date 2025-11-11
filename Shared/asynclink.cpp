@@ -15,6 +15,7 @@
 #include <exception>
 
 #include "asynclink.h"
+#include "misc.h"
 #include "log.h"
 
 /*
@@ -273,8 +274,8 @@ const char* DataAckSenderStateToString(const DataAckSenderState s) noexcept
 }
 
 
-DataAckSender::DataAckSender(TxRxPin& tx_rx_pin) : m_pin(tx_rx_pin), m_sampleCount(0), m_bits(0), m_data(0),
-    m_ack_rxed(false), m_send_ack(false), m_data_enqueued(false), m_data_enqueued_buffer(0x00) {
+DataAckSender::DataAckSender(TxRxPin& tx_rx_pin) : m_pin(tx_rx_pin), m_send_ack(false), m_ack_rxed(false), m_sampleCount(0),
+    m_bits(0), m_data(0), m_data_enqueued(false), m_data_enqueued_buffer(0x00) {
 
     // TODO mutex {
     m_state = DataAckSenderState::IDLE;
@@ -386,7 +387,7 @@ void DataAckSender::clock() {
     // TODO mutex {
     switch (m_state) {
         case DataAckSenderState::IDLE:
-            break;
+            // Fall through
         case DataAckSenderState::ACK_TIMEOUT:
             break;
         case DataAckSenderState::SENDING_ACK:
@@ -456,13 +457,13 @@ void DataAckSender::changeState(const DataAckSenderState newState) {
     // State exit actions
     logDebugF("Exiting state %s", DataAckSenderStateToString(m_state));
     switch (m_state) {
-        case DataAckSenderState::IDLE:
-            break;
         case DataAckSenderState::SENDING_ACK:
             m_send_ack = false;
             break;
+        case DataAckSenderState::IDLE:
+            // Fall through
         case DataAckSenderState::SENDING_DATA:
-            break;
+            // Fall through
         case DataAckSenderState::ACK_TIMEOUT:
             break;
     }
