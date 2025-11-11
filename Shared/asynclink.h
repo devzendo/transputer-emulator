@@ -101,15 +101,15 @@ public:
     virtual void clearReadyToSend() = 0;
 
     /**
-     * The DataAckSender has sent some data, but has not received an ack, so the send has timed out: set this flag in
-     * the AsyncLink.
+     * The DataAckSender has sent some data, but has not received an ack, so the send operation has timed out: set
+     * this flag in the AsyncLink.
      */
     virtual void setTimeoutError() = 0;
 };
 
 /**
  * The DataAckReceiver will call a registered instance of ReceiverToSender's sendAck() when it
- * starts to receive data bits, and if the Link's Read Data Available flag is true (i.e. there's space in the receive
+ * starts to receive data bits, and if the Link's Read Data Available flag is true (i.e. there's space in the reception
  * buffer).
  * The ackReceived() method will be called when an ack has been detected. This will eventually cause the Link's Ready To
  * Send flag to be cleared, indicating that more data can be sent.
@@ -119,7 +119,7 @@ public:
     virtual ~ReceiverToSender() = default;
 
     /**
-     * Data is being received, and there is room in the receive buffer to hold it, so send an
+     * Data is being received, and there is room in the reception buffer to hold it, so send an
      * ack.
      */
     virtual void sendAck() = 0;
@@ -143,7 +143,7 @@ public:
     virtual void framingError() = 0;
 
     /**
-     * The DataAckReceiver has detected an overrun error (data was being received but the receive buffer is full: the
+     * The DataAckReceiver has detected an overrun error (data was being received but the reception buffer is full: the
      * Read Data Available flag is true), so informs the AsyncLink via this method.
      */
     virtual void overrunError() = 0;
@@ -204,8 +204,8 @@ private:
 /* Medium level abstraction: DataAckSender/Receiver. Internally used by AsyncLink.
  *
  * DataAckSender is a state machine that uses the Tx half of a TxRxPin to clock out an Ack or Data frame, can be
- * queried for its state and will notify a client (the AsyncLink) that sent Data has been Acked, or the send has timed
- * out.
+ * queried for its state and will notify a client (the AsyncLink) that sent Data has been Acked, or the send operation
+ * has timed out.
  *
  * DataAckReceiver is a state machine that senses the Rx half of a TxRxPin to clock in any received Ack and/or Data
  * frame. It notifies a client (the DataAckSender) of any received Ack, and notifies a client (the DataAckSender) of any

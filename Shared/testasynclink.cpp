@@ -324,10 +324,10 @@ TEST_F(OversampledTxRxPinTest, SyncPulseInputZero) {
 }
 
 // Bits at start of a frame:
-// Zero Zero - invalid
-// Zero One - invalid
-// One Zero - ack
-// One One - data
+// Zero, Zero - invalid
+// Zero,  One - invalid
+// One,  Zero - ack
+// One,   One - data
 
 TEST_F(OversampledTxRxPinTest, SyncPulseInputZeroZero) {
     //                                 0123456789ABCDEF0123456789ABCDEF
@@ -407,7 +407,7 @@ TEST_F(OversampledTxRxPinTest, MajorityVote5Ack) {
     expect_ack(received, m_o_pin._resync_in_samples(), m_received_bits);
 }
 
-// One One - This is the start of a data frame; want to ensure the resync is at the end of the data...
+// One, One - This is the start of a data frame; want to ensure the resync is at the end of the data...
 
 TEST_F(OversampledTxRxPinTest, SyncPulseInputOneOne) {
     //                                 0123456789ABCDEF0123456789ABCDEF
@@ -586,7 +586,7 @@ TEST_F(DataAckSenderTest, DataSentAckReceivedGoesToIdle) {
     EXPECT_EQ(m_sender->_ack_rxed(), true);
     // Test rest of transition guard
     EXPECT_EQ(m_sender->_send_ack(), false);
-    // bit more clocking...
+    // A bit more clocking...
     m_sender->clock();
     m_trace->clock();
 
@@ -736,7 +736,7 @@ TEST_F(DataAckSenderTest, DataSendThenSendAck) {
     EXPECT_EQ(m_sender->state(), DataAckSenderState::SENDING_DATA);
     // Has the sender registered it needs to send the ack?
     EXPECT_EQ(m_sender->_send_ack(), true);
-    // bit more clocking...
+    // A bit more clocking...
     m_sender->clock();
     m_trace->clock();
 
@@ -822,7 +822,7 @@ TEST_F(DataAckSenderTest, EnterIdleWithAckRxedClearsItAndSetsRTS) {
     EXPECT_EQ(m_sender->_send_ack(), false);
     // RTS should be clear (we're sending)
     EXPECT_EQ(m_ready_to_send, false);
-    // bit more clocking...
+    // A bit more clocking...
     m_sender->clock();
     m_trace->clock();
 
@@ -942,7 +942,7 @@ TEST_F(DataAckSenderTest, AckReceivedInSendingData) {
     }
     m_sender->ackReceived();
     EXPECT_EQ(m_sender->_ack_rxed(), true);
-    // bit more clocking
+    // A bit more clocking
     m_sender->clock();
     m_trace->clock();
 }
@@ -960,7 +960,7 @@ TEST_F(DataAckSenderTest, SendAckRequestedInSendingData) {
     }
     m_sender->sendAck();
     EXPECT_EQ(m_sender->_send_ack(), true);
-    // bit more clocking
+    // A bit more clocking
     m_sender->clock();
     m_trace->clock();
 }
@@ -1199,7 +1199,7 @@ TEST_F(DataAckSenderTest, StoryDataSentAndAckReceived) {
     EXPECT_EQ(m_sender->_ack_rxed(), true);
     // RTS should be clear (we're sending)
     EXPECT_EQ(m_ready_to_send, false);
-    // bit more clocking...
+    // Perform more clocking...
     m_sender->clock();
     m_trace->clock();
 
@@ -1239,7 +1239,7 @@ TEST_F(DataAckSenderTest, StoryDataSendThenSendAckThenTimeout) {
     EXPECT_EQ(m_sender->_send_ack(), true);
     // We have not heard an ack.
     EXPECT_EQ(m_sender->_ack_rxed(), false);
-    // bit more clocking...
+    // A bit more clocking...
     m_sender->clock();
     m_trace->clock();
 
