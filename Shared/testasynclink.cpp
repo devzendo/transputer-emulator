@@ -110,6 +110,10 @@ protected:
     AsyncLink *linkB = nullptr;
 };
 
+TEST_F(AsyncLinkTest, RTSSetOnInitialisation) {
+    EXPECT_EQ(linkA->queryReadyToSend(), true);
+}
+
 /*
 TEST_F(AsyncLinkTest, WriteAndReadByte) {
     linkA->writeByte(16);
