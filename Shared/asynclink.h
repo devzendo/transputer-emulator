@@ -165,43 +165,6 @@ public:
     virtual void clearReadDataAvailable() = 0;
 };
 
-
-
-/* Highest level abstraction: AsyncLink uses the DataAckSender & DataAckReceiver state machines,
- * and an OversampledTxRxPin to handle the send/receive over an underlying TxRxPin.
- */
-class AsyncLink : public Link, SenderToLink, ReceiverToLink {
-public:
-    AsyncLink(int linkNo, bool isServer, TxRxPin& tx_rx_pin);
-    void initialise() override;
-    ~AsyncLink() override;
-    BYTE8 readByte() override;
-    void writeByte(BYTE8 b) override;
-    void resetLink() override;
-    int getLinkType() override;
-    void clock() override;
-
-    // SenderToLink
-    bool queryReadyToSend() override;
-    void setReadyToSend() override;
-    void clearReadyToSend() override;
-    void setTimeoutError() override;
-
-    // ReceiverToLink
-    void framingError() override;
-    void overrunError() override;
-    void dataReceived(BYTE8 data) override;
-    bool queryReadDataAvailable() override;
-    void clearReadDataAvailable() override;
-
-private:
-    TxRxPin & m_pin;
-    OversampledTxRxPin * m_o_pin;
-    volatile WORD16 m_status_word;
-    WORD32 myWriteSequence, myReadSequence;
-};
-
-
 /* Medium level abstraction: DataAckSender/Receiver. Internally used by AsyncLink.
  *
  * DataAckSender is a state machine that uses the Tx half of a TxRxPin to clock out an Ack or Data frame, can be
@@ -290,5 +253,42 @@ private:
     mutable ReceiverToSender *m_receiver_to_sender = nullptr;
     mutable ReceiverToLink *m_receiver_to_link = nullptr;
 };
+
+
+/* Highest level abstraction: AsyncLink uses the DataAckSender & DataAckReceiver state machines,
+ * and an OversampledTxRxPin to handle the send/receive over an underlying TxRxPin.
+ */
+class AsyncLink : public Link, SenderToLink, ReceiverToLink {
+public:
+    AsyncLink(int linkNo, bool isServer, TxRxPin& tx_rx_pin);
+    void initialise() override;
+    ~AsyncLink() override;
+    BYTE8 readByte() override;
+    void writeByte(BYTE8 b) override;
+    void resetLink() override;
+    int getLinkType() override;
+    void clock() override;
+
+    // SenderToLink
+    bool queryReadyToSend() override;
+    void setReadyToSend() override;
+    void clearReadyToSend() override;
+    void setTimeoutError() override;
+
+    // ReceiverToLink
+    void framingError() override;
+    void overrunError() override;
+    void dataReceived(BYTE8 data) override;
+    bool queryReadDataAvailable() override;
+    void clearReadDataAvailable() override;
+
+private:
+    TxRxPin & m_pin;
+    OversampledTxRxPin * m_o_pin;
+    volatile WORD16 m_status_word;
+    WORD32 myWriteSequence, myReadSequence;
+};
+
+
 
 #endif // _ASYNCLINK_H
