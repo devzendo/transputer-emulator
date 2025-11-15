@@ -14,6 +14,7 @@ UPONE="${PWD%/*}"
 
 rm -rf cmake-build-release/ ; mvn clean
 export PICO_SDK_PATH=${UPONE}/PICO_SDK
-export PICO_EXTRAS_PATH=${UPONE}/PICO_EXTRAS
 mvn -DCROSS=PICO compile -P build
+
+
 

@@ -25,6 +25,10 @@ else()
     message(STATUS "Not cross-compiling, this is a full desktop build")
 endif()
 
+# Weird build problems that resolve on a second build may be caused by setting flags before the project statement
+# see https://forums.raspberrypi.com/viewtopic.php?t=336843 - comment by kilograham, Mon, Jul 04. 2022.
+# Fix by using add_compile_options() instead.
+
 # Convenience CMake variables, and analogues of them as C++ preprocessor definitions.
 if(PICO) # OR TEENSY OR ADAFRUIT_FEATHER .. or whatever
   set(EMBEDDED ON)
@@ -46,8 +50,9 @@ endif()
 # one of PLATFORM_OSX, PLATFORM_LINUX, PLATFORM_WINDOWS, PLATFORM_PICO.
 
 if(PICO)
+  # Picotool problems? Enable this:
+  # set(PICOTOOL_FORCE_FETCH_FROM_GIT 1)
   include(pico_sdk_import.cmake)
-  include(pico_extras_import.cmake)
   set(PICO_CXX_ENABLE_EXCEPTIONS 1)
 endif(PICO)
 

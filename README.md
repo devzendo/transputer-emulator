@@ -18,7 +18,7 @@ limited the C++ standard I could support.
 
 
 ## Project Status
-Last changes in early November 2025.
+Last changes in mid November 2025.
 
 Currently adding a build for the Raspberry Pi Pico, using USB CDC for diagnostic and link 0 I/O.
 Starting a GPIO-based asynchronous link abstraction, for eventual use on the Pi Pico.
@@ -448,7 +448,7 @@ Prerequisites:
   - G++ 11 etc:
     apt-get install build-essential g++-11 make cmake
  
-- Raspberry Pi Pico (build on Ubuntu 24.04)
+- Raspberry Pi Pico (build on Intel ~ Ubuntu 24.04; have had no success yet on macOS/Apple Silicon)
   - The Pico SDK and toolchain:
     `apt install gcc-arm-none-eabi libnewlib-arm-none-eabi build-essential`
     The Pico SDK should be cloned from https://github.com/raspberrypi/pico-sdk

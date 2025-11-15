@@ -293,7 +293,7 @@ struct CriticalSection  /* BasicResolvable */ {
 private:
     critical_section_t m_critsec;
 };
-#define MUTEX     std::lock_guard<CriticalSection> guard(m_critsec);
+#define MUTEX     std::lock_guard<CriticalSection> guard(m_criticalsection);
 #endif
 
 /* Highest level abstraction: AsyncLink uses the DataAckSender & DataAckReceiver state machines,

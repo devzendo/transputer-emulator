@@ -234,8 +234,7 @@ bool AsyncLink::queryReadyToSend() {
 }
 
 void AsyncLink::setReadyToSend() {
-    std::lock_guard<std::mutex> guard(m_mutex);
-
+    MUTEX
     // TODO
 }
 
