@@ -28,6 +28,10 @@ add_library(parachutedev STATIC log.h log.cpp misc.h misc.cpp hexdump.h hexdump.
         "${non_embedded_sources}"
 )
 # asynclink is intended for embedded, but am developing it on desktop for now
+# if asynclink is built for pico, it pulls in some pico SDK:
+if(PICO)
+    target_link_libraries(parachutedev pico_sync)
+endif(PICO)
 
 if(NOT(EMBEDDED))
   add_library(testfixtures STATIC tempfilesfixture.h tempfilesfixture.cpp exceptionfixture.h)

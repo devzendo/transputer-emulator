@@ -15,6 +15,15 @@
 #ifndef _ASYNCLINK_H
 #define _ASYNCLINK_H
 
+#ifdef DESKTOP
+#include <mutex>
+#endif
+
+#ifdef PICO
+#include <mutex> // For std::lock_guard and BasicLockable
+#include <pico/sync.h>
+#endif
+
 #include "types.h"
 #include "link.h"
 
@@ -254,6 +263,38 @@ private:
     mutable ReceiverToLink *m_receiver_to_link = nullptr;
 };
 
+/* Access to the AsyncLink status word and other apparatus is protected by a std::lock_guard
+ * and an appropriate lock for the platform - std::mutex on desktop, and a critical_section_t
+ * on PICO, wrapped in this BasicResolvable.
+ */
+
+#ifdef DESKTOP
+#define MUTEX     std::lock_guard<std::mutex> guard(m_mutex);
+#endif
+
+#ifdef PICO
+struct CriticalSection  /* BasicResolvable */ {
+    CriticalSection() {
+        critical_section_init(&m_critsec);
+    }
+
+    void lock() {
+        critical_section_enter_blocking(&m_critsec);
+    }
+
+    void unlock() {
+        critical_section_exit(&m_critsec);
+    }
+
+    CriticalSection(const CriticalSection&) = delete;
+
+    CriticalSection& operator=(const CriticalSection&) = delete;
+
+private:
+    critical_section_t m_critsec;
+};
+#define MUTEX     std::lock_guard<CriticalSection> guard(m_critsec);
+#endif
 
 /* Highest level abstraction: AsyncLink uses the DataAckSender & DataAckReceiver state machines,
  * and an OversampledTxRxPin to handle the send/receive over an underlying TxRxPin.
@@ -285,8 +326,16 @@ public:
 private:
     TxRxPin & m_pin;
     OversampledTxRxPin * m_o_pin;
+    DataAckSender * m_sender;
+    DataAckReceiver * m_receiver;
     volatile WORD16 m_status_word;
     WORD32 myWriteSequence, myReadSequence;
+#ifdef DESKTOP
+    std::mutex m_mutex;
+#endif
+#ifdef PICO
+    CriticalSection m_criticalsection;
+#endif
 };
 
 

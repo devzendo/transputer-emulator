@@ -18,6 +18,7 @@
 #include "misc.h"
 #include "log.h"
 
+
 /*
  * A TxRxPin decorator that performs majority voting to provide solid bit-long true/false values for all the samples
  * in a bit.
@@ -182,18 +183,18 @@ AsyncLink::AsyncLink(int linkNo, bool isServer, TxRxPin& tx_rx_pin) :
     myWriteSequence = myReadSequence = 0;
 
     m_o_pin = new OversampledTxRxPin(tx_rx_pin);
-    DataAckReceiver receiver;
-    receiver.registerReceiverToLink(*this); // dereference this to get a reference.
-    m_o_pin->registerRxBitReceiver(receiver);
+    m_receiver = new DataAckReceiver();
+    m_receiver->registerReceiverToLink(*this); // dereference this to get a reference.
+    m_o_pin->registerRxBitReceiver(*m_receiver);
     // The sender can use the TxRxPin directly - it could use the OversampledTxRxPin
     // which would pass setTx straight through, but direct is quicker.
-    DataAckSender sender(tx_rx_pin);
-    receiver.registerReceiverToSender(sender);
-    sender.registerSenderToLink(*this); // dereference this to get a reference.
+    m_sender = new DataAckSender(tx_rx_pin);
+    m_receiver->registerReceiverToSender(*m_sender);
+    m_sender->registerSenderToLink(*this); // dereference this to get a reference.
 }
 
 void AsyncLink::initialise() {
-    
+    setReadyToSend();
 }
 
 AsyncLink::~AsyncLink() {
@@ -225,13 +226,16 @@ void AsyncLink::clock() {
 	// no-op
 }
 
+
 // SenderToLink
 bool AsyncLink::queryReadyToSend() {
-    // TODO
+    MUTEX
     return false;
 }
 
 void AsyncLink::setReadyToSend() {
+    std::lock_guard<std::mutex> guard(m_mutex);
+
     // TODO
 }
 
