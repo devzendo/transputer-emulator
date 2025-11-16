@@ -12,6 +12,9 @@
 //------------------------------------------------------------------------------
 
 #include <vector>
+#include <atomic>
+#include <chrono>
+#include <thread>
 
 #include "gtest/gtest.h"
 #include "link.h"
@@ -63,6 +66,88 @@ public:
 };
 
 
+class AsyncLinkClockTest : public ::testing::Test {
+public:
+    AsyncLinkClockTest() : clock(-1, handler) {
+    }
+protected:
+
+    void SetUp() override {
+        setLogLevel(LOGLEVEL_DEBUG);
+        logDebug("SetUp start");
+
+        logDebug("Setup complete");
+        logFlush();
+    }
+
+    void TearDown() override {
+        logDebug("TearDown start");
+
+        logDebug("TearDown complete");
+        logFlush();
+    }
+
+    class AtomicTickHandler: public TickHandler {
+    public:
+        AtomicTickHandler() : TickHandler(), m_counter(0) {
+
+        }
+
+        // TickHandler
+        void tick() override {
+            // logDebug("Tick - increment");
+            m_counter.fetch_add(1);
+        }
+
+        int counter() {
+            int counter = m_counter.load();
+            logDebugF("Counter is %d", counter);
+            return counter;
+        }
+
+    private:
+        std::atomic_int m_counter;
+    };
+
+    AtomicTickHandler handler;
+    AsyncLinkClock clock;
+};
+
+TEST_F(AsyncLinkClockTest, InitialConditions) {
+    EXPECT_EQ(handler.counter(), 0);
+    EXPECT_EQ(handler.is_running(), false);
+}
+
+TEST_F(AsyncLinkClockTest, StartTicksThenStopHalts) {
+    clock.start();
+    EXPECT_EQ(handler.is_running(), true);
+
+    std::this_thread::sleep_for(std::chrono::milliseconds(100));
+
+    EXPECT_EQ(handler.is_running(), true);
+    int counter1 = handler.counter();
+    EXPECT_GT(counter1, 0); // counter going up
+
+    std::this_thread::sleep_for(std::chrono::milliseconds(100));
+
+    int counter2 = handler.counter();
+    EXPECT_GT(counter2, counter1); // counter still going up
+
+    std::this_thread::sleep_for(std::chrono::milliseconds(100));
+
+    clock.stop();
+
+    std::this_thread::sleep_for(std::chrono::milliseconds(100));
+    EXPECT_EQ(handler.is_running(), false); // now everything is stopping
+    int counter3 = handler.counter();
+    EXPECT_GE(counter3, counter2); // maybe greater
+
+    std::this_thread::sleep_for(std::chrono::milliseconds(100));
+    EXPECT_EQ(handler.is_running(), false); // should be stasis.
+    int counter4 = handler.counter();
+    EXPECT_EQ(counter4, counter3); // no change
+}
+
 class AsyncLinkTest : public ::testing::Test {
 protected:
 
@@ -111,6 +196,17 @@ protected:
 };
 
 TEST_F(AsyncLinkTest, RTSSetOnInitialisation) {
+    EXPECT_EQ(linkA->queryReadyToSend(), true);
+}
+
+TEST_F(AsyncLinkTest, ClearRTSClearsIt) {
+    linkA->clearReadyToSend();
+    EXPECT_EQ(linkA->queryReadyToSend(), false);
+}
+
+TEST_F(AsyncLinkTest, SetRTSSetsIt) {
+    linkA->clearReadyToSend();
+    linkA->setReadyToSend();
     EXPECT_EQ(linkA->queryReadyToSend(), true);
 }
 

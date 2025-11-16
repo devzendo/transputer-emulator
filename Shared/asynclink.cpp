@@ -13,11 +13,13 @@
 //------------------------------------------------------------------------------
 
 #include <exception>
-
 #include "asynclink.h"
 #include "misc.h"
 #include "log.h"
 
+#ifdef PICO
+#include "pico/stdlib.h"
+#endif
 
 /*
  * A TxRxPin decorator that performs majority voting to provide solid bit-long true/false values for all the samples
@@ -133,6 +135,89 @@ int OversampledTxRxPin::_resync_in_samples() const {
     return m_resync_in_samples;
 }
 
+#ifdef PICO
+// TODO this is global, and prevents multiple cores - but would you just have one clock
+// for the whole board?
+// Free function for the timer callback.
+static bool timerCallback(repeating_timer_t *rt) {
+    AsyncLinkClock* clock = static_cast<AsyncLinkClock*>(rt->user_data);
+    clock();
+    return clock->is_running(); // true to continue repeating
+}
+#endif
+
+
+AsyncLinkClock::AsyncLinkClock(uint clockGPIOPin, TickHandler& tickHandler) :
+    m_clockGPIOPin(clockGPIOPin), m_tick_handler(tickHandler) {
+    logDebugF("Creating AsyncLinkClock with pin %d", m_clockGPIOPin);
+#ifdef PICO
+    // Initialise the clock diagnostic pin...
+    gpio_init(m_clockGPIOPin);
+    gpio_set_dir(m_clockGPIOPin, GPIO_OUT);
+    gpio_set_drive_strength(m_clockGPIOPin, GPIO_DRIVE_STRENGTH_2MA);
+    gpio_put(m_clockGPIOPin, false);
+#endif
+}
+
+void AsyncLinkClock::start() {
+    logDebug("Starting AsyncLinkClock; starting TickHandler");
+    m_tick_handler.start();
+    logDebug("TickHandler started");
+    // The tick handler (base class) will prevent this repeating timer being set up if it
+    // has been stopped.
+#ifdef PICO
+    // Set up the timer...
+    // Negative delay so means we will call repeating_timer_callback, and call it again
+    // at the next tick interval regardless of how long the callback took to execute.
+    add_repeating_timer_us(-LINK_CLOCK_TICK_INTERVAL_US, &timerCallback, this, &m_timer);
+#endif
+#ifdef DESKTOP
+    logDebug("Starting thread");
+    m_thread = new std::thread([this] {
+        while (is_running()) {
+            this->operator()();
+            std::this_thread::sleep_for(std::chrono::microseconds(LINK_CLOCK_TICK_INTERVAL_US));
+        }
+    });
+
+#endif
+    logDebug("Started AsyncLinkClock");
+}
+
+bool AsyncLinkClock::is_running() {
+    return m_tick_handler.is_running();
+}
+
+void AsyncLinkClock::stop() {
+    logDebug("Stopping AsyncLinkClock");
+    logDebug("Stopping TickHandler");
+    m_tick_handler.stop();
+#ifdef DESKTOP
+    if (m_thread != nullptr) {
+        logDebug("Joining thread");
+        m_thread->join();
+        logDebug("Thread joined");
+    }
+#endif
+    logDebug("Stopped AsyncLinkClock");
+}
+
+void AsyncLinkClock::operator()() const {
+    // logDebug("Tick!");
+#ifdef PICO
+    gpio_put(m_clockGPIOPin, true);
+#endif
+    m_tick_handler.tick();
+#ifdef PICO
+    gpio_put(m_clockGPIOPin, false);
+#endif
+}
+
+
+AsyncLinkClock::~AsyncLinkClock() {
+    logDebug("Destroying AsyncLinkClock");
+}
+
 
 // Only one byte needed to buffer in the receiving link (DataAckReceiver).
 // Ack can be sent as soon as reception of a data byte starts, if there's room to buffer another - need state to store
@@ -178,7 +263,7 @@ const WORD16 ST_DATA_SENT_NOT_ACKED = 0x0800;
 const WORD16 ST_DATA_MASK = 0x00FF;
 
 AsyncLink::AsyncLink(int linkNo, bool isServer, TxRxPin& tx_rx_pin) :
-    Link(linkNo, isServer), m_pin(tx_rx_pin) {
+    Link(linkNo, isServer), m_pin(tx_rx_pin), m_status_word(0) {
     logDebugF("Constructing async link %d for %s", myLinkNo, isServer ? "server" : "cpu client");
     myWriteSequence = myReadSequence = 0;
 
@@ -230,16 +315,17 @@ void AsyncLink::clock() {
 // SenderToLink
 bool AsyncLink::queryReadyToSend() {
     MUTEX
-    return false;
+    return m_status_word & ST_READY_TO_SEND;
 }
 
 void AsyncLink::setReadyToSend() {
     MUTEX
-    // TODO
+    m_status_word |= ST_READY_TO_SEND;
 }
 
 void AsyncLink::clearReadyToSend() {
-    // TODO
+    MUTEX
+    m_status_word &= ~ST_READY_TO_SEND;
 }
 
 void AsyncLink::setTimeoutError() {

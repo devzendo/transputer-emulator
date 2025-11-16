@@ -17,6 +17,7 @@
 
 #ifdef DESKTOP
 #include <mutex>
+#include <thread>
 #endif
 
 #ifdef PICO
@@ -24,6 +25,7 @@
 #include <pico/sync.h>
 #endif
 
+#include <sys/types.h>
 #include "types.h"
 #include "link.h"
 
@@ -295,6 +297,62 @@ private:
 };
 #define MUTEX     std::lock_guard<CriticalSection> guard(m_criticalsection);
 #endif
+
+/*
+ * A AsyncLinkClock will tick at a set frequency, and call its registered tick handler, to 'do whatever'.
+ * This is used to clock all the links.
+ *
+ * On the PICO, a diagnostic GPIO pin will be raised around the call to the tick handler, to
+ * allow measurement of the duration of the tick handler. The SDK hardware_timer's repeating
+ * timer is used.
+ *
+ * On DESKTOP, a std::thread is used to call the tick handler repeatedly, until terminated.
+ * There's no link hardware on desktop systems, but this is used in unit tests.
+ */
+
+class TickHandler {
+public:
+    TickHandler() : m_is_running(false) {
+    };
+    virtual ~TickHandler() = default;
+    virtual void tick() = 0;
+    bool is_running() {
+        return m_is_running.load();
+    };
+    void start() {
+        m_is_running.store(true);
+    }
+    void stop() {
+        m_is_running.store(false);
+    }
+private:
+    std::atomic_bool m_is_running;  // TODO can the pico sdk do std::atomic_bool or must I use its own atomics?
+};
+
+const int64_t LINK_CLOCK_TICK_INTERVAL_US = 500;
+
+class AsyncLinkClock {
+public:
+    AsyncLinkClock(uint clockGPIOPin, TickHandler& tickHandler);
+    void start();
+    bool is_running();
+    void stop();
+    ~AsyncLinkClock();
+#ifdef DESKTOP
+    void operator()() const; // the std::thread handler
+#endif
+private:
+    void tick();
+    uint m_clockGPIOPin{};
+    TickHandler &m_tick_handler;
+#ifdef PICO
+    struct repeating_timer m_timer;
+#endif
+#ifdef DESKTOP
+    std::thread *m_thread = nullptr;
+#endif
+};
+
 
 /* Highest level abstraction: AsyncLink uses the DataAckSender & DataAckReceiver state machines,
  * and an OversampledTxRxPin to handle the send/receive over an underlying TxRxPin.
