@@ -23,6 +23,7 @@
 #ifdef PICO
 #include <mutex> // For std::lock_guard and BasicLockable
 #include <pico/sync.h>
+#include <atomic>
 #endif
 
 #include <sys/types.h>
@@ -326,7 +327,7 @@ public:
         m_is_running.store(false);
     }
 private:
-    std::atomic_bool m_is_running;  // TODO can the pico sdk do std::atomic_bool or must I use its own atomics?
+    std::atomic_bool m_is_running;
 };
 
 const int64_t LINK_CLOCK_TICK_INTERVAL_US = 500;
@@ -338,9 +339,7 @@ public:
     bool is_running();
     void stop();
     ~AsyncLinkClock();
-#ifdef DESKTOP
-    void operator()() const; // the std::thread handler
-#endif
+    void operator()() const; // the caller of the tick handler
 private:
     void tick();
     uint m_clockGPIOPin{};

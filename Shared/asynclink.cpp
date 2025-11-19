@@ -141,7 +141,7 @@ int OversampledTxRxPin::_resync_in_samples() const {
 // Free function for the timer callback.
 static bool timerCallback(repeating_timer_t *rt) {
     AsyncLinkClock* clock = static_cast<AsyncLinkClock*>(rt->user_data);
-    clock();
+    clock->operator()();
     return clock->is_running(); // true to continue repeating
 }
 #endif
