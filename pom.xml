@@ -54,9 +54,8 @@
     </distributionManagement>
 
     <properties>
-        <!-- These two are modified by the release profile (does not currently work) -->
-        <cmake.binary.dir>cmake-build-debug</cmake.binary.dir>
-        <cmake.build.type>Debug</cmake.build.type>
+        <cmake.binary.dir>cmake-build-release</cmake.binary.dir>
+        <cmake.build.type>Release</cmake.build.type>
 
         <download.cmake>false</download.cmake> <!-- old setting -->
         <cmake.download>false</cmake.download> <!-- new setting -->
@@ -169,7 +168,6 @@
                                     <targetPath>${project.basedir}/${cmake.binary.dir}</targetPath>
                                     <generator>${cmake.generator}</generator>
                                     <classifier>${cmake.classifier}</classifier>
-                                    <!-- Release mechanism does not work yet - see release profile -->
                                     <environmentVariables>
                                         <CMAKE_BUILD_TYPE>${cmake.build.type}</CMAKE_BUILD_TYPE>
                                     </environmentVariables>
@@ -266,25 +264,6 @@
                 </plugins>
             </build>
         </profile>
-        <!-- This 'release' profile is intended to make CMake produce a stripped set of executables with no symbols
-             and debug information. It does not work - CMake refuses to do the right thing. Leave it in for now, and
-             come back to it when I have more time to devote to it...
-             It does cause the appropriate cmake-build-xxx directory to be used. -->
-        <profile>
-            <id>release</id>
-            <activation>
-                <property>
-                    <name>RELEASE</name> <!-- Could trigger on M2_RELEASE? -->
-                    <value>1</value>
-                </property>
-            </activation>
-            <properties>
-                <cmake.binary.dir>cmake-build-release</cmake.binary.dir>
-                <cmake.build.type>Release</cmake.build.type>
-            </properties>
-            <build>
-            </build>
-        </profile>
         <profile>
             <!-- Prerequisite: Pi Pico tool chain and SDK are installed.
                  Define the -DCROSS=PICO property to maven to trigger this
@@ -311,8 +290,6 @@
                 <binary.suffix></binary.suffix>
                 <assembly.name>pi-pico-distribution</assembly.name>
                 <cmake.option>CROSS=PICO</cmake.option>
-                <cmake.binary.dir>cmake-build-release</cmake.binary.dir>
-                <cmake.build.type>Release</cmake.build.type>
             </properties>
             <build>
             </build>
@@ -329,8 +306,7 @@
                 </property>
             </activation>
             <properties>
-                <!-- The CMake maven plugin understands cmake.root.dir -->
-                <cmake.root.dir>/opt/cmake</cmake.root.dir>
+                <!-- Use the apt-installed cmake: no need to set its path -->
 
                 <!-- One of the generators defined at https://cmake.org/cmake/help/v3.7/manual/cmake-generators.7.html -->
                 <cmake.generator>Unix Makefiles</cmake.generator>
@@ -355,8 +331,7 @@
                 </os>
             </activation>
             <properties>
-                <!-- The CMake maven plugin understands cmake.root.dir -->
-                <cmake.root.dir>/opt/cmake</cmake.root.dir>
+                <!-- Use the apt-installed cmake: no need to set its path -->
 
                 <!-- One of the generators defined at https://cmake.org/cmake/help/v3.7/manual/cmake-generators.7.html -->
                 <cmake.generator>Unix Makefiles</cmake.generator>
@@ -381,8 +356,7 @@
                 </os>
             </activation>
             <properties>
-                <!-- The CMake maven plugin understands cmake.root.dir -->
-                <cmake.root.dir>/opt/cmake</cmake.root.dir>
+                <!-- Use the apt-installed cmake: no need to set its path -->
 
                 <!-- One of the generators defined at https://cmake.org/cmake/help/v3.7/manual/cmake-generators.7.html -->
                 <cmake.generator>Unix Makefiles</cmake.generator>
@@ -410,8 +384,7 @@
                 </property>
             </activation>
             <properties>
-                <!-- The CMake maven plugin understands cmake.root.dir -->
-                <cmake.root.dir>/opt/local</cmake.root.dir>
+                <!-- Use the macports-installed cmake or a manual install on the path: no need to set its path -->
 
                 <!-- These are two of my properties I pass in to the CMake plugin, they're not known by the plugin innately -->
                 <!-- One of the generators defined at https://cmake.org/cmake/help/v3.7/manual/cmake-generators.7.html -->
