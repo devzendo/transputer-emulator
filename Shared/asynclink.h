@@ -15,15 +15,15 @@
 #ifndef _ASYNCLINK_H
 #define _ASYNCLINK_H
 
+#include <atomic>
+#include <mutex> // For std::lock_guard and BasicLockable
+
 #ifdef DESKTOP
-#include <mutex>
 #include <thread>
 #endif
 
 #ifdef PICO
-#include <mutex> // For std::lock_guard and BasicLockable
 #include <pico/sync.h>
-#include <atomic>
 #endif
 
 #include <sys/types.h>
