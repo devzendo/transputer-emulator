@@ -148,7 +148,25 @@ TEST_F(AsyncLinkClockTest, StartTicksThenStopHalts) {
     EXPECT_EQ(counter4, counter3); // no change
 }
 
+TEST_F(AsyncLinkClockTest, MultipleTickHandler) {
+    MultipleTickHandler mth;
+    EXPECT_EQ(handler.counter(), 0);
+    mth.tick();
+    EXPECT_EQ(handler.counter(), 0);
+    mth.addTickHandler(&handler);
+    mth.tick();
+    EXPECT_EQ(handler.counter(), 1);
+
+    mth.addTickHandler(&handler); // it'll be called twice
+    mth.tick();
+    EXPECT_EQ(handler.counter(), 3);
+}
+
 class AsyncLinkTest : public ::testing::Test {
+public:
+    AsyncLinkTest() : clock(-1, handler) {
+
+    }
 protected:
 
     void SetUp() override {
@@ -193,6 +211,8 @@ protected:
     CrosswiredTxRxPinPair pair;
     AsyncLink *linkA = nullptr;
     AsyncLink *linkB = nullptr;
+    MultipleTickHandler handler;
+    AsyncLinkClock clock;
 };
 
 TEST_F(AsyncLinkTest, RTSSetOnInitialisation) {

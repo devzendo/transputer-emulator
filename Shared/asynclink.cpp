@@ -354,6 +354,33 @@ void AsyncLink::clearReadDataAvailable() {
     // TODO
 }
 
+// TickHandler
+void AsyncLink::tick() {
+    // TODO
+}
+
+/*
+ * A MultipleTickHandler clocks all the (sub-)TickHandlers it is given.
+ */
+MultipleTickHandler::MultipleTickHandler() : TickHandler() {
+
+}
+
+void MultipleTickHandler::addTickHandler(TickHandler* ticker) {
+    m_tick_handlers.push_back(ticker);
+}
+
+
+// TickHandler
+void MultipleTickHandler::tick() {
+    logDebug("Tick - clock the (sub-)TickHandlers");
+    for (TickHandler* th: m_tick_handlers) {
+        th->tick();
+    }
+}
+
+
+
 /*
  * Using oversampling: The clock pulse triggers 16 times the bit frequency, giving 16 samples per bit.
  * |         1111111|

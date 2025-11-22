@@ -17,6 +17,7 @@
 
 #include <atomic>
 #include <mutex> // For std::lock_guard and BasicLockable
+#include <vector>
 
 #ifdef DESKTOP
 #include <thread>
@@ -352,11 +353,26 @@ private:
 #endif
 };
 
+/*
+ * A MultipleTickHandler clocks all the (sub-)TickHandlers it is given.
+ */
+
+class MultipleTickHandler: public TickHandler {
+public:
+    MultipleTickHandler();
+    void addTickHandler(TickHandler* ticker);
+    // TickHandler
+    void tick() override;
+private:
+    std::vector<TickHandler*> m_tick_handlers;
+};
+
+
 
 /* Highest level abstraction: AsyncLink uses the DataAckSender & DataAckReceiver state machines,
  * and an OversampledTxRxPin to handle the send/receive over an underlying TxRxPin.
  */
-class AsyncLink : public Link, SenderToLink, ReceiverToLink {
+class AsyncLink : public Link, SenderToLink, ReceiverToLink, TickHandler {
 public:
     AsyncLink(int linkNo, bool isServer, TxRxPin& tx_rx_pin);
     void initialise() override;
@@ -379,6 +395,9 @@ public:
     void dataReceived(BYTE8 data) override;
     bool queryReadDataAvailable() override;
     void clearReadDataAvailable() override;
+
+    // TickHandler
+    void tick() override;
 
 private:
     TxRxPin & m_pin;
