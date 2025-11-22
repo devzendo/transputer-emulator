@@ -54,8 +54,8 @@ bool OversampledTxRxPin::getRx() {
     // Majority vote taken on the rightmost 3 of m_data. 011, 101, 110 = 3,5,6
     m_data_samples <<= 1;
     m_data_samples |= rx;
-    logDebugF("rx %d m_data_samples 0b%s sample index %d resync %d", rx, word_to_binary(m_data_samples), m_sample_index,
-        m_resync_in_samples);
+    // logDebugF("rx %d m_data_samples 0b%s sample index %d resync %d", rx, word_to_binary(m_data_samples), m_sample_index,
+    //     m_resync_in_samples);
 
     // Detect rising edge, so we can count samples for majority vote detection
     const bool rising_edge = !m_previous_rx && rx;
@@ -72,12 +72,12 @@ bool OversampledTxRxPin::getRx() {
     if (m_sample_index == 8) {
         WORD16 majority_samples = m_data_samples & 0x0007;
         m_latched_output_rx = (majority_samples == 3 || majority_samples == 5 || majority_samples == 6 || majority_samples == 7);
-        logDebugF("majority vote is %d = 0b%s : latched output %d", majority_samples,
-            word_to_binary(majority_samples), m_latched_output_rx);
+        // logDebugF("majority vote is %d = 0b%s : latched output %d", majority_samples,
+        //     word_to_binary(majority_samples), m_latched_output_rx);
         m_data_bits <<= 1;
         m_data_bits |= m_latched_output_rx;
         m_data_bits_length++;
-        logDebugF("m_data_bits 0b%s length %d", word_to_binary(m_data_bits), m_data_bits_length);
+        // logDebugF("m_data_bits 0b%s length %d", word_to_binary(m_data_bits), m_data_bits_length);
         // Got 2 bits? Can set resync correctly now - we know whether it's ack/data/unknown.
         if (m_data_bits_length == 2) {
             switch (m_data_bits) {
@@ -91,12 +91,13 @@ bool OversampledTxRxPin::getRx() {
                     logDebug("Data detected; setting resync at end of data");
                     break;
                 default:
-                    logInfo("Start of frame was not ack or data");
+                    logDebug("Start of frame was not ack or data");
                     break;
             }
         }
         // Notify the bit receiver, if there is one.
         if (m_rx_bit_receiver != nullptr) {
+            logDebugF("Received majority bit %d", m_latched_output_rx);
             m_rx_bit_receiver->bitStateReceived(m_latched_output_rx);
         }
     }
@@ -104,7 +105,7 @@ bool OversampledTxRxPin::getRx() {
     m_sample_index++;
 
     if (m_sample_index == 16) {
-        logDebug("Resetting sample index");
+        // logDebug("Resetting sample index");
         m_sample_index = 0;
     }
 
@@ -112,7 +113,7 @@ bool OversampledTxRxPin::getRx() {
         m_resync_in_samples--;
     }
     m_previous_rx = rx; // For rising edge detection.
-    logDebugF("rx input %d output %d, resync in %d samples", rx, m_latched_output_rx, m_resync_in_samples);
+    // logDebugF("rx input %d output %d, resync in %d samples", rx, m_latched_output_rx, m_resync_in_samples);
     return m_latched_output_rx;
 }
 
@@ -308,7 +309,7 @@ int AsyncLink::getLinkType() {
 }
 
 void AsyncLink::clock() {
-    logDebugF("Clocking link %d", myLinkNo);
+    // logDebugF("Clocking link %d", myLinkNo);
 	m_sender->clock(); // Will start clocking data out, if not idle.
     m_o_pin->getRx(); // Will call the majority vote callback with the input bit.
 }
@@ -375,13 +376,12 @@ void MultipleTickHandler::addLink(Link* link) {
 
 // TickHandler
 void MultipleTickHandler::tick() {
-    logDebug("Tick - clock the Links");
+    // logDebug("Tick - clock the Links");
     for (Link* link: m_links) {
-        logDebugF("Tick - link at 0x%x", link);
+        // logDebugF("Tick - link at 0x%x", link);
         link->clock();
     }
 }
-
 
 
 /*
@@ -531,6 +531,7 @@ void DataAckSender::clock() {
             m_pin.setTx(one);
             m_sampleCount ++;
             if (m_sampleCount == 16) {
+                logDebugF("Finished sending bit %d for 16 samples", one);
                 m_sampleCount = 0;
                 m_bits--;
                 m_data >>= 1;
@@ -589,7 +590,7 @@ void DataAckSender::unregisterSenderToLink() const {
 
 void DataAckSender::changeState(const DataAckSenderState newState) {
     // State exit actions
-    logDebugF("Exiting state %s", DataAckSenderStateToString(m_state));
+    logDebugF("Sender exiting state %s", DataAckSenderStateToString(m_state));
     switch (m_state) {
         case DataAckSenderState::SENDING_ACK:
             m_send_ack = false;
@@ -603,7 +604,7 @@ void DataAckSender::changeState(const DataAckSenderState newState) {
     }
 
     // State entry actions
-    logDebugF("Entering state %s", DataAckSenderStateToString(newState));
+    logDebugF("Sender entering state %s", DataAckSenderStateToString(newState));
     m_state = newState;
     switch (newState) {
         case DataAckSenderState::IDLE:
@@ -770,7 +771,7 @@ void DataAckReceiver::unregisterReceiverToLink() const {
 }
 
 void DataAckReceiver::changeState(const DataAckReceiverState newState) {
-    logDebugF("Changing state from %s to %s", DataAckReceiverStateToString(m_state), DataAckReceiverStateToString(newState));
+    logDebugF("Receiver changing state from %s to %s", DataAckReceiverStateToString(m_state), DataAckReceiverStateToString(newState));
     m_state = newState;
 }
 

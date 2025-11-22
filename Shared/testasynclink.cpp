@@ -193,7 +193,6 @@ public:
 
     }
 protected:
-
     void SetUp() override {
         setLogLevel(LOGLEVEL_DEBUG);
         logDebug("SetUp start");
@@ -241,7 +240,7 @@ protected:
     }
 
     void pause() {
-        std::this_thread::sleep_for(std::chrono::microseconds(LINK_CLOCK_TICK_INTERVAL_US * 3));
+        std::this_thread::sleep_for(std::chrono::microseconds(LINK_CLOCK_TICK_INTERVAL_US));
     }
 
     CrosswiredTxRxPinPair pair;
@@ -250,7 +249,6 @@ protected:
     MultipleTickHandler handler;
     AsyncLinkClock clock;
 };
-
 
 TEST_F(AsyncLinkTest, RTSSetOnInitialisation) {
     EXPECT_EQ(linkA->queryReadyToSend(), true);
@@ -267,9 +265,25 @@ TEST_F(AsyncLinkTest, SetRTSSetsIt) {
     EXPECT_EQ(linkA->queryReadyToSend(), true);
 }
 
-TEST_F(AsyncLinkTest, StartWritingAsync) {
+TEST_F(AsyncLinkTest, RTSClearedWhenDataSentAsync) {
     EXPECT_EQ(linkA->writeByteAsync(0xC9), true);
+    pause();
+    EXPECT_EQ(linkA->queryReadyToSend(), false);
+}
 
+TEST_F(AsyncLinkTest, DataSentAsyncGetsAckedRTSSet) {
+    EXPECT_EQ(linkA->writeByteAsync(0xC9), true);
+    for (int i=0; i<24 * 12; i++) { // 24 bit-lengths should be enough to hear the ack
+        pause();
+    }
+    EXPECT_EQ(linkA->queryReadyToSend(), true);
+}
+
+TEST_F(AsyncLinkTest, StartWritingAsync) {
+    EXPECT_EQ(linkA->writeByteAsync(0xC9), true); // 1100100110
+
+    pause();
+    pause();
     pause();
 
     TxRxPin &pairB = pair.pairB();
