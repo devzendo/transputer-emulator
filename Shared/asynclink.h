@@ -353,26 +353,10 @@ private:
 #endif
 };
 
-/*
- * A MultipleTickHandler clocks all the (sub-)TickHandlers it is given.
- */
-
-class MultipleTickHandler: public TickHandler {
-public:
-    MultipleTickHandler();
-    void addTickHandler(TickHandler* ticker);
-    // TickHandler
-    void tick() override;
-private:
-    std::vector<TickHandler*> m_tick_handlers;
-};
-
-
-
 /* Highest level abstraction: AsyncLink uses the DataAckSender & DataAckReceiver state machines,
  * and an OversampledTxRxPin to handle the send/receive over an underlying TxRxPin.
  */
-class AsyncLink : public Link, SenderToLink, ReceiverToLink, TickHandler {
+class AsyncLink : public Link, SenderToLink, ReceiverToLink {
 public:
     AsyncLink(int linkNo, bool isServer, TxRxPin& tx_rx_pin);
     void initialise() override;
@@ -382,6 +366,8 @@ public:
     void resetLink() override;
     int getLinkType() override;
     void clock() override;
+
+    bool writeByteAsync(BYTE8 b);
 
     // SenderToLink
     bool queryReadyToSend() override;
@@ -396,9 +382,6 @@ public:
     bool queryReadDataAvailable() override;
     void clearReadDataAvailable() override;
 
-    // TickHandler
-    void tick() override;
-
 private:
     TxRxPin & m_pin;
     OversampledTxRxPin * m_o_pin;
@@ -412,6 +395,20 @@ private:
 #ifdef PICO
     CriticalSection m_criticalsection;
 #endif
+};
+
+/*
+ * A MultipleTickHandler clocks all the Links it is given.
+ */
+
+class MultipleTickHandler: public TickHandler {
+public:
+    MultipleTickHandler();
+    void addLink(Link* link);
+    // TickHandler
+    void tick() override;
+private:
+    std::vector<Link*> m_links;
 };
 
 

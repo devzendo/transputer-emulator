@@ -109,6 +109,30 @@ protected:
         std::atomic_int m_counter;
     };
 
+    class AtomicClockable: public Link {
+    public:
+        AtomicClockable(int linkNo, bool isServer) : Link(linkNo, isServer), m_counter(0) {};
+        void initialise() override {};
+        ~AtomicClockable() override = default;
+        BYTE8 readByte() override { return 0; };
+        void writeByte(BYTE8 b) override {};
+        void resetLink() override {};
+        int getLinkType() override { return 0; };
+
+        void clock() override {
+            // logDebug("Clock - increment");
+            m_counter.fetch_add(1);
+        }
+
+        int counter() {
+            int counter = m_counter.load();
+            logDebugF("Counter is %d", counter);
+            return counter;
+        }
+    private:
+        std::atomic_int m_counter;
+    };
+
     AtomicTickHandler handler;
     AsyncLinkClock clock;
 };
@@ -150,16 +174,17 @@ TEST_F(AsyncLinkClockTest, StartTicksThenStopHalts) {
 
 TEST_F(AsyncLinkClockTest, MultipleTickHandler) {
     MultipleTickHandler mth;
-    EXPECT_EQ(handler.counter(), 0);
+    AtomicClockable clockable(0, false);
+    EXPECT_EQ(clockable.counter(), 0);
     mth.tick();
-    EXPECT_EQ(handler.counter(), 0);
-    mth.addTickHandler(&handler);
+    EXPECT_EQ(clockable.counter(), 0);
+    mth.addLink(&clockable);
     mth.tick();
-    EXPECT_EQ(handler.counter(), 1);
+    EXPECT_EQ(clockable.counter(), 1);
 
-    mth.addTickHandler(&handler); // it'll be called twice
+    mth.addLink(&clockable); // it'll be called twice
     mth.tick();
-    EXPECT_EQ(handler.counter(), 3);
+    EXPECT_EQ(clockable.counter(), 3);
 }
 
 class AsyncLinkTest : public ::testing::Test {
@@ -188,12 +213,19 @@ protected:
         logDebug("Initialising Link B");
         linkB->initialise();
 
+        logDebug("Setup and start clock");
+        handler.addLink(&*linkA);
+        handler.addLink(&*linkB);
+        clock.start();
+
         logDebug("Setup complete");
         logFlush();
     }
 
     void TearDown() override {
-        logDebug("TearDown start");
+        logDebug("TearDown start; stopping clock");
+        clock.stop();
+
         if (linkA != nullptr) {
             logDebug("Resetting Link A");
             linkA->resetLink();
@@ -208,12 +240,17 @@ protected:
         logFlush();
     }
 
+    void pause() {
+        std::this_thread::sleep_for(std::chrono::microseconds(LINK_CLOCK_TICK_INTERVAL_US * 3));
+    }
+
     CrosswiredTxRxPinPair pair;
     AsyncLink *linkA = nullptr;
     AsyncLink *linkB = nullptr;
     MultipleTickHandler handler;
     AsyncLinkClock clock;
 };
+
 
 TEST_F(AsyncLinkTest, RTSSetOnInitialisation) {
     EXPECT_EQ(linkA->queryReadyToSend(), true);
@@ -228,6 +265,15 @@ TEST_F(AsyncLinkTest, SetRTSSetsIt) {
     linkA->clearReadyToSend();
     linkA->setReadyToSend();
     EXPECT_EQ(linkA->queryReadyToSend(), true);
+}
+
+TEST_F(AsyncLinkTest, StartWritingAsync) {
+    EXPECT_EQ(linkA->writeByteAsync(0xC9), true);
+
+    pause();
+
+    TxRxPin &pairB = pair.pairB();
+    EXPECT_EQ(pairB.getRx(), true);
 }
 
 /*

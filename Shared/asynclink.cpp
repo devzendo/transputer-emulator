@@ -308,7 +308,13 @@ int AsyncLink::getLinkType() {
 }
 
 void AsyncLink::clock() {
-	// no-op
+    logDebugF("Clocking link %d", myLinkNo);
+	m_sender->clock(); // Will start clocking data out, if not idle.
+    m_o_pin->getRx(); // Will call the majority vote callback with the input bit.
+}
+
+bool AsyncLink::writeByteAsync(unsigned char b) {
+    return m_sender->sendData(0xC9);
 }
 
 
@@ -354,28 +360,25 @@ void AsyncLink::clearReadDataAvailable() {
     // TODO
 }
 
-// TickHandler
-void AsyncLink::tick() {
-    // TODO
-}
 
 /*
- * A MultipleTickHandler clocks all the (sub-)TickHandlers it is given.
+ * A MultipleTickHandler clocks all the Links it is given.
  */
 MultipleTickHandler::MultipleTickHandler() : TickHandler() {
 
 }
 
-void MultipleTickHandler::addTickHandler(TickHandler* ticker) {
-    m_tick_handlers.push_back(ticker);
+void MultipleTickHandler::addLink(Link* link) {
+    m_links.push_back(link);
 }
 
 
 // TickHandler
 void MultipleTickHandler::tick() {
-    logDebug("Tick - clock the (sub-)TickHandlers");
-    for (TickHandler* th: m_tick_handlers) {
-        th->tick();
+    logDebug("Tick - clock the Links");
+    for (Link* link: m_links) {
+        logDebugF("Tick - link at 0x%x", link);
+        link->clock();
     }
 }
 
