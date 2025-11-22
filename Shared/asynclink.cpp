@@ -315,7 +315,8 @@ void AsyncLink::clock() {
     m_o_pin->getRx(); // Will call the majority vote callback with the input bit.
 }
 
-bool AsyncLink::writeByteAsync(unsigned char b) {
+bool AsyncLink::writeByteAsync(BYTE8 b, std::function<void(bool, bool, bool)> callback) {
+    m_callback = callback;
     return m_sender->sendData(0xC9);
 }
 
@@ -339,8 +340,12 @@ void AsyncLink::clearReadyToSend() {
 }
 
 void AsyncLink::setTimeoutError() {
-    logDebugF("Link %d timed out (UNIMPLEMENTED)", myLinkNo);
-    // TODO
+    logDebugF("Link %d timed out", myLinkNo);
+    MUTEX
+    m_status_word |= ST_DATA_SENT_NOT_ACKED;
+    if (m_callback != nullptr) {
+        m_callback(false, true, false);
+    }
 }
 
 // ReceiverToLink
@@ -525,7 +530,7 @@ void DataAckSender::sendDataInternal(const BYTE8 byte) {
 }
 
 void DataAckSender::clock() {
-    //logDebugF("Link %d clock > %d sample count %d bits %d data 0x%04X", m_linkNo, m_state, m_sampleCount, m_bits, m_data);
+    // logDebugF("Link %d clock > %d sample count %d bits %d data 0x%04X", m_linkNo, m_state, m_sampleCount, m_bits, m_data);
     // TODO mutex {
     switch (m_state) {
         case DataAckSenderState::IDLE:
@@ -582,7 +587,7 @@ void DataAckSender::clock() {
             break;
     }
     // TODO }
-    //logDebugF("Link %d clock < %d sample count %d bits %d data 0x%04X", m_linkNo, m_state, m_sampleCount, m_bits, m_data);
+    // logDebugF("Link %d clock < %d sample count %d bits %d data 0x%04X", m_linkNo, m_state, m_sampleCount, m_bits, m_data);
 }
 
 // Register the SenderToLink

@@ -66,6 +66,23 @@ public:
 };
 
 
+class DisconnectedPin: public TxRxPin {
+public:
+    DisconnectedPin() {
+
+    }
+
+    ~DisconnectedPin() override = default;
+
+    bool getRx() override {
+        return false;
+    }
+
+    void setTx(const bool state) override {
+    }
+};
+
+
 class AsyncLinkClockTest : public ::testing::Test {
 public:
     AsyncLinkClockTest() : clock(-1, handler) {
@@ -266,13 +283,20 @@ TEST_F(AsyncLinkTest, SetRTSSetsIt) {
 }
 
 TEST_F(AsyncLinkTest, RTSClearedWhenDataSentAsync) {
-    EXPECT_EQ(linkA->writeByteAsync(0xC9), true);
+    bool ok = linkA->writeByteAsync(0xC9,
+[](bool ack, bool to, bool fe) {
+        // Handle callback
+    });
+    EXPECT_EQ(ok, true);
     pause();
     EXPECT_EQ(linkA->queryReadyToSend(), false);
 }
 
 TEST_F(AsyncLinkTest, DataSentAsyncGetsAckedRTSSet) {
-    EXPECT_EQ(linkA->writeByteAsync(0xC9), true);
+    linkA->writeByteAsync(0xC9,
+    [](bool ack, bool to, bool fe) {
+        // Handle callback
+    });
     for (int i=0; i<24 * 12; i++) { // 24 bit-lengths should be enough to hear the ack
         pause();
     }
@@ -280,7 +304,10 @@ TEST_F(AsyncLinkTest, DataSentAsyncGetsAckedRTSSet) {
 }
 
 TEST_F(AsyncLinkTest, StartWritingAsync) {
-    EXPECT_EQ(linkA->writeByteAsync(0xC9), true); // 1100100110
+    linkA->writeByteAsync(0xC9,
+        [](bool ack, bool to, bool fe) {
+        // Handle callback
+    });
 
     pause();
     pause();
@@ -311,6 +338,80 @@ TEST_F(AsyncLinkTest, WriteAndReadBytes) {
     EXPECT_EQ(readBuf[3], 0x21);
 }
 */
+
+class AsyncLinkTimeoutTest : public ::testing::Test {
+public:
+    AsyncLinkTimeoutTest() : clock(-1, handler) {
+
+    }
+protected:
+    void SetUp() override {
+        setLogLevel(LOGLEVEL_DEBUG);
+        logDebug("SetUp start");
+
+        linkA = new AsyncLink(0, false, pin);
+        linkA->setDebug(true);
+        logDebug("Initialising Link");
+        linkA->initialise();
+
+        logDebug("Setup and start clock");
+        handler.addLink(&*linkA);
+        clock.start();
+
+        logDebug("Setup complete");
+        logFlush();
+    }
+
+    void TearDown() override {
+        logDebug("TearDown start; stopping clock");
+        clock.stop();
+
+        if (linkA != nullptr) {
+            logDebug("Resetting Link");
+            linkA->resetLink();
+            delete linkA;
+        }
+        logDebug("TearDown complete");
+        logFlush();
+    }
+
+    void pause() {
+        std::this_thread::sleep_for(std::chrono::microseconds(LINK_CLOCK_TICK_INTERVAL_US));
+    }
+    DisconnectedPin pin;
+    AsyncLink *linkA = nullptr;
+    MultipleTickHandler handler;
+    AsyncLinkClock clock;
+};
+
+TEST_F(AsyncLinkTimeoutTest, DisconnectedOps) {
+    DisconnectedPin pin;
+    EXPECT_EQ(pin.getRx(), false);
+    pin.setTx(true);
+}
+
+TEST_F(AsyncLinkTimeoutTest, DataSentAsyncTimesOutWithNoOtherLinkListening) {
+    bool timeout = false;
+    linkA->writeByteAsync(0xC9, [&](bool ack, bool to, bool fe) {
+        // Handle callback
+        timeout = to;
+    });
+    for (int i=0; i<24 * 12; i++) { // 24 bit-lengths should be enough to time out
+        pause();
+    }
+    linkA->writeByteAsync(0xC9, nullptr);
+    EXPECT_EQ(timeout, true);
+}
+
+TEST_F(AsyncLinkTimeoutTest, DataSentAsyncTimesOutWithNoOtherLinkListeningNullSafety) {
+    linkA->writeByteAsync(0xC9, nullptr);
+    for (int i=0; i<24 * 12; i++) { // 24 bit-lengths should be enough to time out
+        pause();
+    }
+    // Just gets through the night without crashing
+}
+
+
 
 class TxRxPinTest : public ::testing::Test {
 protected:
