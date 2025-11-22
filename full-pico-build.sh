@@ -1,6 +1,11 @@
 #!/bin/bash
 set -euf -o pipefail
 
+if [ $(uname) == "Darwin" ]; then
+  echo "You haven't found much success building for Pico on macOS. Use the container instead!"
+  exit
+fi
+
 # Move to the folder the script is in (for consistency) - https://stackoverflow.com/a/246128
 SOURCE="${BASH_SOURCE[0]}"
 while [ -h "$SOURCE" ]; do
