@@ -303,6 +303,27 @@ TEST_F(AsyncLinkTest, DataSentAsyncGetsAckedRTSSet) {
     EXPECT_EQ(linkA->queryReadyToSend(), true);
 }
 
+TEST_F(AsyncLinkTest, DataSentAsyncGetsAckedAndCalledBack) {
+    bool acked = false;
+    linkA->writeByteAsync(0xC9,
+    [&](bool ack, bool to, bool fe) {
+        // Handle callback
+        acked = ack;
+    });
+    for (int i=0; i<24 * 12; i++) { // 24 bit-lengths should be enough to hear the ack
+        pause();
+    }
+    EXPECT_EQ(acked, true);
+}
+
+TEST_F(AsyncLinkTest, DataSentAsyncGetsAckedAndCalledBackNullSafety) {
+    linkA->writeByteAsync(0xC9, nullptr);
+    for (int i=0; i<24 * 12; i++) { // 24 bit-lengths should be enough to hear the ack
+        pause();
+    }
+    // Got here? Good!
+}
+
 TEST_F(AsyncLinkTest, StartWritingAsync) {
     linkA->writeByteAsync(0xC9,
         [](bool ack, bool to, bool fe) {

@@ -387,6 +387,7 @@ public:
     void clearReadDataAvailable() override;
 
 private:
+    void callback() const;
     TxRxPin & m_pin;
     OversampledTxRxPin * m_o_pin;
     DataAckSender * m_sender;

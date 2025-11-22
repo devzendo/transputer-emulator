@@ -331,6 +331,7 @@ void AsyncLink::setReadyToSend() {
     logDebugF("Link %d is ready to send", myLinkNo);
     MUTEX
     m_status_word |= ST_READY_TO_SEND;
+    callback();
 }
 
 void AsyncLink::clearReadyToSend() {
@@ -340,12 +341,10 @@ void AsyncLink::clearReadyToSend() {
 }
 
 void AsyncLink::setTimeoutError() {
-    logDebugF("Link %d timed out", myLinkNo);
+    logWarnF("Link %d timed out", myLinkNo);
     MUTEX
     m_status_word |= ST_DATA_SENT_NOT_ACKED;
-    if (m_callback != nullptr) {
-        m_callback(false, true, false);
-    }
+    callback();
 }
 
 // ReceiverToLink
@@ -374,6 +373,14 @@ void AsyncLink::clearReadDataAvailable() {
     logDebugF("Link %d data NOT available (UNIMPLEMENTED)", myLinkNo);
 }
 
+// Precondition: called under MUTEX
+void AsyncLink::callback() const {
+    if (m_callback != nullptr) {
+        m_callback(m_status_word & ST_READY_TO_SEND,
+            m_status_word & ST_DATA_SENT_NOT_ACKED,
+            m_status_word & ST_FRAMING);
+    }
+}
 
 /*
  * A MultipleTickHandler clocks all the Links it is given.
