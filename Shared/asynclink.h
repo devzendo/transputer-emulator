@@ -193,7 +193,7 @@ const char* DataAckSenderStateToString(DataAckSenderState s) noexcept;
 
 class DataAckSender: public ReceiverToSender {
 public:
-    explicit DataAckSender(TxRxPin& tx_rx_pin);
+    explicit DataAckSender(int linkNo, TxRxPin& tx_rx_pin);
 
     /**
      * Send data
@@ -226,6 +226,7 @@ public:
     BYTE8 _data_enqueued_buffer() const;
 
 private:
+    int m_linkNo;
     TxRxPin & m_pin;
     DataAckSenderState m_state;
     bool m_send_ack;
@@ -243,7 +244,7 @@ enum class DataAckReceiverState { IDLE, START_BIT_2, DATA, DISCARD, STOP_BIT };
 
 class DataAckReceiver : public RxBitReceiver {
 public:
-    explicit DataAckReceiver();
+    explicit DataAckReceiver(int linkNo);
     DataAckReceiverState state() const;
     void bitStateReceived(bool state) override;
 
@@ -259,6 +260,7 @@ public:
     BYTE8 _buffer() const;
 
 private:
+    int m_linkNo;
     DataAckReceiverState m_state;
     int m_bit_count;
     BYTE8 m_buffer;

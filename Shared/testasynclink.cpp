@@ -207,7 +207,7 @@ protected:
         linkA->initialise();
 
         logDebug("Creating Link B");
-        linkB = new AsyncLink(0, false, pairB);
+        linkB = new AsyncLink(1, false, pairB);
         linkB->setDebug(true);
         logDebug("Initialising Link B");
         linkB->initialise();
@@ -688,7 +688,7 @@ protected:
         TxRxPin & pairA = m_pair.pairA();
         TxRxPin & pairB = m_pair.pairB();
         m_trace = new ClockingPinTracer(pairB);
-        m_sender = new DataAckSender(pairA);
+        m_sender = new DataAckSender(0, pairA);
         m_sender->registerSenderToLink(*this); // dereference this to get a reference
 
         logDebug("Setup complete");
@@ -1465,7 +1465,7 @@ protected:
     void SetUp() override {
         setLogLevel(LOGLEVEL_DEBUG);
         logDebug("SetUp start");
-        m_receiver = new DataAckReceiver();
+        m_receiver = new DataAckReceiver(0);
         m_receiver->registerReceiverToLink(*this); // dereference this to get a reference
         m_receiver->registerReceiverToSender(*this);
         logDebug("Setup complete");
