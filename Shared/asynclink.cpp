@@ -316,7 +316,7 @@ void AsyncLink::clock() {
 }
 
 bool AsyncLink::writeByteAsync(BYTE8 b, std::function<void(bool, bool)> callback) {
-    m_callback = callback;
+    m_write_callback = callback;
     return m_sender->sendData(0xC9);
 }
 
@@ -331,7 +331,7 @@ void AsyncLink::setReadyToSend() {
     logDebugF("Link %d is ready to send", myLinkNo);
     MUTEX
     m_status_word |= ST_READY_TO_SEND;
-    callback();
+    write_callback();
 }
 
 void AsyncLink::clearReadyToSend() {
@@ -344,7 +344,7 @@ void AsyncLink::setTimeoutError() {
     logWarnF("Link %d timed out", myLinkNo);
     MUTEX
     m_status_word |= ST_DATA_SENT_NOT_ACKED;
-    callback();
+    write_callback();
 }
 
 // ReceiverToLink
@@ -374,9 +374,9 @@ void AsyncLink::clearReadDataAvailable() {
 }
 
 // Precondition: called under MUTEX
-void AsyncLink::callback() const {
-    if (m_callback != nullptr) {
-        m_callback(m_status_word & ST_READY_TO_SEND,
+void AsyncLink::write_callback() const {
+    if (m_write_callback != nullptr) {
+        m_write_callback(m_status_word & ST_READY_TO_SEND,
             m_status_word & ST_DATA_SENT_NOT_ACKED);
     }
 }

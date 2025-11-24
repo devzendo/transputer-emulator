@@ -387,12 +387,12 @@ public:
     void clearReadDataAvailable() override;
 
 private:
-    void callback() const;
+    void write_callback() const;
     TxRxPin & m_pin;
     OversampledTxRxPin * m_o_pin;
     DataAckSender * m_sender;
     DataAckReceiver * m_receiver;
-    std::function<void(bool, bool)> m_callback = nullptr;
+    std::function<void(bool, bool)> m_write_callback = nullptr;
     volatile WORD16 m_status_word;
     WORD32 myWriteSequence, myReadSequence;
 #ifdef DESKTOP
