@@ -338,6 +338,48 @@ TEST_F(AsyncLinkTest, StartWritingAsync) {
     EXPECT_EQ(pairB.getRx(), true);
 }
 
+TEST_F(AsyncLinkTest, StartReadingAsync) {
+    EXPECT_EQ(linkB->queryReadDataAvailable(), false);
+    // Opposite values to what I expect, to verify the correct values passed to the callback.
+    bool test_ov = true;
+    bool test_fr = true;
+    bool test_ok = false;
+    BYTE8 test_data = 0;
+    bool called_back = false;
+    linkB->readByteAsync([&](bool ov, bool fr, bool ok, BYTE8 byte) {
+        //logDebugF("Link B in callback ov %d fr %d ok %d read byte 0b%s", ov, fr, ok, byte_to_binary(byte));
+        called_back = true;
+        test_ov = ov;
+        test_fr = fr;
+        test_ok = ok;
+        test_data = byte;
+    });
+
+    linkA->writeByteAsync(0xC9, nullptr);
+    for (int i=0; i<24 * 12; i++) { // 24 bit-lengths should be enough to hear the data
+        pause();
+    }
+    //logDebugF("Link B after pause ov %d fr %d ok %d read byte 0b%s", test_ov, test_fr, test_ok, byte_to_binary(test_data));
+
+    EXPECT_EQ(called_back, true);
+    EXPECT_EQ(test_ok, true);
+    EXPECT_EQ(test_ov, false);
+    EXPECT_EQ(test_fr, false);
+    EXPECT_EQ(test_data, 0xC9);
+    // And the callback clears this once called back.
+    EXPECT_EQ(linkB->queryReadDataAvailable(), false);
+}
+
+TEST_F(AsyncLinkTest, StartReadingAsyncNullSafety) {
+    linkB->readByteAsync(nullptr);
+
+    linkA->writeByteAsync(0xC9, nullptr);
+    for (int i=0; i<24 * 12; i++) { // 24 bit-lengths should be enough to hear the data
+        pause();
+    }
+    // Got to here, good! You'll never know what data was sent..
+}
+
 /*
 TEST_F(AsyncLinkTest, WriteAndReadByte) {
     linkA->writeByte(16);
@@ -1811,19 +1853,19 @@ TEST_F(DataAckReceiverTest, DataToStopBit) {
 
     m_receiver->bitStateReceived(true);
     EXPECT_EQ(m_receiver->_bit_count(), 1);
-    EXPECT_EQ(m_receiver->_buffer(), 0b00000001);
+    EXPECT_EQ(m_receiver->_buffer(), 0b10000000);
 
     m_receiver->bitStateReceived(true);
     EXPECT_EQ(m_receiver->_bit_count(), 2);
-    EXPECT_EQ(m_receiver->_buffer(), 0b00000011);
+    EXPECT_EQ(m_receiver->_buffer(), 0b11000000);
 
     m_receiver->bitStateReceived(false);
     EXPECT_EQ(m_receiver->_bit_count(), 3);
-    EXPECT_EQ(m_receiver->_buffer(), 0b00000110);
+    EXPECT_EQ(m_receiver->_buffer(), 0b01100000);
 
     m_receiver->bitStateReceived(false);
     EXPECT_EQ(m_receiver->_bit_count(), 4);
-    EXPECT_EQ(m_receiver->_buffer(), 0b00001100);
+    EXPECT_EQ(m_receiver->_buffer(), 0b00110000);
 
     m_receiver->bitStateReceived(false);
     EXPECT_EQ(m_receiver->_bit_count(), 5);
@@ -1831,11 +1873,11 @@ TEST_F(DataAckReceiverTest, DataToStopBit) {
 
     m_receiver->bitStateReceived(false);
     EXPECT_EQ(m_receiver->_bit_count(), 6);
-    EXPECT_EQ(m_receiver->_buffer(), 0b00110000);
+    EXPECT_EQ(m_receiver->_buffer(), 0b00001100);
 
     m_receiver->bitStateReceived(true);
     EXPECT_EQ(m_receiver->_bit_count(), 7);
-    EXPECT_EQ(m_receiver->_buffer(), 0b01100001);
+    EXPECT_EQ(m_receiver->_buffer(), 0b10000110);
     EXPECT_EQ(m_receiver->state(), DataAckReceiverState::DATA);
 
     m_receiver->bitStateReceived(true);

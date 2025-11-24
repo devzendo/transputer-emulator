@@ -320,6 +320,10 @@ bool AsyncLink::writeByteAsync(BYTE8 b, std::function<void(bool, bool)> callback
     return m_sender->sendData(0xC9);
 }
 
+void AsyncLink::readByteAsync(std::function<void(bool, bool, bool, BYTE8)> callback) {
+    m_read_callback = callback;
+}
+
 
 // SenderToLink
 bool AsyncLink::queryReadyToSend() {
@@ -359,18 +363,23 @@ void AsyncLink::overrunError() {
 }
 
 void AsyncLink::dataReceived(BYTE8 data) {
-    logDebugF("Link %d data received (UNIMPLEMENTED)", myLinkNo);
-    // TODO
+    logDebugF("Link %d data received 0b%s", myLinkNo, byte_to_binary(data));
+    MUTEX
+    m_status_word |= (ST_READ_DATA_AVAILABLE | data);
+    // logDebugF("Link %d status word 0b%s", myLinkNo, word_to_binary(m_status_word));
+    read_callback();
+    m_status_word &= ~ST_READ_DATA_AVAILABLE; // If there's no callback, this should not be cleared?
 }
 
 bool AsyncLink::queryReadDataAvailable() {
-    // TODO
-    return false;
+    MUTEX
+    return m_status_word & ST_READ_DATA_AVAILABLE;
 }
 
 void AsyncLink::clearReadDataAvailable() {
-    // TODO
-    logDebugF("Link %d data NOT available (UNIMPLEMENTED)", myLinkNo);
+    logDebugF("Link %d data NOT available", myLinkNo);
+    MUTEX
+    m_status_word &= ~ST_READ_DATA_AVAILABLE;
 }
 
 // Precondition: called under MUTEX
@@ -378,6 +387,19 @@ void AsyncLink::write_callback() const {
     if (m_write_callback != nullptr) {
         m_write_callback(m_status_word & ST_READY_TO_SEND,
             m_status_word & ST_DATA_SENT_NOT_ACKED);
+    }
+}
+
+// Precondition: called under MUTEX
+void AsyncLink::read_callback() const {
+    if (m_read_callback != nullptr) {
+        //logDebugF("Link %d calling read callback", myLinkNo);
+        m_read_callback(m_status_word & ST_OVERRUN,
+            m_status_word & ST_FRAMING,
+            m_status_word & ST_READ_DATA_AVAILABLE,
+            m_status_word & ST_DATA_MASK);
+    } else {
+        logWarnF("Link %d read data with no callback", myLinkNo);
     }
 }
 
@@ -738,8 +760,8 @@ void DataAckReceiver::bitStateReceived(const bool state) {
             break;
         case DataAckReceiverState::DATA:
             if (m_bit_count < 8) {
-                m_buffer <<= 1;
-                m_buffer |= state;
+                m_buffer >>= 1;
+                m_buffer |= state ? 0x80 : 0x00;
                 m_bit_count ++;
             }
             if (m_bit_count == 8) {
