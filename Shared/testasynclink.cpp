@@ -284,7 +284,7 @@ TEST_F(AsyncLinkTest, SetRTSSetsIt) {
 
 TEST_F(AsyncLinkTest, RTSClearedWhenDataSentAsync) {
     bool ok = linkA->writeByteAsync(0xC9,
-[](bool ack, bool to, bool fe) {
+[](bool ack, bool to) {
         // Handle callback
     });
     EXPECT_EQ(ok, true);
@@ -294,7 +294,7 @@ TEST_F(AsyncLinkTest, RTSClearedWhenDataSentAsync) {
 
 TEST_F(AsyncLinkTest, DataSentAsyncGetsAckedRTSSet) {
     linkA->writeByteAsync(0xC9,
-    [](bool ack, bool to, bool fe) {
+    [](bool ack, bool to) {
         // Handle callback
     });
     for (int i=0; i<24 * 12; i++) { // 24 bit-lengths should be enough to hear the ack
@@ -306,7 +306,7 @@ TEST_F(AsyncLinkTest, DataSentAsyncGetsAckedRTSSet) {
 TEST_F(AsyncLinkTest, DataSentAsyncGetsAckedAndCalledBack) {
     bool acked = false;
     linkA->writeByteAsync(0xC9,
-    [&](bool ack, bool to, bool fe) {
+    [&](bool ack, bool to) {
         // Handle callback
         acked = ack;
     });
@@ -326,7 +326,7 @@ TEST_F(AsyncLinkTest, DataSentAsyncGetsAckedAndCalledBackNullSafety) {
 
 TEST_F(AsyncLinkTest, StartWritingAsync) {
     linkA->writeByteAsync(0xC9,
-        [](bool ack, bool to, bool fe) {
+        [](bool ack, bool to) {
         // Handle callback
     });
 
@@ -413,7 +413,7 @@ TEST_F(AsyncLinkTimeoutTest, DisconnectedOps) {
 
 TEST_F(AsyncLinkTimeoutTest, DataSentAsyncTimesOutWithNoOtherLinkListening) {
     bool timeout = false;
-    linkA->writeByteAsync(0xC9, [&](bool ack, bool to, bool fe) {
+    linkA->writeByteAsync(0xC9, [&](bool ack, bool to) {
         // Handle callback
         timeout = to;
     });

@@ -370,8 +370,8 @@ public:
     int getLinkType() override;
     void clock() override;
 
-    // Acknowledged, Timeout, Framing Error
-    bool writeByteAsync(BYTE8 b, std::function<void(bool, bool, bool)> callback);
+    // Acknowledged, Timeout
+    bool writeByteAsync(BYTE8 b, std::function<void(bool, bool)> callback);
 
     // SenderToLink
     bool queryReadyToSend() override;
@@ -392,7 +392,7 @@ private:
     OversampledTxRxPin * m_o_pin;
     DataAckSender * m_sender;
     DataAckReceiver * m_receiver;
-    std::function<void(bool, bool, bool)> m_callback = nullptr;
+    std::function<void(bool, bool)> m_callback = nullptr;
     volatile WORD16 m_status_word;
     WORD32 myWriteSequence, myReadSequence;
 #ifdef DESKTOP

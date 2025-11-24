@@ -315,7 +315,7 @@ void AsyncLink::clock() {
     m_o_pin->getRx(); // Will call the majority vote callback with the input bit.
 }
 
-bool AsyncLink::writeByteAsync(BYTE8 b, std::function<void(bool, bool, bool)> callback) {
+bool AsyncLink::writeByteAsync(BYTE8 b, std::function<void(bool, bool)> callback) {
     m_callback = callback;
     return m_sender->sendData(0xC9);
 }
@@ -377,8 +377,7 @@ void AsyncLink::clearReadDataAvailable() {
 void AsyncLink::callback() const {
     if (m_callback != nullptr) {
         m_callback(m_status_word & ST_READY_TO_SEND,
-            m_status_word & ST_DATA_SENT_NOT_ACKED,
-            m_status_word & ST_FRAMING);
+            m_status_word & ST_DATA_SENT_NOT_ACKED);
     }
 }
 
