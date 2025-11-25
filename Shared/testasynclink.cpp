@@ -283,20 +283,17 @@ TEST_F(AsyncLinkTest, SetRTSSetsIt) {
 }
 
 TEST_F(AsyncLinkTest, RTSClearedWhenDataSentAsync) {
-    bool ok = linkA->writeByteAsync(0xC9,
-[](bool ack, bool to) {
-        // Handle callback
-    });
+    char outbuf[] = "a";
+    bool ok = linkA->writeDataAsync(0xCAFEBABE, (BYTE8*)&outbuf[0], 1);
+    logDebug("out of writeDataAsync");
     EXPECT_EQ(ok, true);
     pause();
     EXPECT_EQ(linkA->queryReadyToSend(), false);
 }
 
 TEST_F(AsyncLinkTest, DataSentAsyncGetsAckedRTSSet) {
-    linkA->writeByteAsync(0xC9,
-    [](bool ack, bool to) {
-        // Handle callback
-    });
+    char outbuf[] = "a";
+    linkA->writeDataAsync(0xCAFEBABE, (BYTE8*)&outbuf[0], 1);
     for (int i=0; i<24 * 12; i++) { // 24 bit-lengths should be enough to hear the ack
         pause();
     }
@@ -304,31 +301,17 @@ TEST_F(AsyncLinkTest, DataSentAsyncGetsAckedRTSSet) {
 }
 
 TEST_F(AsyncLinkTest, DataSentAsyncGetsAckedAndCalledBack) {
-    bool acked = false;
-    linkA->writeByteAsync(0xC9,
-    [&](bool ack, bool to) {
-        // Handle callback
-        acked = ack;
-    });
+    char outbuf[] = "a";
+    linkA->writeDataAsync(0xCAFEBABE, (BYTE8*)&outbuf[0], 1);
     for (int i=0; i<24 * 12; i++) { // 24 bit-lengths should be enough to hear the ack
         pause();
     }
-    EXPECT_EQ(acked, true);
-}
-
-TEST_F(AsyncLinkTest, DataSentAsyncGetsAckedAndCalledBackNullSafety) {
-    linkA->writeByteAsync(0xC9, nullptr);
-    for (int i=0; i<24 * 12; i++) { // 24 bit-lengths should be enough to hear the ack
-        pause();
-    }
-    // Got here? Good!
+    EXPECT_EQ(linkA->getStatusWord() & ST_READY_TO_SEND, ST_READY_TO_SEND);
 }
 
 TEST_F(AsyncLinkTest, StartWritingAsync) {
-    linkA->writeByteAsync(0xC9,
-        [](bool ack, bool to) {
-        // Handle callback
-    });
+    char outbuf[] = "a";
+    linkA->writeDataAsync(0xCAFEBABE, (BYTE8*)&outbuf[0], 1);
 
     pause();
     pause();
@@ -340,44 +323,43 @@ TEST_F(AsyncLinkTest, StartWritingAsync) {
 
 TEST_F(AsyncLinkTest, StartReadingAsync) {
     EXPECT_EQ(linkB->queryReadDataAvailable(), false);
-    // Opposite values to what I expect, to verify the correct values passed to the callback.
-    bool test_ov = true;
-    bool test_fr = true;
-    bool test_ok = false;
-    BYTE8 test_data = 0;
-    bool called_back = false;
-    linkB->readByteAsync([&](bool ov, bool fr, bool ok, BYTE8 byte) {
-        //logDebugF("Link B in callback ov %d fr %d ok %d read byte 0b%s", ov, fr, ok, byte_to_binary(byte));
-        called_back = true;
-        test_ov = ov;
-        test_fr = fr;
-        test_ok = ok;
-        test_data = byte;
-    });
+    char readBuf[]="x";
+    linkB->readDataAsync(0xCAFEBABE, (BYTE8*)&readBuf[0], 1);
 
-    linkA->writeByteAsync(0xC9, nullptr);
-    for (int i=0; i<24 * 12; i++) { // 24 bit-lengths should be enough to hear the data
+    char outbuf[] = "a";
+    linkA->writeDataAsync(0xDEADF00D, (BYTE8*)&outbuf[0], 1);
+    // for (int i=0; i<24 * 12; i++) { // 24 bit-lengths should be enough to hear the data
+    //     pause();
+    // }
+
+    while ((linkA->getStatusWord() & ST_SEND_COMPLETE) == 0 && (linkB->getStatusWord() & ST_READ_COMPLETE) == 0) {
         pause();
     }
-    //logDebugF("Link B after pause ov %d fr %d ok %d read byte 0b%s", test_ov, test_fr, test_ok, byte_to_binary(test_data));
 
-    EXPECT_EQ(called_back, true);
-    EXPECT_EQ(test_ok, true);
-    EXPECT_EQ(test_ov, false);
-    EXPECT_EQ(test_fr, false);
-    EXPECT_EQ(test_data, 0xC9);
-    // And the callback clears this once called back.
+    EXPECT_EQ(readBuf[0], 'a');
     EXPECT_EQ(linkB->queryReadDataAvailable(), false);
 }
 
-TEST_F(AsyncLinkTest, StartReadingAsyncNullSafety) {
-    linkB->readByteAsync(nullptr);
+TEST_F(AsyncLinkTest, BulkTransfer) {
+    // Receive some data into this buffer, letting the test continue when it's all received.
+    char readBuffer[] = "--------------------------------------------------------------------------------------"
+        "----------------------------------------------------------------------------------------------"
+        "----------------------------------";
+    linkB->readDataAsync(0xCAFEBABE, (BYTE8*)&readBuffer[0], strlen(readBuffer));
 
-    linkA->writeByteAsync(0xC9, nullptr);
-    for (int i=0; i<24 * 12; i++) { // 24 bit-lengths should be enough to hear the data
+    char sendBuffer[] = "There are two ways of constructing a software design: One way is to make it so simple "
+        "that there are obviously no deficiencies, and the other way is to make it so complicated that "
+        "there are no obvious deficiencies.";
+    // Send a buffer of data until done...
+    linkA->writeDataAsync(0xDEADBEEF, (BYTE8*)&sendBuffer[0], strlen(sendBuffer));
+
+    // Wait until all data received...
+    while ((linkA->getStatusWord() & ST_SEND_COMPLETE) == 0 && (linkB->getStatusWord() & ST_READ_COMPLETE) == 0) {
         pause();
     }
-    // Got to here, good! You'll never know what data was sent..
+
+    EXPECT_EQ(std::string(readBuffer), std::string(sendBuffer));
+    logInfo("******************** BulkTransfer has exited ************************************");
 }
 
 /*
@@ -454,26 +436,13 @@ TEST_F(AsyncLinkTimeoutTest, DisconnectedOps) {
 }
 
 TEST_F(AsyncLinkTimeoutTest, DataSentAsyncTimesOutWithNoOtherLinkListening) {
-    bool timeout = false;
-    linkA->writeByteAsync(0xC9, [&](bool ack, bool to) {
-        // Handle callback
-        timeout = to;
-    });
+    char outbuf[] = "a";
+    linkA->writeDataAsync(0xDEADF00D, (BYTE8*)&outbuf[0], 1);
     for (int i=0; i<24 * 12; i++) { // 24 bit-lengths should be enough to time out
         pause();
     }
-    linkA->writeByteAsync(0xC9, nullptr);
-    EXPECT_EQ(timeout, true);
+    EXPECT_EQ(linkA->getStatusWord() & ST_DATA_SENT_NOT_ACKED, ST_DATA_SENT_NOT_ACKED);
 }
-
-TEST_F(AsyncLinkTimeoutTest, DataSentAsyncTimesOutWithNoOtherLinkListeningNullSafety) {
-    linkA->writeByteAsync(0xC9, nullptr);
-    for (int i=0; i<24 * 12; i++) { // 24 bit-lengths should be enough to time out
-        pause();
-    }
-    // Just gets through the night without crashing
-}
-
 
 
 class TxRxPinTest : public ::testing::Test {

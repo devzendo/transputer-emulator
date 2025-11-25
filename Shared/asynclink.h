@@ -18,7 +18,6 @@
 #include <atomic>
 #include <mutex> // For std::lock_guard and BasicLockable
 #include <vector>
-#include <functional>
 
 #ifdef DESKTOP
 #include <thread>
@@ -356,6 +355,32 @@ private:
 #endif
 };
 
+struct LinkRegisters {
+public:
+    WORD32 m_workspace_pointer;
+    BYTE8* m_data_pointer;
+    WORD32 m_length;
+};
+
+/*
+ * Status word bits.
+ * 15       | 14       | 13        | 12        | 11        | 10        | 9         | 8
+ * FRAMING  | OVERRUN  | READ DATA | READY TO  | DATA SENT | READ      | SEND      | ......... |
+ *          |          | AVAILABLE | SEND      | NOT ACKED | COMPLETE  | COMPLETE  |           |
+ *          |          |           |           | (TIMEOUT) |           |           |           |
+ * ---------------------------------------------------------------------------------------------
+ * 7        | 6        | 5         | 4         | 3         | 2         | 1         | 0
+ * DATA RECEIVED IF READ DATA AVAILABLE (BIT 13) IS TRUE
+ */
+const WORD16 ST_FRAMING = 0x8000;
+const WORD16 ST_OVERRUN = 0x4000;
+const WORD16 ST_READ_DATA_AVAILABLE = 0x2000;
+const WORD16 ST_READY_TO_SEND = 0x1000;
+const WORD16 ST_DATA_SENT_NOT_ACKED = 0x0800;
+const WORD16 ST_READ_COMPLETE = 0x0400;
+const WORD16 ST_SEND_COMPLETE = 0x0200;
+const WORD16 ST_DATA_MASK = 0x00FF;
+
 /* Highest level abstraction: AsyncLink uses the DataAckSender & DataAckReceiver state machines,
  * and an OversampledTxRxPin to handle the send/receive over an underlying TxRxPin.
  */
@@ -370,12 +395,11 @@ public:
     int getLinkType() override;
     void clock() override;
 
-    // Callback parameters are Acknowledged, Timeout.
-    bool writeByteAsync(BYTE8 b, std::function<void(bool, bool)> callback);
+    WORD16 getStatusWord();
+    bool writeDataAsync(WORD32 workspacePointer, BYTE8* dataPointer, WORD32 length);
+    void readDataAsync(WORD32 workspacePointer, BYTE8* dataPointer, WORD32 length);
 
-    // Callback parameters are Overrun, Framing error (bad stop bit), Data byte received & The Byte.
-    void readByteAsync(std::function<void(bool, bool, bool, BYTE8)> callback);
-
+    // All internals...
     // SenderToLink
     bool queryReadyToSend() override;
     void setReadyToSend() override;
@@ -390,14 +414,12 @@ public:
     void clearReadDataAvailable() override;
 
 private:
-    void write_callback() const;
-    void read_callback() const;
     TxRxPin & m_pin;
     OversampledTxRxPin * m_o_pin;
     DataAckSender * m_sender;
     DataAckReceiver * m_receiver;
-    std::function<void(bool, bool)> m_write_callback = nullptr;
-    std::function<void(bool, bool, bool, BYTE8)> m_read_callback = nullptr;
+    LinkRegisters m_send_registers;
+    LinkRegisters m_receive_registers;
     volatile WORD16 m_status_word;
     WORD32 myWriteSequence, myReadSequence;
 #ifdef DESKTOP

@@ -247,23 +247,6 @@ AsyncLinkClock::~AsyncLinkClock() {
 // * That an ack has been received - the emulator only reschedules the sending process when the ack for the final byte
 //   has been received.
 
-/*
- * Status word bits.
- * 15       | 14       | 13        | 12        | 11        | 10        | 9         | 8
- * FRAMING  | OVERRUN  | READ DATA | READY TO  | DATA SENT | ......... | ......... | ......... |
- *          |          | AVAILABLE | SEND      | NOT ACKED |           |           |           |
- *          |          |           |           | (TIMEOUT) |           |           |           |
- * ---------------------------------------------------------------------------------------------
- * 7        | 6        | 5         | 4         | 3         | 2         | 1         | 0
- * DATA RECEIVED IF READ DATA AVAILABLE (BIT 13) IS TRUE
- */
-const WORD16 ST_FRAMING = 0x8000;
-const WORD16 ST_OVERRUN = 0x4000;
-const WORD16 ST_READ_DATA_AVAILABLE = 0x2000;
-const WORD16 ST_READY_TO_SEND = 0x1000;
-const WORD16 ST_DATA_SENT_NOT_ACKED = 0x0800;
-const WORD16 ST_DATA_MASK = 0x00FF;
-
 AsyncLink::AsyncLink(int linkNo, bool isServer, TxRxPin& tx_rx_pin) :
     Link(linkNo, isServer), m_pin(tx_rx_pin), m_status_word(0) {
     logDebugF("Constructing async link %d for %s", myLinkNo, isServer ? "server" : "cpu client");
@@ -278,6 +261,8 @@ AsyncLink::AsyncLink(int linkNo, bool isServer, TxRxPin& tx_rx_pin) :
     m_sender = new DataAckSender(linkNo, tx_rx_pin);
     m_receiver->registerReceiverToSender(*m_sender);
     m_sender->registerSenderToLink(*this); // dereference this to get a reference.
+    m_receive_registers.m_length = 0;
+    m_send_registers.m_length = 0;
 }
 
 void AsyncLink::initialise() {
@@ -315,40 +300,67 @@ void AsyncLink::clock() {
     m_o_pin->getRx(); // Will call the majority vote callback with the input bit.
 }
 
-bool AsyncLink::writeByteAsync(BYTE8 b, std::function<void(bool, bool)> callback) {
-    m_write_callback = callback;
-    return m_sender->sendData(0xC9);
+WORD16 AsyncLink::getStatusWord() {
+    MUTEX
+    return m_status_word;
 }
 
-void AsyncLink::readByteAsync(std::function<void(bool, bool, bool, BYTE8)> callback) {
-    m_read_callback = callback;
+bool AsyncLink::writeDataAsync(WORD32 workspacePointer, BYTE8* dataPointer, WORD32 length) {
+    logDebugF("Link %d sending %d bytes from initial address 0x%08x", myLinkNo, length, dataPointer);
+    MUTEX
+    m_status_word &= ~ST_SEND_COMPLETE;
+    m_send_registers.m_workspace_pointer = workspacePointer;
+    m_send_registers.m_data_pointer = dataPointer;
+    m_send_registers.m_length = length;
+    return m_sender->sendData(*dataPointer);
 }
 
+void AsyncLink::readDataAsync(WORD32 workspacePointer, BYTE8* dataPointer, WORD32 length) {
+    logDebugF("Link %d receiving %d bytes to initial address 0x%08x", myLinkNo, length, dataPointer);
+    MUTEX
+    m_status_word &= ~ST_READ_COMPLETE;
+    m_receive_registers.m_workspace_pointer = workspacePointer;
+    m_receive_registers.m_data_pointer = dataPointer;
+    m_receive_registers.m_length = length;
+    // Any received data will get stored from m_data_pointer until m_length is received.
+}
 
 // SenderToLink
 bool AsyncLink::queryReadyToSend() {
-    MUTEX
+    // MUTEX
     return m_status_word & ST_READY_TO_SEND;
 }
 
+// Precondition: called under MUTEX
 void AsyncLink::setReadyToSend() {
     logDebugF("Link %d is ready to send", myLinkNo);
-    MUTEX
     m_status_word |= ST_READY_TO_SEND;
-    write_callback();
+    if (m_send_registers.m_length == 0) {
+        return; // just initialising
+    }
+    // Actually transferring...
+    m_send_registers.m_data_pointer++;
+    m_send_registers.m_length--;
+    if (m_send_registers.m_length == 0) {
+        logDebugF("Link %d sending complete", myLinkNo);
+        m_status_word |= ST_SEND_COMPLETE;
+        // TODO the emulator will sense ST_SEND_COMPLETE and reschedule the process at m_send_registers->workspacePointer.
+    } else {
+        logDebugF("Link %d sending %d bytes, storing at 0x%08x", myLinkNo, m_send_registers.m_length, m_send_registers.m_data_pointer);
+        m_sender->sendData(*m_send_registers.m_data_pointer);
+    }
 }
 
 void AsyncLink::clearReadyToSend() {
     logDebugF("Link %d is NOT ready to send", myLinkNo);
-    MUTEX
+    //MUTEX
     m_status_word &= ~ST_READY_TO_SEND;
 }
 
 void AsyncLink::setTimeoutError() {
     logWarnF("Link %d timed out", myLinkNo);
-    MUTEX
+    //MUTEX
     m_status_word |= ST_DATA_SENT_NOT_ACKED;
-    write_callback();
 }
 
 // ReceiverToLink
@@ -362,45 +374,39 @@ void AsyncLink::overrunError() {
     // TODO
 }
 
+// Precondition: called under MUTEX
 void AsyncLink::dataReceived(BYTE8 data) {
     logDebugF("Link %d data received 0b%s", myLinkNo, byte_to_binary(data));
-    MUTEX
+    //MUTEX
     m_status_word |= (ST_READ_DATA_AVAILABLE | data);
+    if (m_receive_registers.m_length == 0) {
+        logWarnF("Link %d received data with no buffer", myLinkNo);
+        return;
+    }
     // logDebugF("Link %d status word 0b%s", myLinkNo, word_to_binary(m_status_word));
-    read_callback();
+    BYTE8* ptr = m_receive_registers.m_data_pointer;
+    logDebugF("Link %d receiving at address 0x%08x", myLinkNo, ptr);
+    *ptr = data;
+    logDebugF("Link %d stored byte", myLinkNo);
+    m_receive_registers.m_length--;
+    m_receive_registers.m_data_pointer++;
+    if (m_receive_registers.m_length == 0) {
+        logDebugF("Link %d receiving complete", myLinkNo);
+        m_status_word |= ST_READ_COMPLETE;
+        // TODO the emulator will see ST_READ_COMPLETE and reschedule the process at m_receive_registers->m_workspace_pointer.
+    }
     m_status_word &= ~ST_READ_DATA_AVAILABLE; // If there's no callback, this should not be cleared?
 }
 
 bool AsyncLink::queryReadDataAvailable() {
-    MUTEX
+    //MUTEX
     return m_status_word & ST_READ_DATA_AVAILABLE;
 }
 
 void AsyncLink::clearReadDataAvailable() {
     logDebugF("Link %d data NOT available", myLinkNo);
-    MUTEX
+    //MUTEX
     m_status_word &= ~ST_READ_DATA_AVAILABLE;
-}
-
-// Precondition: called under MUTEX
-void AsyncLink::write_callback() const {
-    if (m_write_callback != nullptr) {
-        m_write_callback(m_status_word & ST_READY_TO_SEND,
-            m_status_word & ST_DATA_SENT_NOT_ACKED);
-    }
-}
-
-// Precondition: called under MUTEX
-void AsyncLink::read_callback() const {
-    if (m_read_callback != nullptr) {
-        //logDebugF("Link %d calling read callback", myLinkNo);
-        m_read_callback(m_status_word & ST_OVERRUN,
-            m_status_word & ST_FRAMING,
-            m_status_word & ST_READ_DATA_AVAILABLE,
-            m_status_word & ST_DATA_MASK);
-    } else {
-        logWarnF("Link %d read data with no callback", myLinkNo);
-    }
 }
 
 /*
@@ -417,11 +423,12 @@ void MultipleTickHandler::addLink(Link* link) {
 
 // TickHandler
 void MultipleTickHandler::tick() {
-    // logDebug("Tick - clock the Links");
+    // logDebug("Tick - >> clock the Links");
     for (Link* link: m_links) {
         // logDebugF("Tick - link at 0x%x", link);
         link->clock();
     }
+    // logDebug("Tick - << clock the Links");
 }
 
 
@@ -508,6 +515,7 @@ void DataAckSender::sendAck() {
 
 bool DataAckSender::sendData(const BYTE8 byte) {
     // TODO mutex {
+    logDebugF("Link %d sendData state %s", m_linkNo, DataAckSenderStateToString(m_state));
     switch (m_state) {
         case DataAckSenderState::IDLE:
             if (m_sender_to_link != nullptr && m_sender_to_link->queryReadyToSend()) {
@@ -515,6 +523,8 @@ bool DataAckSender::sendData(const BYTE8 byte) {
                 m_sender_to_link->clearReadyToSend();
                 sendDataInternal(byte);
                 return true;
+            } else {
+                logWarnF("Link %d wants to send data but NOT ready to send", m_linkNo);
             }
             return false;
         case DataAckSenderState::SENDING_ACK:
