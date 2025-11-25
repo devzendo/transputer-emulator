@@ -15,6 +15,8 @@
 #define _MISC_H
 
 #include <string>
+#include <mutex>
+#include <condition_variable>
 #include "platformdetection.h"
 #include "types.h"
 
@@ -78,6 +80,36 @@ extern std::string stripLeading(char toStrip, const std::string &from);
 
 extern const char *byte_to_binary(BYTE8 x);
 extern const char *word_to_binary(WORD16 x);
+
+class CountDownLatch {
+public:
+    explicit CountDownLatch(unsigned int count) : m_count(count) {}
+
+    void await() {
+        std::unique_lock<std::mutex> lock(m_mutex);
+        m_cv.wait(lock, [this]() { return m_count == 0; });
+    }
+
+    void countDown() {
+        std::unique_lock<std::mutex> lock(m_mutex);
+        if (m_count > 0) {
+            --m_count;
+            if (m_count == 0) {
+                m_cv.notify_all();
+            }
+        }
+    }
+
+    unsigned int getCount() const {
+        std::unique_lock<std::mutex> lock(m_mutex);
+        return m_count;
+    }
+
+private:
+    mutable std::mutex m_mutex;
+    std::condition_variable m_cv;
+    unsigned int m_count;
+};
 
 #endif // _MISC_H
 
