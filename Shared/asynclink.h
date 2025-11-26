@@ -54,6 +54,21 @@ public:
 };
 
 /*
+ * A TxRxPin that uses a pair of Pico GPIO pins for transmit and receive.
+ */
+#ifdef PICO
+class GPIOTxRxPin: public TxRxPin {
+public:
+    GPIOTxRxPin(uint txGPIOPin, uint rxGPIOPin);
+    ~GPIOTxRxPin() override = default;
+    bool getRx() override;
+    void setTx(bool state) override;
+private:
+    uint m_txGPIOPin, m_rxGPIOPin;
+};
+#endif // PICO
+
+/*
  * The OversampledTxRxPin will emit majority-voted bit states via an instance of this interface that can be registered.
  */
 class RxBitReceiver {

@@ -21,6 +21,30 @@
 #include "pico/stdlib.h"
 #endif
 
+#ifdef PICO
+/*
+ * A TxRxPin that uses a pair of Pico GPIO pins for transmit and receive.
+ */
+GPIOTxRxPin::GPIOTxRxPin(uint txGPIOPin, uint rxGPIOPin) : m_txGPIOPin(txGPIOPin), m_rxGPIOPin(rxGPIOPin) {
+    logDebugF("Creating GPIOTxRxPin with TX pin %d, RX pin %d", m_txGPIOPin, m_rxGPIOPin);
+    gpio_init(m_txGPIOPin);
+    gpio_set_dir(m_txGPIOPin, GPIO_OUT);
+    gpio_set_drive_strength(m_txGPIOPin, GPIO_DRIVE_STRENGTH_2MA);
+    gpio_put(m_txGPIOPin, false);
+
+    gpio_init(m_rxGPIOPin);
+    gpio_set_dir(m_rxGPIOPin, GPIO_IN);
+}
+
+bool GPIOTxRxPin::getRx() {
+    return gpio_get(m_rxGPIOPin);
+}
+
+void GPIOTxRxPin::setTx(bool state) {
+    gpio_put(m_txGPIOPin, state);
+}
+#endif // PICO
+
 /*
  * A TxRxPin decorator that performs majority voting to provide solid bit-long true/false values for all the samples
  * in a bit.
