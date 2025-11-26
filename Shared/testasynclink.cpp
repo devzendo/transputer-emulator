@@ -19,6 +19,7 @@
 #include "gtest/gtest.h"
 #include "link.h"
 #include "asynclink.h"
+#include "constants.h"
 #include "log.h"
 #include "misc.h"
 
@@ -328,11 +329,11 @@ TEST_F(AsyncLinkTest, StartReadingAsync) {
 
     char outbuf[] = "a";
     linkA->writeDataAsync(0xDEADF00D, (BYTE8*)&outbuf[0], 1);
-    // for (int i=0; i<24 * 12; i++) { // 24 bit-lengths should be enough to hear the data
-    //     pause();
-    // }
 
-    while ((linkA->getStatusWord() & ST_SEND_COMPLETE) == 0 && (linkB->getStatusWord() & ST_READ_COMPLETE) == 0) {
+    while (linkA->writeComplete() == NotProcess_p) {
+        pause();
+    }
+    while (linkB->readComplete() == NotProcess_p) {
         pause();
     }
 
@@ -354,7 +355,13 @@ TEST_F(AsyncLinkTest, BulkTransfer) {
     linkA->writeDataAsync(0xDEADBEEF, (BYTE8*)&sendBuffer[0], strlen(sendBuffer));
 
     // Wait until all data received...
-    while ((linkA->getStatusWord() & ST_SEND_COMPLETE) == 0 && (linkB->getStatusWord() & ST_READ_COMPLETE) == 0) {
+    // while ((linkA->getStatusWord() & ST_SEND_COMPLETE) == 0 && (linkB->getStatusWord() & ST_READ_COMPLETE) == 0) {
+    //     pause();
+    // }
+    while (linkA->writeComplete() == NotProcess_p) {
+        pause();
+    }
+    while (linkB->readComplete() == NotProcess_p) {
         pause();
     }
 

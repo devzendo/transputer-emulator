@@ -14,6 +14,8 @@
 
 #include <exception>
 #include "asynclink.h"
+
+#include "constants.h"
 #include "misc.h"
 #include "log.h"
 
@@ -320,6 +322,7 @@ int AsyncLink::getLinkType() {
 
 void AsyncLink::clock() {
     // logDebugF("Clocking link %d", myLinkNo);
+    MUTEX
 	m_sender->clock(); // Will start clocking data out, if not idle.
     m_o_pin->getRx(); // Will call the majority vote callback with the input bit.
 }
@@ -339,6 +342,22 @@ bool AsyncLink::writeDataAsync(WORD32 workspacePointer, BYTE8* dataPointer, WORD
     return m_sender->sendData(*dataPointer);
 }
 
+WORD32 AsyncLink::writeComplete() {
+    // logDebugF("Link %d writeComplete?", myLinkNo);
+    MUTEX
+    if ((m_status_word & ST_SEND_COMPLETE) == 0) {
+        // logDebugF("Link %d writeComplete no", myLinkNo);
+        return NotProcess_p;
+    }
+    // logDebugF("Link %d writeComplete yes", myLinkNo);
+    WORD32 w = m_send_registers.m_workspace_pointer;
+    m_send_registers.m_workspace_pointer = NotProcess_p;
+    m_send_registers.m_length = 0;
+    m_send_registers.m_data_pointer = nullptr;
+    m_status_word &= ~ST_SEND_COMPLETE;
+    return w;
+}
+
 void AsyncLink::readDataAsync(WORD32 workspacePointer, BYTE8* dataPointer, WORD32 length) {
     // logDebugF("Link %d receiving %d bytes to initial address 0x%08x", myLinkNo, length, dataPointer);
     MUTEX
@@ -347,6 +366,20 @@ void AsyncLink::readDataAsync(WORD32 workspacePointer, BYTE8* dataPointer, WORD3
     m_receive_registers.m_data_pointer = dataPointer;
     m_receive_registers.m_length = length;
     // Any received data will get stored from m_data_pointer until m_length is received.
+}
+
+WORD32 AsyncLink::readComplete() {
+    // logDebugF("Link %d readComplete?", myLinkNo);
+    MUTEX
+    if ((m_status_word & ST_READ_COMPLETE) == 0) {
+        return NotProcess_p;
+    }
+    WORD32 w = m_receive_registers.m_workspace_pointer;
+    m_receive_registers.m_workspace_pointer = NotProcess_p;
+    m_receive_registers.m_length = 0;
+    m_receive_registers.m_data_pointer = nullptr;
+    m_status_word &= ~ST_READ_COMPLETE;
+    return w;
 }
 
 // SenderToLink
