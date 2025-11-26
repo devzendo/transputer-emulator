@@ -15,8 +15,10 @@
 #define _MISC_H
 
 #include <string>
+#ifdef DESKTOP
 #include <mutex>
 #include <condition_variable>
+#endif
 #include "platformdetection.h"
 #include "types.h"
 
@@ -81,6 +83,7 @@ extern std::string stripLeading(char toStrip, const std::string &from);
 extern const char *byte_to_binary(BYTE8 x);
 extern const char *word_to_binary(WORD16 x);
 
+#ifdef DESKTOP
 class CountDownLatch {
 public:
     explicit CountDownLatch(unsigned int count) : m_count(count) {}
@@ -110,6 +113,7 @@ private:
     std::condition_variable m_cv;
     unsigned int m_count;
 };
+#endif // DESKTOP
 
 #endif // _MISC_H
 
