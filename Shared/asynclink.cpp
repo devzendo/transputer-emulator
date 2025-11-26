@@ -89,7 +89,7 @@ bool OversampledTxRxPin::getRx() {
         // Don't know what the first two bits are yet (we'll collect them in m_data_bits), but the shortest resync could
         // be after an ack, so be pessimistic and sync again after a potential ack.
         m_resync_in_samples = 31 + 1; // +1 since we'll decrement below
-        logDebug("Synchronising majority vote detection on rising edge; setting resync at end of possible ack");
+        // logDebug("Synchronising majority vote detection on rising edge; setting resync at end of possible ack");
         m_sample_index = 0;
     }
 
@@ -112,7 +112,7 @@ bool OversampledTxRxPin::getRx() {
                     // 0123456789ABCDEF0123456789ABCDEF
                     // xxxxxx|||xxxxxxxyyyyyy|||yyyyyyy
                     m_resync_in_samples = 151 + 1; // +1 since we'll decrement below;
-                    logDebug("Data detected; setting resync at end of data");
+                    // logDebug("Data detected; setting resync at end of data");
                     break;
                 default:
                     // This is a bit noisy...
@@ -330,7 +330,7 @@ WORD16 AsyncLink::getStatusWord() {
 }
 
 bool AsyncLink::writeDataAsync(WORD32 workspacePointer, BYTE8* dataPointer, WORD32 length) {
-    logDebugF("Link %d sending %d bytes from initial address 0x%08x", myLinkNo, length, dataPointer);
+    // logDebugF("Link %d sending %d bytes from initial address 0x%08x", myLinkNo, length, dataPointer);
     MUTEX
     m_status_word &= ~ST_SEND_COMPLETE;
     m_send_registers.m_workspace_pointer = workspacePointer;
@@ -340,7 +340,7 @@ bool AsyncLink::writeDataAsync(WORD32 workspacePointer, BYTE8* dataPointer, WORD
 }
 
 void AsyncLink::readDataAsync(WORD32 workspacePointer, BYTE8* dataPointer, WORD32 length) {
-    logDebugF("Link %d receiving %d bytes to initial address 0x%08x", myLinkNo, length, dataPointer);
+    // logDebugF("Link %d receiving %d bytes to initial address 0x%08x", myLinkNo, length, dataPointer);
     MUTEX
     m_status_word &= ~ST_READ_COMPLETE;
     m_receive_registers.m_workspace_pointer = workspacePointer;
@@ -357,7 +357,7 @@ bool AsyncLink::queryReadyToSend() {
 
 // Precondition: called under MUTEX
 void AsyncLink::setReadyToSend() {
-    logDebugF("Link %d is ready to send", myLinkNo);
+    // logDebugF("Link %d is ready to send", myLinkNo);
     m_status_word |= ST_READY_TO_SEND;
     if (m_send_registers.m_length == 0) {
         return; // just initialising
@@ -366,17 +366,17 @@ void AsyncLink::setReadyToSend() {
     m_send_registers.m_data_pointer++;
     m_send_registers.m_length--;
     if (m_send_registers.m_length == 0) {
-        logDebugF("Link %d sending complete", myLinkNo);
+        // logDebugF("Link %d sending complete", myLinkNo);
         m_status_word |= ST_SEND_COMPLETE;
         // TODO the emulator will sense ST_SEND_COMPLETE and reschedule the process at m_send_registers->workspacePointer.
     } else {
-        logDebugF("Link %d sending %d bytes, storing at 0x%08x", myLinkNo, m_send_registers.m_length, m_send_registers.m_data_pointer);
+        // logDebugF("Link %d sending %d bytes, storing at 0x%08x", myLinkNo, m_send_registers.m_length, m_send_registers.m_data_pointer);
         m_sender->sendData(*m_send_registers.m_data_pointer);
     }
 }
 
 void AsyncLink::clearReadyToSend() {
-    logDebugF("Link %d is NOT ready to send", myLinkNo);
+    // logDebugF("Link %d is NOT ready to send", myLinkNo);
     //MUTEX
     m_status_word &= ~ST_READY_TO_SEND;
 }
@@ -400,7 +400,7 @@ void AsyncLink::overrunError() {
 
 // Precondition: called under MUTEX
 void AsyncLink::dataReceived(BYTE8 data) {
-    logDebugF("Link %d data received 0b%s", myLinkNo, byte_to_binary(data));
+    // logDebugF("Link %d data received 0b%s", myLinkNo, byte_to_binary(data));
     //MUTEX
     m_status_word |= (ST_READ_DATA_AVAILABLE | data);
     if (m_receive_registers.m_length == 0) {
@@ -409,13 +409,13 @@ void AsyncLink::dataReceived(BYTE8 data) {
     }
     // logDebugF("Link %d status word 0b%s", myLinkNo, word_to_binary(m_status_word));
     BYTE8* ptr = m_receive_registers.m_data_pointer;
-    logDebugF("Link %d receiving at address 0x%08x", myLinkNo, ptr);
+    // logDebugF("Link %d receiving at address 0x%08x", myLinkNo, ptr);
     *ptr = data;
-    logDebugF("Link %d stored byte", myLinkNo);
+    // logDebugF("Link %d stored byte", myLinkNo);
     m_receive_registers.m_length--;
     m_receive_registers.m_data_pointer++;
     if (m_receive_registers.m_length == 0) {
-        logDebugF("Link %d receiving complete", myLinkNo);
+        // logDebugF("Link %d receiving complete", myLinkNo);
         m_status_word |= ST_READ_COMPLETE;
         // TODO the emulator will see ST_READ_COMPLETE and reschedule the process at m_receive_registers->m_workspace_pointer.
     }
@@ -501,26 +501,26 @@ void DataAckSender::ackReceived() {
             logWarnF("Link %d Ack received in IDLE state", m_linkNo);
             break;
         case DataAckSenderState::SENDING_DATA:
-            logDebugF("Link %d Data being sent has been acked", m_linkNo);
+            // logDebugF("Link %d Data being sent has been acked", m_linkNo);
             m_ack_rxed = true;
             break;
         case DataAckSenderState::SENDING_ACK:
-            logDebugF("Link %d Ack being sent has been acked", m_linkNo);
+            // logDebugF("Link %d Ack being sent has been acked", m_linkNo);
             m_ack_rxed = true;
             break;
         case DataAckSenderState::ACK_TIMEOUT:
-            logDebugF("Link %d Ack being sent has been acked (timeout)", m_linkNo);
+            // logDebugF("Link %d Ack being sent has been acked (timeout)", m_linkNo);
             m_ack_rxed = true;
             break;
         default:
-            logDebug("Ack received");
+            // logDebug("Ack received");
             break;
     }
 }
 
 // ReceiverToSender
 void DataAckSender::sendAck() {
-    logDebugF("Link %d The sending of an ack has been requested", m_linkNo);
+    // logDebugF("Link %d The sending of an ack has been requested", m_linkNo);
     switch (m_state) {
         case DataAckSenderState::IDLE:
             m_sampleCount = 0;
@@ -539,7 +539,7 @@ void DataAckSender::sendAck() {
 
 bool DataAckSender::sendData(const BYTE8 byte) {
     // TODO mutex {
-    logDebugF("Link %d sendData state %s", m_linkNo, DataAckSenderStateToString(m_state));
+    // logDebugF("Link %d sendData state %s", m_linkNo, DataAckSenderStateToString(m_state));
     switch (m_state) {
         case DataAckSenderState::IDLE:
             if (m_sender_to_link != nullptr && m_sender_to_link->queryReadyToSend()) {
@@ -552,7 +552,7 @@ bool DataAckSender::sendData(const BYTE8 byte) {
             }
             return false;
         case DataAckSenderState::SENDING_ACK:
-            logDebugF("Link %d Enqueueing data to send 0b%s", m_linkNo, byte_to_binary(byte));
+            // logDebugF("Link %d Enqueueing data to send 0b%s", m_linkNo, byte_to_binary(byte));
             m_data_enqueued = true;
             m_data_enqueued_buffer = byte;
             m_ack_rxed = false;
@@ -575,8 +575,8 @@ void DataAckSender::sendDataInternal(const BYTE8 byte) {
     // Data is shifted out from the LSB of m_data. After the start bits (1 1), 'byte' is sent, starting with the
     // least significant bit of 'byte' then one stop bit (0).
     m_data = (byte << 2) | 0x0003; // A stop bit (implied), 'byte', then two start bits.
-    logDebugF("Link %d sendData orig byte 0b%s", m_linkNo, byte_to_binary(origByte));
-    logDebugF("Link %d sendData data 0b%s", m_linkNo, word_to_binary(m_data));
+    // logDebugF("Link %d sendData orig byte 0b%s", m_linkNo, byte_to_binary(origByte));
+    // logDebugF("Link %d sendData data 0b%s", m_linkNo, word_to_binary(m_data));
     // 1
     // 0 5 2 1
     // 2 1 5 2 6 3 1
@@ -606,12 +606,12 @@ void DataAckSender::clock() {
             m_pin.setTx(one);
             m_sampleCount ++;
             if (m_sampleCount == 16) {
-                logDebugF("Link %d Finished sending bit %d for 16 samples", m_linkNo, one);
+                // logDebugF("Link %d Finished sending bit %d for 16 samples", m_linkNo, one);
                 m_sampleCount = 0;
                 m_bits--;
                 m_data >>= 1;
                 if (m_bits == 0) {
-                    logDebugF("Link %d End of transmission, state is %s, ack_rxed %d data_enqueued %d send_ack %d", m_linkNo, DataAckSenderStateToString(m_state), m_ack_rxed, m_data_enqueued, m_send_ack);
+                    // logDebugF("Link %d End of transmission, state is %s, ack_rxed %d data_enqueued %d send_ack %d", m_linkNo, DataAckSenderStateToString(m_state), m_ack_rxed, m_data_enqueued, m_send_ack);
                     if (m_state == DataAckSenderState::SENDING_ACK) {
                         if (m_data_enqueued) {
                             m_ack_rxed = false;
@@ -665,7 +665,7 @@ void DataAckSender::unregisterSenderToLink() const {
 
 void DataAckSender::changeState(const DataAckSenderState newState) {
     // State exit actions
-    logDebugF("Link %d Sender exiting state %s", m_linkNo, DataAckSenderStateToString(m_state));
+    // logDebugF("Link %d Sender exiting state %s", m_linkNo, DataAckSenderStateToString(m_state));
     switch (m_state) {
         case DataAckSenderState::SENDING_ACK:
             m_send_ack = false;
@@ -679,7 +679,7 @@ void DataAckSender::changeState(const DataAckSenderState newState) {
     }
 
     // State entry actions
-    logDebugF("Link %d Sender entering state %s", m_linkNo, DataAckSenderStateToString(newState));
+    // logDebugF("Link %d Sender entering state %s", m_linkNo, DataAckSenderStateToString(newState));
     m_state = newState;
     switch (newState) {
         case DataAckSenderState::IDLE:
@@ -759,7 +759,7 @@ DataAckReceiverState DataAckReceiver::state() const {
 }
 
 void DataAckReceiver::bitStateReceived(const bool state) {
-    logDebugF("Link %d received majority bit %d", m_linkNo, state);
+    // logDebugF("Link %d received majority bit %d", m_linkNo, state);
     switch (m_state) {
         case DataAckReceiverState::IDLE:
             if (state) {
@@ -847,7 +847,7 @@ void DataAckReceiver::unregisterReceiverToLink() const {
 }
 
 void DataAckReceiver::changeState(const DataAckReceiverState newState) {
-    logDebugF("Link %d Receiver changing state from %s to %s", m_linkNo, DataAckReceiverStateToString(m_state), DataAckReceiverStateToString(newState));
+    // logDebugF("Link %d Receiver changing state from %s to %s", m_linkNo, DataAckReceiverStateToString(m_state), DataAckReceiverStateToString(newState));
     m_state = newState;
 }
 
