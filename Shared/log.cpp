@@ -12,6 +12,7 @@
 //------------------------------------------------------------------------------
 
 #ifdef PICO
+#include <cstdlib>
 #include <stdio.h> // Pico USB Serial STDIO
 #endif
 

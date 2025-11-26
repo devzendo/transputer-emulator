@@ -18,7 +18,7 @@ limited the C++ standard I could support.
 
 
 ## Project Status
-Last changes in mid November 2025.
+Last changes in late November 2025.
 
 Currently adding a build for the Raspberry Pi Pico, using USB CDC for diagnostic and link 0 I/O.
 Starting a GPIO-based asynchronous link abstraction, for eventual use on the Pi Pico.
@@ -578,6 +578,9 @@ Henry S. Warren, for "Hacker's Delight".
 Pete Warden for his investigation and documentation into the Raspberry Pi Pico
 memory layout at
 https://petewarden.com/2024/01/16/understanding-the-raspberry-pi-picos-memory-layout/
+
+Klaus Zerbe for the implementation of stdio getline for the Pi Pico, from
+https://github.com/ambotaku/pico-getLine, included in the Shared library code.
 
 Yury Shevchuk and Roman Pozlevich for the gcc-t800 port, ttools and libxputer
 packages.  These were used throughout an earlier version of the project, for

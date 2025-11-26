@@ -33,6 +33,21 @@ if(PICO)
     target_link_libraries(parachutedev pico_sync pico_stdlib)
 endif(PICO)
 
+# Some test harnesses and a link adapter for the pico
+if (PICO)
+    add_executable(picolinkharness picolinkharness.cpp getline.cpp)
+    target_link_libraries(picolinkharness parachutedev)
+    pico_enable_stdio_usb(picolinkharness 1)
+    pico_enable_stdio_uart(picolinkharness 1)
+    pico_add_extra_outputs(picolinkharness)
+
+    add_executable(picolinkreflect picolinkreflect.cpp)
+    target_link_libraries(picolinkreflect parachutedev)
+    pico_enable_stdio_usb(picolinkreflect 1)
+    pico_enable_stdio_uart(picolinkreflect 1)
+    pico_add_extra_outputs(picolinkreflect)
+endif(PICO)
+
 if(NOT(EMBEDDED))
   add_library(testfixtures STATIC tempfilesfixture.h tempfilesfixture.cpp exceptionfixture.h)
   target_link_libraries(testfixtures parachutedev)
