@@ -17,10 +17,7 @@
 
 #include "log.h"
 #include "asynclink.h"
-
-// Don't know why I can't refer to it as
-// extern char * getLine(bool fullDuplex, char lineBreak);
-#include "getline.cpp"
+#include "getline.h"
 
 using namespace std;
 

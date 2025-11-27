@@ -580,7 +580,9 @@ memory layout at
 https://petewarden.com/2024/01/16/understanding-the-raspberry-pi-picos-memory-layout/
 
 Klaus Zerbe for the implementation of stdio getline for the Pi Pico, from
-https://github.com/ambotaku/pico-getLine, included in the Shared library code.
+https://github.com/ambotaku/pico-getLine, included in the Shared library code, with a
+tiny modification to remove the 'static' qualifier, as I could not get that to build
+successfully.
 
 Yury Shevchuk and Roman Pozlevich for the gcc-t800 port, ttools and libxputer
 packages.  These were used throughout an earlier version of the project, for

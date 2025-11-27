@@ -35,7 +35,7 @@ endif(PICO)
 
 # Some test harnesses and a link adapter for the pico
 if (PICO)
-    add_executable(picolinkharness picolinkharness.cpp getline.cpp)
+    add_executable(picolinkharness picolinkharness.cpp getline.h getline.cpp)
     target_link_libraries(picolinkharness parachutedev)
     pico_enable_stdio_usb(picolinkharness 1)
     pico_enable_stdio_uart(picolinkharness 1)

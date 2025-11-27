@@ -36,7 +36,7 @@ const char eof = 255;           // EOF in stdio.h -is -1, but getchar returns in
  *  @param linebreak defaults to "\n", but "\r" may be needed for terminals
  *  @return entered line on heap - don't forget calling free() to get memory back
  */
-static char * getLine(bool fullDuplex = true, char lineBreak = '\n') {
+char * getLine(bool fullDuplex = true, char lineBreak = '\n') {
     // th line buffer
     // will allocated by pico_malloc module if <cstdlib> gets included
     char * pStart = (char*)malloc(startLineLength);
