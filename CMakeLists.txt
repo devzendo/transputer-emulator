@@ -32,52 +32,52 @@ endif()
 # Convenience CMake variables, and analogues of them as C++ preprocessor definitions.
 if(PICO) # OR TEENSY OR ADAFRUIT_FEATHER .. or whatever
   set(EMBEDDED ON)
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DPICO")
+  add_compile_options(-DPICO)
   message(STATUS "Setting an embedded build with -DPICO in the CXX flags...")
 endif()
 
 # It's either embedded, or desktop.
 if(EMBEDDED)
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DEMBEDDED")
+  add_compile_options(-DEMBEDDED)
   message(STATUS "Setting -DEMBEDDED in the CXX flags")
 else()
   set(DESKTOP ON)
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DDESKTOP")
+  add_compile_options(-DDESKTOP)
   message(STATUS "Setting -DDESKTOP in the CXX flags")
 endif()
+
+# VERSION is filtered into target/classes/version.cpp by using the maven resources plugin.
+add_compile_options(-DDEBUG)
+add_compile_options(-DVERSION="${VERSION}")
+if(WIN32)
+    if(${CMAKE_BUILD_TYPE} STREQUAL "Debug")
+        add_compile_options(/Od /Zi)
+    else()
+        add_compile_options(/O2)
+    endif()
+endif(WIN32)
+
+if(UNIX)
+    if(${CMAKE_BUILD_TYPE} STREQUAL "Debug")
+        add_compile_options(-O3 -g)
+    else()
+        add_compile_options(-O3)
+    endif()
+endif(UNIX)
 
 # So you'll either have DESKTOP or EMBEDDED, and then Shared/platformdetection.h will give you
 # one of PLATFORM_OSX, PLATFORM_LINUX, PLATFORM_WINDOWS, PLATFORM_PICO.
 
 if(PICO)
   # Picotool problems? Enable this:
-  # set(PICOTOOL_FORCE_FETCH_FROM_GIT 1)
-  include(pico_sdk_import.cmake)
+  set(PICOTOOL_FORCE_FETCH_FROM_GIT 1)
+  include(pico_sdk_import.cmake) # must be before project
   set(PICO_CXX_ENABLE_EXCEPTIONS 1)
 endif(PICO)
 
-# VERSION is filtered into target/classes/version.cpp by using the maven resources plugin.
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DDEBUG -DVERSION=\"${VERSION}\"")
-if(WIN32)
-    if(${CMAKE_BUILD_TYPE} STREQUAL "Debug")
-        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /Od /Zi")
-    else()
-        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /O2")
-    endif()
-endif(WIN32)
-
-if(UNIX)
-    if(${CMAKE_BUILD_TYPE} STREQUAL "Debug")
-        #set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++1y -Wall -O2 -g")
-        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O3 -g")
-    else()
-        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O3")
-    endif()
-endif(UNIX)
-
 project(transputer-emulator)
 
-if(PICO) 
+if(PICO)
   pico_sdk_init()
 endif(PICO)
 
