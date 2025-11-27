@@ -71,6 +71,7 @@ std::string getLastError() {
 #if defined(PLATFORM_OSX) || defined(PLATFORM_LINUX)
     return std::string(strerror(errno));
 #endif
+    return std::string("Unknown error");
 }
 
 
