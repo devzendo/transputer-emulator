@@ -584,6 +584,9 @@ https://github.com/ambotaku/pico-getLine, included in the Shared library code, w
 tiny modification to remove the 'static' qualifier, as I could not get that to build
 successfully.
 
+Jack Ganssle for his article on firmware debouncing
+http://www.ganssle.com/debouncing-pt2.htm
+
 Yury Shevchuk and Roman Pozlevich for the gcc-t800 port, ttools and libxputer
 packages.  These were used throughout an earlier version of the project, for
 bootstrap code, object and executable file format and loader.

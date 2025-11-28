@@ -41,7 +41,7 @@ if (PICO)
     pico_enable_stdio_uart(picolinkharness 1)
     pico_add_extra_outputs(picolinkharness)
 
-    add_executable(picolinkreflect picolinkreflect.cpp)
+    add_executable(picolinkreflect picolinkreflect.cpp debouncer.h debouncer.cpp)
     target_link_libraries(picolinkreflect parachutedev)
     pico_enable_stdio_usb(picolinkreflect 1)
     pico_enable_stdio_uart(picolinkreflect 1)
