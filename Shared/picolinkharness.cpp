@@ -13,6 +13,7 @@
 
 #include <stdio.h> // Pico USB Serial STDIO
 #include "pico/stdlib.h"
+#include "pico/time.h"
 #include <cstdlib> // free
 #include <locale>
 
@@ -42,12 +43,19 @@ void process_command(char *cmd, AsyncLink *link) {
     BYTE8 a1;
     BYTE8 a2;
     int xx;
+    uint32_t msSinceBootAtStart;
+    uint32_t msSinceBootAtEnd;
 
+    if (strncmp(cmd, "help", 4) == 0) {
+        printf("sb xx - sends the hex byte xx and receives it back\r\n");
+        printf("sk    - sends 1KB (1024 bytes) and times how long it takes; receives it back\r\n");
+        return;
+    }
     if (strncmp(cmd, "sb", 2) == 0) {
         if (sscanf(cmd, "sb %02x", &xx) == 1) {
             a1 = xx; // Byte
             if (!link->writeDataAsync(WPTR, &a1, 1)) {
-                printf("Could not write data\n");
+                printf("Could not write data\r\n");
             } else {
                 link->readDataAsync(WPTR, &a2, 1);
                 bool writeDone = false;
@@ -55,50 +63,69 @@ void process_command(char *cmd, AsyncLink *link) {
                 while (!writeDone && !readDone) {
                     if (!writeDone) {
                         if (link->writeComplete() != NotProcess_p) {
-                            printf("Write completed\n");
+                            printf("Write completed\r\n");
                             writeDone = true;
                         }
                     }
                     if (!readDone) {
                         if (link->readComplete() != NotProcess_p) {
-                            printf("Read completed: 0x%02x '%c'\n", a2, isprint(a2) ? a2 : '?');
+                            printf("Read completed: 0x%02x '%c'\r\n", a2, isprint(a2) ? a2 : '?');
                             readDone = true;
                         }
                     }
                     pause();
                 }
-                printf("sb finished\n");
+                printf("sb finished\r\n");
             }
         }
+        return;
     }
 
     // Send a kilobyte
     if (strncmp(cmd, "sk", 2) == 0) {
+        msSinceBootAtStart = to_ms_since_boot(get_absolute_time());
         if (!link->writeDataAsync(WPTR, kilobyte, 1024)) {
-            printf("Could not write data\n");
+            printf("Could not write data\r\n");
         } else {
+            printf("Waiting for write and read to complete...\r\n");
             int read = 0;
-            // WIP WOZERE
             link->readDataAsync(WPTR, &a2, 1);
             bool writeDone = false;
             bool readDone = false;
             while (!writeDone && !readDone) {
                 if (!writeDone) {
                     if (link->writeComplete() != NotProcess_p) {
-                        printf("Write completed\n");
                         writeDone = true;
+                        msSinceBootAtEnd = to_ms_since_boot(get_absolute_time());
+                        uint32_t msDuration = msSinceBootAtEnd - msSinceBootAtStart;
+                        // Convert to MB/second
+                        // 1024 bytes transferred in msDuration ms
+                        // Bytes per second = 1024 / (msDuration / 1000)
+                        // MB per second = (1024 / (msDuration / 1000)) / (1024 * 1024)
+                        double mbPerSecond = (1024.0 * 1000.0) / (msDuration * 1024.0 * 1024.0);
+                        printf("\nWrite completed in %lu ms: %f MB/s\r\n", msDuration, mbPerSecond);
                     }
                 }
                 if (!readDone) {
                     if (link->readComplete() != NotProcess_p) {
-                        printf("Read completed: 0x%02x '%c'\n", a2, isprint(a2) ? a2 : '?');
-                        readDone = true;
+                        read++;
+                        if (read == 1024) {
+                            printf("\rRead completed                  \r\n");
+                            readDone = true;
+                        } else {
+                            // Start the read of another byte...
+                            link->readDataAsync(WPTR, &a2, 1);
+                            if (read % 16 == 0) {
+                                printf("\rReceived %d bytes      ", read);
+                            }
+                        }
                     }
                 }
                 pause();
             }
             printf("sb finished\n");
         }
+        return;
     }
 }
 
