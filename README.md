@@ -587,6 +587,8 @@ successfully.
 Jack Ganssle for his article on firmware debouncing
 http://www.ganssle.com/debouncing-pt2.htm
 
+Ha Thach, Jerzy Kasenberg, Angel Molina for TinyUSB, and the CDC example code.
+
 Yury Shevchuk and Roman Pozlevich for the gcc-t800 port, ttools and libxputer
 packages.  These were used throughout an earlier version of the project, for
 bootstrap code, object and executable file format and loader.
