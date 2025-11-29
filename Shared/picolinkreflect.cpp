@@ -13,6 +13,7 @@
 
 #include <stdio.h> // Pico USB Serial STDIO
 #include "pico/stdlib.h"
+#include "pico/rand.h"
 
 #include "asynclink.h"
 #include "constants.h"
@@ -132,6 +133,7 @@ int main() {
     BYTE8 a1;
     bool readScheduled = false;
     bool writeScheduled = false;
+    uint32_t write_after_time = to_ms_since_boot(get_absolute_time());
     while (true) {
         if (!readScheduled && g_state != ReflectState::SILENCE) {
             link->readDataAsync(WPTR, &a1, 1);
@@ -151,12 +153,26 @@ int main() {
                     }
                 }
                 break;
+
             case ReflectState::REFLECT_SLOWLY:
+                if (writeScheduled && link->writeComplete() != NotProcess_p) {
+                    writeScheduled = false; // not doing more with this atm
+                }
+                if (readScheduled && link->readComplete() != NotProcess_p) {
+                    write_after_time = to_ms_since_boot(get_absolute_time()) + (get_rand_32() & 0x7F);
+                }
+                if (to_ms_since_boot(get_absolute_time()) > write_after_time) {
+                    readScheduled = false;
+                    if (!link->writeDataAsync(WPTR, &a1, 1)) {
+                        printf("Could not write data\r\n");
+                    } else {
+                        writeScheduled = true;
+                    }
+                }
+
                 break;
             case ReflectState::SILENCE:
                 break;
         }
-
-
     }
 }
