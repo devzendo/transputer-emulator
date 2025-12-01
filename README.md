@@ -8,7 +8,8 @@ It runs on Apple macOS Catalina (Intel), Windows 10, Ubuntu 24.02, Linux Mint 21
 An embedded version of the emulator component is also available for the Raspberry Pi Pico 1.
 Building for Apple Silicon macOS (Tahoe) works for the desktop build, but not for the embedded version,
 without problems. (After preparing a PICO build, edit cmake-build-release/CMakeCache.txt and ensure your
-compiler paths are correct for the cross-compiler).
+compiler paths are correct for the cross-compiler, e.g. if you use Macports. Then it'll build in CLion, but not from
+the command line - Shared/log.cpp fails on the command line).
 Due to lack of compatible TPM hardware, I cannot build on Windows 11 or later.
 
 It is part of the [Parachute Project](https://devzendo.github.io/parachute).
