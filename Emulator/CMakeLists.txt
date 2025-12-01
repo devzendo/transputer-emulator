@@ -9,7 +9,7 @@ if(PICO)
 
   # Until the Pico FIFO USB link is rewritten to use tinyusb...
   pico_enable_stdio_usb(temulate 1)
-  pico_enable_stdio_uart(temulate 1)
+  pico_enable_stdio_uart(temulate 0)
 
   pico_add_extra_outputs(temulate)
 endif(PICO)

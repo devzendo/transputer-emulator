@@ -453,9 +453,10 @@ Prerequisites:
     `apt install gcc-arm-none-eabi libnewlib-arm-none-eabi build-essential`
     The Pico SDK should be cloned from https://github.com/raspberrypi/pico-sdk
     Set the `PICO_SDK_PATH` environment variable to point to this copy of the Pico SDK.
-    The Pico Extras should be cloned into the directory alongside the SDK from https://github.com/raspberrypi/pico-extras
-    Set the `PICO_EXTRAS_PATH` environment variable to point to this copy of the Pico Extras.
-    i.e. the pico-sdk and pico-extras clones are siblings.
+    In the clone of the Pico SDK, you must:
+    `git submodule init`
+    `git submodule update`
+    If you build and get problems with 'tusb.h' not found, you haven't updated the git submodules in the Pico SDK.
     CMake can be installed from apt, no need for a manual install.
 
 The typical install location is:

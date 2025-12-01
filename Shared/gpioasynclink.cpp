@@ -1,6 +1,6 @@
 //------------------------------------------------------------------------------
 //
-// File        : asynclink.cpp
+// File        : gpioasynclink.cpp
 // Description : An asynchronous link that works with a pair of (abstract)
 //               GPIO pins.
 // License     : Apache License v2.0 - see LICENSE.txt for more details
@@ -13,7 +13,7 @@
 //------------------------------------------------------------------------------
 
 #include <exception>
-#include "asynclink.h"
+#include "gpioasynclink.h"
 
 #include "constants.h"
 #include "misc.h"

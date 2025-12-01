@@ -18,7 +18,7 @@
 #include <locale>
 
 #include "log.h"
-#include "asynclink.h"
+#include "gpioasynclink.h"
 #include "constants.h"
 #include "getline.h"
 

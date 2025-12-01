@@ -28,6 +28,7 @@ endif()
 # Weird build problems that resolve on a second build may be caused by setting flags before the project statement
 # see https://forums.raspberrypi.com/viewtopic.php?t=336843 - comment by kilograham, Mon, Jul 04. 2022.
 # Fix by using add_compile_options() instead.
+# Believe this is fixed in this project now.
 
 # Convenience CMake variables, and analogues of them as C++ preprocessor definitions.
 if(PICO) # OR TEENSY OR ADAFRUIT_FEATHER .. or whatever
@@ -70,7 +71,7 @@ endif(UNIX)
 
 if(PICO)
   # Picotool problems? Enable this:
-  set(PICOTOOL_FORCE_FETCH_FROM_GIT 1)
+  #set(PICOTOOL_FORCE_FETCH_FROM_GIT 1)
   include(pico_sdk_import.cmake) # must be before project
   set(PICO_CXX_ENABLE_EXCEPTIONS 1)
 endif(PICO)
@@ -158,6 +159,7 @@ endif() # NOT(EMBEDDED)
 add_subdirectory(target/classes)
 add_subdirectory(Shared)
 add_subdirectory(Emulator)
+add_subdirectory(Pico)
 
 if(NOT(EMBEDDED))
   add_subdirectory(IServer)

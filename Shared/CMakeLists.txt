@@ -24,41 +24,14 @@ add_library(parachutedev STATIC log.h log.cpp misc.h misc.cpp hexdump.h hexdump.
         linkfactory.h linkfactory.cpp constants.h emuquery.h memloc.h platformdetection.h types.h
         nulllink.cpp nulllink.h
         ringbuffer.cpp ringbuffer.h
-        asynclink.h asynclink.cpp
+        gpioasynclink.h gpioasynclink.cpp
         "${non_embedded_sources}"
 )
-# asynclink is intended for embedded, but am developing it on desktop for now
-# if asynclink is built for pico, it pulls in some pico SDK:
+# gpioasynclink is intended for embedded, but am developing it on desktop for now, as it's testable there,
+# apart from the actual GPIOTxRxPin.
+# if gpioasynclink is built for pico, it pulls in some pico SDK:
 if(PICO)
-    target_link_libraries(parachutedev pico_sync pico_stdlib)
-endif(PICO)
-
-# Some test harnesses and a link adapter for the pico
-if (PICO)
-    add_executable(picolinkharness picolinkharness.cpp getline.h getline.cpp)
-    target_link_libraries(picolinkharness parachutedev)
-    pico_enable_stdio_usb(picolinkharness 1)
-    pico_enable_stdio_uart(picolinkharness 1)
-    pico_add_extra_outputs(picolinkharness)
-
-    add_executable(picolinkreflect picolinkreflect.cpp debouncer.h debouncer.cpp)
-    target_link_libraries(picolinkreflect parachutedev pico_rand)
-    pico_enable_stdio_usb(picolinkreflect 1)
-    pico_enable_stdio_uart(picolinkreflect 1)
-    pico_add_extra_outputs(picolinkreflect)
-
-    add_executable(picolinkadapter picolinkadapter.cpp cdc_app.c usb_descriptors.c)
-    # Make sure TinyUSB can find tusb_config.h
-    target_include_directories(picolinkadapter PUBLIC ${CMAKE_CURRENT_LIST_DIR}/)
-
-    # For TinyUSB device support and tinyusb_board for the additional board support library.
-    # In addition to pico_stdlib required for common PicoSDK functionality, add dependency on tinyusb_device
-    target_link_libraries(picolinkadapter parachutedev pico_unique_id tinyusb_device tinyusb_board)
-    pico_add_extra_outputs(picolinkadapter)
-
-    # Use the submodule of tinyusb in preference to that in the Raspberry Pi Pico SDK
-    # maybe... set(PICO_TINYUSB_PATH ${CMAKE_CURRENT_LIST_DIR}/libs/tinyusb)
-
+    target_link_libraries(parachutedev pico_sync pico_stdlib) # what specifically - pico_stdlib is too wide
 endif(PICO)
 
 if(NOT(EMBEDDED))

@@ -15,7 +15,7 @@
 #include "pico/stdlib.h"
 #include "pico/rand.h"
 
-#include "asynclink.h"
+#include "../Shared/gpioasynclink.h"
 #include "constants.h"
 #include "debouncer.h"
 #include "log.h"
