@@ -18,7 +18,7 @@
 
 #include "gtest/gtest.h"
 #include "link.h"
-#include "asynclink.h"
+#include "gpioasynclink.h"
 #include "constants.h"
 #include "log.h"
 #include "misc.h"
