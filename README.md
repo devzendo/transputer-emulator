@@ -4,9 +4,11 @@
 This is a portable, open source emulator of the 32-bit Inmos T414/T800/T801/T805 Transputer family, and a host/file
 I/O Server that interfaces it to a host OS, providing boot/debug/IO facilities.
 
-It runs on Apple macOS Catalina, Windows 10, Ubuntu 24.02, Linux Mint 21.3, and Raspberry Pi Debian 12.
+It runs on Apple macOS Catalina (Intel), Windows 10, Ubuntu 24.02, Linux Mint 21.3, and Raspberry Pi Debian 12.
 An embedded version of the emulator component is also available for the Raspberry Pi Pico 1.
-I do not have Mac hardware to support porting beyond Catalina; specifically no M1/M2/Mx.
+Building for Apple Silicon macOS (Tahoe) works for the desktop build, but not for the embedded version,
+without problems. (After preparing a PICO build, edit cmake-build-release/CMakeCache.txt and ensure your
+compiler paths are correct for the cross-compiler).
 Due to lack of compatible TPM hardware, I cannot build on Windows 11 or later.
 
 It is part of the [Parachute Project](https://devzendo.github.io/parachute).
@@ -18,10 +20,11 @@ limited the C++ standard I could support.
 
 
 ## Project Status
-Last changes in late November 2025.
+Last changes in early December 2025.
 
 Currently adding a build for the Raspberry Pi Pico, using USB CDC for diagnostic and link 0 I/O.
-Starting a GPIO-based asynchronous link abstraction, for eventual use on the Pi Pico.
+Integration-testing a GPIO-based asynchronous link abstraction, for use on the Pi Pico. This will
+eventually be replaced by a much faster PIO-based link.
 
 Also working on compatibility with the aid of Mike Brüstle's Transputer Validation Suite.
 
