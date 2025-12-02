@@ -399,9 +399,9 @@ const WORD16 ST_DATA_MASK = 0x00FF;
 /* Highest level abstraction: AsyncLink uses the DataAckSender & DataAckReceiver state machines,
  * and an OversampledTxRxPin to handle the send/receive over an underlying TxRxPin.
  */
-class IAsyncLink {
+class AsyncLink {
 public:
-    virtual ~IAsyncLink() = default;
+    virtual ~AsyncLink() = default;
 
     virtual void clock() = 0;
 
@@ -453,7 +453,7 @@ public:
     virtual WORD32 readComplete() = 0;
 };
 
-class GPIOAsyncLink : public Link, public IAsyncLink, SenderToLink, ReceiverToLink {
+class GPIOAsyncLink : public Link, public AsyncLink, SenderToLink, ReceiverToLink {
 public:
     GPIOAsyncLink(int linkNo, bool isServer, TxRxPin& tx_rx_pin);
     void initialise() override;
@@ -463,7 +463,7 @@ public:
     void resetLink() override;
     int getLinkType() override;
 
-    // IAsyncLink
+    // AsyncLink
     void clock() override;
     bool writeDataAsync(WORD32 workspacePointer, BYTE8* dataPointer, WORD32 length) override;
     WORD32 writeComplete() override;
@@ -503,17 +503,17 @@ private:
 };
 
 /*
- * A MultipleTickHandler clocks all the IAsyncLinks it is given.
+ * A MultipleTickHandler clocks all the AsyncLinks it is given.
  */
 
 class MultipleTickHandler: public TickHandler {
 public:
     MultipleTickHandler();
-    void addLink(IAsyncLink* link);
+    void addLink(AsyncLink* link);
     // TickHandler
     void tick() override;
 private:
-    std::vector<IAsyncLink*> m_links;
+    std::vector<AsyncLink*> m_links;
 };
 
 

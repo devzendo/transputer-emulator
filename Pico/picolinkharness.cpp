@@ -39,7 +39,7 @@ void pause() {
 
 static BYTE8 kilobyte[1024];
 
-void process_command(char *cmd, IAsyncLink *link) {
+void process_command(char *cmd, AsyncLink *link) {
     BYTE8 a1;
     BYTE8 a2;
     int xx;
@@ -168,7 +168,7 @@ void process_command(char *cmd, IAsyncLink *link) {
         printf("> ");
         stdio_flush();
         cmd_buf = getLine(true, '\r');
-        process_command(cmd_buf, (IAsyncLink *)linkA);
+        process_command(cmd_buf, (AsyncLink *)linkA);
         free(cmd_buf);
     }
 }

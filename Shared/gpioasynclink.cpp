@@ -474,7 +474,7 @@ MultipleTickHandler::MultipleTickHandler() : TickHandler() {
 
 }
 
-void MultipleTickHandler::addLink(IAsyncLink* link) {
+void MultipleTickHandler::addLink(AsyncLink* link) {
     m_links.push_back(link);
 }
 
@@ -482,7 +482,7 @@ void MultipleTickHandler::addLink(IAsyncLink* link) {
 // TickHandler
 void MultipleTickHandler::tick() {
     // logDebug("Tick - >> clock the Links");
-    for (IAsyncLink* link: m_links) {
+    for (AsyncLink* link: m_links) {
         // logDebugF("Tick - link at 0x%x", link);
         link->clock();
     }

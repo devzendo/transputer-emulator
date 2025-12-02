@@ -127,7 +127,7 @@ protected:
         std::atomic_int m_counter;
     };
 
-    class AtomicClockable: public IAsyncLink {
+    class AtomicClockable: public AsyncLink {
     public:
         AtomicClockable() : m_counter(0) {};
 

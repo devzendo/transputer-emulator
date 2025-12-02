@@ -47,7 +47,7 @@ public:
         m_tick_count = 0;
         m_debouncer = nullptr;
     }
-    void addLink(IAsyncLink* link) {
+    void addLink(AsyncLink* link) {
         m_links.push_back(link);
     }
     void setDebouncer(Debouncer* debouncer) {
@@ -58,7 +58,7 @@ public:
         m_tick_count++;
 
         // logDebug("Tick - >> clock the Links");
-        for (IAsyncLink* link: m_links) {
+        for (AsyncLink* link: m_links) {
             // logDebugF("Tick - link at 0x%x", link);
             link->clock();
         }
@@ -93,7 +93,7 @@ public:
     }
 private:
     uint32_t m_tick_count;
-    std::vector<IAsyncLink*> m_links;
+    std::vector<AsyncLink*> m_links;
     Debouncer* m_debouncer;
 };
 
