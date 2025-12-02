@@ -399,16 +399,11 @@ const WORD16 ST_DATA_MASK = 0x00FF;
 /* Highest level abstraction: AsyncLink uses the DataAckSender & DataAckReceiver state machines,
  * and an OversampledTxRxPin to handle the send/receive over an underlying TxRxPin.
  */
-class AsyncLink : public Link, SenderToLink, ReceiverToLink {
+class IAsyncLink {
 public:
-    AsyncLink(int linkNo, bool isServer, TxRxPin& tx_rx_pin);
-    void initialise() override;
-    ~AsyncLink() override;
-    BYTE8 readByte() override;
-    void writeByte(BYTE8 b) override;
-    void resetLink() override;
-    int getLinkType() override;
-    void clock() override;
+    virtual ~IAsyncLink() = default;
+
+    virtual void clock() = 0;
 
     /**
      * Write a buffer through the link, asynchronously. When done, writeComplete() will
@@ -423,7 +418,7 @@ public:
      * @param length
      * @return
      */
-    bool writeDataAsync(WORD32 workspacePointer, BYTE8* dataPointer, WORD32 length);
+    virtual bool writeDataAsync(WORD32 workspacePointer, BYTE8* dataPointer, WORD32 length) = 0;
 
     /**
      * Has the write completed?
@@ -433,7 +428,7 @@ public:
      * pointer on one call, you'll get NotProcess_p on the next - you must use the
      * pointer when you get it.
      */
-    WORD32 writeComplete();
+    virtual WORD32 writeComplete() = 0;
 
     /**
      * Read data asynchronously into a sized buffer.
@@ -445,7 +440,7 @@ public:
      * of the start of the buffer to read data into.
      * @param length The amount of data to read into the buffer at dataPointer.
      */
-    void readDataAsync(WORD32 workspacePointer, BYTE8* dataPointer, WORD32 length);
+    virtual void readDataAsync(WORD32 workspacePointer, BYTE8* dataPointer, WORD32 length) = 0;
 
     /**
      * Has the read completed?
@@ -455,7 +450,25 @@ public:
      * pointer on one call, you'll get NotProcess_p on the next - you must use the
      * pointer when you get it.
      */
-    WORD32 readComplete();
+    virtual WORD32 readComplete() = 0;
+};
+
+class GPIOAsyncLink : public Link, public IAsyncLink, SenderToLink, ReceiverToLink {
+public:
+    GPIOAsyncLink(int linkNo, bool isServer, TxRxPin& tx_rx_pin);
+    void initialise() override;
+    ~GPIOAsyncLink() override;
+    BYTE8 readByte() override;
+    void writeByte(BYTE8 b) override;
+    void resetLink() override;
+    int getLinkType() override;
+
+    // IAsyncLink
+    void clock() override;
+    bool writeDataAsync(WORD32 workspacePointer, BYTE8* dataPointer, WORD32 length) override;
+    WORD32 writeComplete() override;
+    void readDataAsync(WORD32 workspacePointer, BYTE8* dataPointer, WORD32 length) override;
+    WORD32 readComplete() override;
 
     // All internals...
     WORD16 getStatusWord();
@@ -490,17 +503,17 @@ private:
 };
 
 /*
- * A MultipleTickHandler clocks all the Links it is given.
+ * A MultipleTickHandler clocks all the IAsyncLinks it is given.
  */
 
 class MultipleTickHandler: public TickHandler {
 public:
     MultipleTickHandler();
-    void addLink(Link* link);
+    void addLink(IAsyncLink* link);
     // TickHandler
     void tick() override;
 private:
-    std::vector<Link*> m_links;
+    std::vector<IAsyncLink*> m_links;
 };
 
 

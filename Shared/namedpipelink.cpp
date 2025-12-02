@@ -220,7 +220,3 @@ void NamedPipeLink::resetLink(void) {
 int NamedPipeLink::getLinkType() {
     return LinkType_NamedPipe;
 }
-
-void NamedPipeLink::clock(void) {
-	// no-op
-}

@@ -47,7 +47,7 @@ public:
         m_tick_count = 0;
         m_debouncer = nullptr;
     }
-    void addLink(Link* link) {
+    void addLink(IAsyncLink* link) {
         m_links.push_back(link);
     }
     void setDebouncer(Debouncer* debouncer) {
@@ -58,7 +58,7 @@ public:
         m_tick_count++;
 
         // logDebug("Tick - >> clock the Links");
-        for (Link* link: m_links) {
+        for (IAsyncLink* link: m_links) {
             // logDebugF("Tick - link at 0x%x", link);
             link->clock();
         }
@@ -93,12 +93,12 @@ public:
     }
 private:
     uint32_t m_tick_count;
-    std::vector<Link*> m_links;
+    std::vector<IAsyncLink*> m_links;
     Debouncer* m_debouncer;
 };
 
 
-int main() {
+[[noreturn]] int main() {
     // Initialise USB Serial STDIO...
     bool ok = stdio_init_all();
     printf("Hello from picolinkreflect.uf2 %d\r\n", ok);
@@ -111,7 +111,7 @@ int main() {
     GPIOTxRxPin txRxPin = GPIOTxRxPin(TX_PIN, RX_PIN);
 
     printf("Initialising AsyncLink\r\n");
-    auto *link = new AsyncLink(0, false, txRxPin);
+    auto *link = new GPIOAsyncLink(0, false, txRxPin);
     link->setDebug(true);
     logDebug("Initialising Link");
     link->initialise();

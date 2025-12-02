@@ -80,7 +80,3 @@ void StubLink::setReadableBytes(std::vector<BYTE8> bytes) {
 int StubLink::getLinkType() {
     return LinkType_Stub;
 }
-
-void StubLink::clock(void) {
-	// no-op
-}

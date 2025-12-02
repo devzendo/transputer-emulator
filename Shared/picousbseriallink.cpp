@@ -49,7 +49,3 @@ void PicoUSBSerialLink::resetLink(void) {
 int PicoUSBSerialLink::getLinkType() {
     return LinkType_USBCDC;
 }
-
-void PicoUSBSerialLink::clock(void) {
-	// no-op
-}

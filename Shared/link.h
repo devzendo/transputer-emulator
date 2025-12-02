@@ -57,10 +57,6 @@ public:
 	void setDebug(bool newDebug);
 	virtual int getLinkType(void) = 0;
 
-	// Async support functions.
-	virtual void clock() = 0; // called under interrupt
-	// writeStatus? (idle, writing, acknowledged, not-acknowledged)
-	// readStatus? (idle, ack-received, reading, read-available)
 protected:
 	int myLinkNo;
 	bool bServer;

@@ -39,7 +39,7 @@ void pause() {
 
 static BYTE8 kilobyte[1024];
 
-void process_command(char *cmd, AsyncLink *link) {
+void process_command(char *cmd, IAsyncLink *link) {
     BYTE8 a1;
     BYTE8 a2;
     int xx;
@@ -129,7 +129,7 @@ void process_command(char *cmd, AsyncLink *link) {
     }
 }
 
-int main() {
+[[noreturn]] int main() {
     // Initialise USB Serial STDIO...
     bool ok = stdio_init_all();
     printf("Hello from picolinkharness.uf2 %d\r\n", ok);
@@ -145,14 +145,14 @@ int main() {
     GPIOTxRxPin txRxPin = GPIOTxRxPin(TX_PIN, RX_PIN);
 
     printf("Initialising AsyncLink\r\n");
-    AsyncLink *linkA = new AsyncLink(0, false, txRxPin);
+    auto *linkA = new GPIOAsyncLink(0, false, txRxPin);
     linkA->setDebug(true);
     logDebug("Initialising Link");
     linkA->initialise();
 
     printf("Initialising MultipleTickHandler\r\n");
     MultipleTickHandler handler;
-    handler.addLink(&*linkA);
+    handler.addLink(linkA);
 
     printf("Initialising AsyncLinkClock\r\n");
     AsyncLinkClock clock(CLOCK_PIN, handler);
@@ -168,7 +168,7 @@ int main() {
         printf("> ");
         stdio_flush();
         cmd_buf = getLine(true, '\r');
-        process_command(cmd_buf, linkA);
+        process_command(cmd_buf, (IAsyncLink *)linkA);
         free(cmd_buf);
     }
 }

@@ -49,7 +49,3 @@ void NullLink::resetLink(void) {
 int NullLink::getLinkType() {
     return LinkType_Null;
 }
-
-void NullLink::clock(void) {
-	// no-op
-}

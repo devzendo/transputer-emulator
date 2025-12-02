@@ -124,7 +124,3 @@ void TVSLink::resetLink(void) {
 int TVSLink::getLinkType() {
     return LinkType_TVS;
 }
-
-void TVSLink::clock(void) {
-	// no-op
-}

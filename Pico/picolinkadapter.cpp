@@ -30,19 +30,19 @@ const int LED_PIN = 25;
 const WORD32 WPTR = 0xCAFEF00D;
 
 
-int main() {
+[[noreturn]] int main() {
     gpio_init(LED_PIN);
     gpio_set_dir(LED_PIN, GPIO_OUT);
     usb_cdc_initialise();
 
     GPIOTxRxPin txRxPin = GPIOTxRxPin(TX_PIN, RX_PIN);
 
-    AsyncLink *linkA = new AsyncLink(0, false, txRxPin);
+    auto *linkA = new GPIOAsyncLink(0, false, txRxPin);
     linkA->setDebug(true);
     linkA->initialise();
 
     MultipleTickHandler handler;
-    handler.addLink(&*linkA);
+    handler.addLink(linkA);
 
     AsyncLinkClock clock(CLOCK_PIN, handler);
 

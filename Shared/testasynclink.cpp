@@ -127,15 +127,9 @@ protected:
         std::atomic_int m_counter;
     };
 
-    class AtomicClockable: public Link {
+    class AtomicClockable: public IAsyncLink {
     public:
-        AtomicClockable(int linkNo, bool isServer) : Link(linkNo, isServer), m_counter(0) {};
-        void initialise() override {};
-        ~AtomicClockable() override = default;
-        BYTE8 readByte() override { return 0; };
-        void writeByte(BYTE8 b) override {};
-        void resetLink() override {};
-        int getLinkType() override { return 0; };
+        AtomicClockable() : m_counter(0) {};
 
         void clock() override {
             // logDebug("Clock - increment");
@@ -147,6 +141,20 @@ protected:
             logDebugF("Counter is %d", counter);
             return counter;
         }
+
+        bool writeDataAsync(WORD32 workspacePointer, BYTE8* dataPointer, WORD32 length) override {
+            return false;
+        }
+        WORD32 writeComplete() override {
+            return 0;
+        };
+
+        void readDataAsync(WORD32 workspacePointer, BYTE8* dataPointer, WORD32 length) override {}
+
+        WORD32 readComplete() override {
+            return 0;
+        }
+
     private:
         std::atomic_int m_counter;
     };
@@ -192,7 +200,7 @@ TEST_F(AsyncLinkClockTest, StartTicksThenStopHalts) {
 
 TEST_F(AsyncLinkClockTest, MultipleTickHandler) {
     MultipleTickHandler mth;
-    AtomicClockable clockable(0, false);
+    AtomicClockable clockable;
     EXPECT_EQ(clockable.counter(), 0);
     mth.tick();
     EXPECT_EQ(clockable.counter(), 0);
@@ -219,13 +227,13 @@ protected:
         TxRxPin &pairB = pair.pairB();
 
         logDebug("Creating Link A");
-        linkA = new AsyncLink(0, false, pairA);
+        linkA = new GPIOAsyncLink(0, false, pairA);
         linkA->setDebug(true);
         logDebug("Initialising Link A");
         linkA->initialise();
 
         logDebug("Creating Link B");
-        linkB = new AsyncLink(1, false, pairB);
+        linkB = new GPIOAsyncLink(1, false, pairB);
         linkB->setDebug(true);
         logDebug("Initialising Link B");
         linkB->initialise();
@@ -262,8 +270,8 @@ protected:
     }
 
     CrosswiredTxRxPinPair pair;
-    AsyncLink *linkA = nullptr;
-    AsyncLink *linkB = nullptr;
+    GPIOAsyncLink *linkA = nullptr;
+    GPIOAsyncLink *linkB = nullptr;
     MultipleTickHandler handler;
     AsyncLinkClock clock;
 };
@@ -401,7 +409,7 @@ protected:
         setLogLevel(LOGLEVEL_DEBUG);
         logDebug("SetUp start");
 
-        linkA = new AsyncLink(0, false, pin);
+        linkA = new GPIOAsyncLink(0, false, pin);
         linkA->setDebug(true);
         logDebug("Initialising Link");
         linkA->initialise();
@@ -431,7 +439,7 @@ protected:
         std::this_thread::sleep_for(std::chrono::microseconds(LINK_CLOCK_TICK_INTERVAL_US));
     }
     DisconnectedPin pin;
-    AsyncLink *linkA = nullptr;
+    GPIOAsyncLink *linkA = nullptr;
     MultipleTickHandler handler;
     AsyncLinkClock clock;
 };

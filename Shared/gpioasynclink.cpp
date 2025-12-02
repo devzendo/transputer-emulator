@@ -274,7 +274,7 @@ AsyncLinkClock::~AsyncLinkClock() {
 // * That an ack has been received - the emulator only reschedules the sending process when the ack for the final byte
 //   has been received.
 
-AsyncLink::AsyncLink(int linkNo, bool isServer, TxRxPin& tx_rx_pin) :
+GPIOAsyncLink::GPIOAsyncLink(int linkNo, bool isServer, TxRxPin& tx_rx_pin) :
     Link(linkNo, isServer), m_pin(tx_rx_pin), m_status_word(0) {
     logDebugF("Constructing async link %d for %s", myLinkNo, isServer ? "server" : "cpu client");
     myWriteSequence = myReadSequence = 0;
@@ -292,48 +292,48 @@ AsyncLink::AsyncLink(int linkNo, bool isServer, TxRxPin& tx_rx_pin) :
     m_send_registers.m_length = 0;
 }
 
-void AsyncLink::initialise() {
+void GPIOAsyncLink::initialise() {
     setReadyToSend();
 }
 
-AsyncLink::~AsyncLink() {
+GPIOAsyncLink::~GPIOAsyncLink() {
     logDebugF("Destroying async link %d", myLinkNo);
 }
 
-BYTE8 AsyncLink::readByte() {
+BYTE8 GPIOAsyncLink::readByte() {
     if (bDebug) {
         logDebugF("Link %d R #%08X 00 (.)", myLinkNo, myReadSequence++);
     }
     return 0;
 }
 
-void AsyncLink::writeByte(BYTE8 buf) {
+void GPIOAsyncLink::writeByte(BYTE8 buf) {
     if (bDebug) {
         logDebugF("Link %d W #%08X 00 (.)", myLinkNo, myWriteSequence++);
     }
 }
 
-void AsyncLink::resetLink() {
+void GPIOAsyncLink::resetLink() {
     // TODO
 }
 
-int AsyncLink::getLinkType() {
+int GPIOAsyncLink::getLinkType() {
     return LinkType_Async;
 }
 
-void AsyncLink::clock() {
+void GPIOAsyncLink::clock() {
     // logDebugF("Clocking link %d", myLinkNo);
     MUTEX
 	m_sender->clock(); // Will start clocking data out, if not idle.
     m_o_pin->getRx(); // Will call the majority vote callback with the input bit.
 }
 
-WORD16 AsyncLink::getStatusWord() {
+WORD16 GPIOAsyncLink::getStatusWord() {
     MUTEX
     return m_status_word;
 }
 
-bool AsyncLink::writeDataAsync(WORD32 workspacePointer, BYTE8* dataPointer, WORD32 length) {
+bool GPIOAsyncLink::writeDataAsync(WORD32 workspacePointer, BYTE8* dataPointer, WORD32 length) {
     // logDebugF("Link %d sending %d bytes from initial address 0x%08x", myLinkNo, length, dataPointer);
     MUTEX
     m_status_word &= ~ST_SEND_COMPLETE;
@@ -343,7 +343,7 @@ bool AsyncLink::writeDataAsync(WORD32 workspacePointer, BYTE8* dataPointer, WORD
     return m_sender->sendData(*dataPointer);
 }
 
-WORD32 AsyncLink::writeComplete() {
+WORD32 GPIOAsyncLink::writeComplete() {
     // logDebugF("Link %d writeComplete?", myLinkNo);
     MUTEX
     if ((m_status_word & ST_SEND_COMPLETE) == 0) {
@@ -359,7 +359,7 @@ WORD32 AsyncLink::writeComplete() {
     return w;
 }
 
-void AsyncLink::readDataAsync(WORD32 workspacePointer, BYTE8* dataPointer, WORD32 length) {
+void GPIOAsyncLink::readDataAsync(WORD32 workspacePointer, BYTE8* dataPointer, WORD32 length) {
     // logDebugF("Link %d receiving %d bytes to initial address 0x%08x", myLinkNo, length, dataPointer);
     MUTEX
     m_status_word &= ~ST_READ_COMPLETE;
@@ -369,7 +369,7 @@ void AsyncLink::readDataAsync(WORD32 workspacePointer, BYTE8* dataPointer, WORD3
     // Any received data will get stored from m_data_pointer until m_length is received.
 }
 
-WORD32 AsyncLink::readComplete() {
+WORD32 GPIOAsyncLink::readComplete() {
     // logDebugF("Link %d readComplete?", myLinkNo);
     MUTEX
     if ((m_status_word & ST_READ_COMPLETE) == 0) {
@@ -384,13 +384,13 @@ WORD32 AsyncLink::readComplete() {
 }
 
 // SenderToLink
-bool AsyncLink::queryReadyToSend() {
+bool GPIOAsyncLink::queryReadyToSend() {
     // MUTEX
     return m_status_word & ST_READY_TO_SEND;
 }
 
 // Precondition: called under MUTEX
-void AsyncLink::setReadyToSend() {
+void GPIOAsyncLink::setReadyToSend() {
     // logDebugF("Link %d is ready to send", myLinkNo);
     m_status_word |= ST_READY_TO_SEND;
     if (m_send_registers.m_length == 0) {
@@ -409,31 +409,31 @@ void AsyncLink::setReadyToSend() {
     }
 }
 
-void AsyncLink::clearReadyToSend() {
+void GPIOAsyncLink::clearReadyToSend() {
     // logDebugF("Link %d is NOT ready to send", myLinkNo);
     //MUTEX
     m_status_word &= ~ST_READY_TO_SEND;
 }
 
-void AsyncLink::setTimeoutError() {
+void GPIOAsyncLink::setTimeoutError() {
     logWarnF("Link %d timed out", myLinkNo);
     //MUTEX
     m_status_word |= ST_DATA_SENT_NOT_ACKED;
 }
 
 // ReceiverToLink
-void AsyncLink::framingError() {
+void GPIOAsyncLink::framingError() {
     logDebugF("Link %d framing error (UNIMPLEMENTED)", myLinkNo);
     // TODO
 }
 
-void AsyncLink::overrunError() {
+void GPIOAsyncLink::overrunError() {
     logDebugF("Link %d overrun error (UNIMPLEMENTED)", myLinkNo);
     // TODO
 }
 
 // Precondition: called under MUTEX
-void AsyncLink::dataReceived(BYTE8 data) {
+void GPIOAsyncLink::dataReceived(BYTE8 data) {
     // logDebugF("Link %d data received 0b%s", myLinkNo, byte_to_binary(data));
     //MUTEX
     m_status_word |= (ST_READ_DATA_AVAILABLE | data);
@@ -456,12 +456,12 @@ void AsyncLink::dataReceived(BYTE8 data) {
     m_status_word &= ~ST_READ_DATA_AVAILABLE; // If there's no callback, this should not be cleared?
 }
 
-bool AsyncLink::queryReadDataAvailable() {
+bool GPIOAsyncLink::queryReadDataAvailable() {
     //MUTEX
     return m_status_word & ST_READ_DATA_AVAILABLE;
 }
 
-void AsyncLink::clearReadDataAvailable() {
+void GPIOAsyncLink::clearReadDataAvailable() {
     logDebugF("Link %d data NOT available", myLinkNo);
     //MUTEX
     m_status_word &= ~ST_READ_DATA_AVAILABLE;
@@ -474,7 +474,7 @@ MultipleTickHandler::MultipleTickHandler() : TickHandler() {
 
 }
 
-void MultipleTickHandler::addLink(Link* link) {
+void MultipleTickHandler::addLink(IAsyncLink* link) {
     m_links.push_back(link);
 }
 
@@ -482,7 +482,7 @@ void MultipleTickHandler::addLink(Link* link) {
 // TickHandler
 void MultipleTickHandler::tick() {
     // logDebug("Tick - >> clock the Links");
-    for (Link* link: m_links) {
+    for (IAsyncLink* link: m_links) {
         // logDebugF("Tick - link at 0x%x", link);
         link->clock();
     }
