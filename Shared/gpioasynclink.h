@@ -2,7 +2,9 @@
 //
 // File        : gpioasynclink.h
 // Description : An asynchronous link that works with a pair of (abstract)
-//               GPIO pins.
+//               GPIO pins. This will be low-speed, nowhere near the speed
+//               of real Transputer links - a PIO version will hopefully
+//               achieve this.
 // License     : Apache License v2.0 - see LICENSE.txt for more details
 // Created     : 26/09/2025
 //
@@ -12,8 +14,8 @@
 //
 //------------------------------------------------------------------------------
 
-#ifndef _ASYNCLINK_H
-#define _ASYNCLINK_H
+#ifndef _GPIOASYNCLINK_H
+#define _GPIOASYNCLINK_H
 
 #include <atomic>
 #include <mutex> // For std::lock_guard and BasicLockable
@@ -30,6 +32,7 @@
 #include <sys/types.h>
 #include "types.h"
 #include "link.h"
+#include "asynclink.h"
 
 /* Lowest level abstraction: TxRxPin, represents a pair of abstract pins.
  *
@@ -46,6 +49,7 @@
  * Note that TxRxPin has no explicit clock() method, but its Rx/Tx methods will be called by higher level
  * abstractions during a clock tick.
  */
+
 class TxRxPin {
 public:
     virtual ~TxRxPin() = default;
@@ -71,6 +75,7 @@ private:
 /*
  * The OversampledTxRxPin will emit majority-voted bit states via an instance of this interface that can be registered.
  */
+
 class RxBitReceiver {
 public:
     virtual ~RxBitReceiver() = default;
@@ -102,17 +107,16 @@ private:
     mutable RxBitReceiver* m_rx_bit_receiver;
 };
 
-
 /*
  * Callbacks/facades used between DataAckSender->AsyncLink and DataAckReceiver->DataAckSender and
  * DataAckReceiver->AsyncLink.
  */
 
-
 /**
  * The DataAckSender will call a registered instance of SenderToLink to query/set/clear the AsyncLink's Ready To Send
  * flag, and to set the timeout error flag.
  */
+
 class SenderToLink {
 public:
     virtual ~SenderToLink() = default;
@@ -142,6 +146,7 @@ public:
  * The ackReceived() method will be called when an ack has been detected. This will eventually cause the Link's Ready To
  * Send flag to be cleared, indicating that more data can be sent.
  */
+
 class ReceiverToSender {
 public:
     virtual ~ReceiverToSender() = default;
@@ -161,6 +166,7 @@ public:
 /**
  * The DataAckReceiver has this facade on to the AsyncLink to inform it of events.
  */
+
 class ReceiverToLink {
 public:
     virtual ~ReceiverToLink() = default;
@@ -203,6 +209,7 @@ public:
  * frame. It notifies a client (the DataAckSender) of any received Ack, and notifies a client (the DataAckSender) of any
  * received Data (so it can initiate sending an Ack).
  */
+
 enum class DataAckSenderState { IDLE, SENDING_ACK, SENDING_DATA, ACK_TIMEOUT };
 const char* DataAckSenderStateToString(DataAckSenderState s) noexcept;
 
@@ -318,7 +325,7 @@ private:
 #endif
 
 /*
- * A AsyncLinkClock will tick at a set frequency, and call its registered tick handler, to 'do whatever'.
+ * A AsyncLinkClock will tick at a set frequency, and call its registered TickHandler, to 'do whatever'.
  * This is used to clock all the links.
  *
  * On the PICO, a diagnostic GPIO pin will be raised around the call to the tick handler, to
@@ -396,62 +403,10 @@ const WORD16 ST_READ_COMPLETE = 0x0400;
 const WORD16 ST_SEND_COMPLETE = 0x0200;
 const WORD16 ST_DATA_MASK = 0x00FF;
 
-/* Highest level abstraction: AsyncLink uses the DataAckSender & DataAckReceiver state machines,
- * and an OversampledTxRxPin to handle the send/receive over an underlying TxRxPin.
+
+/* Highest level abstraction: GPIOAsyncLink uses the DataAckSender & DataAckReceiver state
+ * machines, and an OversampledTxRxPin to handle the send/receive over an underlying TxRxPin.
  */
-class AsyncLink {
-public:
-    virtual ~AsyncLink() = default;
-
-    virtual void clock() = 0;
-
-    /**
-     * Write a buffer through the link, asynchronously. When done, writeComplete() will
-     * return the workspacePointer and clear dowh the transmit registers for the next write.
-     * If the write is not complete, writeComplete will return NotProcess_p and the write
-     * will continue.
-     * @param workspacePointer The address in the Transputer's memory of a process that's
-     * issuing an OUT/OUTBYTE/OUTWORD instruction. This process will be descheduled by
-     * the emulator, and rescheduled when the transfer is complete. The link interface
-     * doesn't care about this, but holds the workspace pointer for return by readComplete.
-     * @param dataPointer
-     * @param length
-     * @return
-     */
-    virtual bool writeDataAsync(WORD32 workspacePointer, BYTE8* dataPointer, WORD32 length) = 0;
-
-    /**
-     * Has the write completed?
-     * @return NotProcess_p if the write has not yet completed, or the address in the
-     * Transputer's memory of a process to reschedule (and in this case, the write
-     * registers are reset for the next write). Note that if you receive a workspace
-     * pointer on one call, you'll get NotProcess_p on the next - you must use the
-     * pointer when you get it.
-     */
-    virtual WORD32 writeComplete() = 0;
-
-    /**
-     * Read data asynchronously into a sized buffer.
-     * @param workspacePointer The address in the Transputer's memory of a process that's
-     * issuing an IN instruction. This process will be descheduled by the emulator, and
-     * rescheduled when the transfer is complete. The link interface doesn't care about
-     * this, but holds the workspace pointer for return by readComplete.
-     * @param dataPointer The address in real memory (physical, not Transputer-virtual)
-     * of the start of the buffer to read data into.
-     * @param length The amount of data to read into the buffer at dataPointer.
-     */
-    virtual void readDataAsync(WORD32 workspacePointer, BYTE8* dataPointer, WORD32 length) = 0;
-
-    /**
-     * Has the read completed?
-     * @return NotProcess_p if the read has not yet completed, or the address in the
-     * Transputer's memory of a process to reschedule (and in this case, the read
-     * registers are reset for the next read). Note that if you receive a workspace
-     * pointer on one call, you'll get NotProcess_p on the next - you must use the
-     * pointer when you get it.
-     */
-    virtual WORD32 readComplete() = 0;
-};
 
 class GPIOAsyncLink : public Link, public AsyncLink, SenderToLink, ReceiverToLink {
 public:
@@ -516,6 +471,4 @@ private:
     std::vector<AsyncLink*> m_links;
 };
 
-
-
-#endif // _ASYNCLINK_H
+#endif // _GPIOASYNCLINK_H

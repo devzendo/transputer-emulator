@@ -24,6 +24,7 @@ add_library(parachutedev STATIC log.h log.cpp misc.h misc.cpp hexdump.h hexdump.
         linkfactory.h linkfactory.cpp constants.h emuquery.h memloc.h platformdetection.h types.h
         nulllink.cpp nulllink.h
         ringbuffer.cpp ringbuffer.h
+        asynclink.h
         gpioasynclink.h gpioasynclink.cpp
         "${non_embedded_sources}"
 )
