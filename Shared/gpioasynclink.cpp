@@ -36,7 +36,7 @@ GPIOTxRxPin::GPIOTxRxPin(uint txGPIOPin, uint rxGPIOPin) : m_txGPIOPin(txGPIOPin
 
     gpio_init(m_rxGPIOPin);
     gpio_set_dir(m_rxGPIOPin, GPIO_IN);
-    // TODO must configure pullup
+    gpio_pull_down(m_rxGPIOPin);
 }
 
 bool GPIOTxRxPin::getRx() {

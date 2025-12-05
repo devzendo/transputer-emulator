@@ -107,6 +107,11 @@ private:
     gpio_set_dir(LED_PIN, GPIO_OUT);
     gpio_put(LED_PIN, false);
 
+    // Button
+    gpio_init(BUTTON_PIN);
+    gpio_set_dir(BUTTON_PIN, GPIO_IN);
+    gpio_pull_down(BUTTON_PIN);
+
     printf("Initialising GPIOTxRxPin\r\n");
     GPIOTxRxPin txRxPin = GPIOTxRxPin(TX_PIN, RX_PIN);
 
