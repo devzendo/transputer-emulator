@@ -24,12 +24,10 @@
 
 using namespace std;
 
-const int CLOCK_PIN = 1;
-const int LOCK_PIN = 2;
-const int GND_PIN = 3;
-const int TX_PIN = 4;
-const int RX_PIN = 5;
-const int LED_PIN = 25;
+constexpr int CLOCK_PIN = 0;
+constexpr int TX_PIN = 2;
+constexpr int RX_PIN = 3;
+constexpr int LED_PIN = 25;
 
 const WORD32 WPTR = 0xDEADBEEF;
 

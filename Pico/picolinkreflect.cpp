@@ -22,12 +22,10 @@
 
 using namespace std;
 
-constexpr int CLOCK_PIN = 1;
-constexpr int LOCK_PIN = 2;
-constexpr int GND_PIN = 3;
-constexpr int TX_PIN = 4;
-constexpr int RX_PIN = 5;
-constexpr int BUTTON_PIN = 6;
+constexpr int CLOCK_PIN = 0;
+constexpr int TX_PIN = 2;
+constexpr int RX_PIN = 3;
+constexpr int BUTTON_PIN = 4;
 constexpr int LED_PIN = 25;
 
 const WORD32 WPTR = 0xCAFEBABE;
