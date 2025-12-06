@@ -21,6 +21,7 @@
 #include "gpioasynclink.h"
 #include "constants.h"
 #include "getline.h"
+#include "hexdump.h"
 
 using namespace std;
 
@@ -44,16 +45,19 @@ void process_command(char *cmd, AsyncLink *link) {
     uint32_t msSinceBootAtStart;
     uint32_t msSinceBootAtEnd;
 
+    logInfoF("You entered '%s'", cmd);
+
     if (strncmp(cmd, "help", 4) == 0) {
-        printf("sb xx - sends the hex byte xx and receives it back\r\n");
-        printf("sk    - sends 1KB (1024 bytes) and times how long it takes; receives it back\r\n");
+        logInfo("sb xx - sends the hex byte xx and receives it back");
+        logInfo("sk    - sends 1KB (1024 bytes) and times how long it takes; receives it back");
         return;
     }
+    /*
     if (strncmp(cmd, "sb", 2) == 0) {
         if (sscanf(cmd, "sb %02x", &xx) == 1) {
             a1 = xx; // Byte
             if (!link->writeDataAsync(WPTR, &a1, 1)) {
-                printf("Could not write data\r\n");
+                logWarn("Could not write data");
             } else {
                 link->readDataAsync(WPTR, &a2, 1);
                 bool writeDone = false;
@@ -61,19 +65,19 @@ void process_command(char *cmd, AsyncLink *link) {
                 while (!writeDone && !readDone) {
                     if (!writeDone) {
                         if (link->writeComplete() != NotProcess_p) {
-                            printf("Write completed\r\n");
+                            logInfo("Write completed");
                             writeDone = true;
                         }
                     }
                     if (!readDone) {
                         if (link->readComplete() != NotProcess_p) {
-                            printf("Read completed: 0x%02x '%c'\r\n", a2, isprint(a2) ? a2 : '?');
+                            logInfoF("Read completed: 0x%02x '%c'", a2, isprint(a2) ? a2 : '?');
                             readDone = true;
                         }
                     }
                     pause();
                 }
-                printf("sb finished\r\n");
+                logInfo("sb finished");
             }
         }
         return;
@@ -83,9 +87,9 @@ void process_command(char *cmd, AsyncLink *link) {
     if (strncmp(cmd, "sk", 2) == 0) {
         msSinceBootAtStart = to_ms_since_boot(get_absolute_time());
         if (!link->writeDataAsync(WPTR, kilobyte, 1024)) {
-            printf("Could not write data\r\n");
+            logWarn("Could not write data");
         } else {
-            printf("Waiting for write and read to complete...\r\n");
+            logInfo("Waiting for write and read to complete...");
             int read = 0;
             link->readDataAsync(WPTR, &a2, 1);
             bool writeDone = false;
@@ -101,7 +105,7 @@ void process_command(char *cmd, AsyncLink *link) {
                         // Bytes per second = 1024 / (msDuration / 1000)
                         // MB per second = (1024 / (msDuration / 1000)) / (1024 * 1024)
                         double mbPerSecond = (1024.0 * 1000.0) / (msDuration * 1024.0 * 1024.0);
-                        printf("\nWrite completed in %lu ms: %f MB/s\r\n", msDuration, mbPerSecond);
+                        printf("\nWrite completed in %lu ms: %f MB/s", msDuration, mbPerSecond);
                     }
                 }
                 if (!readDone) {
@@ -121,52 +125,99 @@ void process_command(char *cmd, AsyncLink *link) {
                 }
                 pause();
             }
-            printf("sb finished\n");
+            logInfo("sk finished");
         }
-        return;
     }
+    */
 }
+
+#ifndef LED_DELAY_MS
+#define LED_DELAY_MS 250
+#endif
+
+static volatile bool ledstate = false;
+static void toggle_led() {
+    if (ledstate) {
+        printf("led on\r\n");
+    } else {
+        printf("led off\r\n");
+    }
+    gpio_put(LED_PIN, ledstate);
+    ledstate = ! ledstate;
+    sleep_ms(LED_DELAY_MS);
+}
+
+const int64_t STDIO_TICKLE_TICK_INTERVAL_US = 100000; // 100ms
+struct repeating_timer g_stdio_timer;
+// Free function for the timer callback.
+static bool stdioTickleTimerCallback(repeating_timer_t *rt) {
+    // The Pi Pico USB stdio seems to need to be 'tickled' regularly when we enter a
+    // text input loop. Possibly due to the architecture of TinyUSB needing to poll
+    // regularly.
+    stdio_flush();
+    return true; // true to continue repeating
+}
+
 
 [[noreturn]] int main() {
     // Initialise USB Serial STDIO...
     bool ok = stdio_init_all();
-    printf("Hello from picolinkharness.uf2 %d\r\n", ok);
+    setLogLevel(LOGLEVEL_DEBUG);
+
+    // A little pause is needed to get stdio working?
+    for (int i = 0; i < 20; i++) {
+        stdio_flush();
+        sleep_ms(LED_DELAY_MS);
+    }
+    logInfoF("Hello from picolinkharness.uf2 %d", ok);
     for (int i = 0; i < 1024; i++) {
         kilobyte[i] = i & 0xff;
     }
 
-    printf("Initialising LED\r\n");
+    logInfo("Initialising LED");
     gpio_init(LED_PIN);
     gpio_set_dir(LED_PIN, GPIO_OUT);
 
-    printf("Initialising GPIOTxRxPin\r\n");
+    logInfo("Initialising GPIOTxRxPin");
     GPIOTxRxPin txRxPin = GPIOTxRxPin(TX_PIN, RX_PIN);
 
-    printf("Initialising AsyncLink\r\n");
+    logInfo("Initialising AsyncLink");
     auto *linkA = new GPIOAsyncLink(0, false, txRxPin);
     linkA->setDebug(true);
-    logDebug("Initialising Link");
+    logInfo("Initialising Link");
     linkA->initialise();
 
-    printf("Initialising MultipleTickHandler\r\n");
+    logInfo("Initialising MultipleTickHandler");
     MultipleTickHandler handler;
     handler.addLink(linkA);
 
-    printf("Initialising AsyncLinkClock\r\n");
+    logInfo("Initialising AsyncLinkClock");
     AsyncLinkClock clock(CLOCK_PIN, handler);
-
-    printf("Starting clock...\r\n");
+    logInfo("Starting clock...");
     clock.start();
-    printf("Clock started\r\n");
+    logInfo("Clock started");
+
+    // The Pi Pico USB stdio seems to need to be 'tickled' regularly when we enter a
+    // text input loop. Possibly due to the architecture of TinyUSB needing to poll
+    // regularly.
+    add_repeating_timer_us(-STDIO_TICKLE_TICK_INTERVAL_US, &stdioTickleTimerCallback, nullptr, &g_stdio_timer);
 
     char *cmd_buf = nullptr;
-
-    printf("Interactive Link Harness. Enter 'help' for commands.\r\n");
+    logInfo("Interactive Link Harness. Enter 'help' for commands.");
     while (true) {
-        printf("> ");
-        stdio_flush();
+        logPrompt();
+
         cmd_buf = getLine(true, '\r');
-        process_command(cmd_buf, (AsyncLink *)linkA);
-        free(cmd_buf);
+        // Pressing return to return the line does not get echoed, so need to emit \r\n for
+        // subsequent log statement to be presented on its own line.
+        stdio_puts("");
+        if (cmd_buf == nullptr) {
+            logWarn("getLine returned NULL");
+        } else {
+            process_command(cmd_buf, linkA);
+            // logDebugF("command entered: 0x%08X '%s'", cmd_buf, cmd_buf);
+            // hexdump((BYTE8*)cmd_buf, strlen(cmd_buf));
+            free(cmd_buf);
+        }
     }
 }
