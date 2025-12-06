@@ -587,7 +587,8 @@ https://petewarden.com/2024/01/16/understanding-the-raspberry-pi-picos-memory-la
 Klaus Zerbe for the implementation of stdio getline for the Pi Pico, from
 https://github.com/ambotaku/pico-getLine, included in the Shared library code, with a
 tiny modification to remove the 'static' qualifier, as I could not get that to build
-successfully.
+successfully. I've also fixed a small bug where the initial getchar() returns null,
+and implemented backspace handling. PR submitted.
 
 Jack Ganssle for his article on firmware debouncing
 http://www.ganssle.com/debouncing-pt2.htm
