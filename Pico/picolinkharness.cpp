@@ -30,13 +30,39 @@ constexpr int TX_PIN = 2;
 constexpr int RX_PIN = 3;
 constexpr int LED_PIN = 25;
 
+constexpr int LED_DELAY_MS = 250;
+
 const WORD32 WPTR = 0xDEADBEEF;
 
 void pause() {
+    stdio_flush();
     sleep_ms(5);
+    stdio_flush();
 }
 
 static BYTE8 kilobyte[1024];
+
+bool parse_hex_byte(char *hexbytestring, BYTE8* ptr) {
+    BYTE8 result = 0;
+    for (int i = 0; i < 2; i++) {
+        char c = hexbytestring[i];
+        unsigned char digit;
+
+        if (c >= '0' && c <= '9') {
+            digit = c - '0';
+        } else if (c >= 'a' && c <= 'f') {
+            digit = c - 'a' + 10;
+        } else if (c >= 'A' && c <= 'F') {
+            digit = c - 'A' + 10;
+        } else {
+            return false;
+        }
+
+        result = (result << 4) | digit;
+    }
+    *ptr = result;
+    return true;
+}
 
 void process_command(char *cmd, AsyncLink *link) {
     BYTE8 a1;
@@ -52,10 +78,10 @@ void process_command(char *cmd, AsyncLink *link) {
         logInfo("sk    - sends 1KB (1024 bytes) and times how long it takes; receives it back");
         return;
     }
-    /*
-    if (strncmp(cmd, "sb", 2) == 0) {
-        if (sscanf(cmd, "sb %02x", &xx) == 1) {
-            a1 = xx; // Byte
+
+    if (strncmp(cmd, "sb", 2) == 0 && strlen(cmd) == 5) {
+        if (parse_hex_byte(cmd + 3, &a1)) {
+            logInfoF("Writing hex byte 0x%02x to link...", a1);
             if (!link->writeDataAsync(WPTR, &a1, 1)) {
                 logWarn("Could not write data");
             } else {
@@ -79,10 +105,12 @@ void process_command(char *cmd, AsyncLink *link) {
                 }
                 logInfo("sb finished");
             }
+        } else {
+            logWarn("That's not a hex byte");
         }
-        return;
     }
 
+/*
     // Send a kilobyte
     if (strncmp(cmd, "sk", 2) == 0) {
         msSinceBootAtStart = to_ms_since_boot(get_absolute_time());
@@ -131,9 +159,6 @@ void process_command(char *cmd, AsyncLink *link) {
     */
 }
 
-#ifndef LED_DELAY_MS
-#define LED_DELAY_MS 250
-#endif
 
 static volatile bool ledstate = false;
 static void toggle_led() {
