@@ -278,7 +278,8 @@ GPIOAsyncLink::GPIOAsyncLink(int linkNo, bool isServer, TxRxPin& tx_rx_pin) :
     Link(linkNo, isServer), m_pin(tx_rx_pin), m_status_word(0) {
     logDebugF("Constructing async link %d for %s", myLinkNo, isServer ? "server" : "cpu client");
     myWriteSequence = myReadSequence = 0;
-
+    m_receive_registers.m_length = 0;
+    m_send_registers.m_length = 0;
     m_o_pin = new OversampledTxRxPin(tx_rx_pin);
     m_receiver = new DataAckReceiver(linkNo);
     m_receiver->registerReceiverToLink(*this); // dereference this to get a reference.
@@ -288,8 +289,6 @@ GPIOAsyncLink::GPIOAsyncLink(int linkNo, bool isServer, TxRxPin& tx_rx_pin) :
     m_sender = new DataAckSender(linkNo, tx_rx_pin);
     m_receiver->registerReceiverToSender(*m_sender);
     m_sender->registerSenderToLink(*this); // dereference this to get a reference.
-    m_receive_registers.m_length = 0;
-    m_send_registers.m_length = 0;
 }
 
 void GPIOAsyncLink::initialise() {
@@ -400,11 +399,11 @@ void GPIOAsyncLink::setReadyToSend() {
     m_send_registers.m_data_pointer++;
     m_send_registers.m_length--;
     if (m_send_registers.m_length == 0) {
-        // logDebugF("Link %d sending complete", myLinkNo);
+        logDebugF("Link %d sending complete", myLinkNo);
         m_status_word |= ST_SEND_COMPLETE;
         // TODO the emulator will sense ST_SEND_COMPLETE and reschedule the process at m_send_registers->workspacePointer.
     } else {
-        // logDebugF("Link %d sending %d bytes, storing at 0x%08x", myLinkNo, m_send_registers.m_length, m_send_registers.m_data_pointer);
+        logDebugF("Link %d sending %d bytes, storing at 0x%08x", myLinkNo, m_send_registers.m_length, m_send_registers.m_data_pointer);
         m_sender->sendData(*m_send_registers.m_data_pointer);
     }
 }
@@ -702,7 +701,7 @@ void DataAckSender::unregisterSenderToLink() const {
 
 void DataAckSender::changeState(const DataAckSenderState newState) {
     // State exit actions
-    // logDebugF("Link %d Sender exiting state %s", m_linkNo, DataAckSenderStateToString(m_state));
+    logDebugF("Link %d Sender exiting state %s", m_linkNo, DataAckSenderStateToString(m_state));
     switch (m_state) {
         case DataAckSenderState::SENDING_ACK:
             m_send_ack = false;
@@ -716,7 +715,7 @@ void DataAckSender::changeState(const DataAckSenderState newState) {
     }
 
     // State entry actions
-    // logDebugF("Link %d Sender entering state %s", m_linkNo, DataAckSenderStateToString(newState));
+    logDebugF("Link %d Sender entering state %s", m_linkNo, DataAckSenderStateToString(newState));
     m_state = newState;
     switch (newState) {
         case DataAckSenderState::IDLE:
@@ -884,7 +883,7 @@ void DataAckReceiver::unregisterReceiverToLink() const {
 }
 
 void DataAckReceiver::changeState(const DataAckReceiverState newState) {
-    // logDebugF("Link %d Receiver changing state from %s to %s", m_linkNo, DataAckReceiverStateToString(m_state), DataAckReceiverStateToString(newState));
+    logDebugF("Link %d Receiver changing state from %s to %s", m_linkNo, DataAckReceiverStateToString(m_state), DataAckReceiverStateToString(newState));
     m_state = newState;
 }
 
