@@ -28,6 +28,7 @@ SOFTWARE.
 
 const uint startLineLength = 8; // the linebuffer will automatically grow for longer lines
 const char eof = 255;           // EOF in stdio.h -is -1, but getchar returns int 255 to avoid blocking
+const char backspace = 8;
 
 /*
  *  read a line of any  length from stdio (grows)
@@ -51,8 +52,25 @@ char * getLine(bool fullDuplex = true, char lineBreak = '\n') {
 
     while(1) {
         c = getchar(); // expect next character entry
-        if(c == eof || c == lineBreak) {
+        // The first call to getchar() can return null, not sure why, but ignore it if this happens.
+        if (c == 0) {
+            continue;
+        }
+        if (c == eof || c == lineBreak) {
             break;     // non blocking exit
+        }
+
+        if (c == backspace) {
+            if (pPos == pStart) { // Can't backspace past start of input!
+                continue;
+            }
+            pPos--;
+            if (fullDuplex) {
+                putchar(c); // Erase last character
+                putchar(' ');
+                putchar(c);
+            }
+            continue;
         }
 
         if (fullDuplex) {
