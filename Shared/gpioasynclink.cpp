@@ -186,6 +186,7 @@ AsyncLinkClock::AsyncLinkClock(uint clockGPIOPin, TickHandler& tickHandler) :
     gpio_set_drive_strength(m_clockGPIOPin, GPIO_DRIVE_STRENGTH_2MA);
     gpio_put(m_clockGPIOPin, false);
 #endif
+    logDebug("Created AsyncLinkClock");
 }
 
 void AsyncLinkClock::start() {
@@ -232,7 +233,6 @@ void AsyncLinkClock::stop() {
 }
 
 void AsyncLinkClock::operator()() const {
-    // logDebug("Tick!");
 #ifdef PICO
     gpio_put(m_clockGPIOPin, true);
 #endif
@@ -478,15 +478,18 @@ void MultipleTickHandler::addLink(AsyncLink* link) {
     m_links.push_back(link);
 }
 
-
+static bool tickled = false;
 // TickHandler
 void MultipleTickHandler::tick() {
-    // logDebug("Tick - >> clock the Links");
+    gpio_put(PICO_DEFAULT_LED_PIN, tickled);
+    tickled = ! tickled;
+
+    //logDebug("Tick - >> clock the Links");
     for (AsyncLink* link: m_links) {
         // logDebugF("Tick - link at 0x%x", link);
         link->clock();
     }
-    // logDebug("Tick - << clock the Links");
+    //logDebug("Tick - << clock the Links");
 }
 
 
