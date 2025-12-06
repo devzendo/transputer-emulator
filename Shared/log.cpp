@@ -13,7 +13,7 @@
 
 #ifdef PICO
 #include <cstdlib>
-#include <stdio.h> // Pico USB Serial STDIO
+#include <pico/stdio.h> // Pico USB Serial STDIO
 #endif
 
 #include <cstdlib>
@@ -57,6 +57,7 @@ void logFlush(void) {
 #endif
 #ifdef PICO
 	fflush(stdout);
+	stdio_flush();
 #endif
 }
 
@@ -77,6 +78,7 @@ void _logDebug(int l, const char *f, const char *s) {
 		//printf("%d ", l);
 		fputs(s, stdout);
 		fputs("\n", stdout);
+		stdio_flush();
 #endif
 	}
 }
@@ -105,7 +107,8 @@ void _logDebugF(int l, const char *f, const char *fmt, ...) {
 				//putchar(':');
 				//printf("%d ", l);
 				fputs(buf, stdout);
-				fputs("\n", stdout);
+				fputs("\r\n", stdout);
+				stdio_flush();
 #endif
 				free(buf);
 				return;
@@ -121,6 +124,20 @@ void _logDebugF(int l, const char *f, const char *fmt, ...) {
 				return;
 			}
 		}
+	}
+}
+
+void logLevel(const int level, const char *s) {
+	if (myLogLevel <= level) {
+#ifdef DESKTOP
+		*myOutputStream << tags[level] << s << std::endl;
+#endif
+#ifdef PICO
+		fputs(tags[level], stdout);
+		fputs(s, stdout);
+		fputs("\r\n", stdout);
+		stdio_flush();
+#endif
 	}
 }
 
@@ -140,14 +157,7 @@ void logFormat(int level, const char *fmt, ...) {
 			va_end(ap);
 			// if ok, return it - caller must free it
 			if (n >= -1 && n < size) {
-#ifdef DESKTOP
-				*myOutputStream << tags[level] << buf << std::endl;
-#endif
-#ifdef PICO
-				fputs(tags[level], stdout);
-				fputs(buf, stdout);
-				fputs("\n", stdout);
-#endif
+				logLevel(level, buf);
 				free(buf);
 				return;
 			}
@@ -162,19 +172,6 @@ void logFormat(int level, const char *fmt, ...) {
 				return;
 			}
 		}
-	}
-}
-
-void logLevel(const int level, const char *s) {
-	if (myLogLevel <= level) {
-#ifdef DESKTOP
-		*myOutputStream << tags[level] << s << std::endl;
-#endif
-#ifdef PICO
-		fputs(tags[level], stdout);
-		fputs(s, stdout);
-		fputs("\n", stdout);
-#endif
 	}
 }
 
@@ -201,7 +198,8 @@ void logBug(const char *s) {
 #ifdef PICO
 	fputs("*BUG* ", stdout);
 	fputs(s, stdout);
-	fputs("\n", stdout);
+	fputs("\r\n", stdout);
+	stdio_flush();
 #endif
 }
 
@@ -209,6 +207,10 @@ void logPrompt(void) {
 #ifdef DESKTOP
 	*myOutputStream << "> ";
 	myOutputStream->flush();
+#endif
+#ifdef PICO
+	stdio_put_string("> ", 2, false, false);
+	stdio_flush();
 #endif
 }
 
