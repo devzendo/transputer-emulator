@@ -17,11 +17,12 @@ cd -P "$( dirname "$SOURCE" )" >/dev/null 2>&1
 
 UPONE="${PWD%/*}"
 
-rm -rf cmake-build-release
-rm -rf cmake-build-debug
-mvn clean
+#rm -rf cmake-build-release
+#rm -rf cmake-build-debug
+#mvn clean
 export PICO_SDK_PATH=${UPONE}/PICO_SDK
-mvn -DCROSS=PICO compile -P build
+#mvn -DCROSS=PICO compile -P build
+./rl.py -D VARIANT="-D CROSS=PICO" clean compile
 
 
 
