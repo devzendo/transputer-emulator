@@ -384,25 +384,6 @@ public:
     WORD32 m_length;
 };
 
-/*
- * Status word bits.
- * 15       | 14       | 13        | 12        | 11        | 10        | 9         | 8
- * FRAMING  | OVERRUN  | READ DATA | READY TO  | DATA SENT | READ      | SEND      | ......... |
- *          |          | AVAILABLE | SEND      | NOT ACKED | COMPLETE  | COMPLETE  |           |
- *          |          |           |           | (TIMEOUT) |           |           |           |
- * ---------------------------------------------------------------------------------------------
- * 7        | 6        | 5         | 4         | 3         | 2         | 1         | 0
- * DATA RECEIVED IF READ DATA AVAILABLE (BIT 13) IS TRUE
- */
-const WORD16 ST_FRAMING = 0x8000;
-const WORD16 ST_OVERRUN = 0x4000;
-const WORD16 ST_READ_DATA_AVAILABLE = 0x2000;
-const WORD16 ST_READY_TO_SEND = 0x1000;
-const WORD16 ST_DATA_SENT_NOT_ACKED = 0x0800;
-const WORD16 ST_READ_COMPLETE = 0x0400;
-const WORD16 ST_SEND_COMPLETE = 0x0200;
-const WORD16 ST_DATA_MASK = 0x00FF;
-
 
 /* Highest level abstraction: GPIOAsyncLink uses the DataAckSender & DataAckReceiver state
  * machines, and an OversampledTxRxPin to handle the send/receive over an underlying TxRxPin.
@@ -424,9 +405,9 @@ public:
     WORD32 writeComplete() override;
     void readDataAsync(WORD32 workspacePointer, BYTE8* dataPointer, WORD32 length) override;
     WORD32 readComplete() override;
+    WORD16 getStatusWord() override;
 
     // All internals...
-    WORD16 getStatusWord();
     // SenderToLink
     bool queryReadyToSend() override;
     void setReadyToSend() override;

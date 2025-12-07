@@ -94,6 +94,12 @@ void process_command(char *cmd, AsyncLink *link) {
                             logInfo("Write completed");
                             writeDone = true;
                         }
+                        if (link->getStatusWord() & ST_DATA_SENT_NOT_ACKED) {
+                            logWarn("Write timed out without acknowledgement");
+                            writeDone = true;
+                            readDone = true;
+                            // TODO reset link
+                        }
                     }
                     if (!readDone) {
                         if (link->readComplete() != NotProcess_p) {
@@ -172,16 +178,16 @@ static void toggle_led() {
     sleep_ms(LED_DELAY_MS);
 }
 
-const int64_t STDIO_TICKLE_TICK_INTERVAL_US = 100000; // 100ms
-struct repeating_timer g_stdio_timer;
-// Free function for the timer callback.
-static bool stdioTickleTimerCallback(repeating_timer_t *rt) {
-    // The Pi Pico USB stdio seems to need to be 'tickled' regularly when we enter a
-    // text input loop. Possibly due to the architecture of TinyUSB needing to poll
-    // regularly.
-    stdio_flush();
-    return true; // true to continue repeating
-}
+// const int64_t STDIO_TICKLE_TICK_INTERVAL_US = 100000; // 100ms
+// struct repeating_timer g_stdio_timer;
+// // Free function for the timer callback.
+// static bool stdioTickleTimerCallback(repeating_timer_t *rt) {
+//     // The Pi Pico USB stdio seems to need to be 'tickled' regularly when we enter a
+//     // text input loop. Possibly due to the architecture of TinyUSB needing to poll
+//     // regularly.
+//     stdio_flush();
+//     return true; // true to continue repeating
+// }
 
 
 [[noreturn]] int main() {
@@ -225,7 +231,7 @@ static bool stdioTickleTimerCallback(repeating_timer_t *rt) {
     // The Pi Pico USB stdio seems to need to be 'tickled' regularly when we enter a
     // text input loop. Possibly due to the architecture of TinyUSB needing to poll
     // regularly.
-    add_repeating_timer_us(-STDIO_TICKLE_TICK_INTERVAL_US, &stdioTickleTimerCallback, nullptr, &g_stdio_timer);
+    // add_repeating_timer_us(-STDIO_TICKLE_TICK_INTERVAL_US, &stdioTickleTimerCallback, nullptr, &g_stdio_timer);
 
     char *cmd_buf = nullptr;
     logInfo("Interactive Link Harness. Enter 'help' for commands.");

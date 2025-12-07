@@ -701,7 +701,7 @@ void DataAckSender::unregisterSenderToLink() const {
 
 void DataAckSender::changeState(const DataAckSenderState newState) {
     // State exit actions
-    logDebugF("Link %d Sender exiting state %s", m_linkNo, DataAckSenderStateToString(m_state));
+    // logDebugF("Link %d Sender exiting state %s", m_linkNo, DataAckSenderStateToString(m_state));
     switch (m_state) {
         case DataAckSenderState::SENDING_ACK:
             m_send_ack = false;
@@ -715,7 +715,7 @@ void DataAckSender::changeState(const DataAckSenderState newState) {
     }
 
     // State entry actions
-    logDebugF("Link %d Sender entering state %s", m_linkNo, DataAckSenderStateToString(newState));
+    // logDebugF("Link %d Sender entering state %s", m_linkNo, DataAckSenderStateToString(newState));
     m_state = newState;
     switch (newState) {
         case DataAckSenderState::IDLE:
@@ -883,7 +883,7 @@ void DataAckReceiver::unregisterReceiverToLink() const {
 }
 
 void DataAckReceiver::changeState(const DataAckReceiverState newState) {
-    logDebugF("Link %d Receiver changing state from %s to %s", m_linkNo, DataAckReceiverStateToString(m_state), DataAckReceiverStateToString(newState));
+    // logDebugF("Link %d Receiver changing state from %s to %s", m_linkNo, DataAckReceiverStateToString(m_state), DataAckReceiverStateToString(newState));
     m_state = newState;
 }
 
