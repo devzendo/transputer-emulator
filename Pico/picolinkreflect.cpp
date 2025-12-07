@@ -28,6 +28,8 @@ constexpr int RX_PIN = 3;
 constexpr int BUTTON_PIN = 4;
 constexpr int LED_PIN = 25;
 
+constexpr int LED_DELAY_MS = 250;
+
 const WORD32 WPTR = 0xCAFEBABE;
 
 enum class ReflectState { REFLECT, REFLECT_SLOWLY, SILENCE };
@@ -65,6 +67,7 @@ public:
             if (m_debouncer != nullptr) {
                 m_debouncer->debounce(gpio_get(BUTTON_PIN));
                 if (m_debouncer->keyReleased) {
+                    logDebug("Button released");
                     switch (g_state) {
                         case ReflectState::REFLECT:
                             g_state = ReflectState::REFLECT_SLOWLY;
@@ -99,7 +102,15 @@ private:
 [[noreturn]] int main() {
     // Initialise USB Serial STDIO...
     bool ok = stdio_init_all();
-    printf("Hello from picolinkreflect.uf2 %d\r\n", ok);
+    setLogLevel(LOGLEVEL_DEBUG);
+
+    // A little pause is needed to get stdio working?
+    for (int i = 0; i < 20; i++) {
+        stdio_flush();
+        sleep_ms(LED_DELAY_MS);
+    }
+
+    logInfoF("Hello from picolinkreflect.uf2 %d", ok);
     // LED
     gpio_init(LED_PIN);
     gpio_set_dir(LED_PIN, GPIO_OUT);
@@ -110,28 +121,28 @@ private:
     gpio_set_dir(BUTTON_PIN, GPIO_IN);
     gpio_pull_down(BUTTON_PIN);
 
-    printf("Initialising GPIOTxRxPin\r\n");
+    logInfo("Initialising GPIOTxRxPin");
     GPIOTxRxPin txRxPin = GPIOTxRxPin(TX_PIN, RX_PIN);
 
-    printf("Initialising AsyncLink\r\n");
+    logInfo("Initialising AsyncLink");
     auto *link = new GPIOAsyncLink(0, false, txRxPin);
     link->setDebug(true);
     logDebug("Initialising Link");
     link->initialise();
 
-    printf("Initialising Debouncer\r\n");
+    logInfo("Initialising Debouncer");
     Debouncer debouncer;
-    printf("Initialising DebounceAndLinkTickHandler\r\n");
+    logInfo("Initialising DebounceAndLinkTickHandler");
     DebounceAndLinkTickHandler handler;
     handler.addLink(link);
     handler.setDebouncer(&debouncer);
 
-    printf("Initialising AsyncLinkClock\r\n");
+    logInfo("Initialising AsyncLinkClock");
     AsyncLinkClock clock(CLOCK_PIN, handler);
 
-    printf("Starting clock...\r\n");
+    logInfo("Starting clock...");
     clock.start();
-    printf("Clock started\r\n");
+    logInfo("Clock started");
 
     BYTE8 a1;
     bool readScheduled = false;
@@ -150,7 +161,7 @@ private:
                 if (readScheduled && link->readComplete() != NotProcess_p) {
                     readScheduled = false;
                     if (!link->writeDataAsync(WPTR, &a1, 1)) {
-                        printf("Could not write data\r\n");
+                        logInfo("Could not write data");
                     } else {
                         writeScheduled = true;
                     }
@@ -167,7 +178,7 @@ private:
                 if (to_ms_since_boot(get_absolute_time()) > write_after_time) {
                     readScheduled = false;
                     if (!link->writeDataAsync(WPTR, &a1, 1)) {
-                        printf("Could not write data\r\n");
+                        logInfo("Could not write data");
                     } else {
                         writeScheduled = true;
                     }
