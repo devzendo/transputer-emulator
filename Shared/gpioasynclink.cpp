@@ -478,10 +478,14 @@ void MultipleTickHandler::addLink(AsyncLink* link) {
 }
 
 static bool tickled = false;
+static int tick_count = 0;
 // TickHandler
 void MultipleTickHandler::tick() {
-    gpio_put(PICO_DEFAULT_LED_PIN, tickled);
-    tickled = ! tickled;
+    // if (tick_count++ == 1024) {
+    //     tick_count = 0;
+    //     gpio_put(PICO_DEFAULT_LED_PIN, tickled);
+    //     tickled = ! tickled;
+    // }
 
     //logDebug("Tick - >> clock the Links");
     for (AsyncLink* link: m_links) {
@@ -640,6 +644,7 @@ void DataAckSender::clock() {
             // Send the least significant bit of m_data.
             const bool one = m_data & 0x0001;
             m_pin.setTx(one);
+            gpio_put(PICO_DEFAULT_LED_PIN, one);
             m_sampleCount ++;
             if (m_sampleCount == 16) {
                 // logDebugF("Link %d Finished sending bit %d for 16 samples", m_linkNo, one);

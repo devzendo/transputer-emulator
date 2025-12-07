@@ -355,7 +355,7 @@ private:
     std::atomic_bool m_is_running;
 };
 
-const int64_t LINK_CLOCK_TICK_INTERVAL_US = 500000; // half second
+const int64_t LINK_CLOCK_TICK_INTERVAL_US = 5; // 0.005ms
 
 class AsyncLinkClock {
 public:
