@@ -116,7 +116,7 @@ void process_command(char *cmd, AsyncLink *link) {
         }
     }
 
-/*
+
     // Send a kilobyte
     if (strncmp(cmd, "sk", 2) == 0) {
         msSinceBootAtStart = to_ms_since_boot(get_absolute_time());
@@ -141,6 +141,12 @@ void process_command(char *cmd, AsyncLink *link) {
                         double mbPerSecond = (1024.0 * 1000.0) / (msDuration * 1024.0 * 1024.0);
                         printf("\nWrite completed in %lu ms: %f MB/s", msDuration, mbPerSecond);
                     }
+                    if (link->getStatusWord() & ST_DATA_SENT_NOT_ACKED) {
+                        logWarn("Write timed out without acknowledgement");
+                        writeDone = true;
+                        readDone = true;
+                        // TODO reset link
+                    }
                 }
                 if (!readDone) {
                     if (link->readComplete() != NotProcess_p) {
@@ -162,7 +168,7 @@ void process_command(char *cmd, AsyncLink *link) {
             logInfo("sk finished");
         }
     }
-    */
+
 }
 
 
