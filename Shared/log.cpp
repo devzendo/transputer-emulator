@@ -27,6 +27,10 @@
 
 #include "log.h"
 
+#ifdef PICO
+#include "sync.h"
+#endif
+
 static const char *tags[5] = {
 	"DEBUG ", "INFO  ", "WARN  ", "ERROR ", "FATAL ",
 };

@@ -32,6 +32,7 @@
 #include <sys/types.h>
 #include "types.h"
 #include "link.h"
+#include "sync.h"
 #include "asynclink.h"
 
 /* Lowest level abstraction: TxRxPin, represents a pair of abstract pins.
@@ -301,26 +302,6 @@ private:
 #endif
 
 #ifdef PICO
-struct CriticalSection  /* BasicResolvable */ {
-    CriticalSection() {
-        critical_section_init(&m_critsec);
-    }
-
-    void lock() {
-        critical_section_enter_blocking(&m_critsec);
-    }
-
-    void unlock() {
-        critical_section_exit(&m_critsec);
-    }
-
-    CriticalSection(const CriticalSection&) = delete;
-
-    CriticalSection& operator=(const CriticalSection&) = delete;
-
-private:
-    critical_section_t m_critsec;
-};
 #define MUTEX     std::lock_guard<CriticalSection> guard(m_criticalsection);
 #endif
 
