@@ -644,7 +644,9 @@ void DataAckSender::clock() {
             // Send the least significant bit of m_data.
             const bool one = m_data & 0x0001;
             m_pin.setTx(one);
+#ifdef PICO
             gpio_put(PICO_DEFAULT_LED_PIN, one);
+#endif
             m_sampleCount ++;
             if (m_sampleCount == 16) {
                 // logDebugF("Link %d Finished sending bit %d for 16 samples", m_linkNo, one);
