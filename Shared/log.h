@@ -25,10 +25,10 @@ extern void setLogLevel(int l);
 
 // All logging output goes to std::cout, unless this is called to switch it to a file "test.log" (useful for seeing actual code
 // output during Google Test execution which otherwise silences std::cout)
-extern void logToTestLog(void);
+extern void logToTestLog();
 extern void logToFile(const char *fileName);
 
-extern void logFlush(void);
+extern void logFlush();
 
 extern void _logDebug(int line, const char *file, const char *s);
 extern void _logDebugF(int line, const char *file, const char *fmt, ...);

@@ -19,11 +19,12 @@
 #include <cstdlib>
 #include <cstdarg> // vsnprintf is supposed to be in here, but is in cstdio in RH73
 #include <cstdio>
+#include <mutex> // For std::lock_guard and BasicLockable
 
 #ifdef DESKTOP
 #include <iostream>
 #include <fstream>
-#endif 
+#endif
 
 #include "log.h"
 
@@ -35,6 +36,20 @@ static const char *tags[5] = {
 	"DEBUG ", "INFO  ", "WARN  ", "ERROR ", "FATAL ",
 };
 
+/* Access to the log buffer is protected by a std::lock_guard
+ * and an appropriate lock for the platform - std::mutex on desktop, and a critical_section_t
+ * on PICO, wrapped in the CriticalSection BasicResolvable.
+ */
+
+#ifdef DESKTOP
+#define LOGMUTEX std::lock_guard<std::mutex> guard(g_log_mutex);
+static std::mutex g_log_mutex;
+#endif
+
+#ifdef PICO
+#define LOGMUTEX std::lock_guard<CriticalSection> guard(g_log_criticalsection);
+static CriticalSection g_log_criticalsection;
+#endif
 
 #ifdef DESKTOP
 static std::ostream *myOutputStream = &std::cout;
@@ -55,7 +70,7 @@ void logToFile(const char *fileName) {
 #endif // DESKTOP
 
 
-void logFlush(void) {
+void logFlush() {
 #ifdef DESKTOP
     myOutputStream->flush();
 #endif
@@ -87,95 +102,104 @@ void _logDebug(int l, const char *f, const char *s) {
 	}
 }
 void _logDebugF(int l, const char *f, const char *fmt, ...) {
+	if (myLogLevel > LOGLEVEL_DEBUG) {
+		return;
+	}
 	char *buf;
+	int size = 100;
 	va_list ap;
-	int n, size = 100;
-	if (myLogLevel <= LOGLEVEL_DEBUG) {
-		if ((buf = (char *)malloc(size)) == NULL) {
-			logError("Out of memory in _logDebugF");
-			return;
-		}
-		while (1) {
-			// try to print in allocated buffer
-			va_start(ap, fmt);
-			n = vsnprintf(buf, size, fmt, ap);
-			va_end(ap);
-			// if ok, display it
-			if (n >= -1 && n < size) {
+	if ((buf = static_cast<char*>(malloc(size))) == nullptr) {
+		logError("Out of memory in _logDebugF");
+		return;
+	}
+	while (true) {
+		// try to print in allocated buffer
+		va_start(ap, fmt);
+		const int n = vsnprintf(buf, size, fmt, ap);
+		va_end(ap);
+		// if ok, display it
+		if (n >= -1 && n < size) {
 #ifdef DESKTOP
-				*myOutputStream << tags[LOGLEVEL_DEBUG] << f << ":" << l << " " << buf << std::endl;
+			*myOutputStream << tags[LOGLEVEL_DEBUG] << f << ":" << l << " " << buf << std::endl;
 #endif
 #ifdef PICO
-				fputs(tags[LOGLEVEL_DEBUG], stdout);
-				//fputs(f, stdout);
-				//putchar(':');
-				//printf("%d ", l);
-				fputs(buf, stdout);
-				fputs("\r\n", stdout);
-				stdio_flush();
+			fputs(tags[LOGLEVEL_DEBUG], stdout);
+			//fputs(f, stdout);
+			//putchar(':');
+			//printf("%d ", l);
+			fputs(buf, stdout);
+			fputs("\r\n", stdout);
+			stdio_flush();
 #endif
-				free(buf);
-				return;
-			}
-			// else try again with more space
-			if (n >= -1) { // glibc 2.1
-				size = n+1; // precisely what is needed
-			} else { // glibc 2.0
-				size *= 2; // twice old size
-			}
-			if ((buf = (char *)realloc(buf, size)) == NULL) {
-				logError("Reallocation failure in _logDebugF");
-				return;
-			}
+			free(buf);
+			return;
 		}
+		// else try again with more space
+		if (n >= -1) { // glibc 2.1
+			size = n+1; // precisely what is needed
+		} else { // glibc 2.0
+			size *= 2; // twice old size
+		}
+		char *newbuf;
+		if ((newbuf = static_cast<char*>(realloc(buf, size))) == nullptr) {
+			logError("Reallocation failure in _logDebugF");
+			free(buf);
+			return;
+		}
+		buf = newbuf;
 	}
 }
 
 void logLevel(const int level, const char *s) {
-	if (myLogLevel <= level) {
+	if (myLogLevel > level) {
+		return;
+	}
 #ifdef DESKTOP
-		*myOutputStream << tags[level] << s << std::endl;
+	*myOutputStream << tags[level] << s << std::endl;
 #endif
 #ifdef PICO
-		fputs(tags[level], stdout);
-		fputs(s, stdout);
-		fputs("\r\n", stdout);
-		stdio_flush();
+	fputs(tags[level], stdout);
+	fputs(s, stdout);
+	fputs("\r\n", stdout);
+	stdio_flush();
 #endif
-	}
 }
 
 void logFormat(int level, const char *fmt, ...) {
+	if (myLogLevel > level) {
+		return;
+	}
 	char *buf;
 	va_list ap;
-	int n, size = 100;
-	if (myLogLevel <= level) {
-		if ((buf = (char *)malloc(size)) == NULL) {
-			logError("Out of memory in logFormat");
+	int size = 100;
+	if ((buf = static_cast<char*>(malloc(size))) == nullptr) {
+		logError("Out of memory in logFormat");
+		return;
+	}
+	while (true) {
+		// try to print in allocated buffer
+		va_start(ap, fmt);
+		const int n = vsnprintf(buf, size, fmt, ap);
+		va_end(ap);
+		// if ok, return it - caller must free it
+		if (n >= -1 && n < size) {
+			logLevel(level, buf);
+			free(buf);
 			return;
 		}
-		while (1) {
-			// try to print in allocated buffer
-			va_start(ap, fmt);
-			n = vsnprintf(buf, size, fmt, ap);
-			va_end(ap);
-			// if ok, return it - caller must free it
-			if (n >= -1 && n < size) {
-				logLevel(level, buf);
-				free(buf);
-				return;
-			}
-			// else try again with more space
-			if (n >= -1) { // glibc 2.1
-				size = n+1; // precisely what is needed
-			} else { // glibc 2.0
-				size *= 2; // twice old size
-			}
-			if ((buf = (char *)realloc(buf, size)) == NULL) {
-				logError("Reallocation failure in logFormat");
-				return;
-			}
+		// else try again with more space
+		if (n >= -1) { // glibc 2.1
+			size = n+1; // precisely what is needed
+		} else { // glibc 2.0
+			size *= 2; // twice old size
 		}
+		char *newbuf;
+		if ((newbuf = static_cast<char*>(realloc(buf, size))) == nullptr) {
+			logError("Reallocation failure in logFormat");
+			free(buf);
+			return;
+		}
+		buf = newbuf;
 	}
 }
 
@@ -207,7 +231,7 @@ void logBug(const char *s) {
 #endif
 }
 
-void logPrompt(void) {
+void logPrompt() {
 #ifdef DESKTOP
 	*myOutputStream << "> ";
 	myOutputStream->flush();
@@ -220,8 +244,8 @@ void logPrompt(void) {
 
 // TODO Isn't this desktop only?
 void getInput(char *buf, int buflen) {
-	if (fgets(buf, buflen, stdin) == NULL) {
-		// do nothing. casting fgets' output to void still causes warnings
+	if (fgets(buf, buflen, stdin) == nullptr) {
+		// do nothing. casting fgets output to void still causes warnings
 	}
 }
 
