@@ -399,11 +399,11 @@ void GPIOAsyncLink::setReadyToSend() {
     m_send_registers.m_data_pointer++;
     m_send_registers.m_length--;
     if (m_send_registers.m_length == 0) {
-        logDebugF("Link %d sending complete", myLinkNo);
+        // logDebugF("Link %d sending complete", myLinkNo);
         m_status_word |= ST_SEND_COMPLETE;
         // TODO the emulator will sense ST_SEND_COMPLETE and reschedule the process at m_send_registers->workspacePointer.
     } else {
-        logDebugF("Link %d sending %d bytes, storing at 0x%08x", myLinkNo, m_send_registers.m_length, m_send_registers.m_data_pointer);
+        // logDebugF("Link %d sending %d bytes, storing at 0x%08x", myLinkNo, m_send_registers.m_length, m_send_registers.m_data_pointer);
         m_sender->sendData(*m_send_registers.m_data_pointer);
     }
 }
@@ -415,7 +415,7 @@ void GPIOAsyncLink::clearReadyToSend() {
 }
 
 void GPIOAsyncLink::setTimeoutError() {
-    logWarnF("Link %d timed out", myLinkNo);
+    // logWarnF("Link %d timed out", myLinkNo);
     //MUTEX
     m_status_word |= ST_DATA_SENT_NOT_ACKED;
 }
@@ -437,7 +437,7 @@ void GPIOAsyncLink::dataReceived(BYTE8 data) {
     //MUTEX
     m_status_word |= (ST_READ_DATA_AVAILABLE | data);
     if (m_receive_registers.m_length == 0) {
-        logWarnF("Link %d received data with no buffer", myLinkNo);
+        // logWarnF("Link %d received data with no buffer", myLinkNo);
         return;
     }
     // logDebugF("Link %d status word 0b%s", myLinkNo, word_to_binary(m_status_word));
@@ -461,7 +461,7 @@ bool GPIOAsyncLink::queryReadDataAvailable() {
 }
 
 void GPIOAsyncLink::clearReadDataAvailable() {
-    logDebugF("Link %d data NOT available", myLinkNo);
+    // logDebugF("Link %d data NOT available", myLinkNo);
     //MUTEX
     m_status_word &= ~ST_READ_DATA_AVAILABLE;
 }
@@ -538,7 +538,7 @@ DataAckSenderState DataAckSender::state() const {
 void DataAckSender::ackReceived() {
     switch (m_state) {
         case DataAckSenderState::IDLE:
-            logWarnF("Link %d Ack received in IDLE state", m_linkNo);
+            // logWarnF("Link %d Ack received in IDLE state", m_linkNo);
             break;
         case DataAckSenderState::SENDING_DATA:
             // logDebugF("Link %d Data being sent has been acked", m_linkNo);
@@ -588,7 +588,7 @@ bool DataAckSender::sendData(const BYTE8 byte) {
                 sendDataInternal(byte);
                 return true;
             } else {
-                logWarnF("Link %d wants to send data but NOT ready to send", m_linkNo);
+                // logWarnF("Link %d wants to send data but NOT ready to send", m_linkNo);
             }
             return false;
         case DataAckSenderState::SENDING_ACK:
@@ -600,7 +600,7 @@ bool DataAckSender::sendData(const BYTE8 byte) {
         case DataAckSenderState::SENDING_DATA:
             // DROP THROUGH
         default:
-            logWarnF("Link %d Sending data in %s state", m_linkNo, DataAckSenderStateToString(m_state));
+            // logWarnF("Link %d Sending data in %s state", m_linkNo, DataAckSenderStateToString(m_state));
             return false;
     }
     // TODO }
