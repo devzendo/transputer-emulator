@@ -71,6 +71,7 @@ void logToFile(const char *fileName) {
 
 
 void logFlush() {
+	LOGMUTEX
 #ifdef DESKTOP
     myOutputStream->flush();
 #endif
@@ -85,23 +86,43 @@ void setLogLevel(int l) {
 	myLogLevel = l;
 }
 
-void _logDebug(int l, const char *f, const char *s) {
-	if (myLogLevel <= LOGLEVEL_DEBUG) {
+// Internal. Precondition: LOGMUTEX held by the caller, so allows reentrancy.
+void _logLevel(const int level, const char *s) {
+	if (myLogLevel > level) {
+		return;
+	}
 #ifdef DESKTOP
-		*myOutputStream << tags[LOGLEVEL_DEBUG] << f << ":" << l << " " << s << std::endl;
+	*myOutputStream << tags[level] << s << std::endl;
 #endif
 #ifdef PICO
-		fputs(tags[LOGLEVEL_DEBUG], stdout);
-		//fputs(f, stdout);
-		//putchar(':');
-		//printf("%d ", l);
-		fputs(s, stdout);
-		fputs("\n", stdout);
-		stdio_flush();
+	fputs(tags[level], stdout);
+	fputs(s, stdout);
+	fputs("\r\n", stdout);
+	stdio_flush();
 #endif
-	}
 }
+
+void _logDebug(int l, const char *f, const char *s) {
+	LOGMUTEX
+	if (myLogLevel > LOGLEVEL_DEBUG) {
+		return;
+	}
+#ifdef DESKTOP
+	*myOutputStream << tags[LOGLEVEL_DEBUG] << f << ":" << l << " " << s << std::endl;
+#endif
+#ifdef PICO
+	fputs(tags[LOGLEVEL_DEBUG], stdout);
+	//fputs(f, stdout);
+	//putchar(':');
+	//printf("%d ", l);
+	fputs(s, stdout);
+	fputs("\n", stdout);
+	stdio_flush();
+#endif
+}
+
 void _logDebugF(int l, const char *f, const char *fmt, ...) {
+	LOGMUTEX
 	if (myLogLevel > LOGLEVEL_DEBUG) {
 		return;
 	}
@@ -109,7 +130,7 @@ void _logDebugF(int l, const char *f, const char *fmt, ...) {
 	int size = 100;
 	va_list ap;
 	if ((buf = static_cast<char*>(malloc(size))) == nullptr) {
-		logError("Out of memory in _logDebugF");
+		_logLevel(LOGLEVEL_ERROR, "Out of memory in _logDebugF");
 		return;
 	}
 	while (true) {
@@ -142,7 +163,7 @@ void _logDebugF(int l, const char *f, const char *fmt, ...) {
 		}
 		char *newbuf;
 		if ((newbuf = static_cast<char*>(realloc(buf, size))) == nullptr) {
-			logError("Reallocation failure in _logDebugF");
+			_logLevel(LOGLEVEL_ERROR, "Reallocation failure in _logDebugF");
 			free(buf);
 			return;
 		}
@@ -151,21 +172,12 @@ void _logDebugF(int l, const char *f, const char *fmt, ...) {
 }
 
 void logLevel(const int level, const char *s) {
-	if (myLogLevel > level) {
-		return;
-	}
-#ifdef DESKTOP
-	*myOutputStream << tags[level] << s << std::endl;
-#endif
-#ifdef PICO
-	fputs(tags[level], stdout);
-	fputs(s, stdout);
-	fputs("\r\n", stdout);
-	stdio_flush();
-#endif
+	LOGMUTEX
+	_logLevel(level, s);
 }
 
 void logFormat(int level, const char *fmt, ...) {
+	LOGMUTEX
 	if (myLogLevel > level) {
 		return;
 	}
@@ -173,7 +185,7 @@ void logFormat(int level, const char *fmt, ...) {
 	va_list ap;
 	int size = 100;
 	if ((buf = static_cast<char*>(malloc(size))) == nullptr) {
-		logError("Out of memory in logFormat");
+		_logLevel(LOGLEVEL_ERROR, "Out of memory in logFormat");
 		return;
 	}
 	while (true) {
@@ -183,7 +195,7 @@ void logFormat(int level, const char *fmt, ...) {
 		va_end(ap);
 		// if ok, return it - caller must free it
 		if (n >= -1 && n < size) {
-			logLevel(level, buf);
+			_logLevel(level, buf);
 			free(buf);
 			return;
 		}
@@ -195,7 +207,7 @@ void logFormat(int level, const char *fmt, ...) {
 		}
 		char *newbuf;
 		if ((newbuf = static_cast<char*>(realloc(buf, size))) == nullptr) {
-			logError("Reallocation failure in logFormat");
+			_logLevel(LOGLEVEL_ERROR, "Reallocation failure in logFormat");
 			free(buf);
 			return;
 		}
@@ -220,6 +232,7 @@ void logFatal(const char *s) {
 }
 
 void logBug(const char *s) {
+	LOGMUTEX
 #ifdef DESKTOP
 	*myOutputStream << "*BUG* " << s << std::endl;
 #endif
@@ -232,6 +245,7 @@ void logBug(const char *s) {
 }
 
 void logPrompt() {
+	LOGMUTEX
 #ifdef DESKTOP
 	*myOutputStream << "> ";
 	myOutputStream->flush();
