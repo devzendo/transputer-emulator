@@ -155,6 +155,10 @@ protected:
             return 0;
         }
 
+        WORD16 getStatusWord() override {
+            return 0;
+        }
+
     private:
         std::atomic_int m_counter;
     };
