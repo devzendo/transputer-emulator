@@ -14,6 +14,7 @@
 #ifdef PICO
 #include <cstdlib>
 #include <pico/stdio.h> // Pico USB Serial STDIO
+#include "sync.h"
 #endif
 
 #include <cstdlib>
@@ -29,7 +30,6 @@
 #include "log.h"
 
 #ifdef PICO
-#include "sync.h"
 #endif
 
 static const char *tags[5] = {
