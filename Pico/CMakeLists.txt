@@ -13,7 +13,7 @@ pico_enable_stdio_usb(picolinkreflect 1)
 pico_enable_stdio_uart(picolinkreflect 0)
 pico_add_extra_outputs(picolinkreflect)
 
-add_executable(picolinkadapter picolinkadapter.cpp cdc_app.c usb_descriptors.c)
+add_executable(picolinkadapter picolinkadapter.cpp)
 # For TinyUSB device support and tinyusb_board for the additional board support library.
 # In addition to pico_stdlib required for common PicoSDK functionality, add dependency on tinyusb_device
 target_link_libraries(picolinkadapter parachutedev pico_unique_id tinyusb_device tinyusb_board)
