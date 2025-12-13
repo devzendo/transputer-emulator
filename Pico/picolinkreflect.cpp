@@ -159,7 +159,7 @@ private:
                     writeScheduled = false; // not doing more with this atm
                 }
                 if (readScheduled && link->readComplete() != NotProcess_p) {
-                    readScheduled = false;
+                    link->readDataAsync(WPTR, &a1, 1);
                     if (!link->writeDataAsync(WPTR, &a1, 1)) {
                         logInfo("Could not write data");
                     } else {

@@ -64,12 +64,116 @@ bool parse_hex_byte(char *hexbytestring, BYTE8* ptr) {
     return true;
 }
 
+void send_byte(AsyncLink *link, unsigned char byte_to_send) {
+    BYTE8 a1 = byte_to_send;
+    BYTE8 a2;
+    // The byte will be sent, acknowledged and read by the picolinkreflect, which will then send the byte back.
+    // A read must be issued for the reflected byte first, else when it starts being received (after receiving the
+    // second start bit), an overrun will be reported.
+    link->readDataAsync(WPTR, &a2, 1);
+    logInfoF("Writing hex byte 0x%02x to link...", a1);
+    if (!link->writeDataAsync(WPTR, &a1, 1)) {
+        logWarn("Could not write data");
+    } else {
+        bool writeDone = false;
+        bool readDone = false;
+        while (!writeDone && !readDone) {
+            if (!writeDone) {
+                if (link->writeComplete() != NotProcess_p) {
+                    logInfo("Write completed");
+                    writeDone = true;
+                }
+                WORD16 status_word = link->getStatusWord();
+                if (status_word & ST_DATA_SENT_NOT_ACKED) {
+                    logWarn("Write timed out without acknowledgement");
+                    writeDone = true;
+                    readDone = true;
+                    // TODO reset link
+                }
+                if (status_word & ST_OVERRUN) {
+                    logWarn("Read overrun - no receiver?");
+                    writeDone = true;
+                    readDone = true;
+                    // TODO reset link
+                }
+            }
+            if (!readDone) {
+                if (link->readComplete() != NotProcess_p) {
+                    logInfoF("Read completed: 0x%02x '%c'", a2, isprint(a2) ? a2 : '?');
+                    readDone = true;
+                }
+            }
+            pause();
+        }
+        logInfo("sb finished");
+    }
+}
+
+void send_kilobyte(AsyncLink *link) {
+    BYTE8 a2;
+
+    // The data will be sent, acknowledged and read by the picolinkreflect, which will then send the data back.
+    // A read must be issued for the reflected data first, else when it starts being received (after receiving the
+    // second start bit), an overrun will be reported.
+    link->readDataAsync(WPTR, &a2, 1);
+
+    uint32_t msSinceBootAtStart = to_ms_since_boot(get_absolute_time());
+    if (!link->writeDataAsync(WPTR, kilobyte, 1024)) {
+        logWarn("Could not write data");
+    } else {
+        logInfo("Waiting for write and read to complete...");
+        int read = 0;
+        bool writeDone = false;
+        bool readDone = false;
+        while (!writeDone && !readDone) {
+            if (link->writeComplete() != NotProcess_p) {
+                writeDone = true;
+                uint32_t msSinceBootAtEnd = to_ms_since_boot(get_absolute_time());
+                uint32_t msDuration = msSinceBootAtEnd - msSinceBootAtStart;
+                // Convert to MB/second
+                // 1024 bytes transferred in msDuration ms
+                // Bytes per second = 1024 / (msDuration / 1000)
+                // MB per second = (1024 / (msDuration / 1000)) / (1024 * 1024)
+                double mbPerSecond = (1024.0 * 1000.0) / (msDuration * 1024.0 * 1024.0);
+                printf("\nWrite completed in %lu ms: %f MB/s", msDuration, mbPerSecond);
+            }
+            WORD16 status_word = link->getStatusWord();
+            if (status_word & ST_DATA_SENT_NOT_ACKED) {
+                logWarn("Write timed out without acknowledgement");
+                writeDone = true;
+                readDone = true;
+                // TODO reset link
+            }
+            if (status_word & ST_OVERRUN) {
+                logWarn("Read overrun - no receiver?");
+                writeDone = true;
+                readDone = true;
+                // TODO reset link
+            }
+
+            if (!readDone) {
+                if (link->readComplete() != NotProcess_p) {
+                    read++;
+                    if (read == 1024) {
+                        printf("\rRead completed                  \r\n");
+                        readDone = true;
+                    } else {
+                        // Start the read of another byte...
+                        link->readDataAsync(WPTR, &a2, 1);
+                        if (read % 16 == 0) {
+                            printf("\rReceived %d bytes      ", read);
+                        }
+                    }
+                }
+            }
+            pause();
+        }
+        logInfo("sk finished");
+    }
+}
+
 void process_command(char *cmd, AsyncLink *link) {
     BYTE8 a1;
-    BYTE8 a2;
-    int xx;
-    uint32_t msSinceBootAtStart;
-    uint32_t msSinceBootAtEnd;
 
     logInfoF("You entered '%s'", cmd);
 
@@ -79,96 +183,19 @@ void process_command(char *cmd, AsyncLink *link) {
         return;
     }
 
+    // Send and receive a byte
     if (strncmp(cmd, "sb", 2) == 0 && strlen(cmd) == 5) {
         if (parse_hex_byte(cmd + 3, &a1)) {
-            logInfoF("Writing hex byte 0x%02x to link...", a1);
-            if (!link->writeDataAsync(WPTR, &a1, 1)) {
-                logWarn("Could not write data");
-            } else {
-                link->readDataAsync(WPTR, &a2, 1);
-                bool writeDone = false;
-                bool readDone = false;
-                while (!writeDone && !readDone) {
-                    if (!writeDone) {
-                        if (link->writeComplete() != NotProcess_p) {
-                            logInfo("Write completed");
-                            writeDone = true;
-                        }
-                        if (link->getStatusWord() & ST_DATA_SENT_NOT_ACKED) {
-                            logWarn("Write timed out without acknowledgement");
-                            writeDone = true;
-                            readDone = true;
-                            // TODO reset link
-                        }
-                    }
-                    if (!readDone) {
-                        if (link->readComplete() != NotProcess_p) {
-                            logInfoF("Read completed: 0x%02x '%c'", a2, isprint(a2) ? a2 : '?');
-                            readDone = true;
-                        }
-                    }
-                    pause();
-                }
-                logInfo("sb finished");
-            }
+            send_byte(link, a1);
         } else {
             logWarn("That's not a hex byte");
         }
     }
 
-
     // Send a kilobyte
     if (strncmp(cmd, "sk", 2) == 0) {
-        msSinceBootAtStart = to_ms_since_boot(get_absolute_time());
-        if (!link->writeDataAsync(WPTR, kilobyte, 1024)) {
-            logWarn("Could not write data");
-        } else {
-            logInfo("Waiting for write and read to complete...");
-            int read = 0;
-            link->readDataAsync(WPTR, &a2, 1);
-            bool writeDone = false;
-            bool readDone = false;
-            while (!writeDone && !readDone) {
-                if (!writeDone) {
-                    if (link->writeComplete() != NotProcess_p) {
-                        writeDone = true;
-                        msSinceBootAtEnd = to_ms_since_boot(get_absolute_time());
-                        uint32_t msDuration = msSinceBootAtEnd - msSinceBootAtStart;
-                        // Convert to MB/second
-                        // 1024 bytes transferred in msDuration ms
-                        // Bytes per second = 1024 / (msDuration / 1000)
-                        // MB per second = (1024 / (msDuration / 1000)) / (1024 * 1024)
-                        double mbPerSecond = (1024.0 * 1000.0) / (msDuration * 1024.0 * 1024.0);
-                        printf("\nWrite completed in %lu ms: %f MB/s", msDuration, mbPerSecond);
-                    }
-                    if (link->getStatusWord() & ST_DATA_SENT_NOT_ACKED) {
-                        logWarn("Write timed out without acknowledgement");
-                        writeDone = true;
-                        readDone = true;
-                        // TODO reset link
-                    }
-                }
-                if (!readDone) {
-                    if (link->readComplete() != NotProcess_p) {
-                        read++;
-                        if (read == 1024) {
-                            printf("\rRead completed                  \r\n");
-                            readDone = true;
-                        } else {
-                            // Start the read of another byte...
-                            link->readDataAsync(WPTR, &a2, 1);
-                            if (read % 16 == 0) {
-                                printf("\rReceived %d bytes      ", read);
-                            }
-                        }
-                    }
-                }
-                pause();
-            }
-            logInfo("sk finished");
-        }
+        send_kilobyte(link);
     }
-
 }
 
 

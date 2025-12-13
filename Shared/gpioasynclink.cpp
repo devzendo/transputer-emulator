@@ -378,7 +378,7 @@ WORD32 GPIOAsyncLink::readComplete() {
     m_receive_registers.m_workspace_pointer = NotProcess_p;
     m_receive_registers.m_length = 0;
     m_receive_registers.m_data_pointer = nullptr;
-    m_status_word &= ~ST_READ_COMPLETE;
+    m_status_word &= ~(ST_READ_COMPLETE | ST_READ_DATA_AVAILABLE);
     return w;
 }
 
@@ -435,11 +435,11 @@ void GPIOAsyncLink::overrunError() {
 void GPIOAsyncLink::dataReceived(BYTE8 data) {
     // logDebugF("Link %d data received 0b%s", myLinkNo, byte_to_binary(data));
     //MUTEX
-    m_status_word |= (ST_READ_DATA_AVAILABLE | data);
-    if (m_receive_registers.m_length == 0) {
+    if (m_receive_registers.m_data_pointer == nullptr) {
         // logWarnF("Link %d received data with no buffer", myLinkNo);
         return;
     }
+    m_status_word |= (ST_READ_DATA_AVAILABLE | data);
     // logDebugF("Link %d status word 0b%s", myLinkNo, word_to_binary(m_status_word));
     BYTE8* ptr = m_receive_registers.m_data_pointer;
     // logDebugF("Link %d receiving at address 0x%08x", myLinkNo, ptr);
@@ -450,7 +450,8 @@ void GPIOAsyncLink::dataReceived(BYTE8 data) {
     if (m_receive_registers.m_length == 0) {
         // logDebugF("Link %d receiving complete", myLinkNo);
         m_status_word |= ST_READ_COMPLETE;
-        // TODO the emulator will see ST_READ_COMPLETE and reschedule the process at m_receive_registers->m_workspace_pointer.
+        // readComplete() will allow the emulator to see ST_READ_COMPLETE and reschedule the process at
+        // m_receive_registers->m_workspace_pointer.
     }
     m_status_word &= ~ST_READ_DATA_AVAILABLE; // If there's no callback, this should not be cleared?
 }
