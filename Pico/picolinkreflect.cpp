@@ -37,9 +37,9 @@ volatile ReflectState g_state = ReflectState::REFLECT;
 volatile bool g_led_state = false;
 volatile int g_rw_state = 0;
 
-// Called every LINK_CLOCK_TICK_INTERVAL_US. (500us)
+// Called every LINK_CLOCK_TICK_INTERVAL_US. (50us)
 // Debouncing needs to be called every checkMsec (5ms == 5000us)
-// So every 10 ticks...
+// So every 100 ticks...
 // LED will flash every 500ms (REFLECT), 1000ms (REFLECT_SLOWLY) or not at all (SILENCE).
 // So 500000us, 1000000us or 0.
 class DebounceAndLinkTickHandler: public TickHandler {
@@ -63,12 +63,12 @@ public:
             // logDebugF("Tick - link at 0x%x", link);
             link->clock();
         }
-        if (m_tick_count % 10 == 0) {
+        if (m_tick_count % 100 == 0) {
             // logDebug("Tick - >> clock the Debouncer");
             if (m_debouncer != nullptr) {
                 m_debouncer->debounce(gpio_get(BUTTON_PIN));
                 if (m_debouncer->keyChanged && !m_debouncer->keyReleased) {
-                    logDebug("Button released");
+                    //logDebug("Button released");
                     g_rw_state = 0;
                     switch (g_state) {
                         case ReflectState::REFLECT:
@@ -90,8 +90,8 @@ public:
             }
             // logDebug("Tick - << clock the Debouncer");
         }
-        if ((g_state == ReflectState::REFLECT && m_tick_count % 500000 == 0) ||
-            (g_state == ReflectState::REFLECT_SLOWLY && m_tick_count % 1000000 == 0)) {
+        if ((g_state == ReflectState::REFLECT && m_tick_count % 10000 == 0) ||
+            (g_state == ReflectState::REFLECT_SLOWLY && m_tick_count % 20000 == 0)) {
             g_led_state = ! g_led_state;
             gpio_put(LED_PIN, g_led_state);
         }
@@ -162,6 +162,7 @@ private:
                         break;
                     case 1: // wait for read to complete
                         if (link->readComplete() != NotProcess_p) {
+                            link->readDataAsync(WPTR, &a1, 1);
                             if (!link->writeDataAsync(WPTR, &a1, 1)) {
                                 logInfo("Could not write data; resetting...");
                                 link->resetLink();
@@ -172,7 +173,7 @@ private:
                         break;
                     case 2: // wait for write to complete
                         if (link->writeComplete() != NotProcess_p) {
-                            g_rw_state = 0; // back to schedule read
+                            g_rw_state = 1; // back to schedule read
                         }
                         break;
                 }

@@ -135,7 +135,7 @@ void send_kilobyte(AsyncLink *link) {
                 // Bytes per second = 1024 / (msDuration / 1000)
                 // MB per second = (1024 / (msDuration / 1000)) / (1024 * 1024)
                 double mbPerSecond = (1024.0 * 1000.0) / (msDuration * 1024.0 * 1024.0);
-                printf("\nWrite completed in %lu ms: %f MB/s", msDuration, mbPerSecond);
+                printf("\nWrite completed in %lu ms: %f MB/s: %f KB/s\r\n\n", msDuration, mbPerSecond, mbPerSecond * 1024);
             }
             WORD16 status_word = link->getStatusWord();
             if (status_word & ST_DATA_SENT_NOT_ACKED) {
@@ -155,13 +155,15 @@ void send_kilobyte(AsyncLink *link) {
                 if (link->readComplete() != NotProcess_p) {
                     read++;
                     if (read == 1024) {
-                        printf("\rRead completed                  \r\n");
+                        printf("\r\nReceived %d bytes      \r\n", read);
+                        stdio_flush();
                         readDone = true;
                     } else {
                         // Start the read of another byte...
                         link->readDataAsync(WPTR, &a2, 1);
                         if (read % 16 == 0) {
                             printf("\rReceived %d bytes      ", read);
+                            stdio_flush();
                         }
                     }
                 }
