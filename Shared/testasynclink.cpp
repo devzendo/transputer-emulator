@@ -354,6 +354,7 @@ TEST_F(AsyncLinkTest, StartReadingAsync) {
 }
 
 TEST_F(AsyncLinkTest, BulkTransfer) {
+    logInfo("******************** BulkTransfer has started ***********************************");
     // Receive some data into this buffer, letting the test continue when it's all received.
     char readBuffer[] = "--------------------------------------------------------------------------------------"
         "----------------------------------------------------------------------------------------------"
