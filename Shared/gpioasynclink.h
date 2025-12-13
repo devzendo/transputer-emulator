@@ -411,6 +411,7 @@ private:
     LinkRegisters m_receive_registers;
     volatile WORD16 m_status_word;
     WORD32 myWriteSequence, myReadSequence;
+    BYTE8 m_byte_buffer;
 #ifdef DESKTOP
     std::mutex m_mutex;
 #endif

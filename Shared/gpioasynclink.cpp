@@ -19,6 +19,10 @@
 #include "misc.h"
 #include "log.h"
 
+#ifdef DESKTOP
+#include <thread>
+#endif
+
 #ifdef PICO
 #include "pico/stdlib.h"
 #endif
@@ -299,16 +303,42 @@ GPIOAsyncLink::~GPIOAsyncLink() {
     logDebugF("Destroying async link %d", myLinkNo);
 }
 
+const long long g_sync_poll_delay_us = 100;
+
 BYTE8 GPIOAsyncLink::readByte() {
     if (bDebug) {
         logDebugF("Link %d R #%08X 00 (.)", myLinkNo, myReadSequence++);
     }
-    return 0;
+    readDataAsync(0x00000000, &m_byte_buffer, 1);
+    // TODO replace with a semaphore
+    while (readComplete() == NotProcess_p) {
+#ifdef DESKTOP
+        std::this_thread::sleep_for(std::chrono::microseconds(g_sync_poll_delay_us));
+#endif
+#ifdef PICO
+        sleep_us(g_sync_poll_delay_us);
+#endif
+    }
+    return m_byte_buffer;
 }
 
 void GPIOAsyncLink::writeByte(BYTE8 buf) {
     if (bDebug) {
         logDebugF("Link %d W #%08X 00 (.)", myLinkNo, myWriteSequence++);
+    }
+    m_byte_buffer = buf;
+    if (!writeDataAsync(0x00000000, &m_byte_buffer, 1)) {
+        logWarnF("Link %d write failure", myLinkNo);
+        return;
+    }
+    // TODO replace with a semaphore
+    while (writeComplete() == NotProcess_p) {
+#ifdef DESKTOP
+        std::this_thread::sleep_for(std::chrono::microseconds(g_sync_poll_delay_us));
+#endif
+#ifdef PICO
+        sleep_us(g_sync_poll_delay_us);
+#endif
     }
 }
 
