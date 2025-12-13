@@ -35,6 +35,7 @@ const WORD32 WPTR = 0xCAFEBABE;
 enum class ReflectState { REFLECT, REFLECT_SLOWLY, SILENCE };
 volatile ReflectState g_state = ReflectState::REFLECT;
 volatile bool g_led_state = false;
+volatile int g_rw_state = 0;
 
 // Called every LINK_CLOCK_TICK_INTERVAL_US. (500us)
 // Debouncing needs to be called every checkMsec (5ms == 5000us)
@@ -66,19 +67,23 @@ public:
             // logDebug("Tick - >> clock the Debouncer");
             if (m_debouncer != nullptr) {
                 m_debouncer->debounce(gpio_get(BUTTON_PIN));
-                if (m_debouncer->keyReleased) {
+                if (m_debouncer->keyChanged && !m_debouncer->keyReleased) {
                     logDebug("Button released");
+                    g_rw_state = 0;
                     switch (g_state) {
                         case ReflectState::REFLECT:
                             g_state = ReflectState::REFLECT_SLOWLY;
+                            logDebug("Slowly reflecting");
                             break;
                         case ReflectState::REFLECT_SLOWLY:
                             g_state = ReflectState::SILENCE;
+                            logDebug("Link silence");
                             g_led_state = false;
                             gpio_put(LED_PIN, g_led_state);
                             break;
                         case ReflectState::SILENCE:
                             g_state = ReflectState::REFLECT;
+                            logDebug("Reflecting");
                             break;
                     }
                 }
@@ -97,7 +102,6 @@ private:
     std::vector<AsyncLink*> m_links;
     Debouncer* m_debouncer;
 };
-
 
 [[noreturn]] int main() {
     // Initialise USB Serial STDIO...
@@ -145,47 +149,67 @@ private:
     logInfo("Clock started");
 
     BYTE8 a1;
-    bool readScheduled = false;
-    bool writeScheduled = false;
+    g_rw_state = 0;
+
     uint32_t write_after_time = to_ms_since_boot(get_absolute_time());
     while (true) {
-        if (!readScheduled && g_state != ReflectState::SILENCE) {
-            link->readDataAsync(WPTR, &a1, 1);
-            readScheduled = true;
-        }
         switch (g_state) {
             case ReflectState::REFLECT:
-                if (writeScheduled && link->writeComplete() != NotProcess_p) {
-                    writeScheduled = false; // not doing more with this atm
-                }
-                if (readScheduled && link->readComplete() != NotProcess_p) {
-                    link->readDataAsync(WPTR, &a1, 1);
-                    if (!link->writeDataAsync(WPTR, &a1, 1)) {
-                        logInfo("Could not write data");
-                    } else {
-                        writeScheduled = true;
-                    }
+                switch (g_rw_state) {
+                    case 0: // initial
+                        link->readDataAsync(WPTR, &a1, 1);
+                        g_rw_state = 1; // wait for read to complete
+                        break;
+                    case 1: // wait for read to complete
+                        if (link->readComplete() != NotProcess_p) {
+                            if (!link->writeDataAsync(WPTR, &a1, 1)) {
+                                logInfo("Could not write data; resetting...");
+                                link->resetLink();
+                            } else {
+                                g_rw_state = 2;
+                            }
+                        }
+                        break;
+                    case 2: // wait for write to complete
+                        if (link->writeComplete() != NotProcess_p) {
+                            g_rw_state = 0; // back to schedule read
+                        }
+                        break;
                 }
                 break;
 
             case ReflectState::REFLECT_SLOWLY:
-                if (writeScheduled && link->writeComplete() != NotProcess_p) {
-                    writeScheduled = false; // not doing more with this atm
+                switch (g_rw_state) {
+                    case 0: // initial
+                        link->readDataAsync(WPTR, &a1, 1);
+                        g_rw_state = 1; // wait for read to complete
+                        break;
+                    case 1: // wait for read to complete
+                        if (link->readComplete() != NotProcess_p) {
+                            write_after_time = to_ms_since_boot(get_absolute_time()) + (get_rand_32() & 0x7F);
+                            g_rw_state = 2;
+                        }
+                        break;
+                    case 2:
+                        if (to_ms_since_boot(get_absolute_time()) > write_after_time) {
+                            if (!link->writeDataAsync(WPTR, &a1, 1)) {
+                                logInfo("Could not write data; resetting...");
+                                link->resetLink();
+                            } else {
+                                g_rw_state = 3;
+                            }
+                        }
+                        break;
+                    case 3: // wait for write to complete
+                        if (link->writeComplete() != NotProcess_p) {
+                            g_rw_state = 0; // back to schedule read
+                        }
+                        break;
                 }
-                if (readScheduled && link->readComplete() != NotProcess_p) {
-                    write_after_time = to_ms_since_boot(get_absolute_time()) + (get_rand_32() & 0x7F);
-                }
-                if (to_ms_since_boot(get_absolute_time()) > write_after_time) {
-                    readScheduled = false;
-                    if (!link->writeDataAsync(WPTR, &a1, 1)) {
-                        logInfo("Could not write data");
-                    } else {
-                        writeScheduled = true;
-                    }
-                }
-
                 break;
+
             case ReflectState::SILENCE:
+                sleep_ms(5);
                 break;
         }
     }

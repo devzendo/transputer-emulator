@@ -172,7 +172,7 @@ void send_kilobyte(AsyncLink *link) {
     }
 }
 
-void process_command(char *cmd, AsyncLink *link) {
+void process_command(char *cmd, GPIOAsyncLink *link) {
     BYTE8 a1;
 
     logInfoF("You entered '%s'", cmd);
@@ -180,6 +180,7 @@ void process_command(char *cmd, AsyncLink *link) {
     if (strncmp(cmd, "help", 4) == 0) {
         logInfo("sb xx - sends the hex byte xx and receives it back");
         logInfo("sk    - sends 1KB (1024 bytes) and times how long it takes; receives it back");
+        logInfo("rst   - resets the link");
         return;
     }
 
@@ -195,6 +196,10 @@ void process_command(char *cmd, AsyncLink *link) {
     // Send a kilobyte
     if (strncmp(cmd, "sk", 2) == 0) {
         send_kilobyte(link);
+    }
+
+    if (strncmp(cmd, "rst", 3) == 0) {
+        link->resetLink();
     }
 }
 

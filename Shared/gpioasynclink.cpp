@@ -313,7 +313,13 @@ void GPIOAsyncLink::writeByte(BYTE8 buf) {
 }
 
 void GPIOAsyncLink::resetLink() {
-    // TODO
+    // TODO bit of a bodge for now
+    MUTEX
+    m_receive_registers.m_length = 0;
+    m_send_registers.m_length = 0;
+    m_status_word = 0;
+    m_sender->changeState(DataAckSenderState::IDLE);
+    m_receiver->changeState(DataAckReceiverState::IDLE);
 }
 
 int GPIOAsyncLink::getLinkType() {

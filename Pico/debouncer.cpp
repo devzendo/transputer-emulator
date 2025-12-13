@@ -21,7 +21,7 @@ constexpr uint8_t pressMsec = 10;    // Stable time before registering pressed
 constexpr uint8_t releaseMsec = 20;  // Stable time before registering released
 
 Debouncer::Debouncer() {
-    debouncedKeyPress = true; // If using internal pullups, the initial state is true.
+    debouncedKeyPress = false; // If using internal pullups, the initial state is true.
     count = releaseMsec / checkMsec;
     keyChanged = false;
     keyReleased = false;
