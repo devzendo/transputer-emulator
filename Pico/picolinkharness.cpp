@@ -11,7 +11,8 @@
 //
 //------------------------------------------------------------------------------
 
-#include <stdio.h> // Pico USB Serial STDIO
+#include <pico/stdio.h> // Pico USB Serial STDIO
+#include <stdio.h>
 #include "pico/stdlib.h"
 #include "pico/time.h"
 #include <cstdlib> // free

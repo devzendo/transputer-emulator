@@ -30,6 +30,7 @@
 #include "log.h"
 
 #ifdef PICO
+#include "cdc_app.h"
 #endif
 
 static const char *tags[5] = {

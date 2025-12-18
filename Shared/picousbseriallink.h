@@ -15,6 +15,7 @@
 #define _PICOUSBSERIALLINK_H
 
 #include <exception>
+#include "pico/stdlib.h" // needed by tinyusb
 
 #include "types.h"
 #include "link.h"
