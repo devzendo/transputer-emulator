@@ -41,7 +41,7 @@
 
 #include "bsp/board_api.h"
 #include "tusb.h"
-#include "pico/stdlib.h"
+#include "pico/stdlib.h" // needed by tinyusb
 #include "cdc_app.h"
 
 // Invoked when cdc when line state changed e.g connected/disconnected
@@ -160,4 +160,20 @@ void usb_cdc_initialise() {
 void usb_poll() {
     tud_task(); // TinyUSB device task
     led_blinking_task();
+}
+
+void usb_link_write(const void *buf, uint32_t size) {
+
+}
+
+uint32_t usb_link_read(void *buf, uint32_t size) {
+    return 0;
+}
+
+bool usb_log_write(const void *buf, uint32_t size) {
+    return true;
+}
+
+uint32_t usb_log_read(void *buf, uint32_t size) {
+    return 0;
 }

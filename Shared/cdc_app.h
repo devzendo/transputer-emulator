@@ -48,6 +48,11 @@ extern "C" {
 void usb_cdc_initialise();
 void usb_poll();
 
+void usb_link_write(const void *buf, uint32_t size);
+uint32_t usb_link_read(void *buf, uint32_t size);
+bool usb_log_write(const void *buf, uint32_t size);
+uint32_t usb_log_read(void *buf, uint32_t size);
+
 #ifdef __cplusplus
 }
 #endif
