@@ -33,6 +33,8 @@ add_library(parachutedev STATIC log.h log.cpp misc.h misc.cpp hexdump.h hexdump.
 # if gpioasynclink is built for pico, it pulls in some pico SDK:
 if(PICO)
     target_link_libraries(parachutedev pico_sync pico_stdlib pico_unique_id tinyusb_device tinyusb_board) # what specifically - pico_stdlib is too wide
+    # Make sure TinyUSB can find tusb_config.h
+    target_include_directories(parachutedev PUBLIC ${CMAKE_CURRENT_LIST_DIR}/)
 endif(PICO)
 
 if(NOT(EMBEDDED))
