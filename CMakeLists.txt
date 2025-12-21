@@ -161,6 +161,7 @@ add_subdirectory(Shared)
 add_subdirectory(Emulator)
 if(PICO)
   add_subdirectory(Pico)
+  add_subdirectory(PicoShared)
 endif()
 
 if(NOT(EMBEDDED))

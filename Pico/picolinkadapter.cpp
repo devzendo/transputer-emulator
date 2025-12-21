@@ -15,7 +15,7 @@
 #include "pico/time.h"
 
 #include "tusb.h"
-#include "cdc_app.h"
+#include "../PicoShared/cdc_app.h"
 #include "log.h"
 #include "gpioasynclink.h"
 #include "constants.h"

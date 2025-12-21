@@ -16,8 +16,8 @@
 
 #include <exception>
 
-#include "types.h"
-#include "link.h"
+#include "../Shared/types.h"
+#include "../Shared/link.h"
 
 class PicoUSBSerialLink : public Link {
 public:

@@ -12,20 +12,21 @@
 //------------------------------------------------------------------------------
 
 #ifdef PICO
-#include <cstdlib>
-#include <pico/stdio.h> // Pico USB Serial STDIO
+#include <stdio.h>
+#include <pico/stdlib.h>
 #include "sync.h"
 #endif
 
-#include <cstdlib>
+#ifdef DESKTOP
 #include <cstdarg> // vsnprintf is supposed to be in here, but is in cstdio in RH73
 #include <cstdio>
-#include <mutex> // For std::lock_guard and BasicLockable
-
-#ifdef DESKTOP
 #include <iostream>
 #include <fstream>
 #endif
+
+#include <cstdlib>
+#include <mutex> // For std::lock_guard and BasicLockable
+
 
 #include "log.h"
 
