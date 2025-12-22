@@ -14,7 +14,7 @@
 #include <exception>
 
 #include "picousbseriallink.h"
-#include "log.h"
+#include "../Shared/log.h"
 
 PicoUSBSerialLink::PicoUSBSerialLink(int linkNo, bool isServer) :
     Link(linkNo, isServer) {

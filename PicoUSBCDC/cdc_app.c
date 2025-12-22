@@ -41,7 +41,7 @@
 
 #include "bsp/board_api.h"
 #include "tusb.h"
-#include "pico/stdlib.h" // needed by tinyusb
+// #include "pico/stdlib.h" // needed by tinyusb
 #include "cdc_app.h"
 
 // Invoked when cdc when line state changed e.g connected/disconnected

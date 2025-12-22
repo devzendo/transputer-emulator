@@ -26,8 +26,8 @@
 #elif defined(PLATFORM_WINDOWS)
 #include <windows.h>
 #include "namedpipelink.h"
-#elif defined(PLATFORM_PICO)
-#include "picousbseriallink.h"
+// #elif defined(PLATFORM_PICO)
+// #include "../PicoUSBCDC/picousbseriallink.h"
 #endif
 
 #if defined(PLATFORM_OSX) || defined(PLATFORM_LINUX) || defined(PLATFORM_WINDOWS)
@@ -132,8 +132,8 @@ Link *LinkFactory::createLink(int linkNo) {
 #elif defined(PLATFORM_WINDOWS)
 			logDebugF("Link %d Named Pipe", linkNo);
 			newLink = new NamedPipeLink(linkNo, bServer);
-#elif defined(PLATFORM_PICO)
-			newLink = new PicoUSBSerialLink(linkNo, bServer);
+// #elif defined(PLATFORM_PICO)
+// 			newLink = new PicoUSBSerialLink(linkNo, bServer);
 #endif
 			break;
 		case LinkType_Socket:

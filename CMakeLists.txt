@@ -158,10 +158,13 @@ endif() # NOT(EMBEDDED)
 # Build the transputer emulator and related code...
 add_subdirectory(target/classes)
 add_subdirectory(Shared)
-add_subdirectory(Emulator)
+
 if(PICO)
   add_subdirectory(Pico)
+  add_subdirectory(PicoUSBCDC)
 endif()
+
+add_subdirectory(Emulator)
 
 if(NOT(EMBEDDED))
   add_subdirectory(IServer)
