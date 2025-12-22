@@ -14,6 +14,7 @@
     * High level: AsyncLink.
   * Need a Pico USB CDC link, supported on the IServer side by a FIFO that works with a serial device.
   * Also need logging to go out on a second USB CDC port.
+  * Learning PIO.
   * Make use of both ARM cores:
     * Inter-core link: Core 0's Link 1 could be connected to Core 1's Link 0.
     * Links:
@@ -34,5 +35,5 @@
   restart the embedded emulator for the next test?
 
 # Known problems
+* The bit-banged GPIO link is a proof of concept, and does not work at a usable data rate.
 
-* None so far.
