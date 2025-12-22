@@ -2,13 +2,13 @@ include_directories(../Shared)
 
 # Some test harnesses and a link adapter for the pico
 add_executable(picolinkharness picolinkharness.cpp getline.h getline.cpp)
-target_link_libraries(picolinkharness parachutedev parachutepicousbcdc pico_stdlib)
+target_link_libraries(picolinkharness parachutedev pico_stdlib)
 pico_enable_stdio_usb(picolinkharness 1)
 pico_enable_stdio_uart(picolinkharness 0)
 pico_add_extra_outputs(picolinkharness)
 
 add_executable(picolinkreflect picolinkreflect.cpp debouncer.h debouncer.cpp)
-target_link_libraries(picolinkreflect parachutedev parachutepicousbcdc pico_rand pico_stdlib)
+target_link_libraries(picolinkreflect parachutedev pico_rand pico_stdlib)
 pico_enable_stdio_usb(picolinkreflect 1)
 pico_enable_stdio_uart(picolinkreflect 0)
 pico_add_extra_outputs(picolinkreflect)
