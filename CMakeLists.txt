@@ -71,7 +71,7 @@ endif(UNIX)
 
 if(PICO)
   # Picotool problems? Enable this:
-  #set(PICOTOOL_FORCE_FETCH_FROM_GIT 1)
+  set(PICOTOOL_FORCE_FETCH_FROM_GIT 1)
   include(pico_sdk_import.cmake) # must be before project
   set(PICO_CXX_ENABLE_EXCEPTIONS 1)
 endif(PICO)
@@ -160,8 +160,8 @@ add_subdirectory(target/classes)
 add_subdirectory(Shared)
 
 if(PICO)
-  add_subdirectory(Pico)
-  add_subdirectory(PicoUSBCDC)
+    add_subdirectory(PicoUSBCDC)
+    add_subdirectory(Pico)
 endif()
 
 add_subdirectory(Emulator)
