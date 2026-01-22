@@ -12,4 +12,6 @@ if(PICO)
 #  pico_enable_stdio_uart(temulate 0)
 
   pico_add_extra_outputs(temulate)
+else()
+  target_link_libraries(temulate parachutedesktop)
 endif(PICO)

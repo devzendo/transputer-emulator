@@ -10,7 +10,7 @@
 // http://devzendo.github.io/parachute
 //
 //------------------------------------------------------------------------------
-
+/*
 #ifdef PICO
 #include <cstdlib>
 #include <pico/stdio.h> // Pico USB Serial STDIO
@@ -30,6 +30,7 @@
 #include "log.h"
 
 #ifdef PICO
+#include "cdc_app.h"
 #endif
 
 static const char *tags[5] = {
@@ -39,7 +40,7 @@ static const char *tags[5] = {
 /* Access to the log buffer is protected by a std::lock_guard
  * and an appropriate lock for the platform - std::mutex on desktop, and a critical_section_t
  * on PICO, wrapped in the CriticalSection BasicResolvable.
- */
+ *
 
 #ifdef DESKTOP
 #define LOGMUTEX std::lock_guard<std::mutex> guard(g_log_mutex);
@@ -263,3 +264,4 @@ void getInput(char *buf, int buflen) {
 	}
 }
 
+*/

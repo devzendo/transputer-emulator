@@ -1,9 +1,9 @@
 //------------------------------------------------------------------------------
 //
-// File        : log.cpp
-// Description : logging subsystem
+// File        : logbase.cpp
+// Description : logging subsystem - functions used in all implementations.
 // License     : Apache License v2.0 - see LICENSE.txt for more details
-// Created     : 07/07/2005
+// Created     : 15/12/2025
 //
 // (C) 2005-2025 Matt J. Gumbley
 // matt.gumbley@devzendo.org
@@ -11,29 +11,20 @@
 //
 //------------------------------------------------------------------------------
 
-#ifdef PICO
-#include <cstdlib>
-#include <pico/stdio.h> // Pico USB Serial STDIO
-#include "sync.h"
-#endif
-
-#include <cstdlib>
-#include <cstdarg> // vsnprintf is supposed to be in here, but is in cstdio in RH73
-#include <cstdio>
 #include <mutex> // For std::lock_guard and BasicLockable
 
 #ifdef DESKTOP
 #include <iostream>
 #include <fstream>
+#include <cstdlib>
+#include <cstdarg> // vsnprintf is supposed to be in here, but is in cstdio in RH73
+#include <cstdio>
 #endif
 
 #include "log.h"
+#include "logbase.h"
 
-#ifdef PICO
-#include "cdc_app.h"
-#endif
-
-static const char *tags[5] = {
+const char *tags[5] = {
 	"DEBUG ", "INFO  ", "WARN  ", "ERROR ", "FATAL ",
 };
 
@@ -43,134 +34,19 @@ static const char *tags[5] = {
  */
 
 #ifdef DESKTOP
-#define LOGMUTEX std::lock_guard<std::mutex> guard(g_log_mutex);
-static std::mutex g_log_mutex;
+std::mutex g_log_mutex;
 #endif
 
 #ifdef PICO
-#define LOGMUTEX std::lock_guard<CriticalSection> guard(g_log_criticalsection);
-static CriticalSection g_log_criticalsection;
+CriticalSection g_log_criticalsection;
 #endif
 
-#ifdef DESKTOP
-static std::ostream *myOutputStream = &std::cout;
-static bool loggingToTestLog = false;
-static std::ofstream logFile;
-
-void logToTestLog(void) {
-	logToFile("test.log");
-}
-
-void logToFile(const char *fileName) {
-	if (!loggingToTestLog) {
-		logFile.open(fileName, std::ios::out | std::ios::app);
-		myOutputStream = &logFile;
-		loggingToTestLog = true;
-	}
-}
-#endif // DESKTOP
-
-
-void logFlush() {
-	LOGMUTEX
-#ifdef DESKTOP
-    myOutputStream->flush();
-#endif
-#ifdef PICO
-	fflush(stdout);
-	stdio_flush();
-#endif
-}
-
-static int myLogLevel = LOGLEVEL_INFO;
+int myLogLevel = LOGLEVEL_INFO;
 void setLogLevel(int l) {
 	myLogLevel = l;
 }
 
-// Internal. Precondition: LOGMUTEX held by the caller, so allows reentrancy.
-void _logLevel(const int level, const char *s) {
-	if (myLogLevel > level) {
-		return;
-	}
-#ifdef DESKTOP
-	*myOutputStream << tags[level] << s << std::endl;
-#endif
-#ifdef PICO
-	fputs(tags[level], stdout);
-	fputs(s, stdout);
-	fputs("\r\n", stdout);
-	stdio_flush();
-#endif
-}
-
-void _logDebug(int l, const char *f, const char *s) {
-	LOGMUTEX
-	if (myLogLevel > LOGLEVEL_DEBUG) {
-		return;
-	}
-#ifdef DESKTOP
-	*myOutputStream << tags[LOGLEVEL_DEBUG] << f << ":" << l << " " << s << std::endl;
-#endif
-#ifdef PICO
-	fputs(tags[LOGLEVEL_DEBUG], stdout);
-	//fputs(f, stdout);
-	//putchar(':');
-	//printf("%d ", l);
-	fputs(s, stdout);
-	fputs("\n", stdout);
-	stdio_flush();
-#endif
-}
-
-void _logDebugF(int l, const char *f, const char *fmt, ...) {
-	LOGMUTEX
-	if (myLogLevel > LOGLEVEL_DEBUG) {
-		return;
-	}
-	char *buf;
-	int size = 100;
-	va_list ap;
-	if ((buf = static_cast<char*>(malloc(size))) == nullptr) {
-		_logLevel(LOGLEVEL_ERROR, "Out of memory in _logDebugF");
-		return;
-	}
-	while (true) {
-		// try to print in allocated buffer
-		va_start(ap, fmt);
-		const int n = vsnprintf(buf, size, fmt, ap);
-		va_end(ap);
-		// if ok, display it
-		if (n >= -1 && n < size) {
-#ifdef DESKTOP
-			*myOutputStream << tags[LOGLEVEL_DEBUG] << f << ":" << l << " " << buf << std::endl;
-#endif
-#ifdef PICO
-			fputs(tags[LOGLEVEL_DEBUG], stdout);
-			//fputs(f, stdout);
-			//putchar(':');
-			//printf("%d ", l);
-			fputs(buf, stdout);
-			fputs("\r\n", stdout);
-			stdio_flush();
-#endif
-			free(buf);
-			return;
-		}
-		// else try again with more space
-		if (n >= -1) { // glibc 2.1
-			size = n+1; // precisely what is needed
-		} else { // glibc 2.0
-			size *= 2; // twice old size
-		}
-		char *newbuf;
-		if ((newbuf = static_cast<char*>(realloc(buf, size))) == nullptr) {
-			_logLevel(LOGLEVEL_ERROR, "Reallocation failure in _logDebugF");
-			free(buf);
-			return;
-		}
-		buf = newbuf;
-	}
-}
+extern void _logLevel(const int level, const char *s); // provided by the implementations
 
 void logLevel(const int level, const char *s) {
 	LOGMUTEX
@@ -231,36 +107,3 @@ void logError(const char *s) {
 void logFatal(const char *s) {
 	logLevel(LOGLEVEL_FATAL, s);
 }
-
-void logBug(const char *s) {
-	LOGMUTEX
-#ifdef DESKTOP
-	*myOutputStream << "*BUG* " << s << std::endl;
-#endif
-#ifdef PICO
-	fputs("*BUG* ", stdout);
-	fputs(s, stdout);
-	fputs("\r\n", stdout);
-	stdio_flush();
-#endif
-}
-
-void logPrompt() {
-	LOGMUTEX
-#ifdef DESKTOP
-	*myOutputStream << "> ";
-	myOutputStream->flush();
-#endif
-#ifdef PICO
-	stdio_put_string("> ", 2, false, false);
-	stdio_flush();
-#endif
-}
-
-// TODO Isn't this desktop only?
-void getInput(char *buf, int buflen) {
-	if (fgets(buf, buflen, stdin) == nullptr) {
-		// do nothing. casting fgets output to void still causes warnings
-	}
-}
-

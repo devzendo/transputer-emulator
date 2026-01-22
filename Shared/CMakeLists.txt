@@ -19,7 +19,7 @@ endif(EMBEDDED)
 message(STATUS "platform_sources: ${platform_sources}")
 message(STATUS "non_embedded_sources: ${non_embedded_sources}")
 
-add_library(parachutedev STATIC log.h log.cpp misc.h misc.cpp hexdump.h hexdump.cpp link.h link.cpp
+add_library(parachutedev STATIC log.h logbase.h logbase.cpp misc.h misc.cpp hexdump.h hexdump.cpp link.h link.cpp
         "${platform_sources}"
         linkfactory.h linkfactory.cpp constants.h emuquery.h memloc.h platformdetection.h types.h
         nulllink.cpp nulllink.h
@@ -35,36 +35,67 @@ if(PICO)
     target_link_libraries(parachutedev pico_sync pico_stdlib) # what specifically - pico_stdlib is too wide
 endif(PICO)
 
+
+
+if(NOT(EMBEDDED))
+    add_library(parachutedesktop STATIC logdesktop.cpp)
+endif() # NOT EMBEDDED
+
+if(PICO)
+    add_library(parachutepicostdio STATIC logpicostdio.cpp sync.h)
+    target_link_libraries(parachutepicostdio pico_sync pico_stdio)
+
+    add_library(parachutepicousbcdc STATIC logpicousbcdc.cpp sync.h tusb_config.h cdc_app.c usb_descriptors.c picousbseriallink.cpp picousbseriallink.h)
+    target_link_libraries(parachutepicousbcdc pico_sync pico_stdlib pico_unique_id tinyusb_device tinyusb_board)
+    # pico_stdlib needed by tinyusb
+    # Use the submodule of tinyusb in the Raspberry Pi Pico SDK
+    #set(PICO_TINYUSB_PATH ${PICO_SDK_DIR}/lib/tinyusb/src)
+    # Make sure TinyUSB can find tusb_config.h
+    target_include_directories(parachutepicousbcdc PUBLIC ${CMAKE_CURRENT_LIST_DIR}/)
+    #target_include_directories(picolinkadapter PUBLIC ${PICO_TINYUSB_PATH})
+
+endif(PICO)
+
+# gpioasynclink is intended for embedded, but am developing it on desktop for now, as it's testable there,
+# apart from the actual GPIOTxRxPin.
+# if gpioasynclink is built for pico, it pulls in some pico SDK:
+if(PICO)
+    target_link_libraries(parachutedev pico_sync pico_stdlib ) # what specifically - pico_stdlib is too wide
+endif(PICO)
+
+
+
+
 if(NOT(EMBEDDED))
   add_library(testfixtures STATIC tempfilesfixture.h tempfilesfixture.cpp exceptionfixture.h)
   target_link_libraries(testfixtures parachutedev)
 
   add_executable(testtypes testtypes.cpp)
-  target_link_libraries(testtypes gtest gmock_main)
+  target_link_libraries(testtypes gtest gmock_main parachutedesktop)
   add_test(NAME testtypes COMMAND testtypes)
 
   add_executable(testlink testlink.cpp)
-  target_link_libraries(testlink parachutedev gtest gmock_main)
+  target_link_libraries(testlink parachutedev gtest gmock_main parachutedesktop)
   add_test(NAME testlink COMMAND testlink)
 
   add_executable(testasynclink testasynclink.cpp)
-  target_link_libraries(testasynclink parachutedev gtest gmock_main)
+  target_link_libraries(testasynclink parachutedev gtest gmock_main parachutedesktop)
   add_test(NAME testasynclink COMMAND testasynclink)
 
   add_executable(testfilesystem testfilesystem.cpp)
-  target_link_libraries(testfilesystem testfixtures parachutedev gtest gmock_main gsl)
+  target_link_libraries(testfilesystem testfixtures parachutedev gtest gmock_main gsl parachutedesktop)
   add_test(NAME testfilesystem COMMAND testfilesystem)
 
   add_executable(testmisc testmisc.cpp)
-  target_link_libraries(testmisc parachutedev gtest gmock_main)
+  target_link_libraries(testmisc parachutedev gtest gmock_main parachutedesktop)
   add_test(NAME testmisc COMMAND testmisc)
 
   add_executable(testcharacterisation testcharacterisation.cpp)
-  target_link_libraries(testcharacterisation testfixtures gtest gmock_main)
+  target_link_libraries(testcharacterisation testfixtures gtest gmock_main parachutedesktop)
   add_test(NAME testcharacterisation COMMAND testcharacterisation)
   
   add_executable(testringbuffer testringbuffer.cpp)
-  target_link_libraries(testringbuffer parachutedev gtest gmock_main)
+  target_link_libraries(testringbuffer parachutedev gtest gmock_main parachutedesktop)
   add_test(NAME testringbuffer COMMAND testringbuffer)
 
 endif() # NOT EMBEDDED

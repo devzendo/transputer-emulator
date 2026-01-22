@@ -160,7 +160,7 @@ add_subdirectory(target/classes)
 add_subdirectory(Shared)
 
 if(PICO)
-    add_subdirectory(PicoUSBCDC)
+#    add_subdirectory(PicoUSBCDC)
     add_subdirectory(Pico)
 endif()
 
