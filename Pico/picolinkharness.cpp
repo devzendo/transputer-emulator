@@ -5,7 +5,7 @@
 // License     : Apache License v2.0 - see LICENSE.txt for more details
 // Created     : 26/11/2025
 //
-// (C) 2005-2025 Matt J. Gumbley
+// (C) 2005-2026 Matt J. Gumbley
 // matt.gumbley@devzendo.org
 // http://devzendo.github.io/parachute
 //
