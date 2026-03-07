@@ -122,7 +122,8 @@ if(NOT(EMBEDDED))
   # Build gsl-lite
   # Thanks to 'As external Git project' at https://github.com/gsl-lite/gsl-lite#as-external-git-project
   # project( use-gsl-lite LANGUAGES CXX )
-  # Using commit 503b14b 15 Aug 2020 since that's the last commit before our last successful build.
+  # Started using commit 503b14b 15 Aug 2020 since that's the last commit before our last successful build.
+  # Upgraded to 335d80d5 - later commits cause problems with __assert.
   # Set default ExternalProject root directory and add gsl-lite:
   set( GSL_LITE_URL https://github.com/gsl-lite/gsl-lite.git )
 
@@ -132,7 +133,7 @@ if(NOT(EMBEDDED))
   ExternalProject_Add(
           gsl-extern
           GIT_REPOSITORY ${GSL_LITE_URL}
-          GIT_TAG 503b14b
+          GIT_TAG 335d80d5
           TIMEOUT 10
           UPDATE_COMMAND ""
           CONFIGURE_COMMAND ""

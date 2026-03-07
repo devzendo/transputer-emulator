@@ -29,7 +29,7 @@
 
 // Work around odd breakage due to gsl-lite's use of __assert - that's just started randomly breaking.
 //#define gsl_CONFIG_USE_CRT_ASSERT_FUNCTION 0
-#include "gsl/gsl-lite.hpp"
+#include "gsl-lite/gsl-lite.hpp"
 
 #include "misc.h"
 
@@ -226,7 +226,7 @@ TEST_F(FilesystemTest, ThrowsIfTMPDIRNonExistent)
 {
     // Get TMPDIR and ensure it's reset after we set it to something nonexistent...
     std::string tmpdir = std::getenv("TMPDIR");
-    auto _ = gsl::finally([tmpdir] {
+    auto _ = gsl_lite::finally([tmpdir] {
         logInfoF("Resetting TMPDIR to %s", tmpdir.c_str());
         if (setenv("TMPDIR", tmpdir.c_str(), 1) != 0) {
             logErrorF("Could not reset TMPDIR after test: %s", getLastError().c_str());
@@ -251,7 +251,7 @@ TEST_F(FilesystemTest, ThrowsIfTMPDIRNotADirectory)
 {
     // Get TMPDIR and ensure it's reset after we set it to something nonexistent...
     std::string tmpdir = std::getenv("TMPDIR");
-    auto _ = gsl::finally([tmpdir] {
+    auto _ = gsl_lite::finally([tmpdir] {
         logInfoF("Resetting TMPDIR to %s", tmpdir.c_str());
         if (setenv("TMPDIR", tmpdir.c_str(), 1) != 0) {
             logErrorF("Could not reset TMPDIR after test: %s", getLastError().c_str());
