@@ -4,13 +4,27 @@
 This is a portable, open source emulator of the 32-bit Inmos T414/T800/T801/T805 Transputer family, and a host/file
 I/O Server that interfaces it to a host OS, providing boot/debug/IO facilities.
 
-It runs on Apple macOS Catalina (Intel), Windows 10, Ubuntu 24.02, Linux Mint 21.3, and Raspberry Pi Debian 12.
-An embedded version of the emulator component is also available for the Raspberry Pi Pico 1.
+It runs on desktop systems:
+  * Apple macOS Catalina (Intel)
+  * Apple macOS Tahoe (Apple Silicon)
+  * Windows 10
+  * Ubuntu 24.02
+  * Linux Mint 21.3 and
+  * Raspberry Pi Debian 12.
+
+An embedded version of the emulator component, and a USB-Link adapter is also available for the Raspberry Pi Pico 1.
+This is best built using the `parachute-docker` docker container, buildable from
+https://github.com/devzendo/parachute-docker.git
+
 Building for Apple Silicon macOS (Tahoe) works for the desktop build, but not for the embedded version,
 without problems. (After preparing a PICO build, edit cmake-build-release/CMakeCache.txt and ensure your
 compiler paths are correct for the cross-compiler, e.g. if you use Macports. Then it'll build in CLion, but not from
-the command line - Shared/log.cpp fails on the command line).
-Due to lack of compatible TPM hardware, I cannot build on Windows 11 or later.
+the command line - Shared/logbase.cpp fails on the command line). You can build embedded using the docker image, see
+above.
+
+Due to lack of compatible TPM hardware, I cannot build on Windows 11 or later; building for Windows is the lowest
+priority for me.
+
 
 It is part of the [Parachute Project](https://devzendo.github.io/parachute).
 
@@ -21,7 +35,7 @@ limited the C++ standard I could support.
 
 
 ## Project Status
-Last changes in late December 2025.
+Last changes in early March 2026.
 
 Currently adding a build for the Raspberry Pi Pico, using USB CDC for diagnostic and link 0 I/O.
 Integration-testing a GPIO-based asynchronous link abstraction, for use on the Pi Pico. This will
@@ -40,7 +54,7 @@ Another hiatus from Sep 2021 to Dec 2022.
 Another hiatus from Dec 2022 to Jul 2023.
 Another hiatus from Dec 2023 to Aug 2024.
 Another hiatus from Sep 2023 to Sep 2025.
-
+Another hiatus from Dec 2025 to Mar 2026.
 
 ## Roadmap
 First release:
