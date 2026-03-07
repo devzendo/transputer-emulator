@@ -1,7 +1,7 @@
 //------------------------------------------------------------------------------
 //
-// File        : logpicostdio.cpp
-// Description : logging subsystem - using Pi Pico stdio.
+// File        : logpicousbcdc.cpp
+// Description : logging subsystem - using Pi Pico USB CDC.
 // License     : Apache License v2.0 - see LICENSE.txt for more details
 // Created     : 15/12/2025
 //
@@ -11,25 +11,20 @@
 //
 //------------------------------------------------------------------------------
 
-#include <pico/stdio.h> // Pico USB Serial STDIO
-//#include <cstdlib>
-#include <cstdarg> // vsnprintf is supposed to be in here, but is in cstdio in RH73
+// #include <cstdlib>
+// #include <cstdarg> // vsnprintf is supposed to be in here, but is in cstdio in RH73
 #include <mutex> // For std::lock_guard and BasicLockable
 
-#include "log.h"
-#include "logbase.h"
+#include "../Shared/log.h"
+#include "../Shared/logbase.h"
 
-#include "sync.h"
+#include "cdc_app.h"
+#include "../Shared/sync.h"
 
-/* Access to the log buffer is protected by a std::lock_guard
- * and an appropriate lock for the platform - std::mutex on desktop, and a critical_section_t
- * on PICO, wrapped in the CriticalSection BasicResolvable.
- */
 
 void logFlush() {
 	LOGMUTEX
-	fflush(stdout);
-	stdio_flush();
+	// TODO
 }
 
 
@@ -38,10 +33,7 @@ void _logLevel(const int level, const char *s) {
 	if (myLogLevel > level) {
 		return;
 	}
-	fputs(tags[level], stdout);
-	fputs(s, stdout);
-	fputs("\r\n", stdout);
-	stdio_flush();
+	// TODO
 }
 
 void _logDebug(int l, const char *f, const char *s) {
@@ -49,13 +41,7 @@ void _logDebug(int l, const char *f, const char *s) {
 	if (myLogLevel > LOGLEVEL_DEBUG) {
 		return;
 	}
-	fputs(tags[LOGLEVEL_DEBUG], stdout);
-	//fputs(f, stdout);
-	//putchar(':');
-	//printf("%d ", l);
-	fputs(s, stdout);
-	fputs("\n", stdout);
-	stdio_flush();
+	// TODO
 }
 
 void _logDebugF(int l, const char *f, const char *fmt, ...) {
@@ -77,13 +63,7 @@ void _logDebugF(int l, const char *f, const char *fmt, ...) {
 		va_end(ap);
 		// if ok, display it
 		if (n >= -1 && n < size) {
-			fputs(tags[LOGLEVEL_DEBUG], stdout);
-			//fputs(f, stdout);
-			//putchar(':');
-			//printf("%d ", l);
-			fputs(buf, stdout);
-			fputs("\r\n", stdout);
-			stdio_flush();
+			// TODO
 			free(buf);
 			return;
 		}
@@ -106,22 +86,16 @@ void _logDebugF(int l, const char *f, const char *fmt, ...) {
 
 void logBug(const char *s) {
 	LOGMUTEX
-	fputs("*BUG* ", stdout);
-	fputs(s, stdout);
-	fputs("\r\n", stdout);
-	stdio_flush();
+	// TODO
 }
 
 void logPrompt() {
 	LOGMUTEX
-	stdio_put_string("> ", 2, false, false);
-	stdio_flush();
+	// TODO
 }
 
 // TODO Isn't this desktop only?
 void getInput(char *buf, int buflen) {
-	if (fgets(buf, buflen, stdin) == nullptr) {
-		// do nothing. casting fgets output to void still causes warnings
-	}
+	// TODO
 }
 
