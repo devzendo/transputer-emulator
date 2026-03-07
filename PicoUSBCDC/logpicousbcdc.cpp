@@ -23,13 +23,15 @@
 
 
 void logFlush() {
+	usb_poll();
 	LOGMUTEX
-	// TODO
+	usb_poll();
 }
 
 
 // Internal. Precondition: LOGMUTEX held by the caller, so allows reentrancy.
 void _logLevel(const int level, const char *s) {
+	usb_poll();
 	if (myLogLevel > level) {
 		return;
 	}
@@ -37,6 +39,7 @@ void _logLevel(const int level, const char *s) {
 }
 
 void _logDebug(int l, const char *f, const char *s) {
+	usb_poll();
 	LOGMUTEX
 	if (myLogLevel > LOGLEVEL_DEBUG) {
 		return;
@@ -45,6 +48,7 @@ void _logDebug(int l, const char *f, const char *s) {
 }
 
 void _logDebugF(int l, const char *f, const char *fmt, ...) {
+	usb_poll();
 	LOGMUTEX
 	if (myLogLevel > LOGLEVEL_DEBUG) {
 		return;
@@ -85,11 +89,13 @@ void _logDebugF(int l, const char *f, const char *fmt, ...) {
 
 
 void logBug(const char *s) {
+	usb_poll();
 	LOGMUTEX
 	// TODO
 }
 
 void logPrompt() {
+	usb_poll();
 	LOGMUTEX
 	// TODO
 }

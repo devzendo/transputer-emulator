@@ -41,6 +41,9 @@
 
 #ifndef _CDC_APP_H
 #define _CDC_APP_H
+
+#include "pico/stdlib.h" // for type uint32_t
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -48,10 +51,12 @@ extern "C" {
 void usb_cdc_initialise();
 void usb_poll();
 
-void usb_link_write(const void *buf, uint32_t size);
+void usb_link_write(void *buf, uint32_t size);
 uint32_t usb_link_read(void *buf, uint32_t size);
-bool usb_log_write(const void *buf, uint32_t size);
+void usb_link_flush();
+void usb_log_write(void *buf, uint32_t size);
 uint32_t usb_log_read(void *buf, uint32_t size);
+void usb_log_flush();
 
 #ifdef __cplusplus
 }

@@ -44,6 +44,13 @@
 // #include "pico/stdlib.h" // needed by tinyusb
 #include "cdc_app.h"
 
+#include <sys/unistd.h>
+
+// These tie up to the interface numbers in usb_descriptors.c.
+constexpr uint8_t LINK_ITF = 0;
+constexpr uint8_t LOG_ITF = 1;
+
+
 // Invoked when cdc when line state changed e.g connected/disconnected
 void tud_cdc_line_state_cb(uint8_t itf, bool dtr, bool rts) {
     (void) itf;
@@ -162,18 +169,65 @@ void usb_poll() {
     led_blinking_task();
 }
 
-void usb_link_write(const void *buf, uint32_t size) {
+void _usb_write(uint8_t itf, void *buf, uint32_t size) {
+    void *cbuf = buf;
+    usb_poll();
+    // Potential of infinite loops here.
+    while (size != 0) {
+        uint32_t written = tud_cdc_n_write(itf, cbuf, size);
+        usb_poll();
+        if (written == 0) {
+            // What else can we do? Infinite loop?
+            board_delay(50);
+            usb_poll();
+        } else {
+            size -= written;
+            cbuf += written;
+        }
+    }
+}
 
+void _usb_read(uint8_t itf, void *buf, uint32_t size) {
+    void *cbuf = buf;
+    while (size > 0) {
+        usb_poll();
+        uint32_t cread = tud_cdc_n_read(itf, cbuf, size);
+        usb_poll();
+        if (cread == 0) {
+            // What else can we do? Infinite loop?
+            board_delay(50);
+            usb_poll();
+        } else {
+            size -= cread;
+            cbuf += cread;
+        }
+    }
+}
+
+void usb_link_write(void *buf, uint32_t size) {
+    _usb_write(LINK_ITF, buf, size);
 }
 
 uint32_t usb_link_read(void *buf, uint32_t size) {
-    return 0;
+    _usb_read(LINK_ITF, buf, size);
 }
 
-bool usb_log_write(const void *buf, uint32_t size) {
-    return true;
+void usb_link_flush() {
+    tud_cdc_n_write_flush(LINK_ITF);
+    usb_poll();
 }
+
+void usb_log_write(void *buf, uint32_t size) {
+    _usb_write(LOG_ITF, buf, size);
+}
+
 
 uint32_t usb_log_read(void *buf, uint32_t size) {
+    // One does not read from the log interface!
     return 0;
+}
+
+void usb_log_flush() {
+    tud_cdc_n_write_flush(LOG_ITF);
+    usb_poll();
 }

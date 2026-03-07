@@ -12,7 +12,8 @@
 //------------------------------------------------------------------------------
 
 #ifdef PICO
-#include <stdio.h> // Pico USB Serial STDIO
+#include "tusb.h"
+#include "cdc_app.h"
 #include "pico/stdlib.h"
 #include <malloc.h>
 #endif
@@ -368,6 +369,9 @@ void interruptHandler(int sig) {
 #endif // DESKTOP
 
 #ifdef PICO
+
+constexpr int LED_PIN = 25;
+
 uint32_t getTotalHeap(void) {
 	extern char __StackLimit, __bss_end__;
 	return &__StackLimit  - &__bss_end__;
@@ -387,30 +391,31 @@ int main() {
 #endif
 
 #if defined(PLATFORM_PICO)
-	// Initialise USB Serial STDIO...
-	bool ok = stdio_init_all();
-	printf("Hello from temulate.uf2 %d\r\n", ok);
-	gpio_init(25);
-	gpio_set_dir(25, GPIO_OUT);
+	gpio_init(LED_PIN);
+	gpio_set_dir(LED_PIN, GPIO_OUT);
+	usb_cdc_initialise();
+
 	int delay = 1000;
 	while (1) {
-		gpio_put(25, 1);
-		printf("p LED ON\n");
+		usb_poll();
 
+		gpio_put(LED_PIN, 1);
 		logInfo("LED ON\n");
 		sleep_ms(delay);
-		gpio_put(25, 0);
-		printf("p LED OFF\n");
 
+		gpio_put(25, 0);
 		logInfo("LED OFF\n");
 		sleep_ms(delay);
+
 		delay -= 50;
 		if (delay < 0) {
 			delay = 1000;
 			break;
 		}
 	}
-	printf("Total heap 0x%08X Free heap 0x%08X\n", getTotalHeap(), getFreeHeap());
+	logInfoF("Total heap 0x%08X Free heap 0x%08X\n", getTotalHeap(), getFreeHeap());
+	usb_poll();
+
 #endif
 
 	Memory *memory;
