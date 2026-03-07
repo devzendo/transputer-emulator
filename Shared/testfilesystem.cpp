@@ -26,7 +26,11 @@
 
 #include "filesystem.h"
 #include "log.h"
+
+// Work around odd breakage due to gsl-lite's use of __assert - that's just started randomly breaking.
+//#define gsl_CONFIG_USE_CRT_ASSERT_FUNCTION 0
 #include "gsl/gsl-lite.hpp"
+
 #include "misc.h"
 
 #include "tempfilesfixture.h"

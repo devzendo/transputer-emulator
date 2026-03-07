@@ -134,7 +134,7 @@ if(NOT(EMBEDDED))
           GIT_REPOSITORY ${GSL_LITE_URL}
           GIT_TAG 503b14b
           TIMEOUT 10
-          UPDATE_COMMAND ${GIT_EXECUTABLE} pull origin master
+          UPDATE_COMMAND ""
           CONFIGURE_COMMAND ""
           BUILD_COMMAND ""
           INSTALL_COMMAND ""
