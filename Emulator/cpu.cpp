@@ -2477,6 +2477,7 @@ void CPU::emulate(const bool bootFromROM) {
 // Executed from emulate, above, and also on receipt of a start instruction.
 void CPU::start() {
 #ifdef DESKTOP
+	// TODO the Pico build should be able to boot from ROM, given an embedded image. Remove the DESKTOP guard.
 	if (myBootFromROM) {
 		logDebug("---- Starting Boot from ROM ----");
 		Areg = IPtr;
