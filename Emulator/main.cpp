@@ -401,15 +401,15 @@ int main() {
 	static uint32_t last_ms = millis_since_epoch();
 	while (1) {
 		usb_poll();
-		logInfo("Hello");
+		//logInfo("Hello");
 		if (millis_since_epoch() - last_ms > 5000) {
-			logInfo("Tick");
+			//logInfo("Tick");
 			last_ms = millis_since_epoch();
 			if (blink_interval_ms > 50) {
-				logInfo("Decrease");
+				//logInfo("Decrease");
 				blink_interval_ms -= 50;
 			} else {
-				logInfo("Stuck");
+				//logInfo("Stuck");
 			}
 		}
 	}

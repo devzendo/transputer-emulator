@@ -176,6 +176,7 @@ void _usb_write(uint8_t itf, void *buf, uint32_t size) {
             cbuf += written;
         }
     }
+    usb_poll();
 }
 
 void _usb_read(uint8_t itf, void *buf, uint32_t size) {
@@ -209,7 +210,10 @@ void usb_link_flush() {
 }
 
 void usb_log_write(void *buf, uint32_t size) {
-    _usb_write(LOG_ITF, buf, size);
+    if (tud_cdc_n_connected(LOG_ITF)) {
+        _usb_write(LOG_ITF, buf, size);
+    }
+    usb_poll();
 }
 
 
@@ -219,6 +223,8 @@ uint32_t usb_log_read(void *buf, uint32_t size) {
 }
 
 void usb_log_flush() {
-    tud_cdc_n_write_flush(LOG_ITF);
+    if (tud_cdc_n_connected(LOG_ITF)) {
+        tud_cdc_n_write_flush(LOG_ITF);
+    }
     usb_poll();
 }
