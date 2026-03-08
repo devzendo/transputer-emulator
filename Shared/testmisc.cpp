@@ -114,3 +114,13 @@ TEST(TestMisc, StripLeading)
     EXPECT_EQ("  x", stripLeading('x', "xx  x"));
     EXPECT_EQ("", stripLeading('x', "x"));
 }
+
+TEST(TestMisc, IntToASCII) {
+    EXPECT_EQ(std::string("0"), std::string(int_to_ascii(0)));
+    EXPECT_EQ(std::string("1"), std::string(int_to_ascii(1)));
+    EXPECT_EQ(std::string("123"), std::string(int_to_ascii(123)));
+    EXPECT_EQ(std::string("-1"), std::string(int_to_ascii(-1)));
+    EXPECT_EQ(std::string("-123"), std::string(int_to_ascii(-123)));
+    EXPECT_EQ(std::string("-2147483648"), std::string(int_to_ascii(-2147483648)));
+    EXPECT_EQ(std::string("2147483647"), std::string(int_to_ascii(2147483647)));
+}

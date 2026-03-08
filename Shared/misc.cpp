@@ -16,6 +16,9 @@
 
 #include "types.h"
 #include "misc.h"
+
+#include <algorithm>
+
 #include "log.h"
 #include "platformdetection.h"
 
@@ -123,5 +126,46 @@ const char *word_to_binary(WORD16 x) {
     for (z = 32768; z > 0; z >>= 1) {
         strcat(buffer, ((x & z) == z) ? "1" : "0");
     }
+    return buffer;
+}
+
+void _reverse(char *buf) {
+    int length = strlen(buf);
+    int start = 0;
+    int end = length - 1;
+    while (start < end) {
+        char temp = buf[start];
+        buf[start] = buf[end];
+        buf[end] = temp;
+        end--;
+        start++;
+    }
+}
+
+const char *int_to_ascii(int x) {
+    static char buffer[17]; // -2,147,483,648 to 2,147,483,647
+    int i = 0;
+    if (x == 0) {
+        buffer[i++] = '0';
+        buffer[i++] = '\0';
+        return buffer;
+    }
+    bool neg;
+    if (x < 0) {
+        neg = true;
+        x = -x;
+    } else {
+        neg = false;
+    }
+    while (x != 0) {
+        int rem = x % 10;
+        buffer[i++] = (rem > 9) ? (rem - 10) + 'a' : rem + '0';
+        x = x / 10;
+    }
+    if (neg) {
+        buffer[i++] = '-';
+    }
+    buffer[i++] = '\0';
+    _reverse(buffer);
     return buffer;
 }

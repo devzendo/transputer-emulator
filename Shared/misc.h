@@ -82,6 +82,7 @@ extern std::string stripLeading(char toStrip, const std::string &from);
 
 extern const char *byte_to_binary(BYTE8 x);
 extern const char *word_to_binary(WORD16 x);
+extern const char *int_to_ascii(int x);
 
 #ifdef DESKTOP
 class CountDownLatch {
