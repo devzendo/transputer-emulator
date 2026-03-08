@@ -394,22 +394,28 @@ int main() {
 	gpio_init(LED_PIN);
 	gpio_set_dir(LED_PIN, GPIO_OUT);
 	usb_cdc_initialise();
+	// Bringup hacks...
+	// Blink quickly until the host is connected and reading the log interface.
+	blink_interval_ms = 60;
+	usb_log_wait_for_connected();
+	// Now blink more sedately
+	blink_interval_ms = 1000;
 
 	int delay = 1000;
 	static uint32_t start_ms = millis_since_epoch();
-	blink_interval_ms = 1000;
 	static uint32_t last_ms = millis_since_epoch();
+	int count = 0;
 	while (1) {
 		usb_poll();
 		//logInfo("Hello");
 		if (millis_since_epoch() - last_ms > 5000) {
-			//logInfo("Tick");
+			logInfoF("Tick %d", count++);
 			last_ms = millis_since_epoch();
 			if (blink_interval_ms > 50) {
 				//logInfo("Decrease");
 				blink_interval_ms -= 50;
 			} else {
-				//logInfo("Stuck");
+				logWarn("Stuck");
 			}
 		}
 	}

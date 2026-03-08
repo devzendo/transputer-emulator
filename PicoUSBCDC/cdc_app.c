@@ -209,6 +209,15 @@ void usb_link_flush() {
     usb_poll();
 }
 
+void usb_log_wait_for_connected() {
+    while (true) {
+        usb_poll();
+        if (tud_cdc_n_connected(LOG_ITF)) {
+            return;
+        }
+    }
+}
+
 void usb_log_write(void *buf, uint32_t size) {
     if (tud_cdc_n_connected(LOG_ITF)) {
         _usb_write(LOG_ITF, buf, size);
