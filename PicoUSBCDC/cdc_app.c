@@ -47,8 +47,8 @@
 #include <sys/unistd.h>
 
 // These tie up to the interface numbers in usb_descriptors.c.
-constexpr uint8_t LINK_ITF = 0;
-constexpr uint8_t LOG_ITF = 1;
+const uint8_t LINK_ITF = 0;
+const uint8_t LOG_ITF = 1;
 
 
 // Invoked when cdc when line state changed e.g connected/disconnected
@@ -102,20 +102,11 @@ void tud_cdc_rx_cb(uint8_t itf) {
     }
 }
 
-/* Blink pattern
- * - 25 ms   : streaming data
- * - 250 ms  : device not mounted
- * - 1000 ms : device mounted
- * - 2500 ms : device is suspended
- */
-enum {
-    BLINK_STREAMING = 25,
-    BLINK_NOT_MOUNTED = 250,
-    BLINK_MOUNTED = 1000,
-    BLINK_SUSPENDED = 2500,
-};
-
 uint32_t blink_interval_ms = BLINK_NOT_MOUNTED;
+
+uint32_t millis_since_epoch() {
+    return board_millis();
+}
 
 //--------------------------------------------------------------------+
 // BLINKING TASK

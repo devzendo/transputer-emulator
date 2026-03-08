@@ -20,14 +20,21 @@
 
 #include "cdc_app.h"
 #include "../Shared/sync.h"
-
+#include "../Shared/misc.h"
 
 void logFlush() {
 	usb_poll();
 	LOGMUTEX
+	usb_log_flush();
 	usb_poll();
 }
 
+void _logLineFlush(const char *s) {
+	usb_log_write((void *) s, strlen(s));
+	usb_log_write((void *) "\r\n", 2);
+	usb_log_flush();
+	usb_poll();
+}
 
 // Internal. Precondition: LOGMUTEX held by the caller, so allows reentrancy.
 void _logLevel(const int level, const char *s) {
@@ -35,7 +42,8 @@ void _logLevel(const int level, const char *s) {
 	if (myLogLevel > level) {
 		return;
 	}
-	// TODO
+	usb_log_write((void *) tags[level], g_tag_length);
+	_logLineFlush(s);
 }
 
 void _logDebug(int l, const char *f, const char *s) {
@@ -44,7 +52,12 @@ void _logDebug(int l, const char *f, const char *s) {
 	if (myLogLevel > LOGLEVEL_DEBUG) {
 		return;
 	}
-	// TODO
+	usb_log_write((void *) tags[LOGLEVEL_DEBUG], g_tag_length);
+	usb_log_write((void *) f, strlen(f));
+	usb_log_write((void *) ":", 1);
+	const char *lbuf = int_to_ascii(l);
+	usb_log_write((void *) lbuf, strlen(lbuf));
+	_logLineFlush(s);
 }
 
 void _logDebugF(int l, const char *f, const char *fmt, ...) {
@@ -67,7 +80,12 @@ void _logDebugF(int l, const char *f, const char *fmt, ...) {
 		va_end(ap);
 		// if ok, display it
 		if (n >= -1 && n < size) {
-			// TODO
+			usb_log_write((void *) tags[LOGLEVEL_DEBUG], g_tag_length);
+			usb_log_write((void *) f, strlen(f));
+			usb_log_write((void *) ":", 1);
+			const char *lbuf = int_to_ascii(l);
+			usb_log_write((void *) lbuf, strlen(lbuf));
+			_logLineFlush(buf);
 			free(buf);
 			return;
 		}
@@ -91,13 +109,16 @@ void _logDebugF(int l, const char *f, const char *fmt, ...) {
 void logBug(const char *s) {
 	usb_poll();
 	LOGMUTEX
-	// TODO
+	usb_log_write((void *) "*BUG* ", g_tag_length);
+	_logLineFlush(s);
 }
 
 void logPrompt() {
 	usb_poll();
 	LOGMUTEX
-	// TODO
+	usb_log_write((void *) "> ", 2);
+	usb_log_flush();
+	usb_poll();
 }
 
 // TODO Isn't this desktop only?

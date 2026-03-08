@@ -48,6 +48,23 @@
 extern "C" {
 #endif
 
+/* Blink pattern
+ * - 25 ms   : streaming data
+ * - 250 ms  : device not mounted
+ * - 1000 ms : device mounted
+ * - 2500 ms : device is suspended
+ */
+enum {
+    BLINK_STREAMING = 25,
+    BLINK_NOT_MOUNTED = 250,
+    BLINK_MOUNTED = 1000,
+    BLINK_SUSPENDED = 2500,
+};
+
+extern uint32_t blink_interval_ms;
+
+uint32_t millis_since_epoch();
+
 void usb_cdc_initialise();
 void usb_poll();
 

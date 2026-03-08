@@ -396,10 +396,25 @@ int main() {
 	usb_cdc_initialise();
 
 	int delay = 1000;
+	static uint32_t start_ms = millis_since_epoch();
+	blink_interval_ms = 1000;
+	static uint32_t last_ms = millis_since_epoch();
 	while (1) {
 		usb_poll();
-
-		gpio_put(LED_PIN, 1);
+		logInfo("Hello");
+		if (millis_since_epoch() - last_ms > 5000) {
+			logInfo("Tick");
+			last_ms = millis_since_epoch();
+			if (blink_interval_ms > 50) {
+				logInfo("Decrease");
+				blink_interval_ms -= 50;
+			} else {
+				logInfo("Stuck");
+			}
+		}
+	}
+/*
+//		gpio_put(LED_PIN, 1);
 		logInfo("LED ON\n");
 		sleep_ms(delay);
 
@@ -413,6 +428,8 @@ int main() {
 			break;
 		}
 	}
+	*/
+
 	logInfoF("Total heap 0x%08X Free heap 0x%08X\n", getTotalHeap(), getFreeHeap());
 	usb_poll();
 

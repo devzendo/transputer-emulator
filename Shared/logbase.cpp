@@ -27,6 +27,7 @@
 const char *tags[5] = {
 	"DEBUG ", "INFO  ", "WARN  ", "ERROR ", "FATAL ",
 };
+const int g_tag_length = 6; // they're all padded to this
 
 /* Access to the log buffer is protected by a std::lock_guard
  * and an appropriate lock for the platform - std::mutex on desktop, and a critical_section_t

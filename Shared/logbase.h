@@ -28,6 +28,7 @@
 #include "log.h"
 
 extern const char *tags[5];
+extern const int g_tag_length;
 
 #ifdef DESKTOP
 #define LOGMUTEX std::lock_guard<std::mutex> guard(g_log_mutex);
