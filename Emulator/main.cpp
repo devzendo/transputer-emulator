@@ -396,10 +396,7 @@ int main() {
 	usb_cdc_initialise();
 	// Bringup hacks...
 	// Blink quickly until the host is connected and reading the log interface.
-	blink_interval_ms = 60;
-	usb_log_wait_for_connected();
-	// Now blink more sedately
-	blink_interval_ms = 1000;
+	blink_interval_ms = 25;
 
 	int delay = 1000;
 	static uint32_t start_ms = millis_since_epoch();
@@ -407,13 +404,21 @@ int main() {
 	int count = 0;
 	while (1) {
 		usb_poll();
+		if (usb_log_device_connected()) {
+			if (usb_log_port_listening()) {
+				blink_interval_ms = 1000;
+			} else {
+				blink_interval_ms = 250;
+			}
+		}
+
 		//logInfo("Hello");
 		if (millis_since_epoch() - last_ms > 5000) {
 			logInfoF("Tick %d", count++);
 			last_ms = millis_since_epoch();
-			if (blink_interval_ms > 50) {
+			if (blink_interval_ms > 10) {
 				//logInfo("Decrease");
-				blink_interval_ms -= 50;
+				blink_interval_ms -= 10;
 			} else {
 				logWarn("Stuck");
 			}

@@ -71,6 +71,8 @@ void usb_poll();
 void usb_link_write(void *buf, uint32_t size);
 uint32_t usb_link_read(void *buf, uint32_t size);
 void usb_link_flush();
+bool usb_log_device_connected();
+bool usb_log_port_listening();
 void usb_log_wait_for_connected();
 void usb_log_write(void *buf, uint32_t size);
 uint32_t usb_log_read(void *buf, uint32_t size);

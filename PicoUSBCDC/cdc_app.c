@@ -209,10 +209,21 @@ void usb_link_flush() {
     usb_poll();
 }
 
+bool usb_log_device_connected() {
+    return tud_cdc_n_connected(LOG_ITF);
+}
+
+bool usb_log_port_listening() {
+// Sensing DTR doesn't seem to work    return (tud_cdc_n_get_line_state(LOG_ITF) & CDC_CONTROL_LINE_STATE_DTR) == 1;
+    cdc_line_coding_t coding;
+    tud_cdc_n_get_line_coding(LOG_ITF, &coding);
+    return coding.bit_rate != 0; // minicom sets the baud rate on connect.
+}
+
 void usb_log_wait_for_connected() {
     while (true) {
         usb_poll();
-        if (tud_cdc_n_connected(LOG_ITF)) {
+        if (tud_cdc_n_ready(LOG_ITF) && tud_cdc_n_connected(LOG_ITF)) {
             return;
         }
     }
