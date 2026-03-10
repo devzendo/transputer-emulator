@@ -576,6 +576,9 @@ transputer emulator (with different goals).
 
 The transputer designers, and all at Inmos/ST who developed it.
 
+Sir Charles Antony Richard Hoare, FRS, FREng.
+11 January 1934 - 5 March 2026
+
 Authors of other emulators:
 
 Julian Highfield for his T414 emulator which may be found at 
