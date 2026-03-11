@@ -398,51 +398,11 @@ int main() {
 	// Blink quickly until the host is connected and reading the log interface.
 	blink_interval_ms = 25;
 
-	int delay = 1000;
-	static uint32_t start_ms = millis_since_epoch();
-	static uint32_t last_ms = millis_since_epoch();
-	int count = 0;
-	while (1) {
-		usb_poll();
-		if (usb_log_device_connected()) {
-			if (usb_log_port_listening()) {
-				blink_interval_ms = 1000;
-			} else {
-				blink_interval_ms = 250;
-			}
-		}
-
-		//logInfo("Hello");
-		if (millis_since_epoch() - last_ms > 5000) {
-			logInfoF("Tick %d", count++);
-			last_ms = millis_since_epoch();
-			if (blink_interval_ms > 10) {
-				//logInfo("Decrease");
-				blink_interval_ms -= 10;
-			} else {
-				logWarn("Stuck");
-			}
-		}
-	}
-/*
-//		gpio_put(LED_PIN, 1);
-		logInfo("LED ON\n");
-		sleep_ms(delay);
-
-		gpio_put(25, 0);
-		logInfo("LED OFF\n");
-		sleep_ms(delay);
-
-		delay -= 50;
-		if (delay < 0) {
-			delay = 1000;
-			break;
-		}
-	}
-	*/
+	usb_log_wait_for_knock();
+	blink_interval_ms = 250;
 
 	logInfoF("Total heap 0x%08X Free heap 0x%08X\n", getTotalHeap(), getFreeHeap());
-	usb_poll();
+	// Total heap 0x0003C700 Free heap 0x0003C2B8
 
 #endif
 
@@ -520,11 +480,13 @@ int main() {
 		exit(1);
 	}
 #endif
+	logDebug("Initialising memory...");
 	if (!memory->initialise(ramSize)) {
 		delete linkFactory;
 		logInfo("END");
 		exit(1);
 	}
+	logDebug("Initialising CPU...");
 	cpu = new CPU();
 #if defined(DESKTOP)
 	cpu->initialiseSymbolTable(symbolTable);

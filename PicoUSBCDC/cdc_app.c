@@ -50,20 +50,41 @@
 const uint8_t LINK_ITF = 0;
 const uint8_t LOG_ITF = 1;
 
+// I see DRxC,K after issuing the 'knock'.
+// (DTR. RTS, coding bit rate nonzero), knock
+static char knock_events[64] = "\0";
+
+void add_knock(char c) {
+    int l = strlen(knock_events);
+    if (l < 63) {
+        knock_events[l++] = c;
+        knock_events[l] = '\0';
+    }
+}
+enum KnockState { WaitingForConnection, Connected, Knocked };
+static enum KnockState knock_state = WaitingForConnection;
 
 // Invoked when cdc when line state changed e.g connected/disconnected
 void tud_cdc_line_state_cb(uint8_t itf, bool dtr, bool rts) {
-    (void) itf;
-    (void) rts;
+cdc_line_coding_t coding;
+    add_knock(dtr ? 'D' : 'd');
+    add_knock(rts ? 'R' : 'r');
+    tud_cdc_n_get_line_coding(itf, &coding);
+    add_knock(coding.bit_rate == 0 ? '0' : 'x');
 
     if (dtr) {
         // Terminal connected
+        if (itf == LOG_ITF && knock_state == WaitingForConnection) {
+            knock_state = Connected;
+            add_knock('C');
+        }
     } else {
         // Terminal disconnected
+        knock_state = WaitingForConnection;
+        add_knock('X');
 
         // touch1200 only with first CDC instance (Serial)
         if (itf == 0) {
-            cdc_line_coding_t coding;
             tud_cdc_get_line_coding(&coding);
             if (coding.bit_rate == 1200) {
                 if (board_reset_to_bootloader) {
@@ -72,6 +93,7 @@ void tud_cdc_line_state_cb(uint8_t itf, bool dtr, bool rts) {
             }
         }
     }
+    add_knock(',');
 }
 
 // Invoked when CDC interface received data from host
@@ -84,20 +106,34 @@ void tud_cdc_rx_cb(uint8_t itf) {
     // Most but not all terminal client set this when making connection
     if (tud_cdc_n_connected(itf)) {
         if (tud_cdc_n_available(itf)) { // data is available
-            count = tud_cdc_n_read(itf, buf, sizeof(buf));
-            // TODO pass this read data to a registered callback for this interface
-            (void) count;
+            if (itf == LOG_ITF) {
+                if (knock_state == Connected) {
+                    count = tud_cdc_n_read(itf, buf, 1);
+                    if (count == 1 && (buf[0] == '\r' || buf[0] == '\n')) {
+                        add_knock('K');
+                        tud_cdc_n_write(itf, "\r\n=== KNOCK ===\r\n", 17);
+                        tud_cdc_n_write(itf, knock_events, strlen(knock_events));
+                        tud_cdc_n_write(itf, "\r\n", 2);
+                        tud_cdc_n_write_flush(itf);
+                        knock_state = Knocked;
+                    }
+                } else {
+                    count = tud_cdc_n_read(itf, buf, sizeof(buf));
+                    // TODO pass this read data to a registered callback for this interface
+                    (void) count;
 
-            sprintf((char * restrict) &hdr, "/dev/ttyACM%d\r\n", itf);
-            tud_cdc_n_write(itf, hdr, strlen(hdr));
-            tud_cdc_n_write(itf, buf, count); // TODO this is how you write data back to the host on this interface
-            tud_cdc_n_write_flush(itf);
-            // dummy code to check that cdc serial is responding
-            board_led_write(0);
-            board_delay(50);
-            board_led_write(1);
-            board_delay(50);
-            board_led_write(0);
+                    sprintf((char * restrict) &hdr, "/dev/ttyACM%d\r\n", itf);
+                    tud_cdc_n_write(itf, hdr, strlen(hdr));
+                    tud_cdc_n_write(itf, buf, count); // TODO this is how you write data back to the host on this interface
+                    tud_cdc_n_write_flush(itf);
+                    // dummy code to check that cdc serial is responding
+                    // board_led_write(0);
+                    // board_delay(50);
+                    // board_led_write(1);
+                    // board_delay(50);
+                    // board_led_write(0);
+                }
+            }
         }
     }
 }
@@ -226,6 +262,12 @@ void usb_log_wait_for_connected() {
         if (tud_cdc_n_ready(LOG_ITF) && tud_cdc_n_connected(LOG_ITF)) {
             return;
         }
+    }
+}
+
+void usb_log_wait_for_knock() {
+    while (knock_state != Knocked) {
+        usb_poll();
     }
 }
 
