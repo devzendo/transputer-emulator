@@ -86,6 +86,7 @@ void _logDebugF(int l, const char *f, const char *fmt, ...) {
 			usb_log_write((void *) ":", 1);
 			const char *lbuf = int_to_ascii(l);
 			usb_log_write((void *) lbuf, strlen(lbuf));
+			usb_log_write((void *) " ", 1);
 			_logLineFlush(buf);
 			free(buf);
 			return;
