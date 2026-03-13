@@ -50,47 +50,51 @@ void setLogLevel(int l) {
 extern void _logLevel(const int level, const char *s); // provided by the implementations
 
 void logLevel(const int level, const char *s) {
-	LOGMUTEX
+	//LOGMUTEX
 	_logLevel(level, s);
 }
 
 void logFormat(int level, const char *fmt, ...) {
-	LOGMUTEX
+const int LOGBUFSIZE = 128;
+static char buf[LOGBUFSIZE];
+	//LOGMUTEX
+	buf[0] = '\0';
+
 	if (myLogLevel > level) {
 		return;
 	}
-	char *buf;
+//	char *buf;
 	va_list ap;
-	int size = 100;
-	if ((buf = static_cast<char*>(malloc(size))) == nullptr) {
-		_logLevel(LOGLEVEL_ERROR, "Out of memory in logFormat");
-		return;
-	}
-	while (true) {
+//	int size = 100;
+	// if ((buf = static_cast<char*>(malloc(size))) == nullptr) {
+	// 	_logLevel(LOGLEVEL_ERROR, "Out of memory in logFormat");
+	// 	return;
+	// }
+	// while (true) {
 		// try to print in allocated buffer
 		va_start(ap, fmt);
-		const int n = vsnprintf(buf, size, fmt, ap);
+		const int n = vsnprintf(buf, LOGBUFSIZE - 1, fmt, ap);
 		va_end(ap);
 		// if ok, return it - caller must free it
-		if (n >= -1 && n < size) {
+		if (n >= -1 /*&& n < size*/) {
 			_logLevel(level, buf);
-			free(buf);
+//			free(buf);
 			return;
 		}
 		// else try again with more space
-		if (n >= -1) { // glibc 2.1
-			size = n+1; // precisely what is needed
-		} else { // glibc 2.0
-			size *= 2; // twice old size
-		}
-		char *newbuf;
-		if ((newbuf = static_cast<char*>(realloc(buf, size))) == nullptr) {
-			_logLevel(LOGLEVEL_ERROR, "Reallocation failure in logFormat");
-			free(buf);
-			return;
-		}
-		buf = newbuf;
-	}
+		// if (n >= -1) { // glibc 2.1
+		// 	size = n+1; // precisely what is needed
+		// } else { // glibc 2.0
+		// 	size *= 2; // twice old size
+		// }
+		// char *newbuf;
+		// if ((newbuf = static_cast<char*>(realloc(buf, size))) == nullptr) {
+		// 	_logLevel(LOGLEVEL_ERROR, "Reallocation failure in logFormat");
+		// 	free(buf);
+		// 	return;
+		// }
+		// buf = newbuf;
+//	}
 }
 
 void logInfo(const char *s) {

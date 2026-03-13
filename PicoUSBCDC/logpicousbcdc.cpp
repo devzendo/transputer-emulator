@@ -24,19 +24,23 @@
 
 void logFlush() {
 	usb_poll();
-	LOGMUTEX
+	//LOGMUTEX
 	usb_log_flush();
 	usb_poll();
 }
 
+// Internal.
 void _logLineFlush(const char *s) {
 	usb_log_write((void *) s, strlen(s));
 	usb_log_write((void *) "\r\n", 2);
-	usb_log_flush();
-	usb_poll();
+	for (int i = 0; i < 5; i++) {
+		usb_log_flush();
+		usb_poll();
+	}
 }
 
-// Internal. Precondition: LOGMUTEX held by the caller, so allows reentrancy.
+// Impl-specific logging
+// Precondition: LOGMUTEX held by the caller, so allows reentrancy.
 void _logLevel(const int level, const char *s) {
 	usb_poll();
 	if (myLogLevel > level) {
@@ -46,9 +50,10 @@ void _logLevel(const int level, const char *s) {
 	_logLineFlush(s);
 }
 
+// Mid-level, called by logDebug macro - needs to lock.
 void _logDebug(int l, const char *f, const char *s) {
+	//LOGMUTEX
 	usb_poll();
-	LOGMUTEX
 	if (myLogLevel > LOGLEVEL_DEBUG) {
 		return;
 	}
@@ -61,26 +66,31 @@ void _logDebug(int l, const char *f, const char *s) {
 	_logLineFlush(s);
 }
 
+// Mid-level, called by logDebugF macro - needs to lock.
 void _logDebugF(int l, const char *f, const char *fmt, ...) {
+	const int LOGBUFSIZE = 128;
+	static char buf[LOGBUFSIZE];
+
+	//LOGMUTEX
+	buf[0] = '\0';
 	usb_poll();
-	LOGMUTEX
 	if (myLogLevel > LOGLEVEL_DEBUG) {
 		return;
 	}
-	char *buf;
-	int size = 100;
+//	char *buf;
+//	int size = 100;
 	va_list ap;
-	if ((buf = static_cast<char*>(malloc(size))) == nullptr) {
-		_logLevel(LOGLEVEL_ERROR, "Out of memory in _logDebugF");
-		return;
-	}
-	while (true) {
+	// if ((buf = static_cast<char*>(malloc(size))) == nullptr) {
+	// 	_logLevel(LOGLEVEL_ERROR, "Out of memory in _logDebugF");
+	// 	return;
+	// }
+//	while (true) {
 		// try to print in allocated buffer
 		va_start(ap, fmt);
-		const int n = vsnprintf(buf, size, fmt, ap);
+		const int n = vsnprintf(buf, LOGBUFSIZE - 1, fmt, ap);
 		va_end(ap);
 		// if ok, display it
-		if (n >= -1 && n < size) {
+		if (n >= -1 /*&& n < size*/) {
 			usb_log_write((void *) tags[LOGLEVEL_DEBUG], g_tag_length);
 			usb_log_write((void *) f, strlen(f));
 			usb_log_write((void *) ":", 1);
@@ -88,36 +98,40 @@ void _logDebugF(int l, const char *f, const char *fmt, ...) {
 			usb_log_write((void *) lbuf, strlen(lbuf));
 			usb_log_write((void *) " ", 1);
 			_logLineFlush(buf);
-			free(buf);
+
+//			free(buf);
 			return;
 		}
+
 		// else try again with more space
-		if (n >= -1) { // glibc 2.1
-			size = n+1; // precisely what is needed
-		} else { // glibc 2.0
-			size *= 2; // twice old size
-		}
-		char *newbuf;
-		if ((newbuf = static_cast<char*>(realloc(buf, size))) == nullptr) {
-			_logLevel(LOGLEVEL_ERROR, "Reallocation failure in _logDebugF");
-			free(buf);
-			return;
-		}
-		buf = newbuf;
-	}
+	// 	if (n >= -1) { // glibc 2.1
+	// 		size = n+1; // precisely what is needed
+	// 	} else { // glibc 2.0
+	// 		size *= 2; // twice old size
+	// 	}
+	// 	char *newbuf;
+	// 	if ((newbuf = static_cast<char*>(realloc(buf, size))) == nullptr) {
+	// 		_logLevel(LOGLEVEL_ERROR, "Reallocation failure in _logDebugF");
+	// 		free(buf);
+	// 		return;
+	// 	}
+	// _logLineFlush("DF 9");
+	//
+	// 	buf = newbuf;
+	// }
 }
 
 
 void logBug(const char *s) {
+	//LOGMUTEX
 	usb_poll();
-	LOGMUTEX
 	usb_log_write((void *) "*BUG* ", g_tag_length);
 	_logLineFlush(s);
 }
 
 void logPrompt() {
+	//LOGMUTEX
 	usb_poll();
-	LOGMUTEX
 	usb_log_write((void *) "> ", 2);
 	usb_log_flush();
 	usb_poll();
