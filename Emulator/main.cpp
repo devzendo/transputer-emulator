@@ -383,6 +383,19 @@ uint32_t getFreeHeap(void) {
 }
 #endif
 
+void doExit(int exitCode) {
+#ifdef PICO
+	blink_interval_ms = BLINK_SUSPENDED;
+
+	while (true) {
+		usb_poll();
+		usb_log_flush();
+	}
+#endif
+#ifdef DESKTOP
+	exit(exitCode);
+#endif
+}
 
 #ifdef DESKTOP
 int main(int argc, char *argv[]) {
@@ -396,18 +409,17 @@ int main() {
 	usb_cdc_initialise();
 	// Bringup hacks...
 	// Blink quickly until the host is connected and reading the log interface.
-	blink_interval_ms = 25;
+	blink_interval_ms = BLINK_STREAMING;
 
 	usb_log_wait_for_knock();
-	blink_interval_ms = 250;
+	blink_interval_ms = BLINK_NOT_MOUNTED;
 
-	logInfoF("Total heap 0x%08X Free heap 0x%08X\n", getTotalHeap(), getFreeHeap());
+	logInfoF("Total heap 0x%08X (%d KB) Free heap 0x%08X (%d KB)\n", getTotalHeap(), getTotalHeap() / Kilo, getFreeHeap(), getFreeHeap() / Kilo);
 	// Total heap 0x0003C700 Free heap 0x0003C2B8
-
 #endif
 
-	Memory *memory;
-	CPU *cpu;
+	Memory *memory = nullptr;
+	CPU *cpu = nullptr;
 #ifdef DESKTOP
 	SymbolTable *symbolTable;
 	progName = argv[0];
@@ -473,7 +485,9 @@ int main() {
 	}
 #endif
 
+	logDebug("Constructing memory...");
 	memory = new Memory();
+	logDebug("Memory constructed");
 #if defined(DESKTOP)
 	if (!memory->initialiseROMFileAndSymbolTable(romFile, symbolTable)) {
 		delete linkFactory;
@@ -482,21 +496,23 @@ int main() {
 #endif
 	logDebug("Initialising memory...");
 	if (!memory->initialise(ramSize)) {
+		logFatal("Memory initialisation failed");
 		delete linkFactory;
 		logInfo("END");
-		exit(1);
+		doExit(1);
 	}
-	logDebug("Initialising CPU...");
+	logDebug("Constructing CPU...");
 	cpu = new CPU();
 #if defined(DESKTOP)
 	cpu->initialiseSymbolTable(symbolTable);
 #endif
+	logDebug("Initialising CPU");
 	if (!cpu->initialise(memory, linkFactory)) {
 		logFatal("CPU setup failed");
 		delete linkFactory;
 		delete memory;
 		logInfo("END");
-		exit(1);
+		doExit(1);
 	}
 
 #if defined(DESKTOP)
@@ -514,6 +530,10 @@ int main() {
 	cpu->emulate(romFile);
 	fflush(stdout);
 #else
+#if defined(PICO)
+	blink_interval_ms = BLINK_MOUNTED;
+#endif
+
 	cpu->emulate(false);
 	logInfo("End of emulation");
 #endif
@@ -522,6 +542,6 @@ int main() {
 	delete memory;
 	delete cpu;
 	logInfo("END");
-	return 0;
+	doExit(0);
 }
 
