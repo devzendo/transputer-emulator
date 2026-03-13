@@ -12,8 +12,10 @@
 //------------------------------------------------------------------------------
 
 #include <exception>
+#include <cctype>
 
 #include "picousbseriallink.h"
+
 #include "cdc_app.h"
 #include "../Shared/log.h"
 
@@ -31,16 +33,24 @@ PicoUSBSerialLink::~PicoUSBSerialLink() {
 }
 
 BYTE8 PicoUSBSerialLink::readByte() {
-    if (bDebug) {
-        logDebugF("Link %d R #%08X 00 (.)", myLinkNo, myReadSequence++);
+    BYTE8 buf;
+    uint32_t readlen = usb_link_read(&buf, 1);
+    if (readlen == 1) {
+        if (bDebug) {
+            logDebugF("Link %d R #%08X %02X (%c)", myLinkNo, myReadSequence++, buf, isprint(buf) ? buf : '.');
+        }
+        return buf;
     }
+    logWarnF("Could not read a byte from USB CDC link: (read %d byte(s))", readlen);
     return 0;
 }
 
 void PicoUSBSerialLink::writeByte(BYTE8 buf) {
+    BYTE8 bufstore = buf;
     if (bDebug) {
-        logDebugF("Link %d W #%08X 00 (.)", myLinkNo, myWriteSequence++);
+        logDebugF("Link %d W #%08X %02X (%c)", myLinkNo, myWriteSequence++, buf, isprint(buf) ? buf : '.');
     }
+    usb_link_write(&bufstore, 1);
 }
 
 void PicoUSBSerialLink::resetLink(void) {
