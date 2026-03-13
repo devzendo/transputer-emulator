@@ -26,8 +26,8 @@
 #elif defined(PLATFORM_WINDOWS)
 #include <windows.h>
 #include "namedpipelink.h"
-// #elif defined(PLATFORM_PICO)
-// #include "../PicoUSBCDC/picousbseriallink.h"
+#elif defined(PLATFORM_PICO)
+#include "../PicoUSBCDC/picousbseriallink.h"
 #endif
 
 #if defined(PLATFORM_OSX) || defined(PLATFORM_LINUX) || defined(PLATFORM_WINDOWS)
@@ -45,7 +45,7 @@ LinkFactory::LinkFactory(bool isServer, bool isDebug) {
 	bDebug = isDebug;
 	bTVS = false;
 #if defined(PLATFORM_PICO)
-	myLinkTypes[0] = LinkType_FIFO; // TODO LinkType_USBCDC
+	myLinkTypes[0] = LinkType_USBCDC;
 	for (int i = 1; i < 4; i++) {
 		myLinkTypes[i] = LinkType_Null; // for now, until we have PIO links
 	}
@@ -132,8 +132,6 @@ Link *LinkFactory::createLink(int linkNo) {
 #elif defined(PLATFORM_WINDOWS)
 			logDebugF("Link %d Named Pipe", linkNo);
 			newLink = new NamedPipeLink(linkNo, bServer);
-// #elif defined(PLATFORM_PICO)
-// 			newLink = new PicoUSBSerialLink(linkNo, bServer);
 #endif
 			break;
 		case LinkType_Socket:
@@ -155,6 +153,12 @@ Link *LinkFactory::createLink(int linkNo) {
 			logDebugF("Link %d Null", linkNo);
 			newLink = new NullLink(linkNo, bServer);
 			break;
+#if defined(PLATFORM_PICO)
+		case LinkType_USBCDC:
+			logDebugF("Link %d USB CDC", linkNo);
+			newLink = new PicoUSBSerialLink(linkNo, bServer);
+			break;
+#endif
 		default:
 			logFatal("Unknown link type requested");
 			return NULL;
