@@ -20,7 +20,8 @@ public:
 	bool processCommandLine(int argc, char *argv[]);
 	Link *createLink(int linkNo);
 private:
-	int myLinkTypes[4];
+	int myLinkTypes[4]{};
+	std::string myLinkFileNames[4]; // Only when filenames of e.g. TTY links given on command line.
 	bool bServer;
 	bool bDebug;
 	bool bTVS;

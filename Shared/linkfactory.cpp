@@ -15,17 +15,16 @@
 #include <cctype>
 #include <cstring>
 #include <fstream>
-#include <iostream>
 #include "platformdetection.h"
-#include "types.h"
-#include "constants.h"
 #include "link.h"
 
 #if defined(PLATFORM_OSX) || defined(PLATFORM_LINUX)
 #include "fifolink.h"
+#include "ttylink.h"
 #elif defined(PLATFORM_WINDOWS)
 #include <windows.h>
 #include "namedpipelink.h"
+#include "ttylink.h"
 #elif defined(PLATFORM_PICO)
 #include "../PicoUSBCDC/picousbseriallink.h"
 #endif
@@ -54,6 +53,9 @@ LinkFactory::LinkFactory(bool isServer, bool isDebug) {
 		myLinkTypes[i] = LinkType_FIFO;
 	}
 #endif
+	for (int i = 0; i < 4; i++) {
+		myLinkFileNames[i] = std::string();
+	}
 }
 
 #if defined(DESKTOP)
@@ -78,16 +80,37 @@ bool LinkFactory::processCommandLine(int argc, char *argv[]) {
 				linkConfigError(argv[i], "not in range -L<0..3>");
 				return false;
 			}
-			if ((t != 'F' && t != 'S' && t != 'M')) {
-				linkConfigError(argv[i], "type not F, S, M");
+			if ((t != 'F' && t != 'S' && t != 'M' && t != 'T')) {
+				linkConfigError(argv[i], "type not F, S, M, T");
 				return false;
 			}
 			switch (t) {
 				case 'F': myLinkTypes[n - '0'] = LinkType_FIFO; break;
 				case 'S': myLinkTypes[n - '0'] = LinkType_Socket; break;
 				case 'M': myLinkTypes[n - '0'] = LinkType_SharedMemory; break;
+				case 'T': myLinkTypes[n - '0'] = LinkType_TTY; break;
 			}
 		}
+#if defined(PLATFORM_OSX) || defined(PLATFORM_LINUX) || defined(PLATFORM_WINDOWS)
+		if (argv[i][0] == '-' && argv[i][1] == 'T') {
+			if (strlen(argv[i]) <= 3) {
+				logFatalF("%s must supply a TTY device filename", argv[i]);
+				return false;
+			}
+			char n = argv[i][2];
+			if (!isdigit(n)) {
+				logFatalF("%s is not of the form -T<number>...", argv[i]);
+				return false;
+			}
+			if (n > '3') {
+				logFatalF("%s is not in range -T<0..3>", argv[i]);
+				return false;
+			}
+			myLinkFileNames[n - '0'] = std::string(argv[i] + 3);
+			myLinkTypes[n - '0'] = LinkType_TTY;
+			logDebugF("Link %d TTY device filename: %s", n - '0', myLinkFileNames[n - '0'].c_str());
+		}
+#endif
 #if defined(PLATFORM_OSX) || defined(PLATFORM_LINUX) || defined(PLATFORM_WINDOWS)
 		if (std::string(argv[i]) == "-tvs") {
 			if (bServer) {
@@ -112,7 +135,18 @@ bool LinkFactory::processCommandLine(int argc, char *argv[]) {
 		}
 #endif
 	}
-	return true;
+
+	// Validation
+	bool linksAllGood = true;
+#if defined(PLATFORM_OSX) || defined(PLATFORM_LINUX) || defined(PLATFORM_WINDOWS)
+	for (int i = 0; i < 4; i++) {
+		if (myLinkTypes[i] == LinkType_TTY && myLinkFileNames[i].empty()) {
+			logFatalF("TTY link %d has not been given a device filename", i);
+			linksAllGood = false;
+		}
+	}
+#endif
+	return linksAllGood;
 }
 #else // DESKTOP
 // Embedded version..
@@ -122,7 +156,7 @@ bool LinkFactory::processCommandLine(int argc, char *argv[]) {
 #endif // DESKTOP
 
 Link *LinkFactory::createLink(int linkNo) {
-	Link *newLink = NULL;
+	Link *newLink = nullptr;
 	logDebugF("Creating Link %d of type %d...", linkNo, myLinkTypes[linkNo]);
 	switch (myLinkTypes[linkNo]) {
 		case LinkType_FIFO:
@@ -136,17 +170,17 @@ Link *LinkFactory::createLink(int linkNo) {
 			break;
 		case LinkType_Socket:
 			logFatal("Socket links not yet implemented");
-			return NULL;
+			return nullptr;
 		case LinkType_SharedMemory:
 			logFatal("Shared memory links not yet implemented");
-			return NULL;
+			return nullptr;
 		case LinkType_TVS:
 #if defined(PLATFORM_OSX) || defined(PLATFORM_LINUX) || defined(PLATFORM_WINDOWS)
 			logDebugF("Link %d TVS", linkNo);
 			newLink = new TVSLink(linkNo, tvsProgram, tvsInput, tvsOutput);
 #else
 			logFatal("TVS links not implemented on this platform");
-			return NULL;
+			return nullptr;
 #endif
 			break;
 		case LinkType_Null:
@@ -159,9 +193,15 @@ Link *LinkFactory::createLink(int linkNo) {
 			newLink = new PicoUSBSerialLink(linkNo, bServer);
 			break;
 #endif
+#if defined(PLATFORM_OSX) || defined(PLATFORM_LINUX) || defined(PLATFORM_WINDOWS)
+		case LinkType_TTY:
+			logDebugF("Link %d TTY", linkNo);
+			newLink = new TTYLink(linkNo, bServer, myLinkFileNames[linkNo]);
+			break;
+#endif
 		default:
 			logFatal("Unknown link type requested");
-			return NULL;
+			return nullptr;
 	}
 	newLink->setDebug(bDebug);
 	return newLink;

@@ -82,10 +82,12 @@ void usage() {
 	logInfo("  -h    Displays this usage summary");
 	logInfo("  -l<X> Sets log level. X is one of [diwef] for DEBUG, INFO");
 	logInfo("        WARN, ERROR or FATAL. Default is INFO");
-	logInfo("  -L<N><T> Sets link type. N is 0..3 and T is F, S, M for");
-	logInfo("        FIFO, Socket or shared Memory. Default is FIFO.");
-	logInfo("        (only FIFO implemented yet)");
+	logInfo("  -L<N><T> Sets link type. N is 0..3 and T is F, S, M, T for");
+	logInfo("        FIFO, Socket, shared Memory, TTY. Default is FIFO.");
+	logInfo("        (only FIFO & TTY implemented yet)");
 	logInfo("  -r<directory> Sets the root directory served by the IServer. Current directory if not given.");
+	logInfo("  -T<N><TTY device file> (e.g. /dev/tty.usbmodem2102 or COM13:) for link N 0..3");
+	logInfo("        (Forces link N to type T)");
 	logInfo("Any options not understood by the IServer are stored to be made available to the transputer.");
 }
 
@@ -339,6 +341,7 @@ int main(int argc, char *argv[]) {
 
 	linkFactory = new LinkFactory(true, debugLinkRaw);
 	if (!linkFactory->processCommandLine(argc, argv)) {
+		logFatal("Could not process command line link arguments");
 		cleanup();
 		exit(1);
 	}
