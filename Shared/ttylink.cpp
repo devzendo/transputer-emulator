@@ -69,8 +69,9 @@ void TTYLink::initialise() {
     serialParameters.c_iflag = IGNBRK | IGNPAR;
     for (unsigned char & i : serialParameters.c_cc)
         i = static_cast<cc_t>(0);
+    // http://unixwiz.net/techtips/termios-vmin-vtime.html
     serialParameters.c_cc[VMIN] = static_cast<cc_t>(0);
-    serialParameters.c_cc[VTIME] = static_cast<cc_t>(0) /* DataTimeout */;
+    serialParameters.c_cc[VTIME] = static_cast<cc_t>(20) /* DataTimeout */;
 
     if (tcsetattr(myFD, TCSANOW, &serialParameters) == -1) {
         snprintf(myMsgbuf, TTY_MSGBUF_SIZE, "Cannot tcsetattr on TTY %s: %s", myTTYName.c_str(), strerror(errno));
@@ -91,16 +92,23 @@ BYTE8 TTYLink::readByte() {
     BYTE8 buf;
     ssize_t readlen = 0;
 	logDebugF("Reading byte from TTY link %d", myLinkNo);
-    readlen = read(myFD, &buf, 1);
-    if (readlen == 1) {
-        if (bDebug) {
-            logDebugF("Link %d R #%08X %02X (%c)", myLinkNo, myReadSequence++, buf, isprint(buf) ? buf : '.');
+    while (readlen == 0) {
+        readlen = read(myFD, &buf, 1);
+        switch (readlen) {
+            case 1:
+                if (bDebug) {
+                    logDebugF("Link %d R #%08X %02X (%c)", myLinkNo, myReadSequence++, buf, isprint(buf) ? buf : '.');
+                }
+                return buf;
+            case 0: // repeat
+                break;
+            default:
+                snprintf(myMsgbuf, TTY_MSGBUF_SIZE, "Could not read a byte from TTY FD#%d: (read %ld byte(s)) %s", myFD, readlen, strerror(errno));
+                logWarn(myMsgbuf);
+                // throw std::runtime_error(myMsgbuf);
         }
-        return buf;
     }
-    snprintf(myMsgbuf, TTY_MSGBUF_SIZE, "Could not read a byte from TTY FD#%d: (read %ld byte(s)) %s", myFD, readlen, strerror(errno));
-    logWarn(myMsgbuf);
-    throw std::runtime_error(myMsgbuf);
+    return 0;
 }
 
 void TTYLink::writeByte(BYTE8 buf) {
