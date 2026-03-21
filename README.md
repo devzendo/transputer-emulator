@@ -35,9 +35,10 @@ limited the C++ standard I could support.
 
 
 ## Project Status
-Last changes in early March 2026.
+Last changes in late March 2026.
 
-Currently adding a build for the Raspberry Pi Pico, using USB CDC for diagnostic and link 0 I/O.
+The build for the Raspberry Pi Pico, using USB CDC for diagnostic and link 0 I/O works.
+
 Integration-testing a GPIO-based asynchronous link abstraction, for use on the Pi Pico. This will
 eventually be replaced by a much faster PIO-based link.
 
@@ -85,8 +86,10 @@ Second release (work in progress):
   * TX!: Send output character
   * !IO: Initialise UART
 * Allow validation using Mike's TVS and pass tests for all implemented instructions
-* Add the start of a build for the Raspberry Pi Pico - that can run Hello World booted from a link; that has a single
-  core, and single link over CDC-USB Serial. The memory/flash use is quantified.
+* Added a build for the Raspberry Pi Pico - that can run Hello World booted from a link; that has a single
+  core, a single link over CDC-USB Serial, and a diagnostics output also over a separate USB CDC port. 
+  The memory/flash use is quantified.
+
   
 Third release:
 * Capable of running eForth.
