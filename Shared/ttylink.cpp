@@ -54,32 +54,29 @@ void TTYLink::initialise() {
     }
 
     // Now change the rest of the parameters - non-canonical input, etc.
-//     if (ioctl(myFD, TCGETA, &serialParameters) == -1) {
-//         snprintf(myMsgbuf, TTY_MSGBUF_SIZE, "Cannot ioctl (get) on TTY %s: %s", myTTYName.c_str(), strerror(errno));
-//         logWarn(myMsgbuf);
-//         throw std::runtime_error(myMsgbuf);
-//     }
+    if (tcgetattr(myFD, &serialParameters) == -1) {
+        snprintf(myMsgbuf, TTY_MSGBUF_SIZE, "Cannot tcgetattr on TTY %s: %s", myTTYName.c_str(), strerror(errno));
+        logWarn(myMsgbuf);
+        throw std::runtime_error(myMsgbuf);
+    }
 //
 //     (void) ioctl (fd, TCGETA, &OriginalSerialParameters);
 //
-//     serialParameters.c_cflag = Baud | CS8 | CLOCAL | CREAD | CRTSCTS;
-//     serialParameters.c_lflag = 0;
-//     serialParameters.c_oflag = 0;
-//     serialParameters.c_iflag = IGNBRK | IGNPAR;
-//     for (i = 0; i < NCC; i++)
-//         serialParameters.c_cc[i] = (unsigned char) 0;
-//
-//     SerialParameters.c_cc[VMIN] = (unsigned char) 0;
-//     SerialParameters.c_cc[VTIME] = (unsigned char) DataTimeout;
-//
-//     if (ioctl (fd, TCSETA, &SerialParameters) == -1) {
-// #ifdef DEBUG
-//         fprintf (stderr, "asy_open: Cannot ioctl (set) on port %s. Errno = %d\n", Port, errno);
-// #endif
-//         return -1;
-//     }
+    // Baud rate: https://forums.raspberrypi.com/viewtopic.php?t=351728
+    serialParameters.c_cflag = B115200 | CS8 | CLOCAL | CREAD | CRTSCTS; // Fake baud rate, it's USB CDC.
+    serialParameters.c_lflag = 0;
+    serialParameters.c_oflag = 0;
+    serialParameters.c_iflag = IGNBRK | IGNPAR;
+    for (unsigned char & i : serialParameters.c_cc)
+        i = static_cast<cc_t>(0);
+    serialParameters.c_cc[VMIN] = static_cast<cc_t>(0);
+    serialParameters.c_cc[VTIME] = static_cast<cc_t>(0) /* DataTimeout */;
 
-
+    if (tcsetattr(myFD, TCSANOW, &serialParameters) == -1) {
+        snprintf(myMsgbuf, TTY_MSGBUF_SIZE, "Cannot tcsetattr on TTY %s: %s", myTTYName.c_str(), strerror(errno));
+        logWarn(myMsgbuf);
+        throw std::runtime_error(myMsgbuf);
+    }
 }
 
 TTYLink::~TTYLink() {
@@ -101,7 +98,7 @@ BYTE8 TTYLink::readByte() {
         }
         return buf;
     }
-    snprintf(myMsgbuf, TTY_MSGBUF_SIZE,"Could not read a byte from TTY FD#%d: (read %ld byte(s)) %s", myFD, readlen, strerror(errno));
+    snprintf(myMsgbuf, TTY_MSGBUF_SIZE, "Could not read a byte from TTY FD#%d: (read %ld byte(s)) %s", myFD, readlen, strerror(errno));
     logWarn(myMsgbuf);
     throw std::runtime_error(myMsgbuf);
 }
