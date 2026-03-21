@@ -1,4 +1,4 @@
-add_library(parachutepicousbcdc STATIC logpicousbcdc.cpp tusb_config.h cdc_app.c usb_descriptors.c picousbseriallink.cpp picousbseriallink.h)
+add_library(parachutepicousbcdc STATIC logpicousbcdc.cpp tusb_config.h cdc_app.cpp usb_descriptors.c picousbseriallink.cpp picousbseriallink.h)
 
 target_link_libraries(parachutepicousbcdc parachutedev pico_sync pico_stdlib pico_unique_id tinyusb_device tinyusb_board)
 # Use the submodule of tinyusb in the Raspberry Pi Pico SDK

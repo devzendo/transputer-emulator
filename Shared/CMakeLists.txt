@@ -45,7 +45,7 @@ if(PICO)
 #    add_library(parachutepicostdio STATIC logpicostdio.cpp sync.h)
 #    target_link_libraries(parachutepicostdio pico_sync pico_stdio)
 
-#    add_library(parachutepicousbcdc STATIC ../PicoUSBCDC/logpicousbcdc.cpp sync.h ../PicoUSBCDC/tusb_config.h ../PicoUSBCDC/cdc_app.c ../PicoUSBCDC/usb_descriptors.c ../PicoUSBCDC/picousbseriallink.cpp ../PicoUSBCDC/picousbseriallink.h)
+#    add_library(parachutepicousbcdc STATIC ../PicoUSBCDC/logpicousbcdc.cpp sync.h ../PicoUSBCDC/tusb_config.h ../PicoUSBCDC/cdc_app.cpp ../PicoUSBCDC/usb_descriptors.c ../PicoUSBCDC/picousbseriallink.cpp ../PicoUSBCDC/picousbseriallink.h)
 #    target_link_libraries(parachutepicousbcdc pico_sync pico_stdlib pico_unique_id tinyusb_device tinyusb_board)
 #    # pico_stdlib needed by tinyusb
 #    # Use the submodule of tinyusb in the Raspberry Pi Pico SDK

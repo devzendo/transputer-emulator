@@ -1,6 +1,6 @@
 //------------------------------------------------------------------------------
 //
-// File        : cdc_app.c
+// File        : cdc_app.cpp
 // Description : USB CDC functions, based on CDC example by Ha Thach,
 //               Jerzy Kasenberg, Angel Molina (MIT License).
 // License     : Apache License v2.0 - see LICENSE.txt for more details
@@ -99,7 +99,7 @@ cdc_line_coding_t coding;
 // Invoked when CDC interface received data from host
 void tud_cdc_rx_cb(uint8_t itf) {
     uint8_t buf[64];
-    uint8_t hdr[32];
+    char hdr[32];
     uint32_t count;
 
     // connected() check for DTR bit
@@ -122,7 +122,7 @@ void tud_cdc_rx_cb(uint8_t itf) {
                     // TODO pass this read data to a registered callback for this interface
                     (void) count;
 
-                    sprintf((char * restrict) &hdr, "/dev/ttyACM%d\r\n", itf);
+                    sprintf(hdr, "/dev/ttyACM%d\r\n", itf);
                     tud_cdc_n_write(itf, hdr, strlen(hdr));
                     tud_cdc_n_write(itf, buf, count); // TODO this is how you write data back to the host on this interface
                     tud_cdc_n_write_flush(itf);
@@ -196,8 +196,8 @@ void usb_poll() {
     led_blinking_task();
 }
 
-void _usb_write(uint8_t itf, void *buf, uint32_t size) {
-    void *cbuf = buf;
+void _usb_write(uint8_t itf, uint8_t *buf, uint32_t size) {
+    uint8_t *cbuf = buf;
     usb_poll();
     // Potential of infinite loops here.
     while (size != 0) {
@@ -215,8 +215,8 @@ void _usb_write(uint8_t itf, void *buf, uint32_t size) {
     usb_poll();
 }
 
-void _usb_read(uint8_t itf, void *buf, uint32_t size) {
-    void *cbuf = buf;
+uint32_t _usb_read(uint8_t itf, uint8_t *buf, uint32_t size) {
+    uint8_t *cbuf = buf;
     while (size > 0) {
         usb_poll();
         uint32_t cread = tud_cdc_n_read(itf, cbuf, size);
@@ -230,14 +230,15 @@ void _usb_read(uint8_t itf, void *buf, uint32_t size) {
             cbuf += cread;
         }
     }
+    return size; // bit of a kludge...
 }
 
-void usb_link_write(void *buf, uint32_t size) {
+void usb_link_write(uint8_t *buf, uint32_t size) {
     _usb_write(LINK_ITF, buf, size);
 }
 
-uint32_t usb_link_read(void *buf, uint32_t size) {
-    _usb_read(LINK_ITF, buf, size);
+uint32_t usb_link_read(uint8_t *buf, uint32_t size) {
+    return _usb_read(LINK_ITF, buf, size);
 }
 
 void usb_link_flush() {
@@ -271,7 +272,7 @@ void usb_log_wait_for_knock() {
     }
 }
 
-void usb_log_write(void *buf, uint32_t size) {
+void usb_log_write(uint8_t *buf, uint32_t size) {
     if (tud_cdc_n_connected(LOG_ITF)) {
         _usb_write(LOG_ITF, buf, size);
     }
@@ -279,8 +280,9 @@ void usb_log_write(void *buf, uint32_t size) {
 }
 
 
-uint32_t usb_log_read(void *buf, uint32_t size) {
+uint32_t usb_log_read(uint8_t *buf, uint32_t size) {
     // One does not read from the log interface!
+    // Although this could be how we might trigger single-step/debugger attachment?
     return 0;
 }
 
