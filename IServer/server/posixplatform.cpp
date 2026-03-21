@@ -23,7 +23,7 @@
 #include "posixplatform.h"
 #include "log.h"
 
-POSIXPlatform::POSIXPlatform() : Platform() {
+POSIXPlatform::POSIXPlatform() : Platform(), timeout(), term(), origterm() {
     logDebug("Constructing POSIX platform");
     stdinfd = 0;
 }
@@ -41,7 +41,7 @@ void POSIXPlatform::initialise() noexcept(false) {
     if (isatty(stdinfd)) { // It's not a TTY in tests, where the following tcget/setattr fails.
         logDebugF("Setting stdin (fd %d) terminal attributes as it is a TTY", stdinfd);
         if (tcgetattr(stdinfd, &term) == -1) {
-            sprintf(msgbuf, "Could not get stdin (fd %d) terminal attributes: %s",
+            snprintf(msgbuf, 255, "Could not get stdin (fd %d) terminal attributes: %s",
                       stdinfd, strerror(errno));
             logFatal(msgbuf);
             throw std::runtime_error(msgbuf);
@@ -49,7 +49,7 @@ void POSIXPlatform::initialise() noexcept(false) {
         tcgetattr(stdinfd, &origterm);
         term.c_lflag = term.c_lflag & (~ICANON);
         if (tcsetattr(stdinfd, TCSANOW, &term) == -1) {
-            sprintf(msgbuf, "Could not set stdin (fd %d) terminal attributes: %s",
+            snprintf(msgbuf, 255,"Could not set stdin (fd %d) terminal attributes: %s",
                       stdinfd, strerror(errno));
             logFatal(msgbuf);
             throw std::runtime_error(msgbuf);
@@ -75,7 +75,7 @@ bool POSIXPlatform::isConsoleCharAvailable() {
     for (;;) {
         FD_ZERO(&stdinfdset);
         FD_SET(stdinfd, &stdinfdset);
-        int fds = select(stdinfd+1, &stdinfdset, NULL, NULL, &timeout);
+        int fds = select(stdinfd+1, &stdinfdset, nullptr, nullptr, &timeout);
         if (fds == -1) {
             if (errno == EINTR) {
                 continue; // try again
@@ -109,15 +109,15 @@ void POSIXPlatform::putConsoleChar(const BYTE8 ch) {
 
 
 WORD32 POSIXPlatform::getTimeMillis() {
-    struct timeval tv;
-    struct timezone tz;
+    struct timeval tv{};
+    struct timezone tz{};
     gettimeofday(&tv, &tz);
     return (tv.tv_sec*1000) + (tv.tv_usec/1000); // TODO check this transform
 }
 
 UTCTime POSIXPlatform::getUTCTime() {
-    struct timeval tv;
-    struct timezone tz;
+    struct timeval tv{};
+    struct timezone tz{};
     gettimeofday(&tv, &tz);
     struct tm *tms = gmtime(&tv.tv_sec);
     return UTCTime(tms->tm_mday, tms->tm_mon + 1, tms->tm_year + 1900, tms->tm_hour, tms->tm_min, tms->tm_sec, (tv.tv_usec/1000));

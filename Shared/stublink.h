@@ -11,8 +11,8 @@
 //
 //------------------------------------------------------------------------------
 
-#ifndef _STUBLINK_H
-#define _STUBLINK_H
+#ifndef STUBLINK_H
+#define STUBLINK_H
 
 #include <queue>
 #include <vector>
@@ -23,16 +23,16 @@
 class StubLink : public Link {
 public:
     StubLink(int linkNo, bool isServer);
-    void initialise(void);
-    ~StubLink(void);
-    BYTE8 readByte(void);
-    void writeByte(BYTE8 b);
-    void resetLink(void);
+    void initialise() override;
+    ~StubLink() override;
+    BYTE8 readByte() override;
+    void writeByte(BYTE8 b) override;
+    void resetLink() override;
     // Used by tests to sense what has been written (by SUT calling writeByte) and
     // to inject data to be read (by SUT calling readbyte).
-    std::vector<BYTE8> getWrittenBytes();
-    void setReadableBytes(std::vector<BYTE8> bytes);
-    int getLinkType(void);
+    std::vector<BYTE8> getWrittenBytes() const;
+    void setReadableBytes(const std::vector<unsigned char> &bytes) const;
+    int getLinkType() override;
 private:
     // These are relative to the CPU, so it reads from the read queue.
     // The IServer reads from the write queue.
@@ -45,4 +45,4 @@ private:
     WORD32 myWriteSequence, myReadSequence;
 };
 
-#endif // _STUBLINK_H
+#endif // STUBLINK_H

@@ -18,7 +18,6 @@
 #include <vector>
 #include <filesystem.h>
 #include "types.h"
-#include "constants.h"
 #include "platform.h"
 #include "link.h"
 #include "hexdump.h"
@@ -341,19 +340,19 @@ bool ProtocolHandler::writeFrame() {
     return true;
 }
 
-WORD64 ProtocolHandler::frameCount() {
+WORD64 ProtocolHandler::frameCount() const {
     return myFrameCount;
 }
 
-WORD64 ProtocolHandler::badFrameCount() {
+WORD64 ProtocolHandler::badFrameCount() const {
     return myBadFrameCount;
 }
 
-WORD64 ProtocolHandler::unimplementedFrameCount() {
+WORD64 ProtocolHandler::unimplementedFrameCount() const {
     return myUnimplementedFrameCount;
 }
 
-int ProtocolHandler::exitCode() {
+int ProtocolHandler::exitCode() const {
     return myExitCode;
 }
 
@@ -477,6 +476,10 @@ void ProtocolHandler::reqRead() {
         codec.put((WORD16) read);
         // The codec needs to know how much data was read into writeOffset(5) above so it can fill in the frame size.
         codec.advance(read);
+    } catch (const std::range_error &e) {
+        logWarn(e.what());
+        codec.put(RES_BADID);
+        codec.put((WORD16) 0);
     } catch (const std::runtime_error &e) { // File must be open for reading
         logWarn(e.what());
         codec.put(RES_BADID);
@@ -484,10 +487,6 @@ void ProtocolHandler::reqRead() {
     } catch (const std::domain_error &e) { // Last op must be read
         logWarn(e.what());
         codec.put(RES_NOPOSN);
-        codec.put((WORD16) 0);
-    } catch (const std::range_error &e) {
-        logWarn(e.what());
-        codec.put(RES_BADID);
         codec.put((WORD16) 0);
     } catch (const std::invalid_argument &e) {
         logWarn(e.what());
@@ -507,6 +506,10 @@ void ProtocolHandler::reqWrite() {
         // TODO if streamId == 1 or 2, flush (test after open done, so we can correctly sense presence/absence of flush call on platform
         codec.put(RES_SUCCESS);
         codec.put((WORD16) wrote);
+    } catch (const std::range_error &e) {
+        logWarn(e.what());
+        codec.put(RES_BADID);
+        codec.put((WORD16) 0);
     } catch (const std::runtime_error &e) { // File must be open for writing
         logWarn(e.what());
         codec.put(RES_BADID);
@@ -514,10 +517,6 @@ void ProtocolHandler::reqWrite() {
     } catch (const std::domain_error &e) { // Last op must be write
         logWarn(e.what());
         codec.put(RES_NOPOSN);
-        codec.put((WORD16) 0);
-    } catch (const std::range_error &e) {
-        logWarn(e.what());
-        codec.put(RES_BADID);
         codec.put((WORD16) 0);
     } catch (const std::invalid_argument &e) {
         logWarn(e.what());
@@ -557,6 +556,10 @@ void ProtocolHandler::reqPuts() {
         // - there is a separate flush call.
         // Note no indication to the client of the amount written..
         codec.put(RES_SUCCESS);
+    } catch (const std::range_error &e) {
+        logWarn(e.what());
+        codec.put(RES_BADID);
+        codec.put((WORD16) 0);
     } catch (const std::runtime_error &e) { // File must be open for writing
         logWarn(e.what());
         codec.put(RES_BADID);
@@ -564,10 +567,6 @@ void ProtocolHandler::reqPuts() {
     } catch (const std::domain_error &e) { // Last op must be write
         logWarn(e.what());
         codec.put(RES_NOPOSN);
-        codec.put((WORD16) 0);
-    } catch (const std::range_error &e) {
-        logWarn(e.what());
-        codec.put(RES_BADID);
         codec.put((WORD16) 0);
     } catch (const std::invalid_argument &e) {
         logWarn(e.what());
@@ -709,15 +708,15 @@ void ProtocolHandler::reqPutChar() {
             logDebugF("Wrote %d byte(s) to stream #%d", wrote, streamId);
             codec.put(RES_SUCCESS);
         }
+    } catch (const std::range_error &e) {
+        logWarn(e.what());
+        codec.put(RES_BADID);
     } catch (const std::runtime_error &e) { // File must be open for writing
         logWarn(e.what());
         codec.put(RES_BADID);
     } catch (const std::domain_error &e) { // Last op must be write
         logWarn(e.what());
         codec.put(RES_NOPOSN);
-    } catch (const std::range_error &e) {
-        logWarn(e.what());
-        codec.put(RES_BADID);
     } catch (const std::invalid_argument &e) {
         logWarn(e.what());
         codec.put(RES_BADID);

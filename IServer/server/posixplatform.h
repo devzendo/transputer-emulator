@@ -39,8 +39,8 @@ public:
 private:
     // For console keyboard handling
     int stdinfd;
-    struct timeval timeout;
-    termios term, origterm;
+    struct timeval timeout{};
+    termios term{}, origterm{};
 };
 
 #endif // _POSIXPLATFORM_H

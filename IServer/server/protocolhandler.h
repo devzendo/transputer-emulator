@@ -36,10 +36,10 @@ public:
     // Return true if the frame is an exit frame; false otherwise.
     bool processFrame();
 
-    WORD64 frameCount();
-    WORD64 badFrameCount();
-    WORD64 unimplementedFrameCount();
-    int exitCode();
+    WORD64 frameCount() const;
+    WORD64 badFrameCount() const;
+    WORD64 unimplementedFrameCount() const;
+    int exitCode() const;
 private:
     bool bDebug;
     Link & myIOLink;

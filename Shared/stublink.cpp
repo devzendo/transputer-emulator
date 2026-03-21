@@ -17,30 +17,28 @@
 #include "stublink.h"
 #include "log.h"
 
-StubLink::StubLink(int linkNo, bool isServer) :
-    Link(linkNo, isServer),
-    // Now set up the references to the queues, using those that will be used appropriately
-    // for read/write given that the user is a server/CPU client.
-    wrq(isServer ? &myReadQueue : &myWriteQueue),
-    rdq(isServer ? &myWriteQueue : &myReadQueue) {
-
+StubLink::StubLink(int linkNo, bool isServer) : Link(linkNo, isServer),
+                                                // Now set up the references to the queues, using those that will be used appropriately
+                                                // for read/write given that the user is a server/CPU client.
+                                                rdq(isServer ? &myWriteQueue : &myReadQueue), wrq(isServer ? &myReadQueue : &myWriteQueue),
+                                                myWriteSequence(0),
+                                                myReadSequence(0) {
     logDebugF("Constructing stub link %d for %s", myLinkNo, isServer ? "server" : "cpu client");
 }
 
-void StubLink::initialise(void) {
-    myReadQueue.empty();
-    myWriteQueue.empty();
+void StubLink::initialise() {
+    (void) myReadQueue.empty();
+    (void) myWriteQueue.empty();
     myWriteSequence = myReadSequence = 0;
 }
 
 StubLink::~StubLink() {
     logDebugF("Destroying stub link %d", myLinkNo);
-    myReadQueue.empty();
-    myWriteQueue.empty();
+    (void) myReadQueue.empty();
+    (void) myWriteQueue.empty();
 }
 
 BYTE8 StubLink::readByte() {
-    static char msgbuf[255];
     BYTE8 buf = rdq->front();
     rdq->pop();
     if (bDebug) {
@@ -50,18 +48,17 @@ BYTE8 StubLink::readByte() {
 }
 
 void StubLink::writeByte(BYTE8 buf) {
-    static char msgbuf[255];
     if (bDebug) {
         logDebugF("Link %d W #%08X %02X (%c)", myLinkNo, myWriteSequence++, buf, isprint(buf) ? buf : '.');
     }
     wrq->push(buf);
 }
 
-void StubLink::resetLink(void) {
+void StubLink::resetLink() {
     // TODO
 }
 
-std::vector<BYTE8> StubLink::getWrittenBytes() {
+std::vector<BYTE8> StubLink::getWrittenBytes() const {
     std::vector<BYTE8> out;
     while (!wrq->empty()) {
         BYTE8 data = wrq->front();
@@ -71,9 +68,9 @@ std::vector<BYTE8> StubLink::getWrittenBytes() {
     return out;
 }
 
-void StubLink::setReadableBytes(std::vector<BYTE8> bytes) {
-    for (auto it = bytes.begin(); it != bytes.end(); it++) {
-        rdq->push(*it);
+void StubLink::setReadableBytes(const std::vector<BYTE8>& bytes) const {
+    for (const BYTE8 & byte : bytes) {
+        rdq->push(byte);
     }
 }
 
