@@ -411,7 +411,7 @@ int main() {
 	// Blink quickly until the host is connected and reading the log interface.
 	blink_interval_ms = BLINK_STREAMING;
 
-	usb_log_wait_for_knock();
+	// usb_log_wait_for_knock();
 	blink_interval_ms = BLINK_NOT_MOUNTED;
 
 	logInfoF("Total heap 0x%08X (%d KB) Free heap 0x%08X (%d KB)\n", getTotalHeap(), getTotalHeap() / Kilo, getFreeHeap(), getFreeHeap() / Kilo);
