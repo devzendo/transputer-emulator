@@ -15,37 +15,37 @@
 
 #include <exception>
 #include <cctype>
+#include <utility>
 
 #include "tvslink.h"
 #include "log.h"
 
 TVSLink::TVSLink(int linkNo, std::string tvsProgram, std::string tvsInput, std::string tvsOutput) :
     Link(linkNo, false) {
-    myTVSProgram = tvsProgram;
-    myTVSInput = tvsInput;
-    myTVSOutput = tvsOutput;
+    myTVSProgram = std::move(tvsProgram);
+    myTVSInput = std::move(tvsInput);
+    myTVSOutput = std::move(tvsOutput);
     myProgramSent = myInputSent = 0;
     logDebugF("Constructing TVS link %d for cpu client", myLinkNo);
 }
 
-void TVSLink::initialise(void) {
-    static char msgbuf[255];
+void TVSLink::initialise() {
     logDebugF("Initialising TVS link %d for cpu client", myLinkNo);
     myWriteSequence = myReadSequence = 0;
     try {
         myTVSProgramStream.open(myTVSProgram, std::ifstream::in | std::ifstream::binary);
     } catch (std::system_error& e) {
-        sprintf(msgbuf, "Could not open program file %s: %s", myTVSProgram.c_str(), e.code().message().c_str());
-        logFatalF("%s", msgbuf);
-        throw std::runtime_error(msgbuf);
+        snprintf(myMsgbuf, TVS_MSGBUF_SIZE, "Could not open program file %s: %s", myTVSProgram.c_str(), e.code().message().c_str());
+        logFatalF("%s", myMsgbuf);
+        throw std::runtime_error(myMsgbuf);
     }
     if (!myTVSInput.empty()) {
         try {
             myTVSInputStream.open(myTVSInput, std::ifstream::in | std::ifstream::binary);
         } catch (std::system_error& e) {
-            sprintf(msgbuf, "Could not open input file %s: %s", myTVSInput.c_str(), e.code().message().c_str());
-            logFatalF("%s", msgbuf);
-            throw std::runtime_error(msgbuf);
+            snprintf(myMsgbuf, TVS_MSGBUF_SIZE, "Could not open input file %s: %s", myTVSInput.c_str(), e.code().message().c_str());
+            logFatalF("%s", myMsgbuf);
+            throw std::runtime_error(myMsgbuf);
         }
     } else {
         logDebug("There is no TVS input file");
@@ -53,9 +53,9 @@ void TVSLink::initialise(void) {
     try {
         myTVSOutputStream.open(myTVSOutput, std::ofstream::out | std::ofstream::binary);
     } catch (std::system_error& e) {
-        sprintf(msgbuf, "Could not open output file %s: %s", myTVSOutput.c_str(), e.code().message().c_str());
-        logFatalF("%s", msgbuf);
-        throw std::runtime_error(msgbuf);
+        snprintf(myMsgbuf, TVS_MSGBUF_SIZE, "Could not open output file %s: %s", myTVSOutput.c_str(), e.code().message().c_str());
+        logFatalF("%s", myMsgbuf);
+        throw std::runtime_error(myMsgbuf);
     }
 }
 
@@ -112,12 +112,12 @@ void TVSLink::writeByte(BYTE8 buf) {
     if (bDebug) {
         logDebugF("Link %d W #%08X %02X (%c)", myLinkNo, myWriteSequence++, buf, isprint(buf) ? buf : '.');
     }
-    const char outBuf = buf;
+    const BYTE8 outBuf = buf;
     myTVSOutputStream.write(reinterpret_cast<const char *>(&outBuf), 1);
     myTVSOutputStream.flush();
 }
 
-void TVSLink::resetLink(void) {
+void TVSLink::resetLink() {
     // TODO
 }
 

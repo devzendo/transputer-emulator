@@ -133,7 +133,7 @@ bool CPU::initialise(Memory *memory, LinkFactory *linkFactory) {
 	bool allLinksOK = true;
 	myMemory = memory;
 	for (i = 0; i < 4; i++) {
-		if ((myLinks[i] = linkFactory->createLink(i)) == NULL) {
+		if ((myLinks[i] = linkFactory->createLink(i)) == nullptr) {
 			logFatalF("Could not create link %d", i);
 			allLinksOK = false;
 			break;
@@ -155,10 +155,10 @@ bool CPU::initialise(Memory *memory, LinkFactory *linkFactory) {
 
 CPU::~CPU() {
 	logDebug("CPU DTOR");
-	for (int i = 0; i < 4; i++) {
-		if (myLinks[i] != NULL) {
-			delete myLinks[i];
-			myLinks[i] = NULL;
+	for (auto & myLink : myLinks) {
+		if (myLink != nullptr) {
+			delete myLink;
+			myLink = nullptr;
 		}
 	}
 }
@@ -317,12 +317,12 @@ void CPU::DumpRegs(int logLevel) {
 #endif // DESKTOP
 }
 
-void CPU::DumpQueueRegs(int logLevel) {
+void CPU::DumpQueueRegs(int logLevel) const {
 	logFormat(logLevel, "       Hf#%08X Hb#%08X Lf#%08X Lb#%08X",
 		HiHead, HiTail, LoHead, LoTail);
 }
 
-void CPU::DumpClockRegs(int logLevel, WORD32 instCycles) {
+void CPU::DumpClockRegs(int logLevel, WORD32 instCycles) const {
 	int qr;
 	qr = LoClock - LoClockLastQuantumExpiry;
 	if (qr >= MaxQuantum)
@@ -350,7 +350,7 @@ WORD32 CPU::disassembleRange(WORD32 addr, WORD32 maxlen) {
 #if defined(PLATFORM_WINDOWS)
 	sprintf_s(line, 256, "%08X ", addr);
 #elif defined(PLATFORM_OSX) || defined(PLATFORM_LINUX)
-	sprintf(line, "%08X ", addr);
+	snprintf(line, 256, "%08X ", addr);
 #endif
 	for (caddr = addr; caddr < addr + maxlen; caddr++) {
 		BYTE8 b = myMemory->getInstruction(caddr);
@@ -361,7 +361,7 @@ WORD32 CPU::disassembleRange(WORD32 addr, WORD32 maxlen) {
 		sprintf_s(misc, 256, "%02X ", b);
 		strcat_s(line, 256, misc); // TODO: fix potential BUFFER OVERFLOW
 #elif defined(PLATFORM_OSX) || defined(PLATFORM_LINUX)
-		sprintf(misc, "%02X ", b);
+		snprintf(misc, 256, "%02X ", b);
 		strcat(line, misc); // TODO: fix potential BUFFER OVERFLOW
 #endif
 		clen++;
@@ -402,7 +402,7 @@ WORD32 CPU::disassembleRange(WORD32 addr, WORD32 maxlen) {
 #if defined(PLATFORM_WINDOWS)
 				sprintf_s(line, 256, "%08X ", oprStart);
 #elif defined(PLATFORM_OSX) || defined(PLATFORM_LINUX)
-				sprintf(line, "%08X ", oprStart);
+				snprintf(line, 256, "%08X ", oprStart);
 #endif
 				cOreg = 0;
 				retval += clen;
@@ -426,7 +426,7 @@ WORD32 CPU::disassembleRange(WORD32 addr, WORD32 maxlen) {
 #if defined(PLATFORM_WINDOWS)
 				sprintf_s(line, 256, "%08X ", oprStart);
 #elif defined(PLATFORM_OSX) || defined(PLATFORM_LINUX)
-				sprintf(line, "%08X ", oprStart);
+				snprintf(line, 256, "%08X ", oprStart);
 #endif
 				cOreg = 0;
 				retval += clen;
@@ -1065,7 +1065,7 @@ inline void CPU::interpret(void) {
 						// TODO: should we deschedule only when communication waits?
 						// Instruction set summary seems to imply this..
 						SET_FLAGS(EmulatorState_Interrupt);
-						Link *myLink = NULL;
+						Link *myLink = nullptr;
 						switch (Breg) {
 							// Need to be able to do a blockcopy-type operation from the
 							// Node Server for proper timing..... or fudge the memory
@@ -1108,7 +1108,7 @@ inline void CPU::interpret(void) {
 								break;
 						}
 						// Now handle input from real links
-						if (myLink != NULL) {
+						if (myLink != nullptr) {
 							try {
 								WORD32 i;
 								for (i = 0; i < Areg; i++)  {
@@ -1132,7 +1132,7 @@ inline void CPU::interpret(void) {
 						// TODO: should we deschedule only when communication waits?
 						// Instruction set summary seems to imply this..
 						SET_FLAGS(EmulatorState_Interrupt);
-						Link *myLink = NULL;
+						Link *myLink = nullptr;
 						switch (Breg) {
 							case Link0Output:
 								myLink = myLinks[0];
@@ -1172,7 +1172,7 @@ inline void CPU::interpret(void) {
 								break;
 						}
 						// Now handle output to real links
-						if (myLink != NULL) {
+						if (myLink != nullptr) {
 							try {
 								WORD32 i;
 								// Again, need to do something about blockcopy over
@@ -1200,7 +1200,7 @@ inline void CPU::interpret(void) {
 
 				case O_outbyte: { // output byte
 						InstCycles = 25;
-						Link *myLink = NULL;
+						Link *myLink = nullptr;
 						switch (Breg) {
 							case Link0Output:
 								myLink = myLinks[0];
@@ -1236,7 +1236,7 @@ inline void CPU::interpret(void) {
 								break;
 						}
 						// Now handle output to real links
-						if (myLink != NULL) {
+						if (myLink != nullptr) {
 							try {
 								myLink->writeByte((BYTE8)Areg & 0xff);
 							} catch (exception &e) {
@@ -1248,7 +1248,7 @@ inline void CPU::interpret(void) {
 					break;
 
 				case O_outword: { // output word
-						Link *myLink = NULL;
+						Link *myLink = nullptr;
 						InstCycles = 25;
 						switch (Breg) {
 							case Link0Output:
@@ -1285,7 +1285,7 @@ inline void CPU::interpret(void) {
 								break;
 						}
 						// Now handle output to real links
-						if (myLink != NULL) {
+						if (myLink != nullptr) {
 							try {
 								myLink->writeWord(Areg);
 							} catch (exception &e) {
@@ -2322,7 +2322,7 @@ inline void CPU::interpret(void) {
 // analyse 'pin'.
 void CPU::bootFromLink0() {
 	bootLen = 0;
-	Link *bootLink = NULL;
+	Link *bootLink = nullptr;
 	int linkNo = -1;
 	Areg = IPtr;
 	Breg = Wdesc;

@@ -33,7 +33,7 @@ TTYLink::TTYLink(int linkNo, bool isServer, const std::string &ttyFileName) :
 }
 
 void TTYLink::initialise() {
-    struct termios serialParameters;
+    struct termios serialParameters{};
     myWriteSequence = myReadSequence = 0;
     // We want to open the port in nodelay mode, so we are informed if the
     // port cannot be opened.

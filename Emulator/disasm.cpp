@@ -11,11 +11,9 @@
 //
 //------------------------------------------------------------------------------
 
-#include <cstdio>
 #include <cstring>
 #include "types.h"
 #include "constants.h"
-#include "log.h"
 #include "flags.h"
 #include "disasm.h"
 #include "opcodes.h"
@@ -61,7 +59,7 @@ char *disassembleDirectOperation(WORD32 Instruction, WORD32 Oreg) {
 	static char buf[255];
 	buf[0] = '\0';
 #if defined(PLATFORM_OSX) || defined(PLATFORM_LINUX)
-	sprintf(buf, "%s #%08X", disassembleDirectInstName(Instruction), Oreg);
+	snprintf(buf, 255, "%s #%08X", disassembleDirectInstName(Instruction), Oreg);
 #elif defined(PLATFORM_WINDOWS)
 	sprintf_s(buf, 255, "%s #%08X", disassembleDirectInstName(Instruction), Oreg);
 #endif
@@ -446,7 +444,7 @@ char *disassembleIndirectOperation(WORD32 Oreg, WORD32 Areg) {
 	buf[0] = '\0';
 	if ((flags & DebugFlags_DebugLevel) >= Debug_OprCodes) {
 #if defined(PLATFORM_OSX) || defined(PLATFORM_LINUX)
-		sprintf(buf, " (O=#%08X) ", Oreg);
+		snprintf(buf, 255, " (O=#%08X) ", Oreg);
 #elif defined(PLATFORM_WINDOWS)
 		sprintf_s(buf, 255, " (O=#%08X) ", Oreg);
 #endif
@@ -454,7 +452,7 @@ char *disassembleIndirectOperation(WORD32 Oreg, WORD32 Areg) {
 	if (Oreg == O_fpentry) {
 		if ((flags & DebugFlags_DebugLevel) >= Debug_OprCodes) {
 #if defined(PLATFORM_OSX) || defined(PLATFORM_LINUX)
-			sprintf(buf, " (fpentry A=#%08X) ", Areg);
+			snprintf(buf, 255, " (fpentry A=#%08X) ", Areg);
 #elif defined(PLATFORM_WINDOWS)
 			sprintf_s(buf, 255, " (fpentry A=#%08X) ", Areg);
 #endif

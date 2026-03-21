@@ -33,6 +33,7 @@ public:
     void resetLink(void);
     int getLinkType(void);
 private:
+    static constexpr int TVS_MSGBUF_SIZE = 128;
     std::string myTVSProgram;
     std::ifstream myTVSProgramStream;
     std::string myTVSInput;
@@ -40,7 +41,8 @@ private:
     std::string myTVSOutput;
     std::ofstream myTVSOutputStream;
     WORD32 myProgramSent, myInputSent;
-    WORD32 myWriteSequence, myReadSequence;
+    WORD32 myWriteSequence{}, myReadSequence{};
+	char myMsgbuf[TVS_MSGBUF_SIZE]{};
 };
 
 #endif // _TVSLINK_H

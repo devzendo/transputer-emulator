@@ -96,8 +96,8 @@ class CPU {
 		inline bool monitor(void);
 
 		void DumpRegs(int logLevel);
-		void DumpQueueRegs(int logLevel);
-		void DumpClockRegs(int logLevel, WORD32 instCycles);
+		void DumpQueueRegs(int logLevel) const;
+		void DumpClockRegs(int logLevel, WORD32 instCycles) const;
 		void disassembleCurrInstruction(int logLevel);
 		WORD32 disassembleRange(WORD32 addr, WORD32 maxlen);
 		void showBreakpointAddresses();

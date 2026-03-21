@@ -18,8 +18,8 @@
 #include <stdexcept>
 #include <system_error>
 #include <sys/stat.h>
-#include <string.h>
-#include <errno.h>
+#include <cstring>
+#include <cerrno>
 using namespace std;
 
 #include "platformdetection.h"
@@ -37,9 +37,9 @@ Memory::Memory() {
 }
 
 void Memory::resetMemory() {
-	myMemory = NULL;
+	myMemory = nullptr;
 	myROMPresent = false;
-	myReadOnlyMemory = NULL;
+	myReadOnlyMemory = nullptr;
 	myReadOnlyMemorySize = 0;
 	mySize = 0;
 	myMemEnd = InternalMemStart;
@@ -47,9 +47,9 @@ void Memory::resetMemory() {
 	myCurrentCycles = 0;
 }
 
-bool Memory::initialise(long initialRAMSize) {
-	myMemory = (BYTE8 *)calloc(initialRAMSize, 1);
-	if (myMemory == NULL) {
+bool Memory::initialise(const long initialRAMSize) {
+	myMemory = static_cast<BYTE8 *>(calloc(initialRAMSize, 1));
+	if (myMemory == nullptr) {
 		logFatal("Failed to allocate memory");
 		return false;
 	}
@@ -78,7 +78,7 @@ bool Memory::initialiseROMFileAndSymbolTable(const char *romFile, SymbolTable *s
 
 // See CWG, p74
 bool Memory::loadROMFile(const char *fileName) {
-	struct stat st;
+	struct stat st{};
 	char msgbuf[255];
 	if (stat(fileName, &st) == -1) {
 #if defined(PLATFORM_OSX) || defined(PLATFORM_LINUX)
@@ -96,7 +96,7 @@ bool Memory::loadROMFile(const char *fileName) {
 	const WORD32 romSize32 = (WORD32) romSize;
 	myReadOnlyMemorySize = romSize32;
 	myReadOnlyMemory = (BYTE8 *)calloc(myReadOnlyMemorySize, 1);
-	if (myReadOnlyMemory == NULL) {
+	if (myReadOnlyMemory == nullptr) {
 		logFatal("Failed to allocate Read-Only memory");
 		return false;
 	}
@@ -135,27 +135,27 @@ bool Memory::loadROMFile(const char *fileName) {
 
 Memory::~Memory() {
 	logDebugF("Memory DTOR - this is 0x%lx, Memory is 0x%lx, ROM is 0x%lx", this, myMemory, myReadOnlyMemory);
-	if (myMemory != NULL) {
+	if (myMemory != nullptr) {
 		logDebug("Memory is not NULL - freeing");
 		free(myMemory);
 	}
-	if (myReadOnlyMemory != NULL) {
+	if (myReadOnlyMemory != nullptr) {
 		logDebug("Read-Only Memory is not NULL - freeing");
 		free(myReadOnlyMemory);
 	}
-	if (myMemory != NULL || myReadOnlyMemory != NULL) {
+	if (myMemory != nullptr || myReadOnlyMemory != nullptr) {
 		resetMemory();
 	}
 }
 
-WORD32 Memory::getMemEnd() {
+WORD32 Memory::getMemEnd() const {
 	return myMemEnd;
 }
 
-int Memory::getMemSize() {
+long Memory::getMemSize() const {
 	return mySize;
 }
-WORD32 Memory::getHighestAccess() {
+WORD32 Memory::getHighestAccess() const {
 	return myHighestAccess;
 }
 
@@ -512,14 +512,14 @@ void Memory::blockCopy(WORD32 len, WORD32 srcAddr, WORD32 destAddr) {
 	}
 }
 
-bool Memory::isLegalMemory(WORD32 addr) {
+bool Memory::isLegalMemory(WORD32 addr) const {
 	return (addr >= InternalMemStart && addr <= myMemEnd) ||
 			(myROMPresent && addr >= myROMStart && addr <= MaxINT);
 }
 
 static char hexdigs[]="0123456789abcdef";
 
-void Memory::hexDump(WORD32 addr, WORD32 len) {
+void Memory::hexDump(const WORD32 addr, const WORD32 len) {
 char line[80];
 WORD32 i;
 WORD32 offset=addr;
@@ -535,7 +535,7 @@ BYTE8 b;
 #if defined(PLATFORM_WINDOWS)
 		sprintf_s(line, sizeof(line), "%08X", offset);
 #elif defined(PLATFORM_OSX) || defined(PLATFORM_LINUX)
-		sprintf(line, "%08X", offset);
+		snprintf(line, 80, "%08X", offset);
 #endif
 		line[8] = ' ';
 		upto16 = (left > 16) ? 16 : left;
@@ -587,7 +587,7 @@ WORD32 w;
 #if defined(PLATFORM_WINDOWS)
 		sprintf_s(line, sizeof(line), "%08X", offset);
 #elif defined(PLATFORM_OSX) || defined(PLATFORM_LINUX)
-		sprintf(line, "%08X", offset);
+		snprintf(line, 80, "%08X", offset);
 #endif
 		line[8] = ' ';
 		upto4Words = (leftBytes > 16) ? 4 : (leftBytes >> 2);
@@ -611,9 +611,9 @@ WORD32 w;
 				BYTE8 b3 = b[3];
 				w = (b3 << 24) | (b2 << 16) | (b1 << 8) | b0;
 #if defined(PLATFORM_WINDOWS)
-				sprintf_s(line + 11 + (9 * x), 8, "%08X", w);
+				sprintf_s(line + 11 + (9 * x), 9, "%08X", w);
 #elif defined(PLATFORM_OSX) || defined(PLATFORM_LINUX)
-				sprintf(line + 11 + (9 * x), "%08X", w);
+				snprintf(line + 11 + (9 * x), 9, "%08X", w);
 #endif
 				line[49 + (x * 5)] = isprint((char)b0) ? ((char)b0) : '.';
 				line[50 + (x * 5)] = isprint((char)b1) ? ((char)b1) : '.';
@@ -624,8 +624,8 @@ WORD32 w;
 				sprintf_s(line + 11 + (9 * x), 8, "--------");
 				sprintf_s(line + 49 + (5 * x), 5, "---- ");
 #elif defined(PLATFORM_OSX) || defined(PLATFORM_LINUX)
-				sprintf(line + 11 + (9 * x), "--------");
-				sprintf(line + 49 + (5 * x), "---- ");
+				snprintf(line + 11 + (9 * x), 9, "--------");
+				snprintf(line + 49 + (5 * x), 6, "---- ");
 #endif
 			}
 			line[19 + (9 * x)] = ' ';
