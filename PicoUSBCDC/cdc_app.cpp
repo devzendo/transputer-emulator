@@ -220,24 +220,24 @@ void _usb_write(uint8_t itf, uint8_t *buf, uint32_t size) {
 uint32_t _usb_read(uint8_t itf, uint8_t *buf, uint32_t size) {
     uint8_t *cbuf = buf;
     uint32_t remaining = size;
-    logDebugF("Interface %d reading %d bytes", itf, remaining);
+    // logDebugF("Interface %d reading %d bytes", itf, remaining);
     while (remaining > 0) {
         usb_poll();
-        logDebugF("Interface %d waiting for %d bytes", itf, remaining);
+        // logDebugF("Interface %d waiting for %d bytes", itf, remaining);
         uint32_t cread = tud_cdc_n_read(itf, cbuf, remaining);
-        logDebugF("Interface %d has read %d bytes", itf, cread);
+        // logDebugF("Interface %d has read %d bytes", itf, cread);
         // usb_poll();
         if (cread == 0) {
-            //logDebugF("Interface %d waiting", itf);
+            // logDebugF("Interface %d waiting", itf);
             // What else can we do? Infinite loop?
-            // board_delay(50);
-            // usb_poll();
+            board_delay(50);
+            usb_poll();
         } else {
             remaining -= cread;
             cbuf += cread;
         }
     }
-    logDebugF("Interface %d finished read %d bytes", itf, size);
+    // logDebugF("Interface %d finished read %d bytes", itf, size);
     return size; // bit of a kludge...
 }
 
