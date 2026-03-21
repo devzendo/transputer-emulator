@@ -51,6 +51,7 @@ void PicoUSBSerialLink::writeByte(BYTE8 buf) {
         logDebugF("Link %d W #%08X %02X (%c)", myLinkNo, myWriteSequence++, buf, isprint(buf) ? buf : '.');
     }
     usb_link_write(&bufstore, 1);
+    usb_link_flush();
 }
 
 void PicoUSBSerialLink::resetLink(void) {
