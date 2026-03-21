@@ -6,11 +6,11 @@ BINDIR=$PARACHUTEPREFIX/bin
 sudo mkdir -p $PARACHUTEPREFIX
 sudo mkdir -p $BINDIR
 
-if [ -f cmake-build-debug/IServer/server/iserver ]; then
-	sudo cp cmake-build-debug/IServer/server/iserver $BINDIR
+if [ -f cmake-build-release/IServer/server/iserver ]; then
+	sudo cp cmake-build-release/IServer/server/iserver $BINDIR
 fi
-if [ -f cmake-build-debug/Emulator/temulate ]; then
-	sudo cp cmake-build-debug/Emulator/temulate $BINDIR
+if [ -f cmake-build-release/Emulator/temulate ]; then
+	sudo cp cmake-build-release/Emulator/temulate $BINDIR
 fi
 
 
