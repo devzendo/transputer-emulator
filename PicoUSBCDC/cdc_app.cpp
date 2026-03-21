@@ -200,17 +200,20 @@ void usb_poll() {
 
 void _usb_write(uint8_t itf, uint8_t *buf, uint32_t size) {
     uint8_t *cbuf = buf;
+    uint32_t remaining = size;
     usb_poll();
     // Potential of infinite loops here.
-    while (size != 0) {
-        uint32_t written = tud_cdc_n_write(itf, cbuf, size);
+    while (remaining > 0) {
+        // logDebugF("Interface %d writing %d bytes", itf, remaining);
+        uint32_t written = tud_cdc_n_write(itf, cbuf, remaining);
         usb_poll();
+        // logDebugF("Interface %d wrote %d bytes", itf, written);
         if (written == 0) {
             // What else can we do? Infinite loop?
             board_delay(50);
             usb_poll();
         } else {
-            size -= written;
+            remaining -= written;
             cbuf += written;
         }
     }
