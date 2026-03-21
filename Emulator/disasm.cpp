@@ -12,6 +12,9 @@
 //------------------------------------------------------------------------------
 
 #include <cstring>
+#ifdef PICO
+#include <cstdio> // for the pico_printf library's snprintf
+#endif
 #include "types.h"
 #include "constants.h"
 #include "flags.h"
@@ -58,7 +61,7 @@ static const char *disassembleDirectInstName(WORD32 Instruction) {
 char *disassembleDirectOperation(WORD32 Instruction, WORD32 Oreg) {
 	static char buf[255];
 	buf[0] = '\0';
-#if defined(PLATFORM_OSX) || defined(PLATFORM_LINUX)
+#if defined(PLATFORM_OSX) || defined(PLATFORM_LINUX) || defined(PLATFORM_PICO)
 	snprintf(buf, 255, "%s #%08X", disassembleDirectInstName(Instruction), Oreg);
 #elif defined(PLATFORM_WINDOWS)
 	sprintf_s(buf, 255, "%s #%08X", disassembleDirectInstName(Instruction), Oreg);
@@ -443,7 +446,7 @@ char *disassembleIndirectOperation(WORD32 Oreg, WORD32 Areg) {
 	static char buf[255];
 	buf[0] = '\0';
 	if ((flags & DebugFlags_DebugLevel) >= Debug_OprCodes) {
-#if defined(PLATFORM_OSX) || defined(PLATFORM_LINUX)
+#if defined(PLATFORM_OSX) || defined(PLATFORM_LINUX) || defined(PLATFORM_PICO)
 		snprintf(buf, 255, " (O=#%08X) ", Oreg);
 #elif defined(PLATFORM_WINDOWS)
 		sprintf_s(buf, 255, " (O=#%08X) ", Oreg);
@@ -451,7 +454,7 @@ char *disassembleIndirectOperation(WORD32 Oreg, WORD32 Areg) {
 	}
 	if (Oreg == O_fpentry) {
 		if ((flags & DebugFlags_DebugLevel) >= Debug_OprCodes) {
-#if defined(PLATFORM_OSX) || defined(PLATFORM_LINUX)
+#if defined(PLATFORM_OSX) || defined(PLATFORM_LINUX) || defined(PLATFORM_PICO)
 			snprintf(buf, 255, " (fpentry A=#%08X) ", Areg);
 #elif defined(PLATFORM_WINDOWS)
 			sprintf_s(buf, 255, " (fpentry A=#%08X) ", Areg);

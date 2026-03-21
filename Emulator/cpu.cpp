@@ -349,7 +349,7 @@ WORD32 CPU::disassembleRange(WORD32 addr, WORD32 maxlen) {
 	line[0] = '\0';
 #if defined(PLATFORM_WINDOWS)
 	sprintf_s(line, 256, "%08X ", addr);
-#elif defined(PLATFORM_OSX) || defined(PLATFORM_LINUX)
+#elif defined(PLATFORM_OSX) || defined(PLATFORM_LINUX) || defined(PLATFORM_PICO)
 	snprintf(line, 256, "%08X ", addr);
 #endif
 	for (caddr = addr; caddr < addr + maxlen; caddr++) {
@@ -360,7 +360,7 @@ WORD32 CPU::disassembleRange(WORD32 addr, WORD32 maxlen) {
 #if defined(PLATFORM_WINDOWS)
 		sprintf_s(misc, 256, "%02X ", b);
 		strcat_s(line, 256, misc); // TODO: fix potential BUFFER OVERFLOW
-#elif defined(PLATFORM_OSX) || defined(PLATFORM_LINUX)
+#elif defined(PLATFORM_OSX) || defined(PLATFORM_LINUX) || defined(PLATFORM_PICO)
 		snprintf(misc, 256, "%02X ", b);
 		strcat(line, misc); // TODO: fix potential BUFFER OVERFLOW
 #endif
@@ -401,7 +401,7 @@ WORD32 CPU::disassembleRange(WORD32 addr, WORD32 maxlen) {
 				oprStart = caddr + 1;
 #if defined(PLATFORM_WINDOWS)
 				sprintf_s(line, 256, "%08X ", oprStart);
-#elif defined(PLATFORM_OSX) || defined(PLATFORM_LINUX)
+#elif defined(PLATFORM_OSX) || defined(PLATFORM_LINUX) || defined(PLATFORM_PICO)
 				snprintf(line, 256, "%08X ", oprStart);
 #endif
 				cOreg = 0;
@@ -425,7 +425,7 @@ WORD32 CPU::disassembleRange(WORD32 addr, WORD32 maxlen) {
 				oprStart = caddr + 1;
 #if defined(PLATFORM_WINDOWS)
 				sprintf_s(line, 256, "%08X ", oprStart);
-#elif defined(PLATFORM_OSX) || defined(PLATFORM_LINUX)
+#elif defined(PLATFORM_OSX) || defined(PLATFORM_LINUX) || defined(PLATFORM_PICO)
 				snprintf(line, 256, "%08X ", oprStart);
 #endif
 				cOreg = 0;
@@ -2438,7 +2438,7 @@ void CPU::emulate(const bool bootFromROM) {
 	// Go...
 	//
 	InstructionStartIPtr = IPtr;
-#ifdef DESKTOP
+
 	if ((flags & DebugFlags_DebugLevel) >= Debug_DisRegs) {
 		DumpRegs(LOGLEVEL_DEBUG);
 	}
@@ -2448,7 +2448,7 @@ void CPU::emulate(const bool bootFromROM) {
 	if ((flags & DebugFlags_Clocks) == DebugFlags_Clocks) {
 		DumpClockRegs(LOGLEVEL_DEBUG, (WORD32)0);
 	}
-#endif
+
 	// For speed, what flags do we turn on before interpreting each instruction?
 	InterpFlagSet = 0;
 	if (IS_FLAG_SET(DebugFlags_Clocks))
@@ -2461,7 +2461,7 @@ void CPU::emulate(const bool bootFromROM) {
 		interpret();
 	}
 	logDebug("---- Ending Emulation ----");
-#ifdef DESKTOP
+
 	if ((flags & DebugFlags_DebugLevel) >= Debug_DisRegs) {
 		DumpRegs(LOGLEVEL_DEBUG);
 	}
@@ -2471,7 +2471,6 @@ void CPU::emulate(const bool bootFromROM) {
 	if ((flags & DebugFlags_Clocks) == DebugFlags_Clocks) {
 		DumpClockRegs(LOGLEVEL_DEBUG, (WORD32)0);
 	}
-#endif
 }
 
 // Executed from emulate, above, and also on receipt of a start instruction.
