@@ -13,7 +13,9 @@
 
 #include <string>
 #include <cerrno>
+#include <termios.h>
 #include <unistd.h>
+#include <sys/ioctl.h>
 #include <sys/fcntl.h>
 
 #include "types.h"
@@ -31,13 +33,53 @@ TTYLink::TTYLink(int linkNo, bool isServer, const std::string &ttyFileName) :
 }
 
 void TTYLink::initialise() {
+    struct termios serialParameters;
     myWriteSequence = myReadSequence = 0;
+    // We want to open the port in nodelay mode, so we are informed if the
+    // port cannot be opened.
     logDebugF("Opening %s read/write", myTTYName.c_str());
-    myFD = open(myTTYName.c_str(), O_RDWR);
+    myFD = open(myTTYName.c_str(), O_RDWR | O_NDELAY);
+	logDebugF("Opened %s read/write, fd=%d", myTTYName.c_str(), myFD);
     if (myFD == -1) {
         snprintf(myMsgbuf, TTY_MSGBUF_SIZE, "Could not open TTY %s: %s", myTTYName.c_str(), strerror(errno));
+        logWarn(myMsgbuf);
         throw std::runtime_error(myMsgbuf);
     }
+
+    // Now change back to delayed mode.
+    if (fcntl(myFD, F_SETFL, fcntl (myFD, F_GETFL) & (~O_NDELAY)) == -1) {
+        snprintf(myMsgbuf, TTY_MSGBUF_SIZE, "Cannot change O_NDELAY on TTY %s: %s", myTTYName.c_str(), strerror(errno));
+        logWarn(myMsgbuf);
+        throw std::runtime_error(myMsgbuf);
+    }
+
+    // Now change the rest of the parameters - non-canonical input, etc.
+//     if (ioctl(myFD, TCGETA, &serialParameters) == -1) {
+//         snprintf(myMsgbuf, TTY_MSGBUF_SIZE, "Cannot ioctl (get) on TTY %s: %s", myTTYName.c_str(), strerror(errno));
+//         logWarn(myMsgbuf);
+//         throw std::runtime_error(myMsgbuf);
+//     }
+//
+//     (void) ioctl (fd, TCGETA, &OriginalSerialParameters);
+//
+//     serialParameters.c_cflag = Baud | CS8 | CLOCAL | CREAD | CRTSCTS;
+//     serialParameters.c_lflag = 0;
+//     serialParameters.c_oflag = 0;
+//     serialParameters.c_iflag = IGNBRK | IGNPAR;
+//     for (i = 0; i < NCC; i++)
+//         serialParameters.c_cc[i] = (unsigned char) 0;
+//
+//     SerialParameters.c_cc[VMIN] = (unsigned char) 0;
+//     SerialParameters.c_cc[VTIME] = (unsigned char) DataTimeout;
+//
+//     if (ioctl (fd, TCSETA, &SerialParameters) == -1) {
+// #ifdef DEBUG
+//         fprintf (stderr, "asy_open: Cannot ioctl (set) on port %s. Errno = %d\n", Port, errno);
+// #endif
+//         return -1;
+//     }
+
+
 }
 
 TTYLink::~TTYLink() {
@@ -51,6 +93,7 @@ TTYLink::~TTYLink() {
 BYTE8 TTYLink::readByte() {
     BYTE8 buf;
     ssize_t readlen = 0;
+	logDebugF("Reading byte from TTY link %d", myLinkNo);
     readlen = read(myFD, &buf, 1);
     if (readlen == 1) {
         if (bDebug) {
