@@ -12,6 +12,7 @@
 //------------------------------------------------------------------------------
 
 #ifdef PICO
+#include "bsp/board_api.h"
 #include "tusb.h"
 #include "cdc_app.h"
 #include "pico/stdlib.h"
@@ -384,12 +385,22 @@ uint32_t getFreeHeap(void) {
 #endif
 
 void doExit(int exitCode) {
+	static char spinner[] = "-\\|/";
+	int spin_index = 0;
 #ifdef PICO
 	blink_interval_ms = BLINK_SUSPENDED;
 
 	while (true) {
+		board_delay(50);
+
 		usb_poll();
 		usb_log_flush();
+		usb_log_write((uint8_t *) "  ", 2);
+		usb_log_write((uint8_t *) &spinner[spin_index], 1);
+		usb_log_write((uint8_t *) "  \r", 3);
+		spin_index = (spin_index + 1) & 0x03;
+		usb_log_flush();
+		usb_poll();
 	}
 #endif
 #ifdef DESKTOP
@@ -438,6 +449,8 @@ int main() {
 				DebugFlags_LinkComms |
 				DebugFlags_Clocks |
 				DebugFlags_Queues |
+				Debug_Disasm |
+				Debug_DisRegs |
 				DebugFlags_IDiag));
 #endif
 
