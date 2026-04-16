@@ -12,9 +12,12 @@
       Ack or Data frame and can be queried for its state. DataAckReceiver, a state machine that
       senses the Rx half of a TxRxPin to clock in any received Ack and/or Data frame.
     * High level: AsyncLink.
-  * Need a Pico USB CDC link, supported on the IServer side by a FIFO that works with a serial device.
-  * Also need logging to go out on a second USB CDC port.
-  * Learning PIO.
+  * Need a Pico USB CDC link, supported on the IServer side by a link that works with a TTY. (Done, although
+    will require porting for Windows, and probably some refinement of the POSIX TTY code on Linux/macOS).
+  * Also need logging to go out on a second USB CDC port (Done).
+  * Learning PIO, to implement a link that doesn't incur CPU usage.
+  * PIO link that works at multiple speeds: 10Mbps for compatibility, max PIO speed, low speed for connection to
+    other microcontroller ports that have to bit-bang (Cheap Yellow Display perhaps?)
   * Make use of both ARM cores:
     * Inter-core link: Core 0's Link 1 could be connected to Core 1's Link 0.
     * Links:
@@ -23,6 +26,8 @@
         * Link 1: To Core 1 Link 0
         * Link 2: 10MHz original Transputer Async link protocol
         * Link 3: Faster Async link protocol
+* Port emulator to the Cheap Yellow Display (ESP32-2432S028), with a Device Server on one core: 
+  * Wifi, Bluetooth, Touch screen, bitmap display, SD card reader, RGB LED, Light dependent resistor, Speaker
 * Testing with the Transputer Validation Suite: all implemented instructions
   pass; need to assess whether the other instructions testable via the TVS but
   not yet currently implemented are required, and implement them.

@@ -35,7 +35,7 @@ limited the C++ standard I could support.
 
 
 ## Project Status
-Last changes in late March 2026.
+Last changes in mid April 2026.
 
 The build for the Raspberry Pi Pico, using USB CDC for diagnostic and link 0 I/O works.
 
@@ -47,6 +47,7 @@ Also working on compatibility with the aid of Mike Brüstle's Transputer Validat
 Also adding debugging facilities to aid the completion of the eForth Transputer port.
 
 Attempting to run other typical Transputer software such as the Inmos occam and C compilers, and the port of Minix. 
+
 
 First release 0.0.1 Midsummer 2019 (13 June 2019) as part of Parachute 0.0.1.
 
