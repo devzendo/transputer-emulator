@@ -15,6 +15,7 @@
   * Need a Pico USB CDC link, supported on the IServer side by a link that works with a TTY. (Done, although
     will require porting for Windows, and probably some refinement of the POSIX TTY code on Linux/macOS).
   * Also need logging to go out on a second USB CDC port (Done).
+  * Refactoring all link abstractions to be asynchronous, and reworking the boot/IO code to work with this.
   * Learning PIO, to implement a link that doesn't incur CPU usage.
   * PIO link that works at multiple speeds: 10Mbps for compatibility, max PIO speed, low speed for connection to
     other microcontroller ports that have to bit-bang (Cheap Yellow Display perhaps?)

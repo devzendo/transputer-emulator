@@ -165,3 +165,5 @@ TEST_F(PeekPokeBootTest, PokeAWordOutsideLegalMemory) {
     terminateBootLoop();
     EXPECT_EQ(IS_FLAG_SET(EmulatorState_Terminate), false);
 }
+
+// TODO boot it!
