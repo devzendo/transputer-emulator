@@ -39,19 +39,23 @@ protected:
 
     void SetUp() override {
         setLogLevel(LOGLEVEL_DEBUG);
-        SET_FLAGS(DebugFlags_LinkComms);
+        SET_FLAGS(DebugFlags_LinkComms | MemAccessDebug_Full | DebugFlags_TerminateOnMemViol);
         logDebug("SetUp start");
 	    myMemory = new Memory();
         if (!myMemory->initialise(1024)) {
             logError("Memory initialisation failed");
             FAIL();
         }
+	    SymbolTable * symbolTable = new SymbolTable();
+        myMemory->initialiseROMFileAndSymbolTable(nullptr, symbolTable);
+
         logDebug("Link setup");
         for (int i = 0; i < 4; i++) {
             // This'll have to change to NamedPipeLink for Windows.
             myControlLinks[i] = new FIFOLink(i, true);
             myControlLinks[i]->initialise();
             myBootLinks[i] = new FIFOLink(i, false);
+            myBootLinks[i]->setDebug(true);
             myBootLinks[i]->initialise();
         }
         logDebug("Boot setup");
@@ -71,9 +75,11 @@ protected:
 
         logDebug("Setup complete");
         logFlush();
+        logDebug("vvvvv TEST vvvvv");
     }
 
     void TearDown() override {
+        logDebug("^^^^^ TEST ^^^^^");
         logDebug("TearDown start");
         // notify?
         if (m_thread != nullptr) {
@@ -93,6 +99,10 @@ protected:
         logFlush();
     }
 
+    void littleSleep() {
+        std::this_thread::sleep_for(std::chrono::milliseconds(100));
+    }
+
     void terminateBootLoop() {
         logDebug("Terminating boot loop");
         // Terminate boot loop by booting:
@@ -107,14 +117,51 @@ protected:
 // With this initial code, synchronous links don't currently provide a mechanism for
 // sensing whether any data is available. Allowing any / all links is an enhancement.
 
-TEST_F(PeekPokeBootTest, PeekAWord) {
-    myMemory->setWord(MemStart, 0xCAFEF00D);
+TEST_F(PeekPokeBootTest, PeekAWordFromLegalMemory) {
+    myMemory->setWord(MemStart + 20, 0xCAFEF00D);
 
     myControlLinks[0]->writeByte(BOOT_PEEK);
-    myControlLinks[0]->writeWord(MemStart);
+    myControlLinks[0]->writeWord(MemStart + 20);
 
     WORD32 word = myControlLinks[0]->readWord();
 
     terminateBootLoop();
     EXPECT_EQ(word, 0xCAFEF00D);
+}
+
+TEST_F(PeekPokeBootTest, PeekAWordFromOutsideLegalMemory) {
+    myControlLinks[0]->writeByte(BOOT_PEEK);
+    myControlLinks[0]->writeWord(MemStart + 1025);
+
+    WORD32 word = myControlLinks[0]->readWord();
+
+    terminateBootLoop();
+    EXPECT_EQ(word, 0xDEADF00D);
+}
+
+TEST_F(PeekPokeBootTest, PokeAWordToLegalMemory) {
+    myControlLinks[0]->writeByte(BOOT_POKE);
+    myControlLinks[0]->writeWord(MemStart + 20);
+    myControlLinks[0]->writeWord(0x12345678);
+
+    littleSleep();
+    WORD32 word = myMemory->getWord(MemStart + 20);
+
+    terminateBootLoop();
+    EXPECT_EQ(word, 0x12345678);
+}
+
+// We are setting the flags so that memory violations cause the terminate
+// flag to be set. The boot code will not allow writes outside memory, so
+// this attempt will NOT cause the terminate flag to be set, but cannot
+// otherwise be detected- a warning diag is reported. Manually observe this:
+TEST_F(PeekPokeBootTest, PokeAWordOutsideLegalMemory) {
+    myControlLinks[0]->writeByte(BOOT_POKE);
+    myControlLinks[0]->writeWord(MemStart + 1025);
+    myControlLinks[0]->writeWord(0x12345678);
+
+    littleSleep();
+
+    terminateBootLoop();
+    EXPECT_EQ(IS_FLAG_SET(EmulatorState_Terminate), false);
 }

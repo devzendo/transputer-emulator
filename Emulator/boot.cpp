@@ -55,18 +55,21 @@ void Boot::start() {
     do {
         try {
             ctrl = bootLink->readByte();
+            if (IS_FLAG_SET(DebugFlags_LinkComms)) {
+                logDebugF("Boot ctrl byte = %02X", ctrl);
+            }
             switch (ctrl) {
                 case BOOT_PEEK: // peek
                     try {
                         WORD32 addr = bootLink->readWord();
                         WORD32 value = 0xDEADF00D;
-//                        if (myMemory->isLegalMemory(addr)) {
+                        if (myMemory->isLegalMemory(addr)) {
                             value = myMemory->getWord(addr);
-                        // } else {
-                        //     logWarnF("Boot-peek requested read from bad address %08X", addr);
-                        // }
-                        if (IS_FLAG_SET(DebugFlags_LinkComms)) {
-                            logDebugF("Boot-peek @ %08X = %08X", addr, value);
+                            if (IS_FLAG_SET(DebugFlags_LinkComms)) {
+                                logDebugF("Boot-peek @ %08X = %08X", addr, value);
+                            }
+                        } else {
+                            logWarnF("Boot-peek requested read from bad address %08X", addr);
                         }
                         bootLink->writeWord(value);
                     } catch (exception &e) {
@@ -74,6 +77,24 @@ void Boot::start() {
                         exit(1);
                     }
                     break;
+                case BOOT_POKE:
+                    try {
+                        WORD32 addr = bootLink->readWord();
+                        WORD32 value = bootLink->readWord();
+                        if (myMemory->isLegalMemory(addr)) {
+                            myMemory->setWord(addr, value);
+                            if (IS_FLAG_SET(DebugFlags_LinkComms)) {
+                                logDebugF("Boot-poke stored %08X @ %08X", value,  addr);
+                            }
+                        } else {
+                            logWarnF("Boot-poke requested write to bad address %08X value %08X", addr, value);
+                        }
+                    } catch (exception &e) {
+                        logFatalF("I/O failure on link %d during boot-poke: %s", linkNo, e.what());
+                        exit(1);
+                    }
+                    break;
+
             }
         } catch (exception &e) {
             logFatalF("Boot failed to read control byte from link %d: %s", linkNo, e.what());
