@@ -18,6 +18,10 @@
 #include "memory.h"
 #include "link.h"
 
+const BYTE8 BOOT_PEEK = 1;
+const BYTE8 BOOT_POKE = 0;
+
+
 class Boot {
 public:
     // 2-phase CTOR since there's only one global Boot

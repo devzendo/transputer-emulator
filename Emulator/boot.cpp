@@ -14,7 +14,12 @@
 
 // using namespace std;
 
+#include <exception>
+using namespace std;
+
 #include "boot.h"
+#include "flags.h"
+#include "log.h"
 
 Boot::Boot() = default;
 
@@ -28,6 +33,51 @@ bool Boot::initialise(Memory *memory, Link *links[4]) {
     return true;
 }
 
+// See TTH, p53
+// Transputer Instruction Set - Appendix ("start") states that the first link to receive a
+// byte handles the boot/peek/poke protocol, and that the links are polled in a
+// repeating cycle starting at link 0. Any number of sequential peeks/pokes are allowed
+// down any link before bootstrap takes place.
+// Note that Parachute is not a microcode emulator, and does not have a reset or
+// analyse 'pin'.
 void Boot::start() {
+    // TODO make use of multiple links, later.
+	int linkNo = 0;
+	Link *bootLink = myLinks[linkNo];
 
+    BYTE8 bootLen = 0;
+    BYTE8 ctrl = 0;
+    // Repeatedly read first byte:
+    // 'poke': 0 => read address word, data word, store data word at address
+    // 'peek': 1 => read word, output word at that address
+    // 'boot': x where x>1, x is the length of boot code to read into MemStart onwards
+    do {
+        try {
+            ctrl = bootLink->readByte();
+            switch (ctrl) {
+                case BOOT_PEEK: // peek
+                    try {
+                        WORD32 addr = bootLink->readWord();
+                        WORD32 value = 0xDEADF00D;
+//                        if (myMemory->isLegalMemory(addr)) {
+                            value = myMemory->getWord(addr);
+                        // } else {
+                        //     logWarnF("Boot-peek requested read from bad address %08X", addr);
+                        // }
+                        if (IS_FLAG_SET(DebugFlags_LinkComms)) {
+                            logDebugF("Boot-peek @ %08X = %08X", addr, value);
+                        }
+                        bootLink->writeWord(value);
+                    } catch (exception &e) {
+                        logFatalF("I/O failure on link %d during boot-peek: %s", linkNo, e.what());
+                        exit(1);
+                    }
+                    break;
+            }
+        } catch (exception &e) {
+            logFatalF("Boot failed to read control byte from link %d: %s", linkNo, e.what());
+            exit(1);
+        }
+    } while (ctrl <= 1);
+    logDebug("Boot done");
 }
