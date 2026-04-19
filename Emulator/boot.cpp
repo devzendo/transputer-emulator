@@ -51,6 +51,7 @@ void Boot::start() {
     // 'poke': 0 => read address word, data word, store data word at address
     // 'peek': 1 => read word, output word at that address
     // 'boot': x where x>1, x is the length of boot code to read into MemStart onwards
+    // CWG p74 states that the address does not need to be word-aligned.
     do {
         try {
             ctrl = bootLink->readByte();

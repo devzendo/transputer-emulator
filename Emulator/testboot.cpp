@@ -107,14 +107,14 @@ protected:
 // With this initial code, synchronous links don't currently provide a mechanism for
 // sensing whether any data is available. Allowing any / all links is an enhancement.
 
-TEST_F(PeekPokeBootTest, PeekAByte) {
-    myMemory->setByte(MemStart, 0x69);
+TEST_F(PeekPokeBootTest, PeekAWord) {
+    myMemory->setWord(MemStart, 0xCAFEF00D);
 
     myControlLinks[0]->writeByte(BOOT_PEEK);
     myControlLinks[0]->writeWord(MemStart);
 
-    BYTE8 byte = myControlLinks[0]->readByte();
+    WORD32 word = myControlLinks[0]->readWord();
 
     terminateBootLoop();
-    EXPECT_EQ(byte, 0x69);
+    EXPECT_EQ(word, 0xCAFEF00D);
 }
