@@ -33,8 +33,8 @@ class SymbolTable {
 		std::string possibleSymbolString(WORD32 addr);
 		~SymbolTable();
 	private:
-		map<std::string, WORD32> symbolToAddress;
-		map<WORD32, std::string> addressToSymbol;
+		std::map<std::string, WORD32> symbolToAddress;
+		std::map<WORD32, std::string> addressToSymbol;
 };
 
 #endif // DESKTOP

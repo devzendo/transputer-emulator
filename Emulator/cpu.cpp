@@ -2315,18 +2315,16 @@ inline void CPU::interpret(void) {
 
 
 // See TTH, p53
-// Transputer Instruction Set - Appendix states that the first link to receive a
+// Transputer Instruction Set - Appendix ("start") states that the first link to receive a
 // byte handles the boot/peek/poke protocol, and that the links are polled in a
-// repeating cycle starting at link 0.
+// repeating cycle starting at link 0. Any number of sequential peeks/pokes are allowed
+// down any link before bootstrap takes place.
 // Note that Parachute is not a microcode emulator, and does not have a reset or
 // analyse 'pin'.
 void CPU::bootFromLink0() {
 	bootLen = 0;
 	Link *bootLink = nullptr;
 	int linkNo = -1;
-	Areg = IPtr;
-	Breg = Wdesc;
-	IPtr = MemStart;
 	// Boot from the link in Creg
 	switch (Creg) {
 		case Link0Input: linkNo = 0; break;
@@ -2486,12 +2484,14 @@ void CPU::start() {
 		Creg = 0xDEADF00D; // CWG states 'undefined'.
 	} else {
 #endif
-		logDebug("---- Starting Boot from Link 0 ----");
-		// NB: CWG states Areg is set to the previous value of IPtr, Breg the previous of Wdesc,
-		// Creg a pointer to the link the Transputer booted from.
+		logDebug("---- Starting Boot from Links ----");
 		IPtr = MemStart;
+		Areg = IPtr;
+		Breg = Wdesc;
 		Creg = Link0Input; // The default IServer link input
 		bootFromLink0();
+		// NB: CWG p74 states Areg is set to the previous value of IPtr, Breg the previous of Wdesc,
+		// Creg a pointer to the link the Transputer booted from.
 		// The initial workspace is the first free word of memory. A low priority process.
 		Wdesc = WordAlign((WORD32)(IPtr + (WORD32)bootLen));
 #ifdef DESKTOP

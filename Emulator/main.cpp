@@ -441,16 +441,16 @@ int main() {
 	flags = 0;
 
 #ifdef EMBEDDED
-	int logLevel = LOGLEVEL_DEBUG;
+	int logLevel = LOGLEVEL_INFO;
 	setLogLevel(logLevel);
 	SET_FLAGS((Debug_OprCodes |
 				MemAccessDebug_ReadWriteData | // Full is too much
 				DebugFlags_TerminateOnMemViol |
-				DebugFlags_LinkComms |
+				// DebugFlags_LinkComms |
 				DebugFlags_Clocks |
 				DebugFlags_Queues |
-				Debug_Disasm |
-				Debug_DisRegs |
+				// Debug_Disasm |
+				// Debug_DisRegs |
 				DebugFlags_IDiag));
 #endif
 
