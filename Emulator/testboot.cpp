@@ -166,4 +166,27 @@ TEST_F(PeekPokeBootTest, PokeAWordOutsideLegalMemory) {
     EXPECT_EQ(IS_FLAG_SET(EmulatorState_Terminate), false);
 }
 
-// TODO boot it!
+TEST_F(PeekPokeBootTest, BootIt) {
+    int boot_length = 7;
+    myControlLinks[0]->writeByte(boot_length);
+    myControlLinks[0]->writeByte(0x00);
+    myControlLinks[0]->writeByte(0x01);
+    myControlLinks[0]->writeByte(0x02);
+    myControlLinks[0]->writeByte(0x03);
+    myControlLinks[0]->writeByte(0x04);
+    myControlLinks[0]->writeByte(0x05);
+    myControlLinks[0]->writeByte(0x06);
+
+    littleSleep();
+
+    // The boot loop will have terminated.
+    EXPECT_EQ(myMemory->getByte(MemStart + 0), 0x00);
+    EXPECT_EQ(myMemory->getByte(MemStart + 1), 0x01);
+    EXPECT_EQ(myMemory->getByte(MemStart + 2), 0x02);
+    EXPECT_EQ(myMemory->getByte(MemStart + 3), 0x03);
+    EXPECT_EQ(myMemory->getByte(MemStart + 4), 0x04);
+    EXPECT_EQ(myMemory->getByte(MemStart + 5), 0x05);
+    EXPECT_EQ(myMemory->getByte(MemStart + 6), 0x06);
+
+    EXPECT_EQ(myMemory->getByte(MemStart + 7), 0x00);
+}

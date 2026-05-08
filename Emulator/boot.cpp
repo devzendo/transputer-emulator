@@ -15,6 +15,8 @@
 // using namespace std;
 
 #include <exception>
+
+#include "memloc.h"
 using namespace std;
 
 #include "boot.h"
@@ -41,7 +43,7 @@ bool Boot::initialise(Memory *memory, Link *links[4]) {
 // Note that Parachute is not a microcode emulator, and does not have a reset or
 // analyse 'pin'.
 void Boot::start() {
-    // TODO make use of multiple links, later.
+    // TODO make use of multiple links, later. Return the link that booted, it'll go in CReg.
 	int linkNo = 0;
 	Link *bootLink = myLinks[linkNo];
 
@@ -94,7 +96,24 @@ void Boot::start() {
                         exit(1);
                     }
                     break;
-
+                default:
+                    bootLen = ctrl;
+                    try {
+                        if (IS_FLAG_SET(DebugFlags_LinkComms)) {
+                            logDebugF("Primary bootstrap contains 0x%02X bytes", bootLen);
+                        }
+                        WORD32 addr = MemStart;
+                        for (int i = 0; i < ctrl; i++) {
+                            BYTE8 value = bootLink->readByte();
+                            // addr is going to be valid, always. There's always at least
+                            // 0xff bytes of memory after MemStart.
+                            myMemory->setByte(addr++, value);
+                        }
+                    } catch (exception &e) {
+                        logFatalF("I/O failure on link %d during bootstrap: %s", linkNo, e.what());
+                        exit(1);
+                    }
+                    break;
             }
         } catch (exception &e) {
             logFatalF("Boot failed to read control byte from link %d: %s", linkNo, e.what());
