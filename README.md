@@ -63,8 +63,8 @@ First release:
 * A Cross Platform system that can run "Hello World" (via my NodeServer (custom protocol) implementation).
 
 Second release (work in progress):
-* Convert the NodeServer to be IServer compatible, implementing all frame types needed by "Hello World" and
-  eForth. Similarly, convert "Hello World" and eForth to be IServer compatible.
+* Converted the NodeServer to be IServer compatible, implementing all frame types needed by "Hello World" and
+  eForth. Similarly, converted "Hello World" and eForth to be IServer compatible.
 * IServer is unfinished; it implements the following frame types:
   * Id (Version)
   * Exit
@@ -88,18 +88,32 @@ Second release (work in progress):
   * !IO: Initialise UART
 * Allow validation using Mike's TVS and pass tests for all implemented instructions
 * Added a build for the Raspberry Pi Pico - that can run Hello World booted from a link; that has a single
-  core, a single link over CDC-USB Serial, and a diagnostics output also over a separate USB CDC port. 
+  core, a single link over CDC-USB Serial, and a diagnostics output also over a separate USB CDC port. All
+  log calls go out over this port.
   The memory/flash use is quantified.
+* The IServer has a link that can run over a TTY (to connect to a Pi Pico emulator).
+* Asynchronous link abstraction using GPIO:
+  * Lowest level: TxRxPin, represents a pair of abstract pins. GPIOTxRxPin would use Pi Pico
+    GPIO pins. Tests would use a CrosswiredTxRxPinPair, which gives a pair of TxRxPins, A and B,
+    where setting A's Tx pin enables B's Rx pin. Setting B's Tx enables A's Rx. An AsyncLink
+    would take a TxRxPin, and tests would create two AsyncLinks with the two TxRxPins back-to-back.
+  * OversampledTxRxPin handles the potentially noisy input and performs majority voting on it to yield
+    a cleaner set of bit-long samples to the next layer...
+  * Medium level: DataAckSender, state machine that uses the Tx half of a TxRxPin to clock out an
+    Ack or Data frame and can be queried for its state. DataAckReceiver, a state machine that
+    senses the Rx half of a TxRxPin to clock in any received Ack and/or Data frame.
+  * High level: AsyncLink.
 
-  
 Third release:
-* Capable of running eForth.
+* Capable of running eForth, possibly the Small-C compiler.
 * Note that the IServer's file handling does not yet prevent directory traversal vulnerabilities.
+* Raspberry Pi Pico bit-banged links replaced with PIO links.
 
 Fourth release:
 * More IServer implementation.
 * Prevent directory-traversal vulnerabilities in IServer's file handling - limit operations to under its root directory.
 * Complete Integer functionality.
+* Port to the Cheap Yellow Display.
 
 Fifth release:
 * Complete Floating Point functionality.
