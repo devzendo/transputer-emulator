@@ -13,6 +13,8 @@
 
 #include <string>
 #include <cerrno>
+#include <exception>
+#include <stdexcept>
 #include <termios.h>
 #include <unistd.h>
 #include <sys/ioctl.h>
