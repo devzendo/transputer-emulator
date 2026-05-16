@@ -12,9 +12,7 @@
 //------------------------------------------------------------------------------
 
 #include <cstring>
-#ifdef PICO
-#include <cstdio> // for the pico_printf library's snprintf
-#endif
+#include <cstdio> // needed generally, and also for the pico_printf library's snprintf
 #include "types.h"
 #include "constants.h"
 #include "flags.h"
