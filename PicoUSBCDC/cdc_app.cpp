@@ -39,7 +39,7 @@
  *
  */
 
-#include "bsp/board_api.h"
+#include "bsp/board.h"
 #include "tusb.h"
 // #include "pico/stdlib.h" // needed by tinyusb
 #include "cdc_app.h"
