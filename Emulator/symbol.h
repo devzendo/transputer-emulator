@@ -14,6 +14,7 @@
 #ifndef _SYMBOL_H
 #define _SYMBOL_H
 
+#include <string>
 #include <map>
 
 #include "types.h"
