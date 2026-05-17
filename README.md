@@ -487,12 +487,14 @@ Prerequisites:
 - Raspberry Pi Pico (build on Intel ~ Ubuntu 24.04; have had no success yet on macOS/Apple Silicon)
   - The Pico SDK and toolchain:
     `apt install gcc-arm-none-eabi libnewlib-arm-none-eabi build-essential`
-    The Pico SDK should be cloned from https://github.com/raspberrypi/pico-sdk
+    The Pico SDK should be cloned from https://github.com/raspberrypi/pico-sdk and should be at commit a1438df
+    'SDK 2.2.0 Release'.
     Set the `PICO_SDK_PATH` environment variable to point to this copy of the Pico SDK.
     In the clone of the Pico SDK, you must:
     `git submodule init`
     `git submodule update`
-    If you build and get problems with 'tusb.h' not found, you haven't updated the git submodules in the Pico SDK.
+    If you build and get problems with 'tusb.h' or 'bsp/board.h' not found, you haven't updated the git submodules in
+    the Pico SDK.
     CMake can be installed from apt, no need for a manual install.
 
 The typical install location is:
