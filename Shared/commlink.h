@@ -17,7 +17,7 @@
 #include "types.h"
 #include "link.h"
 
-class HANDLE; // Defined in Windows.h
+#include <Windows.h> // for HANDLE, I/O functions.
 
 class CommLink : public Link {
 public:
