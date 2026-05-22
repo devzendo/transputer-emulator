@@ -16,7 +16,11 @@
 #include "gtest/gtest.h"
 using namespace std;
 #include "boot.h"
+#if defined(PLATFORM_WINDOWS)
+#include "namedpipelink.h"
+#elif defined(PLATFORM_OSX) || defined(PLATFORM_LINUX)
 #include "fifolink.h"
+#endif
 #include "log.h"
 #include "memory.h"
 #include "types.h"
@@ -51,10 +55,17 @@ protected:
 
         logDebug("Link setup");
         for (int i = 0; i < 4; i++) {
-            // This'll have to change to NamedPipeLink for Windows.
+#if defined(PLATFORM_WINDOWS)
+            myControlLinks[i] = new NamedPipeLink(i, true);
+#elif defined(PLATFORM_OSX) || defined(PLATFORM_LINUX)
             myControlLinks[i] = new FIFOLink(i, true);
+#endif
             myControlLinks[i]->initialise();
+#if defined(PLATFORM_WINDOWS)
+            myBootLinks[i] = new NamedPipeLink(i, false);
+#elif defined(PLATFORM_OSX) || defined(PLATFORM_LINUX)
             myBootLinks[i] = new FIFOLink(i, false);
+#endif
             myBootLinks[i]->setDebug(true);
             myBootLinks[i]->initialise();
         }
