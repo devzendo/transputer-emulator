@@ -256,7 +256,7 @@ bool processCommandLine(int argc, char *argv[]) {
 					char symbolName[40];
 					WORD32 breakpointAddress = 0;
 #if defined(PLATFORM_WINDOWS)
-					if (sscanf_s(&argv[i][2], "%s", symbolName) == 1) {
+					if (sscanf_s(&argv[i][2], "%s", sizeof(symbolName), symbolName) == 1) {
 #elif defined(PLATFORM_OSX) || defined(PLATFORM_LINUX)
 					if (sscanf(&argv[i][2], "%s", symbolName) == 1) {
 #endif
@@ -281,7 +281,7 @@ bool processCommandLine(int argc, char *argv[]) {
 				case 's': {
 					char symbolFile[128];
 #if defined(PLATFORM_WINDOWS)
-					if (sscanf_s(&argv[i][2], "%s", symbolFile) == 1) {
+					if (sscanf_s(&argv[i][2], "%s", sizeof(symbolFile), symbolFile) == 1) {
 #elif defined(PLATFORM_OSX) || defined(PLATFORM_LINUX)
 					if (sscanf(&argv[i][2], "%s", symbolFile) == 1) {
 #endif
