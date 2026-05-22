@@ -15,6 +15,7 @@
 #include <cctype>
 #include <cstring>
 #include <fstream>
+#include <sstream>
 #include "platformdetection.h"
 #include "link.h"
 
@@ -117,6 +118,7 @@ bool LinkFactory::processCommandLine(int argc, char *argv[]) {
 				logFatalF("%s must supply a COM port number (e.g. -T3 for COM3:)", argv[i]);
 				return false;
 			}
+			char n;
 			int com;
 			if (sscanf(argv[i], "-T%d%d", &n, &com) != 2) {
 				logFatalF("%s is not of the form -T<link><COM-number> (e.g. -T03 for Link 0 = COM3:)...", argv[i]);
