@@ -78,10 +78,12 @@ if(NOT(EMBEDDED))
   target_link_libraries(testlink parachutedev gtest gmock_main parachutedesktop)
   add_test(NAME testlink COMMAND testlink)
 
+if(NOT(WIN32))
   add_executable(testasynclink testasynclink.cpp)
   target_link_libraries(testasynclink parachutedev gtest gmock_main parachutedesktop)
   add_test(NAME testasynclink COMMAND testasynclink)
-
+endif()
+  
   add_executable(testfilesystem testfilesystem.cpp)
   target_link_libraries(testfilesystem testfixtures parachutedev gtest gmock_main gsl parachutedesktop)
   add_test(NAME testfilesystem COMMAND testfilesystem)
