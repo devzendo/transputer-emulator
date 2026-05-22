@@ -29,10 +29,6 @@
 #include <pico/sync.h>
 #endif
 
-#if defined(PLATFORM_WINDOWS)
-typedef unsigned int uint;
-#endif
-
 #include <sys/types.h>
 #include "types.h"
 #include "link.h"
