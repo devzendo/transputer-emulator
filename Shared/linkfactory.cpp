@@ -120,7 +120,7 @@ bool LinkFactory::processCommandLine(int argc, char *argv[]) {
 			}
 			char n;
 			int com;
-			if (sscanf_s(argv[i], "-T%1c%d", &n, sizeof(char), &com, sizeof(int)) != 2) {
+			if (sscanf_s(argv[i], "-T%1c%d", &n, (unsigned)sizeof(char), &com) != 2) {
 				logFatalF("%s is not of the form -T<link><COM-number> (e.g. -T03 for Link 0 = COM3:)...", argv[i]);
 				return false;
 			}
