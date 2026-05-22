@@ -84,9 +84,12 @@ void usage() {
 	logInfo("  -h    Displays this usage summary");
 	logInfo("  -l<X> Sets log level. X is one of [diwef] for DEBUG, INFO");
 	logInfo("        WARN, ERROR or FATAL. Default is INFO");
-	logInfo("  -L<N><T> Sets link type. N is 0..3 and T is F, S, M for");
-	logInfo("        FIFO, Socket or shared Memory. Default is FIFO.");
-	logInfo("        (only FIFO implemented yet)");
+	logInfo("  -L<N><T> Sets link type. N is 0..3 and T is F, S, M, T for");
+	logInfo("        FIFO, Socket, shared Memory, TTY (COM port on Windows).");
+	logInfo("        Default is FIFO.");
+	logInfo("        (only FIFO & TTY implemented yet)");
+	logInfo("  -T<N><TTY device file|COM number> (e.g. -T0/dev/tty.usbmodem2102 or -T013 for COM13:) for link N 0..3");
+	logInfo("        (Forces link N to type T)");
 	logInfo("  -m<X> Sets initial memory size to X MB");
 	logInfo("  -i    Enters interactive monitor immediately");
 	logInfo("  -j    Enables break on j0");

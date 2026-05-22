@@ -83,10 +83,11 @@ void usage() {
 	logInfo("  -l<X> Sets log level. X is one of [diwef] for DEBUG, INFO");
 	logInfo("        WARN, ERROR or FATAL. Default is INFO");
 	logInfo("  -L<N><T> Sets link type. N is 0..3 and T is F, S, M, T for");
-	logInfo("        FIFO, Socket, shared Memory, TTY. Default is FIFO.");
+	logInfo("        FIFO, Socket, shared Memory, TTY (COM port on Windows).");
+    logInfo("        Default is FIFO.");
 	logInfo("        (only FIFO & TTY implemented yet)");
 	logInfo("  -r<directory> Sets the root directory served by the IServer. Current directory if not given.");
-	logInfo("  -T<N><TTY device file> (e.g. /dev/tty.usbmodem2102 or COM13:) for link N 0..3");
+	logInfo("  -T<N><TTY device file|COM number> (e.g. -T0/dev/tty.usbmodem2102 or -T013 for COM13:) for link N 0..3");
 	logInfo("        (Forces link N to type T)");
 	logInfo("Any options not understood by the IServer are stored to be made available to the transputer.");
 }

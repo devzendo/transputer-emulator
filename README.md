@@ -35,7 +35,7 @@ limited the C++ standard I could support.
 
 
 ## Project Status
-Last changes in mid April 2026.
+Last changes in late May 2026.
 
 The build for the Raspberry Pi Pico, using USB CDC for diagnostic and link 0 I/O works.
 
@@ -91,7 +91,8 @@ Second release (work in progress):
   core, a single link over CDC-USB Serial, and a diagnostics output also over a separate USB CDC port. All
   log calls go out over this port.
   The memory/flash use is quantified.
-* The IServer has a link that can run over a TTY (to connect to a Pi Pico emulator).
+* The IServer has a link that can run over a TTY (Linux/macOS) or COM port (Windows) to connect to a Pi
+  Pico emulator.
 * Asynchronous link abstraction using GPIO:
   * Lowest level: TxRxPin, represents a pair of abstract pins. GPIOTxRxPin would use Pi Pico
     GPIO pins. Tests would use a CrosswiredTxRxPinPair, which gives a pair of TxRxPins, A and B,

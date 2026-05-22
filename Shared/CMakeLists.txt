@@ -1,5 +1,5 @@
 if(WIN32)
-    set(platform_sources namedpipelink.cpp namedpipelink.h ttylink.cpp ttylink.h)
+    set(platform_sources namedpipelink.cpp namedpipelink.h commlink.cpp commlink.h)
 endif(WIN32)
 if(UNIX AND NOT(PICO))
     set(platform_sources fifolink.cpp fifolink.h ttylink.cpp ttylink.h)

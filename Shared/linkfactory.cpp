@@ -24,7 +24,7 @@
 #elif defined(PLATFORM_WINDOWS)
 #include <windows.h>
 #include "namedpipelink.h"
-#include "ttylink.h"
+#include "commlink.h"
 #elif defined(PLATFORM_PICO)
 #include "../PicoUSBCDC/picousbseriallink.h"
 #endif
@@ -91,7 +91,7 @@ bool LinkFactory::processCommandLine(int argc, char *argv[]) {
 				case 'T': myLinkTypes[n - '0'] = LinkType_TTY; break;
 			}
 		}
-#if defined(PLATFORM_OSX) || defined(PLATFORM_LINUX) || defined(PLATFORM_WINDOWS)
+#if defined(PLATFORM_OSX) || defined(PLATFORM_LINUX)
 		if (argv[i][0] == '-' && argv[i][1] == 'T') {
 			if (strlen(argv[i]) <= 3) {
 				logFatalF("%s must supply a TTY device filename", argv[i]);
@@ -108,7 +108,30 @@ bool LinkFactory::processCommandLine(int argc, char *argv[]) {
 			}
 			myLinkFileNames[n - '0'] = std::string(argv[i] + 3);
 			myLinkTypes[n - '0'] = LinkType_TTY;
-			logDebugF("Link %d TTY device filename: %s", n - '0', myLinkFileNames[n - '0'].c_str());
+			logDebugF("Link %d COM device filename: %s", n - '0', myLinkFileNames[n - '0'].c_str());
+		}
+#endif
+#if defined(PLATFORM_WINDOWS)
+		if (argv[i][0] == '-' && argv[i][1] == 'T') {
+			if (strlen(argv[i]) <= 3) {
+				logFatalF("%s must supply a COM port number (e.g. -T3 for COM3:)", argv[i]);
+				return false;
+			}
+			int com;
+			if (sscanf(argv[i], "-T%d%d", &n, &com) != 2) {
+				logFatalF("%s is not of the form -T<link><COM-number> (e.g. -T03 for Link 0 = COM3:)...", argv[i]);
+				return false;
+			}
+			if (n > '3') {
+				logFatalF("%s is not in range -T<0..3><COM-number>", argv[i]);
+				return false;
+			}
+			std::ostringstream comfile;
+			// See https://www.systutorials.com/com-port-programming-in-win32/
+			comfile << "\\\\.\\COM" << com;
+			myLinkFileNames[n - '0'] = comfile.str();
+			myLinkTypes[n - '0'] = LinkType_TTY;
+			logDebugF("Link %d COM device filename: %s", n - '0', myLinkFileNames[n - '0'].c_str());
 		}
 #endif
 #if defined(PLATFORM_OSX) || defined(PLATFORM_LINUX) || defined(PLATFORM_WINDOWS)
@@ -141,7 +164,7 @@ bool LinkFactory::processCommandLine(int argc, char *argv[]) {
 #if defined(PLATFORM_OSX) || defined(PLATFORM_LINUX) || defined(PLATFORM_WINDOWS)
 	for (int i = 0; i < 4; i++) {
 		if (myLinkTypes[i] == LinkType_TTY && myLinkFileNames[i].empty()) {
-			logFatalF("TTY link %d has not been given a device filename", i);
+			logFatalF("TTY/COM link %d has not been given a device filename", i);
 			linksAllGood = false;
 		}
 	}
@@ -193,12 +216,15 @@ Link *LinkFactory::createLink(int linkNo) {
 			newLink = new PicoUSBSerialLink(linkNo, bServer);
 			break;
 #endif
-#if defined(PLATFORM_OSX) || defined(PLATFORM_LINUX) || defined(PLATFORM_WINDOWS)
 		case LinkType_TTY:
-			logDebugF("Link %d TTY", linkNo);
+			logDebugF("Link %d TTY/COM", linkNo);
+#if defined(PLATFORM_OSX) || defined(PLATFORM_LINUX)
 			newLink = new TTYLink(linkNo, bServer, myLinkFileNames[linkNo]);
-			break;
 #endif
+#if defined(PLATFORM_WINDOWS)
+			newLink = new CommLink(linkNo, bServer, myLinkFileNames[linkNo]);
+#endif
+			break;
 		default:
 			logFatal("Unknown link type requested");
 			return nullptr;
