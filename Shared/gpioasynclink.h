@@ -30,7 +30,7 @@
 #endif
 
 #if defined(PLATFORM_WINDOWS)
-#define uint unsigned int
+typedef unsigned int uint;
 #endif
 
 #include <sys/types.h>
