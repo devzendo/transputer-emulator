@@ -18,7 +18,7 @@
 #include "link.h"
 
 #include <fileapi.h> // for I/O functions.
-#include <winnt.h> // for HANDLE
+#include <windef.h> // for HANDLE
 
 class CommLink : public Link {
 public:
