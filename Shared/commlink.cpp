@@ -14,7 +14,6 @@
 #include <string>
 #include <exception>
 #include <stdexcept>
-#include <Windows.h> // For the Win32 Serial API
 #include "types.h"
 #include "link.h"
 #include "commlink.h"
