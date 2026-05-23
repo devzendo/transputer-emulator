@@ -12,7 +12,6 @@
 //------------------------------------------------------------------------------
 
 #include <string>
-#include <exception>
 #include <stdexcept>
 #include "types.h"
 #include "link.h"

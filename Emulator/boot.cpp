@@ -12,8 +12,6 @@
 //
 //------------------------------------------------------------------------------
 
-// using namespace std;
-
 #include <exception>
 
 #include "memloc.h"
