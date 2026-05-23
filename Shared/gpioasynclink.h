@@ -27,6 +27,9 @@
 
 #ifdef PICO
 #include <pico/sync.h>
+// uint is picked up from pico/types.h
+#else
+typedef unsigned int uint; // which is what pico/types.h defines it as.
 #endif
 
 #include <sys/types.h>

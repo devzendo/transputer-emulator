@@ -2,13 +2,12 @@ if(WIN32)
     set(platform_sources namedpipelink.cpp namedpipelink.h commlink.cpp commlink.h)
 endif(WIN32)
 if(UNIX AND NOT(PICO))
-    set(platform_sources fifolink.cpp fifolink.h ttylink.cpp ttylink.h
-        gpioasynclink.h gpioasynclink.cpp)
+    set(platform_sources fifolink.cpp fifolink.h ttylink.cpp ttylink.h)
 endif(UNIX AND NOT(PICO))
 if(PICO)
     # Links can throw, perhaps review that.
     set(PICO_CXX_ENABLE_EXCEPTIONS 1)
-    set(platform_sources gpioasynclink.h gpioasynclink.cpp)
+    set(platform_sources ) # nothing
 endif(PICO)
 if(EMBEDDED)
     set(non_embedded_sources ) # nothing
@@ -26,6 +25,7 @@ add_library(parachutedev STATIC log.h logbase.h logbase.cpp misc.h misc.cpp hexd
         nulllink.cpp nulllink.h
         ringbuffer.cpp ringbuffer.h
         asynclink.h sync.h
+        gpioasynclink.h gpioasynclink.cpp
         "${non_embedded_sources}"
 )
 # gpioasynclink is intended for embedded, but am developing it on desktop for now, as it's testable there,
@@ -78,12 +78,10 @@ if(NOT(EMBEDDED))
   target_link_libraries(testlink parachutedev gtest gmock_main parachutedesktop)
   add_test(NAME testlink COMMAND testlink)
 
-if(NOT(WIN32))
   add_executable(testasynclink testasynclink.cpp)
   target_link_libraries(testasynclink parachutedev gtest gmock_main parachutedesktop)
   add_test(NAME testasynclink COMMAND testasynclink)
-endif()
-  
+
   add_executable(testfilesystem testfilesystem.cpp)
   target_link_libraries(testfilesystem testfixtures parachutedev gtest gmock_main gsl parachutedesktop)
   add_test(NAME testfilesystem COMMAND testfilesystem)
