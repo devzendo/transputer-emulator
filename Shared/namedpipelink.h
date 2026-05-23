@@ -14,7 +14,7 @@
 #ifndef _NAMEDPIPELINK_H
 #define _NAMEDPIPELINK_H
 
-#include <winbase.h>
+#include <windows.h>
 
 #include "types.h"
 #include "link.h"
