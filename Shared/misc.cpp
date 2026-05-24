@@ -143,7 +143,7 @@ void _reverse(char *buf) {
 }
 
 const char *int_to_ascii(int x) {
-    static char buffer[17]; // -2,147,483,648 to 2,147,483,647
+    static char buffer[17]; // Can hold the ASCII of "-2,147,483,648" to "2,147,483,647".
     int i = 0;
     if (x == 0) {
         buffer[i++] = '0';
