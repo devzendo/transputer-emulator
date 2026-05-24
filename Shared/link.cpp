@@ -46,9 +46,10 @@ int Link::writeBytes(BYTE8* buffer, int bytesToWrite) {
 }
 
 WORD16 Link::readShort(void) {
-    // Input a little-endian short, LSB first MSB last
-    return (readByte()) |
-           (readByte() << 8);
+    // Input a little-endian short, LSB first MSB last, forcing ordering of evaluation to prevent UB.
+	BYTE8 lo = readByte();
+	BYTE8 hi = readByte();
+	return lo | (hi << 8);
 }
 
 void Link::writeShort(WORD16 w) {
@@ -58,11 +59,12 @@ void Link::writeShort(WORD16 w) {
 }
 
 WORD32 Link::readWord(void) {
-	// Input a little-endian word, LSB first MSB last
-	return (readByte()) |
-		  (readByte() << 8) |
-		  (readByte() << 16) |
-		  (readByte() << 24);
+	// Input a little-endian word, LSB first MSB last, forcing ordering of evaluation to prevent UB.
+	BYTE8 b0 = readByte();
+	BYTE8 b1 = readByte();
+	BYTE8 b2 = readByte();
+	BYTE8 b3 = readByte();
+	return b0 | (b1 << 8) | (b2 << 16) | (b3 << 24);
 }
 
 void Link::writeWord(WORD32 w) {
