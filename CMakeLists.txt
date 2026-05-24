@@ -9,6 +9,7 @@ if(NOT CMAKE_BUILD_TYPE)
     set(CMAKE_BUILD_TYPE "Release" CACHE STRING "Choose Release or Debug" FORCE)
 endif()
 
+set(CTEST_PARALLEL_LEVEL 1)
 
 # Most (maven-invoked) builds set NOCROSS=true, since an option must be given
 # (due to maven cmake plugin inflexibility). We ignore that here. But if CROSS
