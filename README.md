@@ -577,6 +577,13 @@ Then to copy the built software there:
 
 This installation location is defined in the operating-system-specific profile sections of the pom.xml.
 
+# AI Declaration
+
+A fix for undefined behaviour on one platform (intel macOS; misc/int_to_ascii) was suggested by Claude, and reviewed
+by me. I use Claude.ai occasionally for assistance; all its output is vetted thoroughly by me.
+
+I gratefully acknowledge the work of others that was stolen without consent in the creation of Large
+Language Models. I understand the environmental impact of this technology.
 
 
 # Acknowledgements

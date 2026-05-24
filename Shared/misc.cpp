@@ -150,17 +150,15 @@ const char *int_to_ascii(int x) {
         buffer[i++] = '\0';
         return buffer;
     }
-    bool neg;
-    if (x < 0) {
-        neg = true;
-        x = -x;
-    } else {
-        neg = false;
-    }
-    while (x != 0) {
-        int rem = x % 10;
-        buffer[i++] = (rem > 9) ? (rem - 10) + 'a' : rem + '0';
-        x = x / 10;
+    bool neg = (x < 0);
+    unsigned int ux = neg ? (unsigned int)(-(x + 1)) + 1 : (unsigned int)x;
+    //                      ^^^^^^^^^^^^^^^^^^^^^^^^^^
+    //                      avoids the UB: negate via unsigned arithmetic
+
+    while (ux != 0) {
+        unsigned int rem = ux % 10;
+        buffer[i++] = rem + '0';
+        ux /= 10;
     }
     if (neg) {
         buffer[i++] = '-';
