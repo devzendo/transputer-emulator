@@ -44,12 +44,12 @@
 
     <distributionManagement>
         <snapshotRepository>
-            <id>sonatype-nexus-snapshots</id>
-            <url>https://oss.sonatype.org/content/repositories/snapshots</url>
+            <id>maven-snapshots</id>
+            <url>http://nexus.build.devzendo.org:8081/repository/maven-snapshots/</url>
         </snapshotRepository>
         <repository>
-            <id>sonatype-nexus-staging</id>
-            <url>https://oss.sonatype.org/service/local/staging/deploy/maven2/</url>
+            <id>devzendo</id>
+            <url>http://nexus.build.devzendo.org:8081/repository/devzendo/</url>
         </repository>
     </distributionManagement>
 
@@ -539,8 +539,9 @@
                         <version>1.6.8</version>
                         <extensions>true</extensions>
                         <configuration>
-                            <serverId>sonatype-nexus-staging</serverId>
-                            <nexusUrl>https://oss.sonatype.org/</nexusUrl>
+                            <serverId>devzendo</serverId>
+                            <nexusUrl>http://nexus.build.devzendo.org:8081/nexus/</nexusUrl>
+                            <skipStagingRepositoryClose>true</skipStagingRepositoryClose> <!-- because we have many platforms to deploy from -->
                         </configuration>
                     </plugin>
                 </plugins>
