@@ -72,11 +72,16 @@
          [INFO] JDK Version: 17.0.12 normalized as: 17.0.12
          [INFO] Java Vendor: Debian
          [INFO] OS Info - Arch: aarch64, Family: unix, Name: linux, Version: 6.6.20+rpt-rpi-v8
-         Mac OS Catalina:
+         Mac OS Catalina / Intel:
          [INFO] Maven Version: 3.9.9
          [INFO] JDK Version: 17.0.12 normalized as: 17.0.12
          [INFO] Java Vendor: Eclipse Adoptium
          [INFO] OS Info - Arch: x86_64, Family: mac, Name: mac os x, Version: 10.15.7
+         Mac OS Tahoe / Apple Silicon:
+         [INFO] Maven Version: 3.9.9
+         [INFO] JDK Version: 17.0.17 normalized as: 17.0.17
+         [INFO] Java Vendor: Eclipse Adoptium
+         [INFO] OS Info - Arch: aarch64, Family: mac, Name: mac os x, Version: 26.2
          Windows 10:
          [INFO] Maven Version: 3.9.9
          [INFO] JDK Version: 17.0.12 normalized as: 17.0.12
@@ -283,7 +288,7 @@
 
                 <!-- One of the generators defined at https://cmake.org/cmake/help/v3.7/manual/cmake-generators.7.html -->
                 <cmake.generator>Unix Makefiles</cmake.generator>
-                <!-- The classifier of the current platform. One of [windows-x86_32, windows-x86_64, linux-x86_32, linux-x86_64, linux-arm_32, mac-x86_64]. -->
+                <!-- The classifier of the current platform. One of [windows-x86_32, windows-x86_64, linux-x86_32, linux-x86_64, linux-arm_32, mac-x86_64, mac-aarch64]. -->
                 <cmake.classifier>linux-x86_64</cmake.classifier>
 
                 <install.dir>/opt/parachute</install.dir>
@@ -310,7 +315,7 @@
 
                 <!-- One of the generators defined at https://cmake.org/cmake/help/v3.7/manual/cmake-generators.7.html -->
                 <cmake.generator>Unix Makefiles</cmake.generator>
-                <!-- The classifier of the current platform. One of [windows-x86_32, windows-x86_64, linux-x86_32, linux-x86_64, linux-arm_32, mac-x86_64]. -->
+                <!-- The classifier of the current platform. One of [windows-x86_32, windows-x86_64, linux-x86_32, linux-x86_64, linux-arm_32, mac-x86_64, mac-aarch64]. -->
                 <cmake.classifier>linux-x86_64</cmake.classifier>
 
                 <install.dir>/opt/parachute</install.dir>
@@ -335,7 +340,7 @@
 
                 <!-- One of the generators defined at https://cmake.org/cmake/help/v3.7/manual/cmake-generators.7.html -->
                 <cmake.generator>Unix Makefiles</cmake.generator>
-                <!-- The classifier of the current platform. One of [windows-x86_32, windows-x86_64, linux-x86_32, linux-x86_64, linux-arm_32, mac-x86_64]. -->
+                <!-- The classifier of the current platform. One of [windows-x86_32, windows-x86_64, linux-x86_32, linux-x86_64, linux-arm_32, mac-x86_64, mac-aarch64]. -->
                 <cmake.classifier>linux-arm_32</cmake.classifier>
 
                 <install.dir>/opt/parachute</install.dir>
@@ -360,7 +365,7 @@
 
                 <!-- One of the generators defined at https://cmake.org/cmake/help/v3.7/manual/cmake-generators.7.html -->
                 <cmake.generator>Unix Makefiles</cmake.generator>
-                <!-- The classifier of the current platform. One of [windows-x86_32, windows-x86_64, linux-x86_32, linux-x86_64, linux-arm_32, mac-x86_64]. -->
+                <!-- The classifier of the current platform. One of [windows-x86_32, windows-x86_64, linux-x86_32, linux-x86_64, linux-arm_32, mac-x86_64, mac-aarch64]. -->
                 <cmake.classifier>linux-aarch_64</cmake.classifier>
 
                 <install.dir>/opt/parachute</install.dir>
@@ -373,10 +378,11 @@
             </build>
         </profile>
         <profile>
-            <id>macosx</id>
+            <id>macosx-x86_64</id>
             <activation>
                 <os>
                     <name>mac os x</name>
+                    <arch>x86_64</arch>
                 </os>
                 <!-- The main PICO build is done on Ubuntu, but allow it on macOS too -->
                 <property>
@@ -389,8 +395,38 @@
                 <!-- These are two of my properties I pass in to the CMake plugin, they're not known by the plugin innately -->
                 <!-- One of the generators defined at https://cmake.org/cmake/help/v3.7/manual/cmake-generators.7.html -->
                 <cmake.generator>Unix Makefiles</cmake.generator>
-                <!-- The classifier of the current platform. One of [windows-x86_32, windows-x86_64, linux-x86_32, linux-x86_64, linux-arm_32, mac-x86_64]. -->
+                <!-- The classifier of the current platform. One of [windows-x86_32, windows-x86_64, linux-x86_32, linux-x86_64, linux-arm_32, mac-x86_64, mac-aarch64]. -->
                 <cmake.classifier>mac-x86_64</cmake.classifier>
+
+                <install.dir>/opt/parachute</install.dir>
+                <binary.suffix></binary.suffix>
+                <assembly.name>macosx-distribution</assembly.name>
+                <!-- This isn't being sensed in CMakeLists.txt but there has to be some option -->
+                <cmake.option>NOCROSS=true</cmake.option>
+            </properties>
+            <build>
+            </build>
+        </profile>
+        <profile>
+            <id>macosx-aarch64</id>
+            <activation>
+                <os>
+                    <name>mac os x</name>
+                    <arch>aarch64</arch>
+                </os>
+                <!-- The main PICO build is done on Ubuntu, but allow it on macOS too -->
+                <property>
+                    <name>!CROSS</name>
+                </property>
+            </activation>
+            <properties>
+                <!-- Use the macports-installed cmake or a manual install on the path: no need to set its path -->
+
+                <!-- These are two of my properties I pass in to the CMake plugin, they're not known by the plugin innately -->
+                <!-- One of the generators defined at https://cmake.org/cmake/help/v3.7/manual/cmake-generators.7.html -->
+                <cmake.generator>Unix Makefiles</cmake.generator>
+                <!-- The classifier of the current platform. One of [windows-x86_32, windows-x86_64, linux-x86_32, linux-x86_64, linux-arm_32, mac-x86_64, mac-aarch64]. -->
+                <cmake.classifier>mac-aarch64</cmake.classifier>
 
                 <install.dir>/opt/parachute</install.dir>
                 <binary.suffix></binary.suffix>
