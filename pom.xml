@@ -46,6 +46,7 @@
         <snapshotRepository>
             <id>maven-snapshots</id>
             <url>http://nexus.build.devzendo.org:8081/repository/maven-snapshots/</url>
+            <uniqueVersion>false</uniqueVersion> <!-- for the emulator, as there are multiple platform builds -->
         </snapshotRepository>
         <repository>
             <id>devzendo</id>
