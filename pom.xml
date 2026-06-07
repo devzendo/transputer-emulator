@@ -517,9 +517,9 @@
                                 <configuration>
                                     <artifacts>
                                         <artifact>
-                                            <file>${project.build.directory}/${project.artifactId}-${project.version}-centos-7-linux-x86_64.tar.gz</file>
+                                            <file>${project.build.directory}/${project.artifactId}-${project.version}-mac-aarch64.tar.gz</file>
                                             <type>tar.gz</type>
-                                            <classifier>centos-7-linux-x86_64</classifier>
+                                            <classifier>mac-aarch64</classifier>
                                         </artifact>
                                         <artifact>
                                             <file>${project.build.directory}/${project.artifactId}-${project.version}-mac-x86_64.tar.gz</file>
@@ -527,19 +527,19 @@
                                             <classifier>mac-x86_64</classifier>
                                         </artifact>
                                         <artifact>
-                                            <file>${project.build.directory}/${project.artifactId}-${project.version}-raspbian-9-linux-arm_32.tar.gz</file>
+                                            <file>${project.build.directory}/${project.artifactId}-${project.version}-debian-12-linux-aarch_64.tar.gz</file>
                                             <type>tar.gz</type>
-                                            <classifier>raspbian-9-linux-arm_32</classifier>
+                                            <classifier>debian-12-linux-aarch_64</classifier>
                                         </artifact>
                                         <artifact>
-                                            <file>${project.build.directory}/${project.artifactId}-${project.version}-ubuntu-16.04-linux-x86_64.tar.gz</file>
+                                            <file>${project.build.directory}/${project.artifactId}-${project.version}-ubuntu-24.04-linux-x86_64.tar.gz</file>
                                             <type>tar.gz</type>
-                                            <classifier>ubuntu-16.04-linux-x86_64</classifier>
+                                            <classifier>ubuntu-24.04-linux-x86_64</classifier>
                                         </artifact>
                                         <artifact>
-                                            <file>${project.build.directory}/${project.artifactId}-${project.version}-ubuntu-18.04-linux-x86_64.tar.gz</file>
+                                            <file>${project.build.directory}/${project.artifactId}-${project.version}-pi-pico.tar.gz</file>
                                             <type>tar.gz</type>
-                                            <classifier>ubuntu-18.04-linux-x86_64</classifier>
+                                            <classifier>pi-pico-arm-none-eabi</classifier>
                                         </artifact>
                                         <artifact>
                                             <file>${project.build.directory}/${project.artifactId}-${project.version}-windows-x86_64.zip</file>
