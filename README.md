@@ -4,50 +4,28 @@
 This is a portable, open source emulator of the 32-bit Inmos T414/T800/T801/T805 Transputer family, and a host/file
 I/O Server that interfaces it to a host OS, providing boot/debug/IO facilities.
 
-It runs on desktop systems:
-  * Apple macOS Catalina (Intel)
-  * Apple macOS Tahoe (Apple Silicon)
-  * Windows 10
-  * Ubuntu 24.02
-  * Linux Mint 21.3 and
-  * Raspberry Pi Debian 12.
+It is part of the [Parachute Project](https://devzendo.github.io/parachute).
 
-An embedded version of the emulator component, and a USB-Link adapter is also available for the Raspberry Pi Pico 1.
-This is best built using the `parachute-docker` docker container, buildable from
-https://github.com/devzendo/parachute-docker.git
-
-Building for Apple Silicon macOS (Tahoe) works for the desktop build, but not for the embedded version,
-without problems. (After preparing a PICO build, edit cmake-build-release/CMakeCache.txt and ensure your
-compiler paths are correct for the cross-compiler, e.g. if you use Macports. Then it'll build in CLion, but not from
-the command line - Shared/logbase.cpp fails on the command line). You can build embedded using the docker image, see
-above.
+The distribution currently builds under the following systems:
+* Apple macOS
+  * Intel: 'Catalina' 10.15
+  * Apple Silicon: 'Tahoe' 26
+* Linux
+  * Linux Mint 21.3 Intel x86-64
+  * Ubuntu Linux 24.04 LTS Intel x86-64
+  * Raspberry Pi Debian 12
+* Microsoft Windows
+  * Windows 10 22H2
+  * (untested on earlier versions e.g. XP, 7, 8, 8.1)
+  * Due to lack of compatible TPM hardware, I cannot build on Windows 11 or later.
+* Embedded microcontrollers
+  * Raspberry Pi Pico (cross-compiled on Ubuntu Linux 24.04) - emulator and a USB-Link adapter
 
 Due to lack of compatible TPM hardware, I cannot build on Windows 11 or later; building for Windows is the lowest
 priority for me.
 
-
-It is part of the [Parachute Project](https://devzendo.github.io/parachute).
-
-It is written in C++14. I do not intend to move beyond this C++ version.
-
-It used to build on Raspbian Stretch, the oldest OS I had when I started automated builds. This had Clang 3.5.0, which
-limited the C++ standard I could support.
-
-
 ## Project Status
-Last changes in late May 2026.
-
-The build for the Raspberry Pi Pico, using USB CDC for diagnostic and link 0 I/O works.
-
-Integration-testing a GPIO-based asynchronous link abstraction, for use on the Pi Pico. This will
-eventually be replaced by a much faster PIO-based link.
-
-Also working on compatibility with the aid of Mike Brüstle's Transputer Validation Suite.
-
-Also adding debugging facilities to aid the completion of the eForth Transputer port.
-
-Attempting to run other typical Transputer software such as the Inmos occam and C compilers, and the port of Minix. 
-
+Last changes in June 2026.
 
 First release 0.0.1 Midsummer 2019 (13 June 2019) as part of Parachute 0.0.1.
 
@@ -57,69 +35,6 @@ Another hiatus from Dec 2022 to Jul 2023.
 Another hiatus from Dec 2023 to Aug 2024.
 Another hiatus from Sep 2023 to Sep 2025.
 Another hiatus from Dec 2025 to Mar 2026.
-
-## Roadmap
-First release:
-* A Cross Platform system that can run "Hello World" (via my NodeServer (custom protocol) implementation).
-
-Second release (work in progress):
-* Converted the NodeServer to be IServer compatible, implementing all frame types needed by "Hello World" and
-  eForth. Similarly, converted "Hello World" and eForth to be IServer compatible.
-* IServer is unfinished; it implements the following frame types:
-  * Id (Version)
-  * Exit
-  * Open
-  * Read
-  * Write
-  * Puts (put string with newline to a stream)
-  * Get Key
-  * Poll Key
-  * Close
-  * Command Line
-* It implements the following "extended" frame types, not part of the original IServer, for performance purposes:
-  * Put Char (to the console stream)
-* Note that the IServer's file handling does not yet prevent directory traversal vulnerabilities.
-* Converting older C code (that's not very portable) to C++14 (that hopefully is more portable).
-* eForth requires the following facilities of IServer (it originally accessed a UART; these routines have been
-  changed to use IServer protocol on Link 0):
-  * URD: Read and wait (odd return system)
-  * ?RX: Return input character and indication of whether there is any input available
-  * TX!: Send output character
-  * !IO: Initialise UART
-* Allow validation using Mike's TVS and pass tests for all implemented instructions
-* Added a build for the Raspberry Pi Pico - that can run Hello World booted from a link; that has a single
-  core, a single link over CDC-USB Serial, and a diagnostics output also over a separate USB CDC port. All
-  log calls go out over this port.
-  The memory/flash use is quantified.
-* The IServer has a link that can run over a TTY (Linux/macOS) or COM port (Windows) to connect to a Pi
-  Pico emulator.
-* Asynchronous link abstraction using GPIO:
-  * Lowest level: TxRxPin, represents a pair of abstract pins. GPIOTxRxPin would use Pi Pico
-    GPIO pins. Tests would use a CrosswiredTxRxPinPair, which gives a pair of TxRxPins, A and B,
-    where setting A's Tx pin enables B's Rx pin. Setting B's Tx enables A's Rx. An AsyncLink
-    would take a TxRxPin, and tests would create two AsyncLinks with the two TxRxPins back-to-back.
-  * OversampledTxRxPin handles the potentially noisy input and performs majority voting on it to yield
-    a cleaner set of bit-long samples to the next layer...
-  * Medium level: DataAckSender, state machine that uses the Tx half of a TxRxPin to clock out an
-    Ack or Data frame and can be queried for its state. DataAckReceiver, a state machine that
-    senses the Rx half of a TxRxPin to clock in any received Ack and/or Data frame.
-  * High level: AsyncLink.
-
-Third release:
-* Capable of running eForth, possibly the Small-C compiler.
-* Note that the IServer's file handling does not yet prevent directory traversal vulnerabilities.
-* Raspberry Pi Pico bit-banged links replaced with PIO links.
-
-Fourth release:
-* More IServer implementation.
-* Prevent directory-traversal vulnerabilities in IServer's file handling - limit operations to under its root directory.
-* Complete Integer functionality.
-* Port to the Cheap Yellow Display.
-
-Fifth release:
-* Complete Floating Point functionality.
-* Complete IServer implementation.
-
 
 # Release Notes
 0.0.2 Second Release (work in progress)
@@ -132,6 +47,13 @@ Fifth release:
 * Removed versions for older OSs (macOS El Capitan, Ubuntu 16.04, 18.04, CentOS 7.6, Raspbian Stretch).
 * IServer -df (full debug) now enables all parts of the debug output.
 * Successfully runs hello.asm !
+* Added debugging facilities to aid the completion of the eForth Transputer port.
+* eForth requires the following facilities of IServer (it originally accessed a UART; these routines have been
+  changed to use IServer protocol on Link 0):
+  * URD: Read and wait (odd return system)
+  * ?RX: Return input character and indication of whether there is any input available
+  * TX!: Send output character
+  * !IO: Initialise UART
 * IServer now supports FPuts and the extended PutChar frame (used by eForth); it 
   also supports CommandLine, for use by (e.g.) the Inmos compilers. Any IServer
   arguments that are not understood by IServer can be passed to the transputer on
@@ -140,7 +62,19 @@ Fifth release:
   include file. (see IServer/client-examples/hello-world-secondary-iserver)
 * Added a "Hello World" example that can boot from ROM.
   (see IServer/client-examples/hello-world-iserver-rom)
-* Bugfix: A loaded ROM's memory is now initialised/destroyed correctly.
+* IServer is unfinished; it implements the following frame types:
+  * Id (Version)
+  * Exit
+  * Open
+  * Read
+  * Write
+  * Puts (put string with newline to a stream)
+  * Get Key
+  * Poll Key
+  * Close
+  * Command Line
+* IServer implements the following "extended" frame types, not part of the original IServer, for performance purposes:
+  * Put Char (to the console stream)
 * Emulator now allows a list of symbols to be loaded; these are displayed when
   disassembling or using the monitor; also enhancements for debugging eForth.
 * The emulator's monitor now accepts a 't' command which toggles the display of
@@ -150,9 +84,17 @@ Fifth release:
   adc, bitrevnbits, bitrevword, csngl, cword, div, ladd, ldiff, ldiv, lmul,
   lshl, lshr, lsub, lsum, mul, rem, shl, shr, sub, wcnt, xdble, xword.
 * Implemented the instructions from "Transputer Instruction Set - Appendix".
-* Add a build of the emulator for the Raspberry Pi Pico 1.
+* Added a build for the Raspberry Pi Pico - that can run Hello World booted from a link; that has a single
+  core, a single link zero over CDC-USB Serial, and a diagnostics output also over a separate USB CDC port. All
+  log calls go out over this port.
+  The memory/flash use is quantified.
+* Added an asynchronous, bit-banged link implementation for the Pico.
+* The IServer has a link that can run over a TTY (Linux/macOS) or COM port (Windows) to connect to a Pi
+  Pico emulator.
+* Boot protocol executed over any link.
 * Bugfix: protocol handler - open file - was inadvertantly broken on some
   platforms.
+* Bugfix: A loaded ROM's memory is now initialised/destroyed correctly.
 
 0.0.1 First Release
 * Versioning and build now controlled by Maven and CMake.
@@ -195,6 +137,9 @@ Fifth release:
 * Add memory-mapped frame buffer via SDL
 * Add mouse interface for same
 * Investigate Benes networks
+
+## Links
+* PIO-based links for Raspberry Pi Pico
 
 ## Correctness
 * Remove potential buffer overflows in cpu.cpp (what were these?)
@@ -409,27 +354,22 @@ application; it's an assembly language include file.
 
 Emulator - the T414/T800/T801/T805 emulator.
 
+Pico - Raspberry Pi Pico-specific emulator / link code, and link adapters
+
+PicoStdio - the system's logging implementation adapted to the Pico SDK's stdio over USB CDC library
+
+PicoUSBCDC - TinyUSB descriptors, and the implementation of the logging implementation and link over our USB CDC ports 
 
 # Building and Installing
-The distribution currently builds under the following systems:
-* Apple macOS - Intel only
-  * 'Catalina' 10.15 
-  * (untested on more recent versions)
-* Linux
-  * Linux Mint 21.3 Intel x86-64
-  * Ubuntu Linux 24.04 LTS Intel x86-64
-  * Raspberry Pi Debian 12
-* Microsoft Windows
-  * Windows 10 22H2
-  * (untested on earlier versions e.g. XP, 7, 8, 8.1)
-  * Due to lack of compatible TPM hardware, I cannot build on Windows 11 or later.
-* Embedded microcontrollers
-  * Raspberry Pi Pico (cross-compiled on Ubuntu Linux 24.04)
+It is written in C++14. I do not intend to move beyond this C++ version.
+
+It used to build on Raspbian Stretch, the oldest OS I had when I started automated builds. This had Clang 3.5.0, which
+limited the C++ standard I could support.
 
 The build is controlled by CMake, with a Maven wrapper around this to work with my CI server, and to make the main
 build commands a little easier to use (standard mvn lifecycle commands vs CMake oddities). Maven is just doing some
 preprocessing (the version number of the project is set in the pom.xml; mvn extracts this and embeds it in the C++ code),
-running cmake in various stages, and is used for packaging and overall build control. It's just much easier with it..
+running cmake in various stages, and is used for packaging and overall build control.
 
 You can ignore the Maven side completely, you'll just have to use arcane commands.
 
@@ -446,7 +386,7 @@ Prerequisites:
     to be on the PATH.
   - Python (prefer 3.x but 2.x is fine; required by the GoogleTest build). Command line interpreter python needs to be
     on the PATH.
-  - Java 17 JDK (for Maven).
+  - Java 21 JDK (for Maven).
   - Optional: Apache Maven. I use 3.9.9. Command line tool mvn needs to be on the PATH. It's recommended to download
     the latest binary release from https://maven.apache.org/download.cgi and unzip it, placing its bin directory on the PATH.
   - CMake. I use 3.10.3+ .. 3.25.1. Command line tool cmake needs to be on the PATH. 
@@ -502,6 +442,15 @@ The typical install location is:
 - macOS/Linux: /opt/parachute
 - Windows: C:\parachute
 - Raspberry Pi Pico: temulate.uf2 - copy it to your Pico with BOOTSEL held down
+
+The Raspberry Pi Pico variant is best built using the `parachute-docker` docker container, buildable from
+https://github.com/devzendo/parachute-docker.git
+
+Building for Apple Silicon macOS (Tahoe) works for the desktop build, but not for the embedded version,
+without problems. (After preparing a PICO build, edit cmake-build-release/CMakeCache.txt and ensure your
+compiler paths are correct for the cross-compiler, e.g. if you use Macports. Then it'll build in CLion, but not from
+the command line - Shared/logbase.cpp fails on the command line). You can build embedded using the docker image, see
+above.
 
 ## Building
 To build, cd to the top level directory (where this README.md is) and do:
@@ -565,7 +514,7 @@ e.g. on macOS/Linux:
 ```
 $ sudo mkdir /opt/parachute
 Password: <enter your password, assuming you have sudo rights>
-$ `sudo chown myuser:myuser /opt/parachute # e.g. Linux
+$ sudo chown myuser:myuser /opt/parachute # e.g. Linux
 $ sudo chown myuser:staff /opt/parachute  # e.g. macOS
 ```
 

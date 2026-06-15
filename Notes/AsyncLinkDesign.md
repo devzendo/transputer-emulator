@@ -62,4 +62,14 @@ The `DataAckReceiver`...
 
 ## The AsyncLink
 
-... TBC ...
+* Lowest level: TxRxPin, represents a pair of abstract pins. GPIOTxRxPin would use Pi Pico
+  GPIO pins. Tests would use a CrosswiredTxRxPinPair, which gives a pair of TxRxPins, A and B,
+  where setting A's Tx pin enables B's Rx pin. Setting B's Tx enables A's Rx. An AsyncLink
+  would take a TxRxPin, and tests would create two AsyncLinks with the two TxRxPins back-to-back.
+* OversampledTxRxPin handles the potentially noisy input and performs majority voting on it to yield
+  a cleaner set of bit-long samples to the next layer...
+* Medium level: DataAckSender, state machine that uses the Tx half of a TxRxPin to clock out an
+  Ack or Data frame and can be queried for its state. DataAckReceiver, a state machine that
+  senses the Rx half of a TxRxPin to clock in any received Ack and/or Data frame.
+* High level: AsyncLink.
+
