@@ -37,7 +37,7 @@ Another hiatus from Sep 2023 to Sep 2025.
 Another hiatus from Dec 2025 to Mar 2026.
 
 # Release Notes
-0.0.2 Second Release (work in progress)
+## 0.0.2 Second Release (work in progress)
 * Converting the NodeServer to be IServer compatible. Similarly, "Hello World"
   (see IServer/client-examples/hello-world-iserver).
 * Release for macOS is upgraded from El Capitan to Catalina.
@@ -96,7 +96,7 @@ Another hiatus from Dec 2025 to Mar 2026.
   platforms.
 * Bugfix: A loaded ROM's memory is now initialised/destroyed correctly.
 
-0.0.1 First Release
+## 0.0.1 First Release
 * Versioning and build now controlled by Maven and CMake.
 * Successfully runs hello2.asm !
 * Renamed emulator binary from t800emul to temulate.
