@@ -32,6 +32,11 @@
             <outputDirectory>./</outputDirectory>
             <destName>README-transputer-emulator.md</destName>
         </file>
+        <file>
+            <source>${project.basedir}/README-pico.md</source>
+            <outputDirectory>./</outputDirectory>
+            <destName>README-transputer-emulator-pico.md</destName>
+        </file>
     </files>
 
 </assembly>
