@@ -95,6 +95,7 @@ Another hiatus from Dec 2025 to Mar 2026.
 * Bugfix: protocol handler - open file - was inadvertantly broken on some
   platforms.
 * Bugfix: A loaded ROM's memory is now initialised/destroyed correctly.
+* Add tserve.{sh,ps1} script to run temulate and iserver to run a program together.
 
 ## 0.0.1 First Release
 * Versioning and build now controlled by Maven and CMake.
