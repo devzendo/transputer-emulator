@@ -32,6 +32,7 @@ const int LinkType_Null = 6;
 const int LinkType_Async = 7;
 const int LinkType_USBCDC = 8;
 const int LinkType_TTY = 9;
+const int LinkType_InMemory = 10;
 
 class Link {
 public:

@@ -11,7 +11,7 @@ if(UNIX)
     set(platform_sources posixplatform.cpp posixplatform.h)
 endif(UNIX)
 
-add_library(parachuteiserver STATIC platform.cpp platform.h platformfactory.h platformfactory.cpp framecodec.cpp framecodec.h protocolhandler.cpp protocolhandler.h "${platform_sources}")
+add_library(parachuteiserver STATIC platform.cpp platform.h platformfactory.h platformfactory.cpp framecodec.cpp framecodec.h protocolhandler.cpp protocolhandler.h iservershared.cpp iservershared.h "${platform_sources}")
 
 add_executable(iserver iserver.cpp)
 target_link_libraries(iserver parachutedesktop parachuteiserver)

@@ -18,6 +18,7 @@ class LinkFactory {
 public:
 	LinkFactory(bool isServer, bool isDebug);
 	bool processCommandLine(int argc, char *argv[]);
+	void singleInMemoryLink();
 	Link *createLink(int linkNo);
 private:
 	int myLinkTypes[4]{};

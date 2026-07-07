@@ -32,6 +32,7 @@
 
 #if defined(PLATFORM_OSX) || defined(PLATFORM_LINUX) || defined(PLATFORM_WINDOWS)
 #include "tvslink.h"
+#include "inmemorylink.h"
 #endif
 
 #include "nulllink.h"
@@ -180,6 +181,13 @@ bool LinkFactory::processCommandLine(int argc, char *argv[]) {
 }
 #endif // DESKTOP
 
+void LinkFactory::singleInMemoryLink() {
+	myLinkTypes[0] = LinkType_InMemory;
+	for (int i = 1; i < 4; i++) {
+		myLinkTypes[i] = LinkType_Null;
+	}
+}
+
 Link *LinkFactory::createLink(int linkNo) {
 	Link *newLink = nullptr;
 	logDebugF("Creating Link %d of type %d...", linkNo, myLinkTypes[linkNo]);
@@ -225,6 +233,16 @@ Link *LinkFactory::createLink(int linkNo) {
 #endif
 #if defined(PLATFORM_WINDOWS)
 			newLink = new CommLink(linkNo, bServer, myLinkFileNames[linkNo]);
+#endif
+			break;
+		case LinkType_InMemory:
+#if defined(PLATFORM_OSX) || defined(PLATFORM_LINUX) || defined(PLATFORM_WINDOWS)
+			logDebugF("Link %d InMemory", linkNo);
+			newLink = new InMemoryLink(linkNo, bServer);
+#else
+			logFatal("InMemory links not implemented on this platform");
+			// TODO maybe for pico, using the inter-core capability?
+			return nullptr;
 #endif
 			break;
 		default:

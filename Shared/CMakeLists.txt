@@ -26,6 +26,7 @@ add_library(parachutedev STATIC log.h logbase.h logbase.cpp misc.h misc.cpp hexd
         ringbuffer.cpp ringbuffer.h
         asynclink.h sync.h
         gpioasynclink.h gpioasynclink.cpp
+        inmemorylink.h inmemorylink.cpp
         "${non_embedded_sources}"
 )
 # gpioasynclink is intended for embedded, but am developing it on desktop for now, as it's testable there,
