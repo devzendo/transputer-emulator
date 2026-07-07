@@ -2,13 +2,16 @@ include_directories(../Shared)
 include_directories(../target/classes)
 link_libraries(parachutedev)
 link_libraries(parachuteversion)
-add_executable(temulate main.cpp memory.cpp cpu.cpp disasm.cpp symbol.cpp boot.cpp opcodes.h)
+
+add_library(parachuteemulator STATIC memory.cpp cpu.cpp disasm.cpp symbol.cpp boot.cpp opcodes.h)
+
+add_executable(temulate main.cpp)
 
 if(PICO)
-  target_link_libraries(temulate pico_stdlib parachutepicousbcdc)
+  target_link_libraries(temulate pico_stdlib parachutepicousbcdc parachuteemulator)
   pico_add_extra_outputs(temulate)
 else()
-  target_link_libraries(temulate parachutedesktop)
+  target_link_libraries(temulate parachutedesktop parachuteemulator)
 endif(PICO)
 
 if(NOT(EMBEDDED))

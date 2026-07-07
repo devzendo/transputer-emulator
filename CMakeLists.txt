@@ -172,4 +172,5 @@ add_subdirectory(Emulator)
 
 if(NOT(EMBEDDED))
   add_subdirectory(IServer)
+  add_subdirectory(EmuServer)
 endif()

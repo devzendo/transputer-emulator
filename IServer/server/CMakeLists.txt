@@ -11,8 +11,10 @@ if(UNIX)
     set(platform_sources posixplatform.cpp posixplatform.h)
 endif(UNIX)
 
-add_executable(iserver iserver.cpp platform.cpp platform.h platformfactory.h platformfactory.cpp framecodec.cpp framecodec.h protocolhandler.cpp protocolhandler.h "${platform_sources}")
-target_link_libraries(iserver parachutedesktop)
+add_library(parachuteiserver STATIC platform.cpp platform.h platformfactory.h platformfactory.cpp framecodec.cpp framecodec.h protocolhandler.cpp protocolhandler.h "${platform_sources}")
+
+add_executable(iserver iserver.cpp)
+target_link_libraries(iserver parachutedesktop parachuteiserver)
 
 add_executable(testprotocolhandler testprotocolhandler.cpp framecodec.cpp framecodec.h protocolhandler.cpp protocolhandler.h memstreambuf.h ../../Shared/link.cpp platform.cpp)
 target_link_libraries(testprotocolhandler testfixtures gtest gmock_main parachutedesktop)
