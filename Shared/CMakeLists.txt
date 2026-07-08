@@ -87,6 +87,10 @@ if(NOT(EMBEDDED))
   target_link_libraries(testfilesystem testfixtures parachutedev gtest gmock_main gsl parachutedesktop)
   add_test(NAME testfilesystem COMMAND testfilesystem)
 
+  add_executable(testinmemorylink testinmemorylink.cpp)
+  target_link_libraries(testinmemorylink parachutedev gtest gmock_main parachutedesktop)
+  add_test(NAME testinmemorylink COMMAND testinmemorylink)
+
   add_executable(testmisc testmisc.cpp)
   target_link_libraries(testmisc parachutedev gtest gmock_main parachutedesktop)
   add_test(NAME testmisc COMMAND testmisc)
