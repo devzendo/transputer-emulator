@@ -236,14 +236,11 @@ Link *LinkFactory::createLink(int linkNo) {
 #endif
 			break;
 		case LinkType_InMemory:
-#if defined(PLATFORM_OSX) || defined(PLATFORM_LINUX) || defined(PLATFORM_WINDOWS)
-			logDebugF("Link %d InMemory", linkNo);
-			newLink = new InMemoryLink(linkNo, bServer);
-#else
-			logFatal("InMemory links not implemented on this platform");
-			// TODO maybe for pico, using the inter-core capability?
-			return nullptr;
-#endif
+			logFatal("InMemory links not available via the LinkFactory");
+			// Use the InMemoryLinkFactory as it gives you a linked pair of InMemoryLinks.
+			// With the other 'paired' links like FIFO, Named Pair, you can create either side independently of the
+			// other (as the link material changes with respect to bServer). Not so with InMemoryLinks - they're
+			// not individually creatable.
 			break;
 		default:
 			logFatal("Unknown link type requested");
