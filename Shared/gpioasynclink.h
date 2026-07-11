@@ -288,7 +288,7 @@ private:
     mutable ReceiverToLink *m_receiver_to_link = nullptr;
 };
 
-/* Access to the AsyncLink status word and other apparatus is protected by our MUTEX that's defined in sync.h.
+/* Access to the AsyncLink status word and other apparatus is protected by our MUTEX that's defined in sync.h. */
 
 /*
  * A AsyncLinkClock will tick at a set frequency, and call its registered TickHandler, to 'do whatever'.
