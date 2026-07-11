@@ -31,7 +31,7 @@ public:
     bool _readAvailable() const;
     bool _writeAvailable() const;
 private:
-    WORD32 myWriteSequence, myReadSequence;
+    WORD32 myWriteSequence{}, myReadSequence{};
     void *m_write_state; // an internal object
     void *m_read_state; // an internal object
 };

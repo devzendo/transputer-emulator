@@ -12,8 +12,6 @@
 //
 //------------------------------------------------------------------------------
 
-#include <cctype>
-
 #include "inmemorylink.h"
 #include "log.h"
 #include "sync.h"
@@ -48,7 +46,7 @@ public:
         }
     }
 
-    void write_maybe(BYTE8 *buf, bool *done) {
+    void write_maybe(const BYTE8 *buf, bool *done) {
         MUTEX
         if (!m_storing) {
             *done = true;
@@ -57,7 +55,7 @@ public:
         }
     }
 
-    const bool storing() {
+    bool storing() {
         MUTEX
         return m_storing;
     }
@@ -74,8 +72,8 @@ public:
 
 //------------------------------------------------------------------------------
 
-InMemoryLink::InMemoryLink(int linkNo, void *readState, void *writeState) :
-    Link(linkNo, false) {
+InMemoryLink::InMemoryLink(int linkNo, void *readState, void *writeState) : Link(linkNo, false),
+    myWriteSequence(0), myReadSequence(0) {
     // Although these links are used in the EmuServer between IServer and Emulator, we
     // don't need to distinguish between 'server' and 'client', as the ends are given
     // by the state pairs.
@@ -84,7 +82,7 @@ InMemoryLink::InMemoryLink(int linkNo, void *readState, void *writeState) :
     m_write_state = writeState;
 }
 
-void InMemoryLink::initialise(void) {
+void InMemoryLink::initialise() {
     myWriteSequence = myReadSequence = 0;
 }
 
@@ -123,7 +121,7 @@ void InMemoryLink::writeByte(BYTE8 buf) {
     }
 }
 
-void InMemoryLink::resetLink(void) {
+void InMemoryLink::resetLink() {
     // TODO
 }
 
