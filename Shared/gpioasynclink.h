@@ -18,19 +18,12 @@
 #define _GPIOASYNCLINK_H
 
 #include <atomic>
-#include <mutex> // For std::lock_guard and BasicLockable
 #include <vector>
 
 #ifdef DESKTOP
 #include <thread>
 #endif
 
-#ifdef PICO
-#include <pico/sync.h>
-// uint is picked up from pico/types.h
-#else
-typedef unsigned int uint; // which is what pico/types.h defines it as.
-#endif
 
 #include <sys/types.h>
 #include "types.h"
@@ -295,18 +288,7 @@ private:
     mutable ReceiverToLink *m_receiver_to_link = nullptr;
 };
 
-/* Access to the AsyncLink status word and other apparatus is protected by a std::lock_guard
- * and an appropriate lock for the platform - std::mutex on desktop, and a critical_section_t
- * on PICO, wrapped in this BasicResolvable.
- */
-
-#ifdef DESKTOP
-#define MUTEX     std::lock_guard<std::mutex> guard(m_mutex);
-#endif
-
-#ifdef PICO
-#define MUTEX     std::lock_guard<CriticalSection> guard(m_criticalsection);
-#endif
+/* Access to the AsyncLink status word and other apparatus is protected by our MUTEX that's defined in sync.h.
 
 /*
  * A AsyncLinkClock will tick at a set frequency, and call its registered TickHandler, to 'do whatever'.

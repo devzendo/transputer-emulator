@@ -14,10 +14,34 @@
 #ifndef _SYNC_H
 #define _SYNC_H
 
+#include <mutex> // For std::lock_guard and BasicLockable
+
 #ifdef PICO
 #include <pico/sync.h>
 #endif
 
+#ifdef PICO
+#include <pico/sync.h>
+// uint is picked up from pico/types.h
+#else
+typedef unsigned int uint; // which is what pico/types.h defines it as.
+#endif
+
+/*
+ * Access to internals is protected by this MUTEX definition - a std::lock_guard
+ * and an appropriate lock for the platform - std::mutex on desktop, and a critical_section_t
+ * on PICO, wrapped in this BasicResolvable.
+ * Any class you want to have a MUTEX must define an m_mutex (desktop) or m_criticalsection (PICO).
+ * Then use the MUTEX macro which will acquire the guard, letting it go out of scope to release.
+ */
+
+#ifdef DESKTOP
+#define MUTEX     std::lock_guard<std::mutex> guard(m_mutex);
+#endif
+
+#ifdef PICO
+#define MUTEX     std::lock_guard<CriticalSection> guard(m_criticalsection);
+#endif
 
 #ifdef PICO
 struct CriticalSection  /* BasicResolvable */ {
