@@ -47,12 +47,12 @@ protected:
         if (cpuLink != nullptr) {
             logDebug("Resetting CPU Link");
             cpuLink->resetLink();
-	    delete cpuLink;
+	        delete cpuLink;
         }
         if (serverLink != nullptr) {
             logDebug("Resetting Server Link");
             serverLink->resetLink();
-	    delete serverLink;
+	        delete serverLink;
         }
         logDebug("TearDown complete");
         logFlush();
