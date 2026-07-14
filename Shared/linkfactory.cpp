@@ -181,13 +181,6 @@ bool LinkFactory::processCommandLine(int argc, char *argv[]) {
 }
 #endif // DESKTOP
 
-void LinkFactory::singleInMemoryLink() {
-	myLinkTypes[0] = LinkType_InMemory;
-	for (int i = 1; i < 4; i++) {
-		myLinkTypes[i] = LinkType_Null;
-	}
-}
-
 Link *LinkFactory::createLink(int linkNo) {
 	Link *newLink = nullptr;
 	logDebugF("Creating Link %d of type %d...", linkNo, myLinkTypes[linkNo]);
