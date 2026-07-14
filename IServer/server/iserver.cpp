@@ -71,59 +71,6 @@ void usage() {
 }
 
 
-void monitorBootLink(void) {
-	for(;;) {
-		try {
-			BYTE8 b = myLink->readByte();
-			//fprintf(stderr, "%c", (b != '\n') && (b != '\r') && isprint(b) ? b : '.');
-			logDebugF("%02X %c", b, (isprint(b) ? b : '.'));
-		} catch (exception e) {
-			logFatalF("Could not read from link 0: %s", e.what());
-			return;
-		}
-	}
-}
-
-// Send a file's contents over the link, typically a boot file.
-// A boot file must start with a byte indicating its length; if the code is longer than 255 bytes, the boot file
-// must contain a chain loader, first.
-// Precondition: sendFile != empty
-void sendFileOverLink(std::string sendFile, std::string fileDescription) {
-    // Open file and set exceptions to be thrown on failure
-    ifstream fileStream;
-    fileStream.exceptions(std::ifstream::failbit | std::ifstream::badbit);
-
-    try {
-        BYTE8 buf[128];
-        streamsize nread = 0;
-        fileStream.open(sendFile, ifstream::in | ifstream::binary);
-        do {
-            fileStream.exceptions(std::ifstream::goodbit);
-            fileStream.read(reinterpret_cast<char *>(buf), 128);
-            nread = fileStream.gcount();
-            if (nread > 0) {
-                if (debugLink) {
-                    logDebugF("Read %d bytes of boot code; sending down link", nread);
-                }
-                for (int i = 0; i < nread; i++) {
-                    try {
-                        // TODO do this in blocks to improve performance
-                        myLink->writeByte(buf[i]);
-                    } catch (exception e) {
-                        logFatalF("Could not write down link 0: %s", e.what());
-                        fileStream.close();
-                        finished = true;
-                        return;
-                    }
-                }
-            }
-        } while (nread > 0);
-    } catch (std::system_error& e) {
-        logFatalF("Could not open %s file %s: %s", fileDescription.c_str(), sendFile.c_str(), e.code().message().c_str());
-        finished = true;
-        return;
-    }
-}
 
 
 int main(int argc, char *argv[]) {
