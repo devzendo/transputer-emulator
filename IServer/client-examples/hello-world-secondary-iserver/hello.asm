@@ -9,6 +9,8 @@ PAGE 60,132
 	j       MAIN
 
 	REQ_PUTS        EQU 0x0f
+    REQ_EXIT        EQU 0x23
+
 	STDOUT_STREAMID EQU 0x01
 	LINK0_OUTPUT    EQU 0x80000000
 	LINK0_INPUT     EQU 0x80000010
@@ -26,6 +28,8 @@ _M1:
 	
 	; a=800000FB (HWSTR), b=00000001 (irrelevant)
 	call    putConsolePString
+	; a,b,c=irrelevant
+	call    terminateIServer
 	terminate
 
 ; Stack effect notation used here:
@@ -115,6 +119,15 @@ putConsolePString:
 	out
 	; ()
 
+	; Read (and ignore) IServer response into PPS_STRINGLEN
+    ldlp    PPS_STRINGLEN
+    ; (a=&PPS_STRINGLEN)
+    ldc     LINK0_INPUT
+    ; (a=link0 b=&PPS_STRINGLEN)
+    ldc     4
+    ; (a=len=4 b=link0 c=&PPS_STRINGLEN)
+    in
+
 	ajw     PCPS_WLEN
 	ret
 
@@ -173,6 +186,66 @@ _sl_end:
 	; (a=string address, b=length, c=char)
 	pop
 	; (a=length, b=char, c=string address)
+	ret
+
+terminateIServer:
+	TIS_WLEN        EQU 1
+
+	TIS_RESPONSE    EQU 0
+
+	ajw     -TIS_WLEN
+
+	; Workspace following call here...
+	; 4 => (old c)
+	; 3 => (old b)
+	; 2 => (which is old a, the string address, which we want)
+	; 1 => (the return address)
+	; 0 => TIS_RESPONSE
+
+	; Frame length is 2 bytes (a short), then the data for the frame itself:
+	; 1 byte for frame type (REQ_PUTS)
+	; 4 bytes for exit code 0
+	; So, frame length is 5. (The whole transmission includes the frame length short, so would be 7.
+	; By chance our message has an odd length, so the whole frame will have an even length.
+    ldc     6 ; pad to even
+    ; (a=frame length)
+    call    outshort0
+    ; ()
+
+	; Output REQ_EXIT byte
+	ldc     LINK0_OUTPUT
+	; (a=LINK0_OUTPUT)
+	ldc     REQ_EXIT
+	; (a=REQ_EXIT, b=LINK0_OUTPUT)
+	outbyte
+	; ()
+
+    ; Output exit code 0
+    ldc     LINK0_OUTPUT
+    ; (a=LINK0_OUTPUT)
+    ldc     0
+    ; (a=0, b=LINK0_OUTPUT)
+    outword
+    ; ()
+
+	; Output pad byte
+	ldc     LINK0_OUTPUT
+	; (a=LINK0_OUTPUT)
+	ldc     0
+	; (a=0, b=LINK0_OUTPUT)
+	outbyte
+	; ()
+
+	; Read (and ignore) IServer response into TIS_RESPONSE
+    ldlp    TIS_RESPONSE
+    ; (a=&TIS_RESPONSE)
+    ldc     LINK0_INPUT
+    ; (a=link0 b=&TIS_RESPONSE)
+    ldc     4
+    ; (a=len=4 b=link0 c=&TIS_RESPONSE)
+    in
+
+	ajw     TIS_WLEN
 	ret
 
 Boot2End:
