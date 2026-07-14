@@ -32,6 +32,7 @@ using namespace std;
 #include "flags.h"
 #include "link.h"
 #include "linkfactory.h"
+#include "nulllink.h"
 #include "opcodes.h"
 #include "disasm.h"
 #include "symbol.h"
@@ -128,15 +129,15 @@ CPU::CPU() {
 	logDebug("CPU CTOR");
 }
 
-bool CPU::initialise(Memory *memory, LinkFactory *linkFactory) {
+bool CPU::initialise(Memory *memory, Link *links[4]) {
 	int i;
 	bool allLinksOK = true;
 	myMemory = memory;
 	for (i = 0; i < 4; i++) {
-		if ((myLinks[i] = linkFactory->createLink(i)) == nullptr) {
-			logFatalF("Could not create link %d", i);
-			allLinksOK = false;
-			break;
+		if (links[i] == nullptr) {
+			myLinks[i] = new NullLink(i, false);
+		} else {
+			myLinks[i] = links[i];
 		}
 		try {
 			myLinks[i]->initialise();
@@ -147,10 +148,28 @@ bool CPU::initialise(Memory *memory, LinkFactory *linkFactory) {
 	}
 
 	if (!allLinksOK) {
-		logFatal("Link setup failed");
+		logFatal("Link initialisation failed");
 		return false;
 	}
 	return true;
+}
+
+bool CPU::initialise(Memory *memory, LinkFactory *linkFactory) {
+	int i;
+	Link *links[4];
+	bool allLinksOK = true;
+	for (i = 0; i < 4; i++) {
+		if ((links[i] = linkFactory->createLink(i)) == nullptr) {
+			logFatalF("Could not create link %d", i);
+			allLinksOK = false;
+			break;
+		}
+	}
+	if (!allLinksOK) {
+		logFatal("Link creation failed");
+		return false;
+	}
+	return initialise(memory, links);
 }
 
 CPU::~CPU() {

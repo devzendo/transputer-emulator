@@ -28,6 +28,9 @@ class CPU {
 	public:
 		// 2-phase CTOR since there's only one global CPU
 		CPU();
+		// Initialise either with the link factory, which will create the links, or with the directly created links,
+		// for example, one of a pair of InMemoryLinks.
+		bool initialise(Memory *memory, Link *links[4]);
 		bool initialise(Memory *memory, LinkFactory *linkFactory);
 #ifdef DESKTOP
 		void initialiseSymbolTable(SymbolTable *symbolTable);
