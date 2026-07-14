@@ -25,7 +25,7 @@ Due to lack of compatible TPM hardware, I cannot build on Windows 11 or later; b
 priority for me.
 
 ## Project Status
-Last changes in June 2026.
+Last changes in July 2026.
 
 First release 0.0.1 Midsummer 2019 (13 June 2019) as part of Parachute 0.0.1.
 
