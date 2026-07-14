@@ -37,13 +37,6 @@
             </includes>
             <outputDirectory>bin</outputDirectory>
         </fileSet>
-        <fileSet>
-            <directory>${project.basedir}/Scripts</directory>
-            <includes>
-                <include>tserve.sh</include>
-            </includes>
-            <outputDirectory>bin</outputDirectory>
-        </fileSet>
     </fileSets>
     <files>
         <file>
