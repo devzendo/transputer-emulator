@@ -19,6 +19,9 @@
 #include <ctime>
 #include <cstdio>
 #include <system_error>
+#include <thread>
+
+#include "constants.h"
 
 using namespace std;
 
@@ -37,8 +40,6 @@ using namespace std;
 
 #include "filesystem.h"
 #include "log.h"
-#include "link.h"
-#include "linkfactory.h"
 #include "misc.h"
 #include "platform.h"
 #include "platformfactory.h"
@@ -48,9 +49,15 @@ using namespace std;
 #include "version.h"
 #include "iservershared.h"
 
+#include "link.h"
+#include "inmemorylink.h"
+
+#include "cpu.h"
+#include "memory.h"
+
 // global variables
 static char *progName;
-
+WORD32 flags;
 
 void usage() {
     logInfoF("Parachute v%s EmuServer " __DATE__, projectVersion);
@@ -104,31 +111,90 @@ int main(int argc, char *argv[]) {
         exit(1);
     }
 
-    linkFactory = new LinkFactory(true, debugLinkRaw);
-    linkFactory->singleInMemoryLink();
-    // The EmuServer doesn't allow link customisation from the command line.
 #if defined(PLATFORM_OSX) || defined(PLATFORM_LINUX)
     logDebug("Setting up signal handlers");
+    // TODO the signal handlers should cleanup the emulator resources too, not just the shared iserver ones.
     signal(SIGSEGV, segViolHandler);
     signal(SIGINT, interruptHandler);
 #endif
-
-    if ((myLink = linkFactory->createLink(0)) == NULL) {
-        logFatal("Could not create link 0");
-        cleanup();
-        exit(1);
-    }
+    
+    // The EmuServer doesn't allow link customisation from the command line. There's only a pair of InMemoryLinks
+    // between IServer and Emulator.
+    inMemoryLinkFactory = new InMemoryLinkFactory(1, 0);
+    myLink = inMemoryLinkFactory->linkA();
+    Link * cpuLink = inMemoryLinkFactory->linkB();
+    // The CPU will initialise its link during the initialise call. The IServer side needs its own initialisation.
     try {
         myLink->initialise();
     } catch (exception &e) {
-        logFatalF("Could not initialise link 0: %s", e.what());
+        logFatalF("Could not initialise IServer link 1: %s", e.what());
+        cleanup();
+        exit(1);
+    }
+
+    logDebug("Constructing memory...");
+    auto * memory = new Memory();
+    logDebug("Memory constructed");
+
+    logDebug("Initialising memory...");
+    if (!memory->initialise(DefaultMemSize)) {
+        logFatal("Memory initialisation failed");
+        cleanup();
+        exit(1);
+    }
+    logDebug("Constructing CPU...");
+    auto cpu = new CPU();
+    logDebug("Initialising CPU");
+    Link *cpuLinks[4] = { cpuLink, nullptr, nullptr, nullptr };
+    if (!cpu->initialise(memory, cpuLinks)) {
+        logFatal("CPU initialisation failed");
+        delete cpu;
+        delete memory;
         cleanup();
         exit(1);
     }
 
     // Start the emulator on a second thread, listening to the other side of the InMemory link.
+    auto *cpuThread = new std::thread([cpu, memory, cpuLink] {
+        logDebug("Start of emulation");
+        cpu->emulate(false);
+        fflush(stdout);
+        logDebug("End of emulation");
+    });
 
+    // start iserver operations
+    if (!bootFile.empty()) {
+        sendFileOverLink(bootFile, "boot");
+        logDebug("End of boot file send");
+    }
+
+    if (monitorLink) {
+        logDebug("Monitoring boot link");
+        monitorBootLink();
+    } else {
+        logDebug("Processing IServer protocol");
+        auto * myProtocolHandler = new ProtocolHandler(*myLink, *myPlatform, myRootDirectory);
+        myProtocolHandler->setDebug(debugProtocol);
+        while (!finished) {
+            finished = myProtocolHandler->processFrame();
+        }
+        exitCode = myProtocolHandler->exitCode();
+        logDebugF("Received exit code %d", exitCode);
+    }
+
+    try {
+        logDebug("Resetting link");
+        myLink->resetLink();
+    } catch (exception &e) {
+        logErrorF("Could not reset link 0: %s", e.what());
+    }
+
+    logDebug("EmuServer stop");
+    cpuThread->join();
+    delete cpuThread;
+    delete cpu;
+    delete memory;
 
     cleanup();
-
+    return exitCode;
 }
