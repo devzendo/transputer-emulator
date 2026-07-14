@@ -1,4 +1,5 @@
 include_directories(../Shared)
+include_directories(../Emulator)
 include_directories(../IServer)
 include_directories(../IServer/server)
 include_directories(../target/classes)
