@@ -127,6 +127,10 @@ inline WORD32 WordAlign(WORD32 addr) {
 
 CPU::CPU() {
 	logDebug("CPU CTOR");
+#ifdef DESKTOP
+	// The symbol table needs initialising to empty, just in case initialiseSymbolTable is not called.
+	mySymbolTable = new SymbolTable();
+#endif
 }
 
 bool CPU::initialise(Memory *memory, Link *links[4]) {

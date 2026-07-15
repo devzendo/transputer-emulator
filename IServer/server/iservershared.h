@@ -20,6 +20,8 @@
 #include "platform.h"
 #include "platformfactory.h"
 
+extern void usage(); // different for the two programs.
+
 extern char currentPath[FILENAME_MAX];
 extern std::string myRootDirectory;
 extern Platform *myPlatform;
@@ -39,7 +41,6 @@ extern bool finished;
 
 void setupCurrentPathAndRootDirectory();
 bool fileExists(const std::string &filename);
-bool processCommandLine(int argc, char *argv[]);
 #if defined(PLATFORM_OSX) || defined(PLATFORM_LINUX)
 void segViolHandler(int sig);
 void interruptHandler(int sig);

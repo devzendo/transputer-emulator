@@ -41,6 +41,104 @@ using namespace std;
 // global variables, some in iservershared.
 static char *progName;
 
+bool processCommandLine(int argc, char *argv[]) {
+	int logLevel = LOGLEVEL_INFO;
+
+	for (int i = 0; i < argc; i++) {
+		fullCommandLine += std::string(argv[i]);
+		if (i != argc-1) {
+			fullCommandLine += " ";
+		}
+	}
+
+	for (int i = 1; i < argc; i++) {
+		logDebugF("Processing cmd line arg %d of %d : '%s'", i, argc, argv[i]);
+		if (strlen(argv[i]) > 1 && argv[i][0] == '-') {
+			switch (argv[i][1]) {
+				default:
+					if (!programCommandLine.empty()) {
+						programCommandLine += " ";
+					}
+					programCommandLine += std::string(argv[i]);
+					break;
+
+				case 'M':
+					monitorLink = true;
+					break;
+				case '?':
+				case 'h':
+					usage();
+					return 0;
+ 				case 'l':
+					switch (argv[i][2]) {
+						case 'd':
+							logLevel = LOGLEVEL_DEBUG;
+							break;
+						case 'i':
+							logLevel = LOGLEVEL_INFO;
+							break;
+						case 'w':
+							logLevel = LOGLEVEL_WARN;
+							break;
+						case 'e':
+							logLevel = LOGLEVEL_ERROR;
+							break;
+						case 'f':
+							logLevel = LOGLEVEL_FATAL;
+							break;
+						default:
+							logFatal("Incorrect level given to -l<loglevel> to set logging level");
+							return 0;
+					}
+					setLogLevel(logLevel);
+					break;
+				case 'd':
+					switch (argv[i][2]) {
+						case 'f':
+							debugLink = true;
+							debugLinkRaw = true;
+							debugPlatform = true;
+							debugProtocol = true;
+							break;
+						case 'l':
+							debugLink = true;
+							break;
+						case 'L':
+							debugLink = true;
+							debugLinkRaw = true;
+							break;
+						case 'p':
+							debugPlatform = true;
+							break;
+						case 'P':
+							debugProtocol = true;
+							break;
+						default:
+							usage();
+							return 0;
+					}
+					break;
+				case 'r':
+					myRootDirectory = std::string(argv[i] + 2);
+					break;
+			}
+		} else {
+			if (fileExists(argv[i])) {
+				bootFile = std::string(argv[i]);
+			} else {
+				if (!programCommandLine.empty()) {
+					programCommandLine += " ";
+				}
+				programCommandLine += std::string(argv[i]);
+			}
+		}
+	}
+	//logDebug("End of cmd line processing");
+	logDebugF("Full command line [%s]", fullCommandLine.c_str());
+	logDebugF("Program command line [%s]", programCommandLine.c_str());
+	return 1;
+}
+
 void usage() {
 	logInfoF("Parachute v%s IServer " __DATE__, projectVersion);
 	logInfo(" (C) 2005-2026 Matt J. Gumbley");
@@ -56,7 +154,7 @@ void usage() {
 	logInfo("  -dP   Enables protocol debug");
 	logInfo("  -dl   Enables link communications (high level) debug");
 	logInfo("  -dL   Enables link communications (high & low level) debug");
-	logInfo("  -m    Monitors boot link instead of handling protocol");
+	logInfo("  -M    Monitors boot link instead of handling protocol");
 	logInfo("  -h    Displays this usage summary");
 	logInfo("  -l<X> Sets log level. X is one of [diwef] for DEBUG, INFO");
 	logInfo("        WARN, ERROR or FATAL. Default is INFO");
@@ -69,9 +167,6 @@ void usage() {
 	logInfo("        (Forces link N to type T)");
 	logInfo("Any options not understood by the IServer are stored to be made available to the transputer.");
 }
-
-
-
 
 int main(int argc, char *argv[]) {
 	progName = argv[0];
