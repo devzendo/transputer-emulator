@@ -12,6 +12,8 @@
 //
 //------------------------------------------------------------------------------
 
+#include <cctype>
+
 #include "inmemorylink.h"
 #include "log.h"
 #include "sync.h"
