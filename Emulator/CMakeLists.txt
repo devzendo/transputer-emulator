@@ -5,7 +5,7 @@ link_libraries(parachuteversion)
 
 add_library(parachuteemulator STATIC memory.cpp cpu.cpp disasm.cpp symbol.cpp boot.cpp opcodes.h)
 
-add_executable(temulate main.cpp)
+add_executable(temulate temulate.cpp)
 
 if(PICO)
   target_link_libraries(temulate pico_stdlib parachutepicousbcdc parachuteemulator)
