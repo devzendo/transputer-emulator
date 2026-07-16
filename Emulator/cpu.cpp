@@ -36,6 +36,7 @@ using namespace std;
 #include "opcodes.h"
 #include "disasm.h"
 #include "symbol.h"
+#include "boot.h"
 
 // Special offsets below the workspace pointer, or other pointer:
 inline WORD32 Wdesc_Priority(WORD32 Wdesc) {
@@ -127,6 +128,7 @@ inline WORD32 WordAlign(WORD32 addr) {
 
 CPU::CPU() {
 	logDebug("CPU CTOR");
+	myBoot = nullptr;
 #ifdef DESKTOP
 	// Don't forget to initialise the symbol table to something! Client program is responsible for alloc/free of it.
 #endif
@@ -154,6 +156,8 @@ bool CPU::initialise(Memory *memory, Link *links[4]) {
 		logFatal("Link initialisation failed");
 		return false;
 	}
+	myBoot = new Boot();
+	myBoot->initialise(myMemory, myLinks);
 	return true;
 }
 
@@ -182,6 +186,10 @@ CPU::~CPU() {
 			delete myLink;
 			myLink = nullptr;
 		}
+	}
+	if (myBoot != nullptr) {
+		delete myBoot;
+		myBoot = nullptr;
 	}
 }
 
@@ -2344,88 +2352,11 @@ inline void CPU::interpret(void) {
 // Note that Parachute is not a microcode emulator, and does not have a reset or
 // analyse 'pin'.
 void CPU::bootFromLink0() {
-	bootLen = 0;
-	Link *bootLink = nullptr;
-	int linkNo = -1;
-	// Boot from the link in Creg
-	switch (Creg) {
-		case Link0Input: linkNo = 0; break;
-		case Link1Input: linkNo = 1; break;
-		case Link2Input: linkNo = 2; break;
-		case Link3Input: linkNo = 3; break;
-		default:
-			 logFatal("Creg is not set to a valid link input address for boot");
-			 exit(1);
-	}
-	bootLink = myLinks[linkNo];
-	// Repeatedly read first byte:
-	// 'poke': 0 => read address word, data word, store data word at address
-	// 'peek': 1 => read word, output word at that address
-	// 'boot': x where x>1, x is the length of boot code to read into MemStart onwards
-	BYTE8 ctrl = 0;
-	do {
-		try {
-			ctrl = bootLink->readByte();
-			switch (ctrl) {
-				case 1: // peek
-					try {
-						WORD32 addr = bootLink->readWord();
-						WORD32 value = 0xDEADF00D;
-						if (myMemory->isLegalMemory(addr)) {
-							value = myMemory->getWord(addr);
-						} else {
-							logWarnF("Boot-peek requested read from bad address %08X", addr);
-						}
-						if (IS_FLAG_SET(DebugFlags_LinkComms)) {
-							logDebugF("Boot-peek @ %08X = %08X", addr, value);
-						}
-						bootLink->writeWord(value);
-					} catch (exception &e) {
-						logFatalF("I/O failure on link %d during boot-peek: %s", linkNo, e.what());
-						exit(1);
-					}
-					break;
-				case 0: // poke
-					try {
-						WORD32 addr = bootLink->readWord();
-						WORD32 value = bootLink->readWord();
-						if (myMemory->isLegalMemory(addr)) {
-							myMemory->setWord(addr, value);
-						} else {
-							logWarnF("Boot-poke requested write to bad address %08X value %08X", addr, value);
-						}
-						if (IS_FLAG_SET(DebugFlags_LinkComms)) {
-							logDebugF("Boot-poke stored %08X @ %08X", value,  addr);
-						}
-					} catch (exception &e) {
-						logFatalF("I/O failure on link %d during boot-poke: %s", linkNo, e.what());
-						exit(1);
-					}
-					break;
-				default: // boot
-					bootLen = ctrl;
-					try {
-						if (IS_FLAG_SET(DebugFlags_LinkComms)) {
-							logDebugF("Primary bootstrap contains 0x%02X bytes", bootLen);
-						}
-						WORD32 addr = MemStart;
-						for (int i = 0; i < ctrl; i++) {
-							BYTE8 value = bootLink->readByte();
-							// addr is going to be valid, always. There's always at least
-							// 0xff bytes of memory after MemStart.
-							myMemory->setByte(addr++, value);
-						}
-					} catch (exception &e) {
-						logFatalF("I/O failure on link %d during bootstrap: %s", linkNo, e.what());
-						exit(1);
-					}
-					break;
-			}
-		} catch (exception &e) {
-			logFatalF("Boot failed to read control byte from link %d: %s", linkNo, e.what());
-			exit(1);
-		}
-	} while (ctrl <= 1);
+	// TODO We're fixed to the Link0 for now until boot.cpp can poll them and return the link it used.
+	// We'll come here with Link0 in Creg.
+	// When boot.cpp returns a link, we'll set Creg to it here.
+	myBoot->start();
+	bootLen = myBoot->bootLen();
 }
 
 void CPU::emulate(const bool bootFromROM) {
@@ -2511,6 +2442,7 @@ void CPU::start() {
 		Areg = IPtr;
 		Breg = Wdesc;
 		Creg = Link0Input; // The default IServer link input
+		// TODO set Creg to the link boot.cpp finds, when it uses multiple ones.
 		bootFromLink0();
 		// NB: CWG p74 states Areg is set to the previous value of IPtr, Breg the previous of Wdesc,
 		// Creg a pointer to the link the Transputer booted from.

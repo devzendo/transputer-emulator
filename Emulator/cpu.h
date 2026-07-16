@@ -23,6 +23,7 @@
 #include "linkfactory.h"
 #include "platformdetection.h"
 #include "symbol.h"
+#include "boot.h"
 
 class CPU {
 	public:
@@ -45,6 +46,7 @@ class CPU {
 		// Dynamically allocated memory
 		Memory *myMemory;
 		Link *myLinks[4];
+		Boot *myBoot;
 		// All registers
 		WORD32 IPtr, Wdesc;
 		WORD32 Areg, Breg, Creg, Oreg; // Integer register evaluation stack
