@@ -331,8 +331,14 @@ int main(int argc, char *argv[]) {
         exit(1);
     }
 
+	mySymbolTable = new SymbolTable();
     logDebug("Constructing memory...");
     myMemory = new Memory();
+	if (!myMemory->initialiseROMFileAndSymbolTable(nullptr, mySymbolTable)) {
+		logFatal("Could not initialise memory's symbol table");
+		cleanup();
+		exit(1);
+	}
     logDebug("Memory constructed");
 
     logDebug("Initialising memory...");
@@ -344,7 +350,6 @@ int main(int argc, char *argv[]) {
     logDebug("Constructing CPU...");
     myCPU = new CPU();
     logDebug("Initialising CPU");
-	mySymbolTable = new SymbolTable();
 	myCPU->initialiseSymbolTable(mySymbolTable);
     Link *cpuLinks[4] = { cpuLink, nullptr, nullptr, nullptr };
     if (!myCPU->initialise(myMemory, cpuLinks)) {
