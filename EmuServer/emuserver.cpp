@@ -52,6 +52,10 @@ using namespace std;
 static char *progName;
 WORD32 flags;
 long ramSize = DefaultMemSize;
+InMemoryLinkFactory *inMemoryLinkFactory = nullptr;
+Memory * myMemory = nullptr;
+CPU * myCPU = nullptr;
+SymbolTable * mySymbolTable = nullptr;
 
 bool processCommandLine(int argc, char *argv[]) {
 	int newMegs = 4;
@@ -244,6 +248,34 @@ void usage() {
     logInfo("Any options not understood by the EmuServer are stored to be made available to the Emulator.");
 }
 
+void cleanup() {
+	if (myPlatform != NULL) {
+		delete myPlatform;
+	}
+	if (myLink != NULL) {
+		delete myLink;
+	}
+	if (platformFactory != NULL) {
+		delete platformFactory;
+	}
+	if (linkFactory != NULL) {
+		delete linkFactory;
+	}
+	if (inMemoryLinkFactory != NULL) {
+		delete inMemoryLinkFactory;
+	}
+	if (myCPU != NULL) {
+		delete myCPU;
+	}
+	if (mySymbolTable != NULL) {
+		delete mySymbolTable;
+	}
+	if (myMemory != NULL) {
+		delete myMemory;
+	}
+	fflush(stdout);
+}
+
 int main(int argc, char *argv[]) {
     progName = argv[0];
     bootFile = "";
@@ -296,31 +328,31 @@ int main(int argc, char *argv[]) {
     }
 
     logDebug("Constructing memory...");
-    auto * memory = new Memory();
+    myMemory = new Memory();
     logDebug("Memory constructed");
 
     logDebug("Initialising memory...");
-    if (!memory->initialise(ramSize)) {
+    if (!myMemory->initialise(ramSize)) {
         logFatal("Memory initialisation failed");
         cleanup();
         exit(1);
     }
     logDebug("Constructing CPU...");
-    auto cpu = new CPU();
+    myCPU = new CPU();
     logDebug("Initialising CPU");
+	mySymbolTable = new SymbolTable();
+	myCPU->initialiseSymbolTable(mySymbolTable);
     Link *cpuLinks[4] = { cpuLink, nullptr, nullptr, nullptr };
-    if (!cpu->initialise(memory, cpuLinks)) {
+    if (!myCPU->initialise(myMemory, cpuLinks)) {
         logFatal("CPU initialisation failed");
-        delete cpu;
-        delete memory;
         cleanup();
         exit(1);
     }
 
     // Start the emulator on a second thread, listening to the other side of the InMemory link.
-    auto *cpuThread = new std::thread([cpu, memory, cpuLink] {
+    auto *cpuThread = new std::thread([] {
         logDebug("Start of emulation");
-        cpu->emulate(false);
+        myCPU->emulate(false);
         fflush(stdout);
         logDebug("End of emulation");
     });
@@ -355,8 +387,6 @@ int main(int argc, char *argv[]) {
     logDebug("EmuServer stop");
     cpuThread->join();
     delete cpuThread;
-    delete cpu;
-    delete memory;
 
     cleanup();
     return exitCode;

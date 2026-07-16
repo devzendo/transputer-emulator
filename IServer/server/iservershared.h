@@ -28,7 +28,6 @@ extern Platform *myPlatform;
 extern PlatformFactory *platformFactory;
 extern Link *myLink;
 extern LinkFactory *linkFactory;
-extern InMemoryLinkFactory *inMemoryLinkFactory;
 extern std::string bootFile;
 extern bool debugPlatform;
 extern bool debugProtocol;
@@ -47,9 +46,5 @@ void interruptHandler(int sig);
 #endif
 void sendFileOverLink(std::string sendFile, std::string fileDescription);
 void monitorBootLink(void);
-
-
-
-void cleanup();
 
 #endif // ISERVERSHARED_H

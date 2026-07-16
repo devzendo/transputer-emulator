@@ -44,7 +44,6 @@ Platform *myPlatform;
 PlatformFactory *platformFactory;
 Link *myLink;
 LinkFactory *linkFactory;
-InMemoryLinkFactory *inMemoryLinkFactory;
 std::string bootFile;
 bool debugPlatform;
 bool debugProtocol;
@@ -55,6 +54,7 @@ std::string fullCommandLine;
 std::string programCommandLine;
 bool finished;
 
+extern void cleanup();
 
 void setupCurrentPathAndRootDirectory() {
     // Thanks to computinglife in https://stackoverflow.com/questions/143174/how-do-i-get-the-directory-that-a-program-is-running-from
@@ -166,21 +166,3 @@ void monitorBootLink(void) {
 	}
 }
 
-void cleanup() {
-    if (myPlatform != NULL) {
-        delete myPlatform;
-    }
-    if (myLink != NULL) {
-        delete myLink;
-    }
-    if (platformFactory != NULL) {
-        delete platformFactory;
-    }
-    if (linkFactory != NULL) {
-        delete linkFactory;
-    }
-	if (inMemoryLinkFactory != NULL) {
-		delete inMemoryLinkFactory;
-	}
-	fflush(stdout);
-}

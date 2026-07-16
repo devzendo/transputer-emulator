@@ -557,6 +557,9 @@ int main() {
 	delete linkFactory;
 	delete memory;
 	delete cpu;
+#ifdef DESKTOP
+	delete symbolTable;
+#endif
 	logInfo("END");
 	doExit(0);
 }

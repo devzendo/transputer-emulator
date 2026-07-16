@@ -168,6 +168,22 @@ void usage() {
 	logInfo("Any options not understood by the IServer are stored to be made available to the transputer.");
 }
 
+void cleanup() {
+	if (myPlatform != NULL) {
+		delete myPlatform;
+	}
+	if (myLink != NULL) {
+		delete myLink;
+	}
+	if (platformFactory != NULL) {
+		delete platformFactory;
+	}
+	if (linkFactory != NULL) {
+		delete linkFactory;
+	}
+	fflush(stdout);
+}
+
 int main(int argc, char *argv[]) {
 	progName = argv[0];
 	bootFile = "";

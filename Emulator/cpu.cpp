@@ -128,8 +128,7 @@ inline WORD32 WordAlign(WORD32 addr) {
 CPU::CPU() {
 	logDebug("CPU CTOR");
 #ifdef DESKTOP
-	// The symbol table needs initialising to empty, just in case initialiseSymbolTable is not called.
-	mySymbolTable = new SymbolTable();
+	// Don't forget to initialise the symbol table to something! Client program is responsible for alloc/free of it.
 #endif
 }
 
