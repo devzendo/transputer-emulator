@@ -231,6 +231,7 @@ void usage() {
     logInfo("  -dr   Enables disassembly & registers during emulation");
     logInfo("  -do   Enables disassembly & regs & opr/fpentry");
     logInfo("  -df   Full debug");
+	logInfo("  -di   Enables IServer debug");
     logInfo("  -dp   Enables platform debug");
     logInfo("  -dP   Enables protocol debug");
     logInfo("  -dl   Enables link communications (high level) debug");
@@ -239,8 +240,11 @@ void usage() {
     logInfo("  -dc   Enables clocks / timers debug");
     logInfo("  -dm   Enables memory read/write debug for data");
     logInfo("  -dM   Enables memory read/write debug for data & instructions");
-    logInfo("  -m    Monitors boot link instead of handling protocol");
+    logInfo("  -M    Monitors boot link instead of handling protocol");
 	logInfo("  -m<X> Sets initial memory size to X MB");
+	logInfo("  -i    Enters interactive monitor immediately");
+	logInfo("  -j    Enables break on j0");
+	logInfo("  -x    Terminate emulation upon memory violation");
     logInfo("  -h    Displays this usage summary");
     logInfo("  -l<X> Sets log level. X is one of [diwef] for DEBUG, INFO");
     logInfo("        WARN, ERROR or FATAL. Default is INFO");
