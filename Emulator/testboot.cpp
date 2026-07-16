@@ -177,6 +177,12 @@ TEST_F(PeekPokeBootTest, PokeAWordOutsideLegalMemory) {
     EXPECT_EQ(IS_FLAG_SET(EmulatorState_Terminate), false);
 }
 
+TEST_F(PeekPokeBootTest, InitialConditions) {
+    littleSleep();
+    terminateBootLoop();
+    EXPECT_EQ(myBoot->bootLen(), 0);
+}
+
 TEST_F(PeekPokeBootTest, BootIt) {
     int boot_length = 7;
     myControlLinks[0]->writeByte(boot_length);
@@ -200,4 +206,7 @@ TEST_F(PeekPokeBootTest, BootIt) {
     EXPECT_EQ(myMemory->getByte(MemStart + 6), 0x06);
 
     EXPECT_EQ(myMemory->getByte(MemStart + 7), 0x00);
+
+    EXPECT_EQ(myBoot->bootLen(), 7);
+
 }

@@ -28,10 +28,12 @@ public:
     Boot();
     bool initialise(Memory *memory, Link *links[4]);
     void start();
+    BYTE8 bootLen();
     ~Boot();
 private:
     Memory *myMemory{};
     Link *myLinks[4]{};
+    BYTE8 myBootLen{};
 };
 
 

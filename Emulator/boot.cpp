@@ -26,11 +26,16 @@ Boot::Boot() = default;
 Boot::~Boot() = default;
 
 bool Boot::initialise(Memory *memory, Link *links[4]) {
+    myBootLen = 0;
     myMemory = memory;
     for (int i = 0; i < 4; i++) {
         myLinks[i] = links[i];
     }
     return true;
+}
+
+BYTE8 Boot::bootLen() {
+    return myBootLen;
 }
 
 // See TTH, p53
@@ -45,7 +50,7 @@ void Boot::start() {
 	int linkNo = 0;
 	Link *bootLink = myLinks[linkNo];
 
-    BYTE8 bootLen = 0;
+    myBootLen = 0;
     BYTE8 ctrl = 0;
     // Repeatedly read first byte:
     // 'poke': 0 => read address word, data word, store data word at address
@@ -95,13 +100,13 @@ void Boot::start() {
                     }
                     break;
                 default:
-                    bootLen = ctrl;
+                    myBootLen = ctrl;
                     try {
                         if (IS_FLAG_SET(DebugFlags_LinkComms)) {
-                            logDebugF("Primary bootstrap contains 0x%02X bytes", bootLen);
+                            logDebugF("Primary bootstrap contains 0x%02X bytes", myBootLen);
                         }
                         WORD32 addr = MemStart;
-                        for (int i = 0; i < ctrl; i++) {
+                        for (int i = 0; i < myBootLen; i++) {
                             BYTE8 value = bootLink->readByte();
                             // addr is going to be valid, always. There's always at least
                             // 0xff bytes of memory after MemStart.
