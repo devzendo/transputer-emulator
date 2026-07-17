@@ -178,9 +178,14 @@ TEST_F(PeekPokeBootTest, PokeAWordOutsideLegalMemory) {
 }
 
 TEST_F(PeekPokeBootTest, InitialConditions) {
-    littleSleep();
-    terminateBootLoop();
     EXPECT_EQ(myBoot->bootLen(), 0);
+
+    littleSleep();
+    EXPECT_EQ(myBoot->bootLen(), 0);
+
+    terminateBootLoop(); // sends a minimum 2-byte boot file
+    littleSleep();
+    EXPECT_EQ(myBoot->bootLen(), 2);
 }
 
 TEST_F(PeekPokeBootTest, BootIt) {
