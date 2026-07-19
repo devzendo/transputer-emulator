@@ -5,7 +5,15 @@ set(CMAKE_CXX_STANDARD 14)
 set(CMAKE_CXX_STANDARD_REQUIRED ON) # Don't fall back to an earlier standard if the one declared isn't available
 set(CMAKE_CXX_EXTENSIONS OFF)
 
+# Get the build type from the CMAKE_BUILD_TYPE environment variable (that's passed in by Maven), and set this into the
+# CMake CMAKE_BUILD_TYPE variable.
+if(DEFINED ENV{CMAKE_BUILD_TYPE})
+    set(CMAKE_BUILD_TYPE $ENV{CMAKE_BUILD_TYPE})
+    message(STATUS "The CMAKE_BUILD_TYPE is set to $ENV{CMAKE_BUILD_TYPE} via environment variable")
+
+endif()
 if(NOT CMAKE_BUILD_TYPE)
+    message(STATUS "Not set the CMAKE_BUILD_TYPE variable so defaulting to Release...")
     set(CMAKE_BUILD_TYPE "Release" CACHE STRING "Choose Release or Debug" FORCE)
 endif()
 
@@ -158,6 +166,14 @@ if(NOT(EMBEDDED))
 endif() # NOT(EMBEDDED)
 
 ########################################################################################################################
+
+IF (UNIX)
+    include(${CMAKE_SOURCE_DIR}/sanitizers.cmake)
+    add_sanitizer_support(thread)
+ENDIF (UNIX)
+
+########################################################################################################################
+
 # Build the transputer emulator and related code...
 add_subdirectory(target/classes)
 add_subdirectory(Shared)

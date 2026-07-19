@@ -557,22 +557,6 @@ The transputer designers, and all at Inmos/ST who developed it.
 Sir Charles Antony Richard Hoare, FRS, FREng.
 11 January 1934 - 5 March 2026
 
-Authors of other emulators:
-
-Julian Highfield for his T414 emulator which may be found at 
-https://web.archive.org/web/20130515034826/http://spirit.lboro.ac.uk/emulator.html
-
-Gavin Crate's various emulators based on microcode and Julian Highfield's
-emulator, which may be found at
-https://sites.google.com/site/transputeremulator/Home
-
-Andras Pahia's continuation of this emulator which may be found at
-https://github.com/pahihu/t4
-
-Andrew Menadue's 'picoputer' extension of Andras' emulator to run on the Raspberry Pi Pico,
-connected to real Inmos IMSC011 link adapters; this may be found at
-https://github.com/blackjetrock/picoputer
-
 Henry S. Warren, for "Hacker's Delight".
 
 Pete Warden for his investigation and documentation into the Raspberry Pi Pico
@@ -590,10 +574,27 @@ http://www.ganssle.com/debouncing-pt2.htm
 
 Ha Thach, Jerzy Kasenberg, Angel Molina for TinyUSB, and the CDC example code.
 
+George Cave for CMake sanitizers support.
+
 Yury Shevchuk and Roman Pozlevich for the gcc-t800 port, ttools and libxputer
 packages.  These were used throughout an earlier version of the project, for
 bootstrap code, object and executable file format and loader.
 
+Authors of other emulators:
+
+Julian Highfield for his T414 emulator which may be found at
+https://web.archive.org/web/20130515034826/http://spirit.lboro.ac.uk/emulator.html
+
+Gavin Crate's various emulators based on microcode and Julian Highfield's
+emulator, which may be found at
+https://sites.google.com/site/transputeremulator/Home
+
+Andras Pahia's continuation of this emulator which may be found at
+https://github.com/pahihu/t4
+
+Andrew Menadue's 'picoputer' extension of Andras' emulator to run on the Raspberry Pi Pico,
+connected to real Inmos IMSC011 link adapters; this may be found at
+https://github.com/blackjetrock/picoputer
 
 # Bibliography
 [CWG] "Transputer Instruction Set - A Compiler Writer's Guide"
