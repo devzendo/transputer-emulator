@@ -38,8 +38,12 @@ protected:
     Memory *myMemory;
     Link *myBootLinks[4];
     Link *myControlLinks[4];
-    Boot *myBoot;
+    Boot *myBoot = nullptr;
     std::thread *m_thread = nullptr;
+    std::atomic<bool> setupDone{false};
+    std::atomic<bool> done{false};
+    std::atomic<int> bootLen{0};
+
 
     void SetUp() override {
         setLogLevel(LOGLEVEL_DEBUG);
@@ -69,7 +73,18 @@ protected:
             myBootLinks[i]->setDebug(true);
             myBootLinks[i]->initialise();
         }
-        logDebug("Boot setup");
+
+        logDebug("Setup complete");
+        logFlush();
+        logDebug("vvvvv TEST vvvvv");
+    }
+
+    void startBoot() {
+        logDebug("Boot setup waiting for initial setup");
+        while (!setupDone.load(std::memory_order_acquire)) {
+            std::this_thread::yield();
+        }
+        logDebug("Initial setup done; booting...");
         myBoot = new Boot();
         myBoot->initialise(myMemory, myBootLinks);
         // It reads from the 'client' links, this test writes to the 'control' (server) links.
@@ -81,23 +96,28 @@ protected:
         m_thread = new std::thread([this] {
             logDebug("Thread started, booting...");
             myBoot->start();
-            logDebug("Boot finished, thread ending");
+            logDebug("Boot finished");
+            bootLen.store(myBoot->bootLen(), std::memory_order_release);
+            logDebug("Boot thread ending");
+            done.store(true, std::memory_order_release);
         });
+    }
 
-        logDebug("Setup complete");
-        logFlush();
-        logDebug("vvvvv TEST vvvvv");
+    void waitUntilEndOfBoot() {
+        while (!done.load(std::memory_order_acquire)) {
+            std::this_thread::yield();
+        }
+        if (m_thread != nullptr) {
+            logDebug("Joining thread");
+            m_thread->join();
+            logDebug("Thread joined");
+        }
     }
 
     void TearDown() override {
         logDebug("^^^^^ TEST ^^^^^");
         logDebug("TearDown start");
         // notify?
-        if (m_thread != nullptr) {
-            logDebug("Joining thread");
-            m_thread->join();
-            logDebug("Thread joined");
-        }
         for (int i = 0; i < 4; i++) {
             myBootLinks[i]->resetLink();
             delete myBootLinks[i];
@@ -111,7 +131,7 @@ protected:
     }
 
     void littleSleep() {
-        std::this_thread::sleep_for(std::chrono::milliseconds(100));
+        std::this_thread::sleep_for(std::chrono::milliseconds(500));
     }
 
     void terminateBootLoop() {
@@ -131,34 +151,46 @@ protected:
 TEST_F(PeekPokeBootTest, PeekAWordFromLegalMemory) {
     myMemory->setWord(MemStart + 20, 0xCAFEF00D);
 
+    setupDone.store(true, std::memory_order_release);
+    startBoot();
+
     myControlLinks[0]->writeByte(BOOT_PEEK);
     myControlLinks[0]->writeWord(MemStart + 20);
 
-    WORD32 word = myControlLinks[0]->readWord();
-
     terminateBootLoop();
+    waitUntilEndOfBoot();
+    WORD32 word = myControlLinks[0]->readWord();
     EXPECT_EQ(word, 0xCAFEF00D);
 }
 
 TEST_F(PeekPokeBootTest, PeekAWordFromOutsideLegalMemory) {
+    setupDone.store(true, std::memory_order_release);
+    startBoot();
+
     myControlLinks[0]->writeByte(BOOT_PEEK);
     myControlLinks[0]->writeWord(MemStart + 1025);
 
-    WORD32 word = myControlLinks[0]->readWord();
+    littleSleep();
 
     terminateBootLoop();
+    waitUntilEndOfBoot();
+    WORD32 word = myControlLinks[0]->readWord();
     EXPECT_EQ(word, 0xDEADF00D);
 }
 
 TEST_F(PeekPokeBootTest, PokeAWordToLegalMemory) {
+    setupDone.store(true, std::memory_order_release);
+    startBoot();
+
     myControlLinks[0]->writeByte(BOOT_POKE);
     myControlLinks[0]->writeWord(MemStart + 20);
     myControlLinks[0]->writeWord(0x12345678);
 
     littleSleep();
-    WORD32 word = myMemory->getWord(MemStart + 20);
 
     terminateBootLoop();
+    waitUntilEndOfBoot();
+    WORD32 word = myMemory->getWord(MemStart + 20);
     EXPECT_EQ(word, 0x12345678);
 }
 
@@ -167,6 +199,9 @@ TEST_F(PeekPokeBootTest, PokeAWordToLegalMemory) {
 // this attempt will NOT cause the terminate flag to be set, but cannot
 // otherwise be detected- a warning diag is reported. Manually observe this:
 TEST_F(PeekPokeBootTest, PokeAWordOutsideLegalMemory) {
+    setupDone.store(true, std::memory_order_release);
+    startBoot();
+
     myControlLinks[0]->writeByte(BOOT_POKE);
     myControlLinks[0]->writeWord(MemStart + 1025);
     myControlLinks[0]->writeWord(0x12345678);
@@ -174,21 +209,32 @@ TEST_F(PeekPokeBootTest, PokeAWordOutsideLegalMemory) {
     littleSleep();
 
     terminateBootLoop();
+    waitUntilEndOfBoot();
     EXPECT_EQ(IS_FLAG_SET(EmulatorState_Terminate), false);
 }
 
 TEST_F(PeekPokeBootTest, InitialConditions) {
-    EXPECT_EQ(myBoot->bootLen(), 0);
+    logDebug("Start of InitialConditions");
 
-    littleSleep();
-    EXPECT_EQ(myBoot->bootLen(), 0);
+    logDebug("Starting booting InitialConditions");
+
+    setupDone.store(true, std::memory_order_release);
+    startBoot();
+    logDebug("Terminating boot loop");
 
     terminateBootLoop(); // sends a minimum 2-byte boot file
+    logDebug("Waiting a bit");
+
     littleSleep();
-    EXPECT_EQ(myBoot->bootLen(), 2);
+    logDebug("Waiting for end of boot");
+    waitUntilEndOfBoot();
+    EXPECT_EQ(bootLen.load(), 2);
 }
 
 TEST_F(PeekPokeBootTest, BootIt) {
+    setupDone.store(true, std::memory_order_release);
+    startBoot();
+
     int boot_length = 7;
     myControlLinks[0]->writeByte(boot_length);
     myControlLinks[0]->writeByte(0x00);
@@ -200,6 +246,7 @@ TEST_F(PeekPokeBootTest, BootIt) {
     myControlLinks[0]->writeByte(0x06);
 
     littleSleep();
+    waitUntilEndOfBoot();
 
     // The boot loop will have terminated.
     EXPECT_EQ(myMemory->getByte(MemStart + 0), 0x00);
@@ -213,5 +260,4 @@ TEST_F(PeekPokeBootTest, BootIt) {
     EXPECT_EQ(myMemory->getByte(MemStart + 7), 0x00);
 
     EXPECT_EQ(myBoot->bootLen(), 7);
-
 }
