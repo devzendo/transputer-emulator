@@ -506,18 +506,18 @@ void GPIOAsyncLink::clearReadDataAvailable() {
 /*
  * A MultipleTickHandler clocks all the Links it is given.
  */
-MultipleTickHandler::MultipleTickHandler() : TickHandler() {
+MultipleAsyncLinkClocker::MultipleAsyncLinkClocker() : TickHandler() {
 
 }
 
-void MultipleTickHandler::addLink(AsyncLink* link) {
+void MultipleAsyncLinkClocker::addLink(AsyncLink* link) {
     m_links.push_back(link);
 }
 
 static bool tickled = false;
 static int tick_count = 0;
 // TickHandler
-void MultipleTickHandler::tick() {
+void MultipleAsyncLinkClocker::tick() {
     // if (tick_count++ == 1024) {
     //     tick_count = 0;
     //     gpio_put(PICO_DEFAULT_LED_PIN, tickled);

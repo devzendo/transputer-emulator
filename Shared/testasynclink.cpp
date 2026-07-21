@@ -203,23 +203,23 @@ TEST_F(AsyncLinkClockTest, StartTicksThenStopHalts) {
 }
 
 TEST_F(AsyncLinkClockTest, MultipleTickHandler) {
-    MultipleTickHandler mth;
+    MultipleAsyncLinkClocker linkClocker;
     AtomicClockable clockable;
     EXPECT_EQ(clockable.counter(), 0);
-    mth.tick();
+    linkClocker.tick();
     EXPECT_EQ(clockable.counter(), 0);
-    mth.addLink(&clockable);
-    mth.tick();
+    linkClocker.addLink(&clockable);
+    linkClocker.tick();
     EXPECT_EQ(clockable.counter(), 1);
 
-    mth.addLink(&clockable); // it'll be called twice
-    mth.tick();
+    linkClocker.addLink(&clockable); // it'll be called twice
+    linkClocker.tick();
     EXPECT_EQ(clockable.counter(), 3);
 }
 
 class AsyncLinkTest : public ::testing::Test {
 public:
-    AsyncLinkTest() : clock(-1, handler) {
+    AsyncLinkTest() : clock(-1, linkClocker) {
 
     }
 protected:
@@ -243,8 +243,8 @@ protected:
         linkB->initialise();
 
         logDebug("Setup and start clock");
-        handler.addLink(&*linkA);
-        handler.addLink(&*linkB);
+        linkClocker.addLink(&*linkA);
+        linkClocker.addLink(&*linkB);
         clock.start();
 
         logDebug("Setup complete");
@@ -276,7 +276,7 @@ protected:
     CrosswiredTxRxPinPair pair;
     GPIOAsyncLink *linkA = nullptr;
     GPIOAsyncLink *linkB = nullptr;
-    MultipleTickHandler handler;
+    MultipleAsyncLinkClocker linkClocker;
     AsyncLinkClock clock;
 };
 
@@ -406,7 +406,7 @@ TEST_F(AsyncLinkTest, WriteAndReadBytes) {
 
 class AsyncLinkTimeoutTest : public ::testing::Test {
 public:
-    AsyncLinkTimeoutTest() : clock(-1, handler) {
+    AsyncLinkTimeoutTest() : clock(-1, linkClocker) {
 
     }
 protected:
@@ -420,7 +420,7 @@ protected:
         linkA->initialise();
 
         logDebug("Setup and start clock");
-        handler.addLink(&*linkA);
+        linkClocker.addLink(&*linkA);
         clock.start();
 
         logDebug("Setup complete");
@@ -445,7 +445,7 @@ protected:
     }
     DisconnectedPin pin;
     GPIOAsyncLink *linkA = nullptr;
-    MultipleTickHandler handler;
+    MultipleAsyncLinkClocker linkClocker;
     AsyncLinkClock clock;
 };
 

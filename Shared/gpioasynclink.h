@@ -406,12 +406,12 @@ private:
 };
 
 /*
- * A MultipleTickHandler clocks all the AsyncLinks it is given.
+ * A MultipleAsyncLinkClocker clocks all the AsyncLinks it is given.
  */
 
-class MultipleTickHandler: public TickHandler {
+class MultipleAsyncLinkClocker: public TickHandler {
 public:
-    MultipleTickHandler();
+    MultipleAsyncLinkClocker();
     void addLink(AsyncLink* link);
     // TickHandler
     void tick() override;
