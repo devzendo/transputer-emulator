@@ -50,14 +50,14 @@ void setLogLevel(int l) {
 extern void _logLevel(const int level, const char *s); // provided by the implementations
 
 void logLevel(const int level, const char *s) {
-	//LOGMUTEX
+	LOGMUTEX
 	_logLevel(level, s);
 }
 
 void logFormat(int level, const char *fmt, ...) {
 const int LOGBUFSIZE = 128;
 static char buf[LOGBUFSIZE];
-	//LOGMUTEX
+	LOGMUTEX
 	buf[0] = '\0';
 
 	if (myLogLevel > level) {
