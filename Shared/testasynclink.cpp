@@ -69,9 +69,7 @@ public:
 
 class DisconnectedPin: public TxRxPin {
 public:
-    DisconnectedPin() {
-
-    }
+    DisconnectedPin() = default;
 
     ~DisconnectedPin() override = default;
 
@@ -117,7 +115,7 @@ protected:
             m_counter.fetch_add(1);
         }
 
-        int counter() {
+        int counter() const {
             int counter = m_counter.load();
             logDebugF("Counter is %d", counter);
             return counter;
@@ -136,7 +134,7 @@ protected:
             m_counter.fetch_add(1);
         }
 
-        int counter() {
+        int counter() const {
             int counter = m_counter.load();
             logDebugF("Counter is %d", counter);
             return counter;
@@ -243,8 +241,8 @@ protected:
         linkB->initialise();
 
         logDebug("Setup and start clock");
-        linkClocker.addLink(&*linkA);
-        linkClocker.addLink(&*linkB);
+        linkClocker.addLink(linkA);
+        linkClocker.addLink(linkB);
         clock.start();
 
         logDebug("Setup complete");
@@ -269,7 +267,7 @@ protected:
         logFlush();
     }
 
-    void pause() {
+    static void pause() {
         std::this_thread::sleep_for(std::chrono::microseconds(LINK_CLOCK_TICK_INTERVAL_US));
     }
 
@@ -297,7 +295,7 @@ TEST_F(AsyncLinkTest, SetRTSSetsIt) {
 
 TEST_F(AsyncLinkTest, RTSClearedWhenDataSentAsync) {
     char outbuf[] = "a";
-    bool ok = linkA->writeDataAsync(0xCAFEBABE, (BYTE8*)&outbuf[0], 1);
+    bool ok = linkA->writeDataAsync(0xCAFEBABE, reinterpret_cast<BYTE8 *>(&outbuf[0]), 1);
     logDebug("out of writeDataAsync");
     EXPECT_EQ(ok, true);
     pause();
@@ -306,7 +304,7 @@ TEST_F(AsyncLinkTest, RTSClearedWhenDataSentAsync) {
 
 TEST_F(AsyncLinkTest, DataSentAsyncGetsAckedRTSSet) {
     char outbuf[] = "a";
-    linkA->writeDataAsync(0xCAFEBABE, (BYTE8*)&outbuf[0], 1);
+    linkA->writeDataAsync(0xCAFEBABE, reinterpret_cast<BYTE8 *>(&outbuf[0]), 1);
     for (int i=0; i<24 * 12; i++) { // 24 bit-lengths should be enough to hear the ack
         pause();
     }
@@ -315,7 +313,7 @@ TEST_F(AsyncLinkTest, DataSentAsyncGetsAckedRTSSet) {
 
 TEST_F(AsyncLinkTest, DataSentAsyncGetsAckedAndCalledBack) {
     char outbuf[] = "a";
-    linkA->writeDataAsync(0xCAFEBABE, (BYTE8*)&outbuf[0], 1);
+    linkA->writeDataAsync(0xCAFEBABE, reinterpret_cast<BYTE8 *>(&outbuf[0]), 1);
     for (int i=0; i<24 * 12; i++) { // 24 bit-lengths should be enough to hear the ack
         pause();
     }
@@ -323,8 +321,8 @@ TEST_F(AsyncLinkTest, DataSentAsyncGetsAckedAndCalledBack) {
 }
 
 TEST_F(AsyncLinkTest, StartWritingAsync) {
-    char outbuf[] = "a";
-    linkA->writeDataAsync(0xCAFEBABE, (BYTE8*)&outbuf[0], 1);
+    char outbuf[] = "\377"; // 0xff
+    linkA->writeDataAsync(0xCAFEBABE, reinterpret_cast<BYTE8 *>(&outbuf[0]), 1);
 
     pause();
     pause();
@@ -337,10 +335,10 @@ TEST_F(AsyncLinkTest, StartWritingAsync) {
 TEST_F(AsyncLinkTest, StartReadingAsync) {
     EXPECT_EQ(linkB->queryReadDataAvailable(), false);
     char readBuf[]="x";
-    linkB->readDataAsync(0xCAFEBABE, (BYTE8*)&readBuf[0], 1);
+    linkB->readDataAsync(0xCAFEBABE, reinterpret_cast<BYTE8 *>(&readBuf[0]), 1);
 
     char outbuf[] = "a";
-    linkA->writeDataAsync(0xDEADF00D, (BYTE8*)&outbuf[0], 1);
+    linkA->writeDataAsync(0xDEADF00D, reinterpret_cast<BYTE8 *>(&outbuf[0]), 1);
 
     while (linkA->writeComplete() == NotProcess_p) {
         pause();
@@ -359,13 +357,13 @@ TEST_F(AsyncLinkTest, BulkTransfer) {
     char readBuffer[] = "--------------------------------------------------------------------------------------"
         "----------------------------------------------------------------------------------------------"
         "----------------------------------";
-    linkB->readDataAsync(0xCAFEBABE, (BYTE8*)&readBuffer[0], strlen(readBuffer));
+    linkB->readDataAsync(0xCAFEBABE, reinterpret_cast<BYTE8 *>(&readBuffer[0]), strlen(readBuffer));
 
     char sendBuffer[] = "There are two ways of constructing a software design: One way is to make it so simple "
         "that there are obviously no deficiencies, and the other way is to make it so complicated that "
         "there are no obvious deficiencies.";
     // Send a buffer of data until done...
-    linkA->writeDataAsync(0xDEADBEEF, (BYTE8*)&sendBuffer[0], strlen(sendBuffer));
+    linkA->writeDataAsync(0xDEADBEEF, reinterpret_cast<BYTE8 *>(&sendBuffer[0]), strlen(sendBuffer));
 
     // Wait until all data received...
     // while ((linkA->getStatusWord() & ST_SEND_COMPLETE) == 0 && (linkB->getStatusWord() & ST_READ_COMPLETE) == 0) {
@@ -420,7 +418,7 @@ protected:
         linkA->initialise();
 
         logDebug("Setup and start clock");
-        linkClocker.addLink(&*linkA);
+        linkClocker.addLink(linkA);
         clock.start();
 
         logDebug("Setup complete");
@@ -440,7 +438,7 @@ protected:
         logFlush();
     }
 
-    void pause() {
+    static void pause() {
         std::this_thread::sleep_for(std::chrono::microseconds(LINK_CLOCK_TICK_INTERVAL_US));
     }
     DisconnectedPin pin;
@@ -457,7 +455,7 @@ TEST_F(AsyncLinkTimeoutTest, DisconnectedOps) {
 
 TEST_F(AsyncLinkTimeoutTest, DataSentAsyncTimesOutWithNoOtherLinkListening) {
     char outbuf[] = "a";
-    linkA->writeDataAsync(0xDEADF00D, (BYTE8*)&outbuf[0], 1);
+    linkA->writeDataAsync(0xDEADF00D, reinterpret_cast<BYTE8 *>(&outbuf[0]), 1);
     for (int i=0; i<24 * 12; i++) { // 24 bit-lengths should be enough to time out
         pause();
     }
