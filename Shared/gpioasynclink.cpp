@@ -12,9 +12,8 @@
 //
 //------------------------------------------------------------------------------
 
-#include <exception>
 #include "gpioasynclink.h"
-
+#include "sync.h"
 #include "constants.h"
 #include "misc.h"
 #include "log.h"
@@ -218,11 +217,11 @@ void AsyncLinkClock::start() {
     logDebug("Started AsyncLinkClock");
 }
 
-bool AsyncLinkClock::is_running() {
+bool AsyncLinkClock::is_running() const {
     return m_tick_handler.is_running();
 }
 
-void AsyncLinkClock::stop() {
+void AsyncLinkClock::stop() const {
     logDebug("Stopping AsyncLinkClock");
     logDebug("Stopping TickHandler");
     m_tick_handler.stop();
@@ -245,7 +244,6 @@ void AsyncLinkClock::operator()() const {
     gpio_put(m_clockGPIOPin, false);
 #endif
 }
-
 
 AsyncLinkClock::~AsyncLinkClock() {
     logDebug("Destroying AsyncLinkClock");
@@ -303,7 +301,7 @@ GPIOAsyncLink::~GPIOAsyncLink() {
     logDebugF("Destroying async link %d", myLinkNo);
 }
 
-const long long g_sync_poll_delay_us = 100;
+constexpr long long G_SYNC_POLL_DELAY_US = 100;
 
 BYTE8 GPIOAsyncLink::readByte() {
     if (bDebug) {
@@ -313,10 +311,10 @@ BYTE8 GPIOAsyncLink::readByte() {
     // TODO replace with a semaphore
     while (readComplete() == NotProcess_p) {
 #ifdef DESKTOP
-        std::this_thread::sleep_for(std::chrono::microseconds(g_sync_poll_delay_us));
+        std::this_thread::sleep_for(std::chrono::microseconds(G_SYNC_POLL_DELAY_US));
 #endif
 #ifdef PICO
-        sleep_us(g_sync_poll_delay_us);
+        sleep_us(G_SYNC_POLL_DELAY_US);
 #endif
     }
     return m_byte_buffer;
@@ -334,10 +332,10 @@ void GPIOAsyncLink::writeByte(BYTE8 buf) {
     // TODO replace with a semaphore
     while (writeComplete() == NotProcess_p) {
 #ifdef DESKTOP
-        std::this_thread::sleep_for(std::chrono::microseconds(g_sync_poll_delay_us));
+        std::this_thread::sleep_for(std::chrono::microseconds(G_SYNC_POLL_DELAY_US));
 #endif
 #ifdef PICO
-        sleep_us(g_sync_poll_delay_us);
+        sleep_us(G_SYNC_POLL_DELAY_US);
 #endif
     }
 }
@@ -514,8 +512,8 @@ void MultipleAsyncLinkClocker::addLink(AsyncLink* link) {
     m_links.push_back(link);
 }
 
-static bool tickled = false;
-static int tick_count = 0;
+// static bool tickled = false;
+// static int tick_count = 0;
 // TickHandler
 void MultipleAsyncLinkClocker::tick() {
     // if (tick_count++ == 1024) {
@@ -646,7 +644,6 @@ bool DataAckSender::sendData(const BYTE8 byte) {
 void DataAckSender::sendDataInternal(const BYTE8 byte) {
     // TODO if m_state != IDLE throw up
     // TODO mutex {
-    const BYTE8 origByte = byte;
     m_sampleCount = 0;
     m_bits = 11;
     // Data is shifted out from the LSB of m_data. After the start bits (1 1), 'byte' is sent, starting with the

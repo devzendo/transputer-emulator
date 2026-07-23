@@ -14,8 +14,8 @@
 //
 //------------------------------------------------------------------------------
 
-#ifndef _GPIOASYNCLINK_H
-#define _GPIOASYNCLINK_H
+#ifndef GPIOASYNCLINK_H
+#define GPIOASYNCLINK_H
 
 #include <atomic>
 #include <vector>
@@ -28,7 +28,6 @@
 #include <sys/types.h>
 #include "types.h"
 #include "link.h"
-#include "sync.h"
 #include "asynclink.h"
 
 /* Lowest level abstraction: TxRxPin, represents a pair of abstract pins.
@@ -308,7 +307,7 @@ public:
     };
     virtual ~TickHandler() = default;
     virtual void tick() = 0;
-    bool is_running() {
+    bool is_running() const {
         return m_is_running.load();
     };
     void start() {
@@ -321,18 +320,17 @@ private:
     std::atomic_bool m_is_running;
 };
 
-const int64_t LINK_CLOCK_TICK_INTERVAL_US = 50; // 0.05ms
+constexpr int64_t LINK_CLOCK_TICK_INTERVAL_US = 50; // 0.05ms
 
 class AsyncLinkClock {
 public:
     AsyncLinkClock(uint clockGPIOPin, TickHandler& tickHandler);
     void start();
-    bool is_running();
-    void stop();
+    bool is_running() const;
+    void stop() const;
     ~AsyncLinkClock();
     void operator()() const; // the caller of the tick handler
 private:
-    void tick();
     uint m_clockGPIOPin{};
     TickHandler &m_tick_handler;
 #ifdef PICO
@@ -392,11 +390,11 @@ private:
     OversampledTxRxPin * m_o_pin;
     DataAckSender * m_sender;
     DataAckReceiver * m_receiver;
-    LinkRegisters m_send_registers;
-    LinkRegisters m_receive_registers;
+    LinkRegisters m_send_registers{};
+    LinkRegisters m_receive_registers{};
     volatile WORD16 m_status_word;
     WORD32 myWriteSequence, myReadSequence;
-    BYTE8 m_byte_buffer;
+    BYTE8 m_byte_buffer{};
 #ifdef DESKTOP
     std::mutex m_mutex;
 #endif
@@ -419,4 +417,4 @@ private:
     std::vector<AsyncLink*> m_links;
 };
 
-#endif // _GPIOASYNCLINK_H
+#endif // GPIOASYNCLINK_H
