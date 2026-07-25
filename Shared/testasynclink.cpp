@@ -200,7 +200,7 @@ TEST_F(AsyncLinkClockTest, StartTicksThenStopHalts) {
     EXPECT_EQ(counter4, counter3); // no change
 }
 
-TEST_F(AsyncLinkClockTest, MultipleTickHandler) {
+TEST_F(AsyncLinkClockTest, MultipleAsyncLinkClocker) {
     MultipleAsyncLinkClocker linkClocker;
     AtomicClockable clockable;
     EXPECT_EQ(clockable.counter(), 0);

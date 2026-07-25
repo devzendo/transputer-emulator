@@ -502,7 +502,7 @@ void GPIOAsyncLink::clearReadDataAvailable() {
 }
 
 /*
- * A MultipleTickHandler clocks all the Links it is given.
+ * A MultipleAsyncLinkClocker clocks all the Links it is given.
  */
 MultipleAsyncLinkClocker::MultipleAsyncLinkClocker() : TickHandler() {
 

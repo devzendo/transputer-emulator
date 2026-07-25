@@ -258,8 +258,8 @@ static void toggle_led() {
     logInfo("Initialising Link");
     linkA->initialise();
 
-    logInfo("Initialising MultipleTickHandler");
-    MultipleTickHandler handler;
+    logInfo("Initialising MultipleAsyncLinkClocker");
+    MultipleAsyncLinkClocker handler;
     handler.addLink(linkA);
 
     logInfo("Initialising AsyncLinkClock");

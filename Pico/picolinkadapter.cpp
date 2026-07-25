@@ -41,7 +41,7 @@ const WORD32 WPTR = 0xCAFEF00D;
     linkA->setDebug(true);
     linkA->initialise();
 
-    MultipleTickHandler handler;
+    MultipleAsyncLinkClocker handler;
     handler.addLink(linkA);
 
     AsyncLinkClock clock(CLOCK_PIN, handler);
