@@ -29,6 +29,7 @@
 #include "types.h"
 #include "link.h"
 #include "asynclink.h"
+#include "sync.h"
 
 /* Lowest level abstraction: TxRxPin, represents a pair of abstract pins.
  *
