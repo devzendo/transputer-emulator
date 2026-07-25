@@ -12,6 +12,7 @@
 //------------------------------------------------------------------------------
 
 #include <thread>
+#include <atomic>
 
 #include "gtest/gtest.h"
 using namespace std;
