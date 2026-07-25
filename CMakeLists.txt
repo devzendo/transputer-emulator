@@ -167,10 +167,10 @@ endif() # NOT(EMBEDDED)
 
 ########################################################################################################################
 
-IF (UNIX)
+IF (UNIX AND NOT(PICO))
     include(${CMAKE_SOURCE_DIR}/sanitizers.cmake)
     add_sanitizer_support(thread)
-ENDIF (UNIX)
+ENDIF (UNIX AND NOT(PICO))
 
 ########################################################################################################################
 
