@@ -421,11 +421,13 @@ bool GPIOAsyncLink::queryReadyToSend() {
     return m_status_word & ST_READY_TO_SEND;
 }
 
+#ifdef DESKTOP
 // Test use only. Not intended as part of public API.
 bool GPIOAsyncLink::_queryReadyToSend() {
     MUTEX
     return queryReadyToSend();
 }
+#endif
 
 // Precondition: called under MUTEX
 void GPIOAsyncLink::setReadyToSend() {
@@ -447,22 +449,26 @@ void GPIOAsyncLink::setReadyToSend() {
     }
 }
 
+#ifdef DESKTOP
 // Test use only. Not intended as part of public API.
 void GPIOAsyncLink::_setReadyToSend() {
     MUTEX
     setReadyToSend();
 }
+#endif
 
 void GPIOAsyncLink::clearReadyToSend() {
     // logDebugF("Link %d is NOT ready to send", myLinkNo);
     m_status_word &= ~ST_READY_TO_SEND;
 }
 
+#ifdef DESKTOP
 // Test use only. Not intended as part of public API.
 void GPIOAsyncLink::_clearReadyToSend() {
     MUTEX
     clearReadyToSend();
 }
+#endif
 
 void GPIOAsyncLink::setTimeoutError() {
     // logWarnF("Link %d timed out", myLinkNo);
@@ -510,11 +516,13 @@ bool GPIOAsyncLink::queryReadDataAvailable() {
     return m_status_word & ST_READ_DATA_AVAILABLE;
 }
 
+#ifdef DESKTOP
 // Test use only. Not intended as part of public API.
 bool GPIOAsyncLink::_queryReadDataAvailable() {
     MUTEX
     return queryReadDataAvailable();
 }
+#endif
 
 void GPIOAsyncLink::clearReadDataAvailable() {
     // logDebugF("Link %d data NOT available", myLinkNo);
