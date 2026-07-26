@@ -168,6 +168,10 @@ endif() # NOT(EMBEDDED)
 ########################################################################################################################
 
 IF (UNIX AND NOT(PICO))
+    # For Linux 6.8.0 you may need to work around thread sanitiser reporting an unexpected memory mapping, by creating
+    # /etc/sysctl.d/10-thread-sanitiser.conf containing
+    # vm.mmap_rnd_bits=28
+    # and rebooting.
     include(${CMAKE_SOURCE_DIR}/sanitizers.cmake)
     add_sanitizer_support(thread)
 ENDIF (UNIX AND NOT(PICO))
