@@ -13,6 +13,7 @@
 //------------------------------------------------------------------------------
 
 #include <cctype>
+#include <thread>
 
 #include "inmemorylink.h"
 #include "log.h"
@@ -101,6 +102,7 @@ BYTE8 InMemoryLink::readByte() {
         if (done) {
             break;
         }
+        std::this_thread::yield();
     }
     if (bDebug) {
         logDebugF("Link %d R #%08X %02X (%c)", myLinkNo, myReadSequence++, buf, isprint(buf) ? buf : '.');
@@ -117,6 +119,7 @@ void InMemoryLink::writeByte(BYTE8 buf) {
         if (done) {
             break;
         }
+        std::this_thread::yield();
     }
     if (bDebug) {
         logDebugF("Link %d W #%08X %02X (%c)", myLinkNo, myWriteSequence++, buf, isprint(buf) ? buf : '.');
