@@ -571,6 +571,7 @@ protected:
         logFlush();
     }
 
+public:
     void bitStateReceived(const bool state) override {
         logDebugF("Received bit: %d", state);
         m_received_bits.push_back(state ? '1' : '0');
@@ -852,6 +853,7 @@ protected:
         logFlush();
     }
 
+public:
     // SenderToLink
     bool queryReadyToSend() override {
         return m_ready_to_send;
@@ -1629,6 +1631,7 @@ protected:
         logFlush();
     }
 
+public:
     // ReceiverToSender
     void sendAck() override {
         logDebug("Send Ack requested");
