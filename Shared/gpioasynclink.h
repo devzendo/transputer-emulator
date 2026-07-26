@@ -31,8 +31,10 @@
 #include "asynclink.h"
 #include "sync.h"
 
-// So that the tests can have friend access to AsyncLink internals.
+// So that the tests can have friend access to AsyncLink internals. And the tests only run on DESKTOP builds.
+#ifdef DESKTOP
 #include "gtest/gtest_prod.h"
+#endif
 
 /* Lowest level abstraction: TxRxPin, represents a pair of abstract pins.
  *
@@ -396,15 +398,14 @@ private:
     void clearReadDataAvailable() override;
     // ReSharper restore CppOverrideWithDifferentVisibility
 
-
-    // Mutex-acquiring methods ONLY FOR TESTS. The FRIEND_TEST below restricts what can call any of these private
-    // methods - but for tests, only the mutex-acquiring variants below must be used.
+#ifdef DESKTOP
+    // Mutex-acquiring methods ONLY FOR TESTS (which only run on DESKTOP builds). The FRIEND_TEST below restricts what
+    // can call any of these private methods - but for tests, only the mutex-acquiring variants below must be used.
     // These methods *may* migrate to be used as part of the AsyncLink public API at some stage.
     bool _queryReadyToSend();
     void _clearReadyToSend();
     void _setReadyToSend();
     bool _queryReadDataAvailable();
-
 
     FRIEND_TEST(AsyncLinkTest, RTSSetOnInitialisation);
     FRIEND_TEST(AsyncLinkTest, ClearRTSClearsIt);
@@ -412,7 +413,7 @@ private:
     FRIEND_TEST(AsyncLinkTest, RTSClearedWhenDataSentAsync);
     FRIEND_TEST(AsyncLinkTest, DataSentAsyncGetsAckedRTSSet);
     FRIEND_TEST(AsyncLinkTest, StartReadingAsync);
-
+#endif
 
 private:
     TxRxPin & m_pin;
