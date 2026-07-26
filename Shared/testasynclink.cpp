@@ -24,30 +24,32 @@
 #include "misc.h"
 
 class CrosswiredTxRxPinPair {
-    bool aPin = false;
-    bool bPin = false;
+    std::atomic_bool aPin{false};
+    std::atomic_bool bPin{false};
 
     class CrosswiredPin: TxRxPin {
     public:
-        CrosswiredPin(const char *side, bool *rxstate, bool *txstate) : m_rxstate(rxstate), m_txstate(txstate) {
+        CrosswiredPin(const char *side, std::atomic_bool *rxstate, std::atomic_bool *txstate) {
             m_side = *side;
+            m_rxstate = rxstate;
+            m_txstate = txstate;
         }
 
         ~CrosswiredPin() override = default;
 
         bool getRx() override {
-            bool retval = (bool) *m_rxstate;
+            bool retval = m_rxstate->load();
             //logDebugF("RX %c pin state is %d", m_side, retval);
             return retval;
         }
 
         void setTx(const bool state) override {
             //logDebugF("Setting TX %c pin state to %d", m_side, state);
-            *m_txstate = state;
+            m_txstate->store(state);
         }
     private:
-        bool *m_rxstate;
-        bool *m_txstate;
+        std::atomic_bool *m_rxstate;
+        std::atomic_bool *m_txstate;
         char m_side = ' ';
     };
 
