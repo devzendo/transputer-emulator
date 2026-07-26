@@ -767,7 +767,6 @@ std::string stretch_16(const std::string &bits) {
     return samples;
 }
 
-
 TEST_F(OversampledTxRxPinTest, PerfectInputData) {
     // Two start bits, 8 bits of C9, a stop bit, and a trailer so we get all the data after the
     // majority vote 'delay'.
