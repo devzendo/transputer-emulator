@@ -31,6 +31,9 @@
 #include "asynclink.h"
 #include "sync.h"
 
+// So that the tests can have friend access to AsyncLink internals.
+#include "gtest/gtest_prod.h"
+
 /* Lowest level abstraction: TxRxPin, represents a pair of abstract pins.
  *
  * GPIOTxRxPin would use Pi Pico GPIO pins.
@@ -354,7 +357,7 @@ public:
  * machines, and an OversampledTxRxPin to handle the send/receive over an underlying TxRxPin.
  */
 
-class GPIOAsyncLink : public Link, public AsyncLink, SenderToLink, ReceiverToLink {
+class GPIOAsyncLink : public Link, public AsyncLink, public SenderToLink, public ReceiverToLink {
 public:
     GPIOAsyncLink(int linkNo, bool isServer, TxRxPin& tx_rx_pin);
     void initialise() override;
@@ -372,8 +375,14 @@ public:
     WORD32 readComplete() override;
     WORD16 getStatusWord() override;
 
+private:
     // All internals...
     // SenderToLink
+    // Pragmas here are to flag up any calls to these internals in tests. All these methods are internal, and are
+    // called with the mutex held - they do not acquire the mutex themselves. The mutex is acquired by the public
+    // methods, and by the clock method. If your test needs to call any of these, use the _underscore form that
+    // is for tests only, and that acquires the mutex.
+    // ReSharper disable CppOverrideWithDifferentVisibility
     bool queryReadyToSend() override;
     void setReadyToSend() override;
     void clearReadyToSend() override;
@@ -385,6 +394,25 @@ public:
     void dataReceived(BYTE8 data) override;
     bool queryReadDataAvailable() override;
     void clearReadDataAvailable() override;
+    // ReSharper restore CppOverrideWithDifferentVisibility
+
+
+    // Mutex-acquiring methods ONLY FOR TESTS. The FRIEND_TEST below restricts what can call any of these private
+    // methods - but for tests, only the mutex-acquiring variants below must be used.
+    // These methods *may* migrate to be used as part of the AsyncLink public API at some stage.
+    bool _queryReadyToSend();
+    void _clearReadyToSend();
+    void _setReadyToSend();
+    bool _queryReadDataAvailable();
+
+
+    FRIEND_TEST(AsyncLinkTest, RTSSetOnInitialisation);
+    FRIEND_TEST(AsyncLinkTest, ClearRTSClearsIt);
+    FRIEND_TEST(AsyncLinkTest, SetRTSSetsIt);
+    FRIEND_TEST(AsyncLinkTest, RTSClearedWhenDataSentAsync);
+    FRIEND_TEST(AsyncLinkTest, DataSentAsyncGetsAckedRTSSet);
+    FRIEND_TEST(AsyncLinkTest, StartReadingAsync);
+
 
 private:
     TxRxPin & m_pin;

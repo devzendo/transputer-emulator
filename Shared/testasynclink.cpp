@@ -279,18 +279,18 @@ protected:
 };
 
 TEST_F(AsyncLinkTest, RTSSetOnInitialisation) {
-    EXPECT_EQ(linkA->queryReadyToSend(), true);
+    EXPECT_EQ(linkA->_queryReadyToSend(), true);
 }
 
 TEST_F(AsyncLinkTest, ClearRTSClearsIt) {
-    linkA->clearReadyToSend();
-    EXPECT_EQ(linkA->queryReadyToSend(), false);
+    linkA->_clearReadyToSend();
+    EXPECT_EQ(linkA->_queryReadyToSend(), false);
 }
 
 TEST_F(AsyncLinkTest, SetRTSSetsIt) {
-    linkA->clearReadyToSend();
-    linkA->setReadyToSend();
-    EXPECT_EQ(linkA->queryReadyToSend(), true);
+    linkA->_clearReadyToSend();
+    linkA->_setReadyToSend();
+    EXPECT_EQ(linkA->_queryReadyToSend(), true);
 }
 
 TEST_F(AsyncLinkTest, RTSClearedWhenDataSentAsync) {
@@ -299,7 +299,7 @@ TEST_F(AsyncLinkTest, RTSClearedWhenDataSentAsync) {
     logDebug("out of writeDataAsync");
     EXPECT_EQ(ok, true);
     pause();
-    EXPECT_EQ(linkA->queryReadyToSend(), false);
+    EXPECT_EQ(linkA->_queryReadyToSend(), false);
 }
 
 TEST_F(AsyncLinkTest, DataSentAsyncGetsAckedRTSSet) {
@@ -308,7 +308,7 @@ TEST_F(AsyncLinkTest, DataSentAsyncGetsAckedRTSSet) {
     for (int i=0; i<24 * 12; i++) { // 24 bit-lengths should be enough to hear the ack
         pause();
     }
-    EXPECT_EQ(linkA->queryReadyToSend(), true);
+    EXPECT_EQ(linkA->_queryReadyToSend(), true);
 }
 
 TEST_F(AsyncLinkTest, DataSentAsyncGetsAckedAndCalledBack) {
@@ -333,7 +333,7 @@ TEST_F(AsyncLinkTest, StartWritingAsync) {
 }
 
 TEST_F(AsyncLinkTest, StartReadingAsync) {
-    EXPECT_EQ(linkB->queryReadDataAvailable(), false);
+    EXPECT_EQ(linkB->_queryReadDataAvailable(), false);
     char readBuf[]="x";
     linkB->readDataAsync(0xCAFEBABE, reinterpret_cast<BYTE8 *>(&readBuf[0]), 1);
 
@@ -348,7 +348,7 @@ TEST_F(AsyncLinkTest, StartReadingAsync) {
     }
 
     EXPECT_EQ(readBuf[0], 'a');
-    EXPECT_EQ(linkB->queryReadDataAvailable(), false);
+    EXPECT_EQ(linkB->_queryReadDataAvailable(), false);
 }
 
 TEST_F(AsyncLinkTest, BulkTransfer) {

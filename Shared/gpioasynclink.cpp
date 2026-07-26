@@ -418,8 +418,13 @@ WORD32 GPIOAsyncLink::readComplete() {
 
 // SenderToLink
 bool GPIOAsyncLink::queryReadyToSend() {
-    // MUTEX
     return m_status_word & ST_READY_TO_SEND;
+}
+
+// Test use only. Not intended as part of public API.
+bool GPIOAsyncLink::_queryReadyToSend() {
+    MUTEX
+    return queryReadyToSend();
 }
 
 // Precondition: called under MUTEX
@@ -442,10 +447,21 @@ void GPIOAsyncLink::setReadyToSend() {
     }
 }
 
+// Test use only. Not intended as part of public API.
+void GPIOAsyncLink::_setReadyToSend() {
+    MUTEX
+    setReadyToSend();
+}
+
 void GPIOAsyncLink::clearReadyToSend() {
     // logDebugF("Link %d is NOT ready to send", myLinkNo);
-    //MUTEX
     m_status_word &= ~ST_READY_TO_SEND;
+}
+
+// Test use only. Not intended as part of public API.
+void GPIOAsyncLink::_clearReadyToSend() {
+    MUTEX
+    clearReadyToSend();
 }
 
 void GPIOAsyncLink::setTimeoutError() {
@@ -491,8 +507,13 @@ void GPIOAsyncLink::dataReceived(BYTE8 data) {
 }
 
 bool GPIOAsyncLink::queryReadDataAvailable() {
-    //MUTEX
     return m_status_word & ST_READ_DATA_AVAILABLE;
+}
+
+// Test use only. Not intended as part of public API.
+bool GPIOAsyncLink::_queryReadDataAvailable() {
+    MUTEX
+    return queryReadDataAvailable();
 }
 
 void GPIOAsyncLink::clearReadDataAvailable() {

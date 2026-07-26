@@ -29,6 +29,10 @@ add_library(parachutedev STATIC log.h logbase.h logbase.cpp misc.h misc.cpp hexd
         inmemorylink.h inmemorylink.cpp
         "${non_embedded_sources}"
 )
+# This inclusion of google tests' include path to the production parachutedev library is so that test code can be a
+# friend of the gpioasynclink code and test internals correctly without needing to expose them publically.
+target_include_directories(parachutedev PRIVATE ${gtest_SOURCE_DIR}/include)
+
 # gpioasynclink is intended for embedded, but am developing it on desktop for now, as it's testable there,
 # apart from the actual GPIOTxRxPin. Except on Windows where it doesn't build.
 # if gpioasynclink is built for pico, it pulls in some pico SDK:
