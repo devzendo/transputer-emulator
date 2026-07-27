@@ -42,7 +42,14 @@
         <fileSet>
             <directory>${project.basedir}/${cmake.binary.dir}/EmuServer</directory>
             <includes>
-                <include>emuserver</include>
+                <include>emuserver.exe</include>
+            </includes>
+            <outputDirectory>bin</outputDirectory>
+        </fileSet>
+        <fileSet>
+            <directory>${project.basedir}/${cmake.binary.dir}/Tools</directory>
+            <includes>
+                <include>bin2boot.exe</include>
             </includes>
             <outputDirectory>bin</outputDirectory>
         </fileSet>

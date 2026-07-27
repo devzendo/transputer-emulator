@@ -189,6 +189,7 @@ if(PICO)
 endif()
 
 add_subdirectory(Emulator)
+add_subdirectory(Tools)
 
 if(NOT(EMBEDDED))
   add_subdirectory(IServer)

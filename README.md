@@ -96,6 +96,7 @@ Another hiatus from Dec 2025 to Mar 2026.
   platforms.
 * Bugfix: A loaded ROM's memory is now initialised/destroyed correctly.
 * Add emuserver that runs a linked emulator and iserver in a single process.
+* Add bin2boot that prefixes a link-bootloader to a Small-C compiled binary file. 
 
 ## 0.0.1 First Release
 * Versioning and build now controlled by Maven and CMake.
