@@ -11,10 +11,12 @@
 //
 // The Small-C compiler emits position-independent code that could be loaded into an emulator at MemStart and run, but
 // it does not contain any initialisation code. Directly patching into memory is an atypical way to run a program on a
-// Transputer: you either send it down a link, or boot from ROM. Neither can be done directly with Small-C output. It
-// can't be sent down a link since it has no link boot length byte, and may be greater than 255 bytes, requiring a boot
-// loader. Nor does it have any Transputer initialisation code. It can't be run from ROM since it has no jump sequence
-// at the end.
+// Transputer: you either send it down a link, or boot from ROM.
+// Neither can be done directly with Small-C output:
+// 1) It can't be sent down a link since it has no link boot length byte, and may be greater than 255 bytes, requiring
+// a second stage boot loader (our boot/bootstrap.asm).
+// 2) It does not have any Transputer initialisation code.
+// 3) It can't be run from ROM since it has no jump sequence at the end.
 //
 // Hence this program.
 //
@@ -24,7 +26,8 @@
 // This code will initialise the transputer, then request a further word down the link. The contents of this word are
 // set by this bin2boot program, based on the size of the input assembled binary that the program is invoked with.
 // Now that the bootloader knows the length of the assembled binary, that many bytes are read into memory just after
-// the bootloader. The start of this code is then executed by the bootloader.
+// the bootloader. The start of this code is then executed by the bootloader, with the initial workspace set to just
+// after this code (and set to a low priority task).
 //
 // The bootloader code is taken from the transputer-macro-assembler project, at
 // tma-includes/src/main/resources/include/tmasm/boot/bootstrap.asm, specifically by looking at the bytes generated
@@ -42,14 +45,18 @@
 
 // Bootloader code
 const BYTE8 bootloader[] = {
-    0xB0, // boot 1 length
-    0x22, 0xB8,
+    0xE8, // boot 1 length
+
+    // Adjust workspace, save registers.
+    0x60, 0xB8,
     0xD6,
     0xD5,
     0xD4,
     0x74,
     0x60, 0x5C,
     0xD3,
+
+    // Initialisation
     0x24, 0xF2,
     0x21, 0xF8,
     0x24, 0xF2,
@@ -104,21 +111,47 @@ const BYTE8 bootloader[] = {
     0x20, 0x20, 0x20, 0x40,
     0xE0,
 
+    // Read in the code.
     0x67, 0x20, 0x20, 0x20,
-    0x20, 0x21, 0x22, 0x40,
+    0x20, 0x21, 0x25, 0x48,
     0x74,
-    0x4D,
+    0x24, 0x44,
     0x21, 0xFB,
     0x30,
     0xF7,
+
+    // Set workspace to end + low priority
     0x67, 0x20, 0x20, 0x20,
-    0x20, 0x21, 0x22, 0x40,
-    0xF6,   // 80000119
+    0x20, 0x21, 0x25, 0x44,
+    0x30,
+    0x67, 0x20, 0x20, 0x20,
+    0x20, 0x21, 0x25, 0x88,
+    // Retain low priority.
+    0x60, 0x4c,
+    0x24, 0xf6,
+    0x41,
+    0x24, 0xfb,
+    0x23, 0xfc,
+    // Execute it
+    0x67, 0x20, 0x20, 0x20,
+    0x20, 0x21, 0x25, 0x48,
+
+    0xF6,   // 80000134
     // ALIGN 4
-    0x00,   // 8000011A
-    0x00,   // 8000011B
-            // 8000011C
-    // And here at 8000011C we write the program size word in little endian.
+    0x00,   // 80000135
+    0x00,   // 80000136
+    0x00,   // 80000137
+            // 80000138
+    // Workspace
+    0x00, 0x00, 0x00, 0x00, // 80000138
+    0x00, 0x00, 0x00, 0x00, // 8000013C
+    0x00, 0x00, 0x00, 0x00, // 80000140
+    0x00, 0x00, 0x00, 0x00, // 80000144
+    0x00, 0x00, 0x00, 0x00, // 80000148
+    0x00, 0x00, 0x00, 0x00, // 8000014C
+    0x00, 0x00, 0x00, 0x00, // 80000150
+
+    // And here at 80000154 we write the program size word in little endian.
 };
 
 void printHex32(WORD32 value) {
@@ -149,6 +182,10 @@ void toLittleEndian(WORD32 value, BYTE8 *littleEndian) {
 int main(int argc, char *argv[]) {
     if (argc != 3) {
         std::cerr << "Usage: bin2boot <input filename> <output filename>" << std::endl;
+        std::cerr << "bin2boot prepends a link boot loader to the input program that" << std::endl;
+        std::cerr << "initialises the CPU and loads the rest of the program, setting" << std::endl;
+        std::cerr << "the initial workspace to the end of the program space." << std::endl;
+        std::cerr << "The final link-boot-loader plus <input file> is written to <output filename>." << std::endl;
         exit(1);
     }
     char *input = argv[1];
