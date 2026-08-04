@@ -181,10 +181,10 @@ TEST_F(PeekPokeBootTest, PokeAWordToLegalMemory) {
     myControlLinks[0]->writeWord(0x12345678);
 
     littleSleep();
-    WORD32 word = myMemory->getWord(MemStart + 20);
 
     terminateBootLoop();
     waitUntilEndOfBoot();
+    WORD32 word = myMemory->getWord(MemStart + 20);
     EXPECT_EQ(word, 0x12345678);
 }
 
