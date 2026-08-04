@@ -56,6 +56,8 @@ InMemoryLinkFactory *inMemoryLinkFactory = nullptr;
 Memory * myMemory = nullptr;
 CPU * myCPU = nullptr;
 SymbolTable * mySymbolTable = nullptr;
+set<WORD32> breakpointAddresses;
+map<std::string, WORD32> symbolToAddress;
 
 bool processCommandLine(int argc, char *argv[]) {
 	int newMegs = 4;
@@ -166,6 +168,68 @@ bool processCommandLine(int argc, char *argv[]) {
 				case 'x':
 					SET_FLAGS(DebugFlags_TerminateOnMemViol);
 					break;
+				case 'b': {
+					// TODO if you want a breakpoint at a symbol whose name is a valid hex number, tough!
+					char symbolName[40];
+					WORD32 breakpointAddress = 0;
+#if defined(PLATFORM_WINDOWS)
+					if (sscanf_s(&argv[i][2], "%s", sizeof(symbolName), symbolName) == 1) {
+#elif defined(PLATFORM_OSX) || defined(PLATFORM_LINUX)
+					if (sscanf(&argv[i][2], "%s", symbolName) == 1) {
+#endif
+						if (symbolToAddress.count(symbolName) == 1) {
+							breakpointAddresses.insert(symbolToAddress[symbolName]);
+							break;
+						}
+						// else fall through to try hex..
+					}
+#if defined(PLATFORM_WINDOWS)
+					if (sscanf_s(&argv[i][2], "%x", &breakpointAddress) == 1) {
+#elif defined(PLATFORM_OSX) || defined(PLATFORM_LINUX)
+					if (sscanf(&argv[i][2], "%x", &breakpointAddress) == 1) {
+#endif
+						breakpointAddresses.insert(breakpointAddress);
+					} else {
+						logFatal("-b must be directly followed by a hex address or symbol e.g. -b8007F123");
+						return false;
+					}
+					}
+					break;
+				case 's': {
+					char symbolFile[128];
+#if defined(PLATFORM_WINDOWS)
+					if (sscanf_s(&argv[i][2], "%s", sizeof(symbolFile), symbolFile) == 1) {
+#elif defined(PLATFORM_OSX) || defined(PLATFORM_LINUX)
+					if (sscanf(&argv[i][2], "%s", symbolFile) == 1) {
+#endif
+						std::ifstream read(symbolFile);
+						for (std::string line; std::getline(read, line); ) {
+							// inserting the line into a stream that helps us parse the content
+							std::stringstream ss(line);
+							// read each symbol
+							std::string symbolName;
+							std::string addressString;
+							ss >> symbolName;
+							ss >> addressString;
+							WORD32 symbolAddress;
+#if defined(PLATFORM_WINDOWS)
+							if (sscanf_s(addressString.c_str(), "08%x", &symbolAddress) == 1) {
+#elif defined(PLATFORM_OSX) || defined(PLATFORM_LINUX)
+							if (sscanf(addressString.c_str(), "%08x", &symbolAddress) == 1) {
+#endif
+								// logDebugF("name [%s] value 0x%08X", symbolName.c_str(), symbolAddress);
+								symbolToAddress[symbolName] = symbolAddress;
+							} else {
+								logFatalF("Symbol %s 'address' %s is not a valid 8-digit hex address", symbolName.c_str(), addressString.c_str());
+								return false;
+							}
+						}
+					} else {
+						logFatal("-s must be directly followed by a symbol file");
+						return false;
+					}
+					}
+					break;
 				case 'M':
 					monitorLink = true;
 					break;
@@ -245,6 +309,10 @@ void usage() {
 	logInfo("  -i    Enters interactive monitor immediately");
 	logInfo("  -j    Enables break on j0");
 	logInfo("  -x    Terminate emulation upon memory violation");
+	logInfo("  -s<F> Load a list of symbols (lines with NAME HEX-ADDRESS) from file X");
+	logInfo("  -b<H> Add H (a hex address or symbol) as a breakpoint (can be repeated)");
+	logInfo("        (Note: symbols must have been specified first with -s<F> to give");
+	logInfo("         a symbol as a breakpoint)");
     logInfo("  -h    Displays this usage summary");
     logInfo("  -l<X> Sets log level. X is one of [diwef] for DEBUG, INFO");
     logInfo("        WARN, ERROR or FATAL. Default is INFO");
@@ -253,30 +321,14 @@ void usage() {
 }
 
 void cleanup() {
-	if (myPlatform != NULL) {
-		delete myPlatform;
-	}
-	if (myLink != NULL) {
-		delete myLink;
-	}
-	if (platformFactory != NULL) {
-		delete platformFactory;
-	}
-	if (linkFactory != NULL) {
-		delete linkFactory;
-	}
-	if (inMemoryLinkFactory != NULL) {
-		delete inMemoryLinkFactory;
-	}
-	if (myCPU != NULL) {
-		delete myCPU;
-	}
-	if (mySymbolTable != NULL) {
-		delete mySymbolTable;
-	}
-	if (myMemory != NULL) {
-		delete myMemory;
-	}
+	delete myPlatform;
+	delete myLink;
+	delete platformFactory;
+	delete linkFactory;
+	delete inMemoryLinkFactory;
+	delete myCPU;
+	delete mySymbolTable;
+	delete myMemory;
 	fflush(stdout);
 }
 
@@ -332,6 +384,16 @@ int main(int argc, char *argv[]) {
     }
 
 	mySymbolTable = new SymbolTable();
+	int symbolCount = 0;
+	for (map<std::string, WORD32>::const_iterator iter = symbolToAddress.begin();
+		iter != symbolToAddress.end(); ++iter) {
+		mySymbolTable->addSymbol(iter->first, iter->second);
+		symbolCount++;
+	}
+	if (symbolCount != 0) {
+		logInfoF("Added %d symbol(s)", symbolCount);
+	}
+
     logDebug("Constructing memory...");
     myMemory = new Memory();
 	if (!myMemory->initialiseROMFileAndSymbolTable(nullptr, mySymbolTable)) {
@@ -357,6 +419,10 @@ int main(int argc, char *argv[]) {
         cleanup();
         exit(1);
     }
+
+	for (WORD32 breakpointAddress : breakpointAddresses) {
+		myCPU->addBreakpoint(breakpointAddress);
+	}
 
     // Start the emulator on a second thread, listening to the other side of the InMemory link.
     auto *cpuThread = new std::thread([] {
