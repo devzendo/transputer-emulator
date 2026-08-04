@@ -146,7 +146,7 @@ bool processCommandLine(int argc, char *argv[]) {
 				case 'h':
 				case '?':
 				    usage();
-				    return 0;
+				    return false;
                 case 'p':
                     showPlatform();
                     exit(0);
@@ -163,18 +163,18 @@ bool processCommandLine(int argc, char *argv[]) {
 						if (n == 1) {
 							if (newMegs < 4 || newMegs > 64) {
 								logFatal("Initial memory size must be in range [4..64] MB");
-								return 0;
+								return false;
 							}
 							ramSize = newMegs * Mega;
 							logInfoF("Initial memory size set to #%08X (%ld) bytes", ramSize, ramSize);
 						} else {
 							logFatalF("'%s' is not of the form -m<number> to "
 									"set the initial memory size", argv[i]);
-							return 0;
+							return false;
 						}
 					} else {
 						logFatal("No argument given to -m<number> to set the initial memory size");
-						return 0;
+						return false;
 					}
 					break;
  				case 'l':
@@ -197,7 +197,7 @@ bool processCommandLine(int argc, char *argv[]) {
 						default:
 							logFatal("Incorrect level given to -l<loglevel> to set logging level.");
 							logFatal("<loglevel> is one of [diwef] for DEBUG, INFO, WARN, ERROR or FATAL.");
-							return 0;
+							return false;
 					}
 					setLogLevel(logLevel);
 					break;
@@ -239,7 +239,7 @@ bool processCommandLine(int argc, char *argv[]) {
 							break;
 						default:
 							usage();
-							return 0;
+							return false;
 					}
 					break;
 				case 'i':
@@ -274,7 +274,7 @@ bool processCommandLine(int argc, char *argv[]) {
 						breakpointAddresses.insert(breakpointAddress);
 					} else {
 						logFatal("-b must be directly followed by a hex address or symbol e.g. -b8007F123");
-						return 0;
+						return false;
 					}
 					}
 					break;
@@ -304,12 +304,12 @@ bool processCommandLine(int argc, char *argv[]) {
 								symbolToAddress[symbolName] = symbolAddress;
 							} else {
 								logFatalF("Symbol %s 'address' %s is not a valid 8-digit hex address", symbolName.c_str(), addressString.c_str());
-								return 0;
+								return false;
 							}
 						}
 					} else {
 						logFatal("-s must be directly followed by a symbol file");
-						return 0;
+						return false;
 					}
 					}
 					break;
@@ -320,7 +320,7 @@ bool processCommandLine(int argc, char *argv[]) {
 						(symbolToAddress.count("RPP") == 1);
 					if (!gotAllSymbols) {
 						logFatal("-e option requires SPP and RPP symbols");
-						return 0;
+						return false;
 					}
 					SPP = symbolToAddress["SPP"];
 					RPP = symbolToAddress["RPP"];
@@ -332,7 +332,7 @@ bool processCommandLine(int argc, char *argv[]) {
 						// i     i+1          i+2                 i+3
 						if (argc < i+4) {
 							logFatal("-tvs requires program-file optional-input-file output-file");
-							return 0;
+							return false;
 						}
 						i += 3;
 						// Skip the arguments here, the linkfactory uses the arguments; we just don't
@@ -340,7 +340,7 @@ bool processCommandLine(int argc, char *argv[]) {
 						SET_FLAGS(EmulatorState_TVS);
 					} else {
 						logFatalF("Unknown option '%s'", argv[i]);
-						return 0;
+						return false;
 					}
 					break;
 			}
@@ -352,7 +352,7 @@ bool processCommandLine(int argc, char *argv[]) {
 		showConfiguration();
 	}
 	//logDebug("End of cmd line processing");
-	return 1;
+	return true;
 }
 
 #ifdef UNIX
