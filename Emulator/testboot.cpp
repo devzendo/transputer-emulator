@@ -17,11 +17,7 @@
 #include "gtest/gtest.h"
 using namespace std;
 #include "boot.h"
-#if defined(PLATFORM_WINDOWS)
-#include "namedpipelink.h"
-#elif defined(PLATFORM_OSX) || defined(PLATFORM_LINUX)
-#include "fifolink.h"
-#endif
+#include "inmemorylink.h"
 #include "log.h"
 #include "memory.h"
 #include "types.h"
@@ -37,6 +33,7 @@ public:
 protected:
 
     Memory *myMemory;
+    InMemoryLinkFactory *m_linkFactory[4];
     Link *myBootLinks[4];
     Link *myControlLinks[4];
     Boot *myBoot = nullptr;
@@ -60,17 +57,10 @@ protected:
 
         logDebug("Link setup");
         for (int i = 0; i < 4; i++) {
-#if defined(PLATFORM_WINDOWS)
-            myControlLinks[i] = new NamedPipeLink(i, true);
-#elif defined(PLATFORM_OSX) || defined(PLATFORM_LINUX)
-            myControlLinks[i] = new FIFOLink(i, true);
-#endif
+            m_linkFactory[i] = new InMemoryLinkFactory(i, i);
+            myControlLinks[i] = dynamic_cast<InMemoryLink *>(m_linkFactory[i]->linkB());
             myControlLinks[i]->initialise();
-#if defined(PLATFORM_WINDOWS)
-            myBootLinks[i] = new NamedPipeLink(i, false);
-#elif defined(PLATFORM_OSX) || defined(PLATFORM_LINUX)
-            myBootLinks[i] = new FIFOLink(i, false);
-#endif
+            myBootLinks[i] = dynamic_cast<InMemoryLink *>(m_linkFactory[i]->linkA());
             myBootLinks[i]->setDebug(true);
             myBootLinks[i]->initialise();
         }
@@ -124,6 +114,7 @@ protected:
             delete myBootLinks[i];
             myControlLinks[i]->resetLink();
             delete myControlLinks[i];
+            delete m_linkFactory[i];
         }
         delete myMemory;
         delete myBoot;
@@ -158,9 +149,11 @@ TEST_F(PeekPokeBootTest, PeekAWordFromLegalMemory) {
     myControlLinks[0]->writeByte(BOOT_PEEK);
     myControlLinks[0]->writeWord(MemStart + 20);
 
+    littleSleep();
+    WORD32 word = myControlLinks[0]->readWord();
+
     terminateBootLoop();
     waitUntilEndOfBoot();
-    WORD32 word = myControlLinks[0]->readWord();
     EXPECT_EQ(word, 0xCAFEF00D);
 }
 
@@ -172,10 +165,10 @@ TEST_F(PeekPokeBootTest, PeekAWordFromOutsideLegalMemory) {
     myControlLinks[0]->writeWord(MemStart + 1025);
 
     littleSleep();
+    WORD32 word = myControlLinks[0]->readWord();
 
     terminateBootLoop();
     waitUntilEndOfBoot();
-    WORD32 word = myControlLinks[0]->readWord();
     EXPECT_EQ(word, 0xDEADF00D);
 }
 
@@ -188,10 +181,10 @@ TEST_F(PeekPokeBootTest, PokeAWordToLegalMemory) {
     myControlLinks[0]->writeWord(0x12345678);
 
     littleSleep();
+    WORD32 word = myMemory->getWord(MemStart + 20);
 
     terminateBootLoop();
     waitUntilEndOfBoot();
-    WORD32 word = myMemory->getWord(MemStart + 20);
     EXPECT_EQ(word, 0x12345678);
 }
 
