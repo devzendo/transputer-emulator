@@ -13,6 +13,7 @@
 
 
 #include <fstream>
+#include <sstream>
 #include <cstdio>
 #include <thread>
 
