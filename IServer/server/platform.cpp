@@ -18,6 +18,12 @@
 #include <fstream>
 #include <iostream>
 
+#if defined(PLATFORM_WINDOWS)
+// For setting the mode correctly on the three initial streams.
+#include <io.h>
+#include <fcntl.h>
+#endif
+
 #include "types.h"
 #include "platform.h"
 #include "log.h"
@@ -135,6 +141,9 @@ namespace {
         pStream->isWritable = false;
         pStream->isReadable = true;
         pStream->isBinary = false;
+#if defined(PLATFORM_WINDOWS)
+        _setmode(_fileno(stdin), _O_TEXT);
+#endif
         return std::move(pStream);
     }
     std::unique_ptr<Stream> initStdout() {
@@ -143,6 +152,9 @@ namespace {
         pStream->isWritable = true;
         pStream->isReadable = false;
         pStream->isBinary = false;
+#if defined(PLATFORM_WINDOWS)
+        _setmode(_fileno(stdout), _O_TEXT);
+#endif
         return std::move(pStream);
     }
     std::unique_ptr<Stream> initStderr() {
@@ -151,6 +163,9 @@ namespace {
         pStream->isWritable = true;
         pStream->isReadable = false;
         pStream->isBinary = false;
+#if defined(PLATFORM_WINDOWS)
+        _setmode(_fileno(stderr), _O_TEXT);
+#endif
         return std::move(pStream);
     }
 }
