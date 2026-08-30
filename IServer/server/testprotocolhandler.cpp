@@ -354,7 +354,78 @@ protected:
 #endif
     }
 
-    // TODO need the above fixtures for write calls too.
+    // Common test code for text translation of stdout write calls
+    void fixtureStdoutWrite(std::string sent, std::string posixExpected, std::string windowsExpected) {
+        // Redirect stdout stream to a stringstream... the REQ_WRITE will write there...
+        std::stringstream stringstream;
+        std::streambuf *buffer = stringstream.rdbuf();
+        const int outputStreamId = 1;
+        stubPlatform._setStreamBuf(outputStreamId, buffer);
+
+        // Now REQ_WRITE...
+        std::vector<BYTE8> putsFrame = {REQ_WRITE};
+        append32(putsFrame, FILE_STDOUT);
+        appendString(putsFrame, sent);
+        std::vector<BYTE8> padded = padFrame(putsFrame);
+        sendFrame(padded);
+
+        std::vector<BYTE8> response = readResponseFrame();
+        checkResponseFrameTag(response, RES_SUCCESS);
+        checkResponseFrameSize(response, 4); // RES_SUCCESS + 0 + 0 + 0-pad
+
+        // Expect redirected data...
+#if defined(PLATFORM_WINDOWS)
+        EXPECT_EQ(stringstream.str(), windowsExpected);
+#endif
+#if defined(PLATFORM_OSX) || defined(PLATFORM_LINUX)
+        EXPECT_EQ(stringstream.str(), posixExpected);
+#endif
+    }
+
+    // Common test code for text translation of new file with specific mode write calls
+    void fixtureNewFileWrite(std::string sent, BYTE8 req_open_type, std::string posixExpected, std::string windowsExpected) {
+        const std::pair<std::string, std::string> &testFilePathAndName = createRandomTempFilePathContaining();
+        const std::string &testFilePath = testFilePathAndName.first;
+        const std::string &testFileName = testFilePathAndName.second;
+
+        // Open
+        std::vector<BYTE8> openFrame = {REQ_OPEN};
+        appendString(openFrame, testFileName);
+        append8(openFrame, req_open_type);
+        append8(openFrame, REQ_OPEN_MODE_OUTPUT);
+        padAndSendFrame(openFrame);
+
+        const std::vector<unsigned char> &openResponse = readResponseFrame();
+        checkResponseFrameTag(openResponse, RES_SUCCESS);
+        WORD32 streamId = get32(openResponse, 3);
+
+        // Now REQ_WRITE...
+        std::vector<BYTE8> putsFrame = {REQ_WRITE};
+        append32(putsFrame, streamId);
+        appendString(putsFrame, sent);
+        padAndSendFrame(putsFrame);
+
+        std::vector<BYTE8> writeResponse = readResponseFrame();
+        checkResponseFrameTag(writeResponse, RES_SUCCESS);
+        checkResponseFrameSize(writeResponse, 4); // RES_SUCCESS + 0 + 0 + 0-pad
+
+        // Close
+        std::vector<BYTE8> closeFrame = {REQ_CLOSE};
+        append32(closeFrame, streamId);
+        sendFrame(padFrame(closeFrame));
+
+        std::vector<BYTE8> closeResponse = readResponseFrame();
+        checkResponseFrameTag(closeResponse, RES_SUCCESS);
+        checkResponseFrameSize(closeResponse, 2); // RES_SUCCESS + 0-pad
+
+        // Expect redirected data...
+#if defined(PLATFORM_WINDOWS)
+        EXPECT_EQ(readFileContents(testFilePath), windowsExpected);
+#endif
+#if defined(PLATFORM_OSX) || defined(PLATFORM_LINUX)
+        EXPECT_EQ(readFileContents(testFilePath), posixExpected);
+#endif
+    }
 };
 
 // FRAME HANDLING
@@ -1125,6 +1196,59 @@ TEST_F(TestProtocolHandler, WriteOkToRealFile)
     // Expect redirected data...
     EXPECT_EQ(readFileContents(testFilePath), "ABCD");
 }
+
+// To already-opened, 'initial conditions' stdout (a text file).
+TEST_F(TestProtocolHandler, WriteOkStdout)
+{
+    fixtureStdoutWrite("ABCD", "ABCD", "ABCD");
+}
+
+TEST_F(TestProtocolHandler, WriteOkStdoutEmbeddedLF)
+{
+    // Note translation of the body..
+    fixtureStdoutWrite("ABCD\nEFGH", "ABCD\nEFGH", "ABCD\r\nEFGH");
+}
+
+TEST_F(TestProtocolHandler, WriteOkStdoutEmbeddedCRLF)
+{
+    // Everything including \r on POSIX text gets written through.
+    fixtureStdoutWrite("ABCD\r\nEFGH", "ABCD\r\nEFGH", "ABCD\r\nEFGH");
+}
+
+TEST_F(TestProtocolHandler, WriteOkToNewBinaryFile)
+{
+    fixtureNewFileWrite("ABCD", REQ_OPEN_TYPE_BINARY, "ABCD", "ABCD");
+}
+
+TEST_F(TestProtocolHandler, WriteOkToNewBinaryFileEmbeddedLF)
+{
+    // Note translation of the body, not just the end-of-line.
+    // https://learn.microsoft.com/en-us/cpp/c-runtime-library/reference/setmode?view=msvc-170
+    // _setmode says
+    // Line feed characters are translated into CR-LF combinations on output.
+    fixtureNewFileWrite("ABCD\nEFGH", REQ_OPEN_TYPE_BINARY, "ABCD\nEFGH", "ABCD\r\nEFGH");
+}
+
+TEST_F(TestProtocolHandler, WriteOkToNewBinaryFileEmbeddedCRLF)
+{
+    fixtureNewFileWrite("ABCD\r\nEFGH", REQ_OPEN_TYPE_BINARY, "ABCD\r\nEFGH", "ABCD\r\nEFGH");
+}
+
+TEST_F(TestProtocolHandler, WriteOkToNewTextFile)
+{
+    fixtureNewFileWrite("ABCD", REQ_OPEN_TYPE_TEXT, "ABCD", "ABCD");
+}
+
+TEST_F(TestProtocolHandler, WriteOkToNewTextFileEmbeddedLFs)
+{
+    fixtureNewFileWrite("ABCD\nEFGH", REQ_OPEN_TYPE_TEXT, "ABCD\nEFGH", "ABCD\r\nEFGH");
+}
+
+TEST_F(TestProtocolHandler, WriteOkToNewTextFileEmbeddedCRLFs)
+{
+    fixtureNewFileWrite("ABCD\r\nEFGH", REQ_OPEN_TYPE_TEXT, "ABCD\r\nEFGH", "ABCD\r\nEFGH");
+}
+
 
 TEST_F(TestProtocolHandler, WriteTruncated)
 {
