@@ -280,6 +280,81 @@ protected:
 
         return testFilePath;
     }
+
+    // Common test code for text translation of stdout puts calls
+    void fixtureStdoutPuts(std::string sent, std::string posixExpected, std::string windowsExpected) {
+        // Redirect stdout stream to a stringstream... the REQ_PUTS will write there...
+        std::stringstream stringstream;
+        std::streambuf *buffer = stringstream.rdbuf();
+        const int outputStreamId = 1;
+        stubPlatform._setStreamBuf(outputStreamId, buffer);
+
+        // Now REQ_PUTS...
+        std::vector<BYTE8> putsFrame = {REQ_PUTS};
+        append32(putsFrame, FILE_STDOUT);
+        appendString(putsFrame, sent);
+        std::vector<BYTE8> padded = padFrame(putsFrame);
+        sendFrame(padded);
+
+        std::vector<BYTE8> response = readResponseFrame();
+        checkResponseFrameTag(response, RES_SUCCESS);
+        checkResponseFrameSize(response, 2); // RES_SUCCESS + 0-pad
+
+        // Expect redirected data...
+#if defined(PLATFORM_WINDOWS)
+        EXPECT_EQ(stringstream.str(), windowsExpected);
+#endif
+#if defined(PLATFORM_OSX) || defined(PLATFORM_LINUX)
+        EXPECT_EQ(stringstream.str(), posixExpected);
+#endif
+    }
+
+    // Common test code for text translation of new file with specific mode puts calls
+    void fixtureNewFilePuts(std::string sent, BYTE8 req_open_type, std::string posixExpected, std::string windowsExpected) {
+        const std::pair<std::string, std::string> &testFilePathAndName = createRandomTempFilePathContaining();
+        const std::string &testFilePath = testFilePathAndName.first;
+        const std::string &testFileName = testFilePathAndName.second;
+
+        // Open
+        std::vector<BYTE8> openFrame = {REQ_OPEN};
+        appendString(openFrame, testFileName);
+        append8(openFrame, req_open_type);
+        append8(openFrame, REQ_OPEN_MODE_OUTPUT);
+        padAndSendFrame(openFrame);
+
+        const std::vector<unsigned char> &openResponse = readResponseFrame();
+        checkResponseFrameTag(openResponse, RES_SUCCESS);
+        WORD32 streamId = get32(openResponse, 3);
+
+        // Now REQ_PUTS...
+        std::vector<BYTE8> putsFrame = {REQ_PUTS};
+        append32(putsFrame, streamId);
+        appendString(putsFrame, sent);
+        padAndSendFrame(putsFrame);
+
+        std::vector<BYTE8> writeResponse = readResponseFrame();
+        checkResponseFrameTag(writeResponse, RES_SUCCESS);
+        checkResponseFrameSize(writeResponse, 2); // RES_SUCCESS + 0-pad
+
+        // Close
+        std::vector<BYTE8> closeFrame = {REQ_CLOSE};
+        append32(closeFrame, streamId);
+        sendFrame(padFrame(closeFrame));
+
+        std::vector<BYTE8> closeResponse = readResponseFrame();
+        checkResponseFrameTag(closeResponse, RES_SUCCESS);
+        checkResponseFrameSize(closeResponse, 2); // RES_SUCCESS + 0-pad
+
+        // Expect redirected data...
+#if defined(PLATFORM_WINDOWS)
+        EXPECT_EQ(readFileContents(testFilePath), windowsExpected);
+#endif
+#if defined(PLATFORM_OSX) || defined(PLATFORM_LINUX)
+        EXPECT_EQ(readFileContents(testFilePath), posixExpected);
+#endif
+    }
+
+    // TODO need the above fixtures for write calls too.
 };
 
 // FRAME HANDLING
@@ -1211,127 +1286,58 @@ TEST_F(TestProtocolHandler, PutsToPositiveOutOfRangeFileIsUnsuccessful)
     EXPECT_EQ((int)response[4], 0x00);
 }
 
-TEST_F(TestProtocolHandler, PutsOk) // To already-opened, 'initial conditions' stdout (a text file).
+// To already-opened, 'initial conditions' stdout (a text file).
+TEST_F(TestProtocolHandler, PutsOkStdout)
 {
-    // Redirect stdout stream to a stringstream... the REQ_PUTS will write there...
-    std::stringstream stringstream;
-    std::streambuf *buffer = stringstream.rdbuf();
-    const int outputStreamId = 1;
-    stubPlatform._setStreamBuf(outputStreamId, buffer);
-
-    // Now REQ_PUTS...
-    std::vector<BYTE8> putsFrame = {REQ_PUTS};
-    append32(putsFrame, FILE_STDOUT);
-    appendString(putsFrame, "ABCD");
-    std::vector<BYTE8> padded = padFrame(putsFrame);
-    sendFrame(padded);
-
-    std::vector<BYTE8> response = readResponseFrame();
-    checkResponseFrameTag(response, RES_SUCCESS);
-    checkResponseFrameSize(response, 2); // RES_SUCCESS + 0-pad
-
-    // Expect redirected data...
-#if defined(PLATFORM_WINDOWS)
-    EXPECT_EQ(stringstream.str(), "ABCD\r\n");
-#endif
-#if defined(PLATFORM_OSX) || defined(PLATFORM_LINUX)
-    EXPECT_EQ(stringstream.str(), "ABCD\n");
-#endif
+    fixtureStdoutPuts("ABCD", "ABCD\n", "ABCD\r\n");
 }
 
-TEST_F(TestProtocolHandler, PutsOkToRealBinaryFile)
+TEST_F(TestProtocolHandler, PutsOkStdoutEmbeddedLF)
 {
-    const std::pair<std::string, std::string> &testFilePathAndName = createRandomTempFilePathContaining();
-    const std::string &testFilePath = testFilePathAndName.first;
-    const std::string &testFileName = testFilePathAndName.second;
-
-    // Open
-    std::vector<BYTE8> openFrame = {REQ_OPEN};
-    appendString(openFrame, testFileName);
-    append8(openFrame, REQ_OPEN_TYPE_BINARY);
-    append8(openFrame, REQ_OPEN_MODE_OUTPUT);
-    padAndSendFrame(openFrame);
-
-    const std::vector<unsigned char> &openResponse = readResponseFrame();
-    checkResponseFrameTag(openResponse, RES_SUCCESS);
-    WORD32 streamId = get32(openResponse, 3);
-
-    // Now REQ_PUTS...
-    std::vector<BYTE8> putsFrame = {REQ_PUTS};
-    append32(putsFrame, streamId);
-    appendString(putsFrame, "ABCD");
-    padAndSendFrame(putsFrame);
-
-    std::vector<BYTE8> writeResponse = readResponseFrame();
-    checkResponseFrameTag(writeResponse, RES_SUCCESS);
-    checkResponseFrameSize(writeResponse, 2); // RES_SUCCESS + 0-pad
-
-    // Close
-    std::vector<BYTE8> closeFrame = {REQ_CLOSE};
-    append32(closeFrame, streamId);
-    sendFrame(padFrame(closeFrame));
-
-    std::vector<BYTE8> closeResponse = readResponseFrame();
-    checkResponseFrameTag(closeResponse, RES_SUCCESS);
-    checkResponseFrameSize(closeResponse, 2); // RES_SUCCESS + 0-pad
-
-    // Expect redirected data...
-    // On Windows, REQ_PUTS on a binary or text file will add \r\n.
-    // On non-Windows, it'll add \n.
-#if defined(PLATFORM_WINDOWS)
-    EXPECT_EQ(readFileContents(testFilePath), "ABCD\r\n");
-#endif
-#if defined(PLATFORM_OSX) || defined(PLATFORM_LINUX)
-    EXPECT_EQ(readFileContents(testFilePath), "ABCD\n");
-#endif
+    // Note translation of the body, not just the end-of-line.
+    fixtureStdoutPuts("ABCD\nEFGH", "ABCD\nEFGH\n", "ABCD\r\nEFGH\r\n");
 }
 
-TEST_F(TestProtocolHandler, PutsOkToRealTextFile)
+TEST_F(TestProtocolHandler, PutsOkStdoutEmbeddedCRLF)
 {
-    const std::pair<std::string, std::string> &testFilePathAndName = createRandomTempFilePathContaining();
-    const std::string &testFilePath = testFilePathAndName.first;
-    const std::string &testFileName = testFilePathAndName.second;
+    // Everything including \r on POSIX text gets written through, and an end-of-line gets added.
+    fixtureStdoutPuts("ABCD\r\nEFGH", "ABCD\r\nEFGH\n", "ABCD\r\nEFGH\r\n");
+}
 
-    // Open
-    std::vector<BYTE8> openFrame = {REQ_OPEN};
-    appendString(openFrame, testFileName);
-    append8(openFrame, REQ_OPEN_TYPE_TEXT);
-    append8(openFrame, REQ_OPEN_MODE_OUTPUT);
-    padAndSendFrame(openFrame);
+TEST_F(TestProtocolHandler, PutsOkToNewBinaryFile)
+{
+    // If this seems odd, that a binary file is doing translation... you're wrong. It's Fputs that's adding the
+    // newline. If you want to write exactly what you say, you should be using Fwrite.
+    fixtureNewFilePuts("ABCD", REQ_OPEN_TYPE_BINARY, "ABCD\n", "ABCD\r\n");
+}
 
-    const std::vector<unsigned char> &openResponse = readResponseFrame();
-    checkResponseFrameTag(openResponse, RES_SUCCESS);
-    WORD32 streamId = get32(openResponse, 3);
+TEST_F(TestProtocolHandler, PutsOkToNewBinaryFileEmbeddedLF)
+{
+    // Note translation of the body, not just the end-of-line.
+    // https://learn.microsoft.com/en-us/cpp/c-runtime-library/reference/setmode?view=msvc-170
+    // _setmode says
+    // Line feed characters are translated into CR-LF combinations on output.
+    fixtureNewFilePuts("ABCD\nEFGH", REQ_OPEN_TYPE_BINARY, "ABCD\nEFGH\n", "ABCD\r\nEFGH\r\n");
+}
 
-    // Now REQ_PUTS...
-    std::vector<BYTE8> putsFrame = {REQ_PUTS};
-    append32(putsFrame, streamId);
-    appendString(putsFrame, "ABCD");
-    padAndSendFrame(putsFrame);
+TEST_F(TestProtocolHandler, PutsOkToNewBinaryFileEmbeddedCRLF)
+{
+    fixtureNewFilePuts("ABCD\r\nEFGH", REQ_OPEN_TYPE_BINARY, "ABCD\r\nEFGH\n", "ABCD\r\nEFGH\r\n");
+}
 
-    std::vector<BYTE8> writeResponse = readResponseFrame();
-    checkResponseFrameTag(writeResponse, RES_SUCCESS);
-    checkResponseFrameSize(writeResponse, 2); // RES_SUCCESS + 0-pad
+TEST_F(TestProtocolHandler, PutsOkToNewTextFile)
+{
+    fixtureNewFilePuts("ABCD", REQ_OPEN_TYPE_TEXT, "ABCD\n", "ABCD\r\n");
+}
 
-    // Close
-    std::vector<BYTE8> closeFrame = {REQ_CLOSE};
-    append32(closeFrame, streamId);
-    sendFrame(padFrame(closeFrame));
+TEST_F(TestProtocolHandler, PutsOkToNewTextFileEmbeddedLFs)
+{
+    fixtureNewFilePuts("ABCD\nEFGH", REQ_OPEN_TYPE_TEXT, "ABCD\nEFGH\n", "ABCD\r\nEFGH\r\n");
+}
 
-    std::vector<BYTE8> closeResponse = readResponseFrame();
-    checkResponseFrameTag(closeResponse, RES_SUCCESS);
-    checkResponseFrameSize(closeResponse, 2); // RES_SUCCESS + 0-pad
-
-    // Expect redirected data...
-    // REQ_PUTS will add a \n to the line, and for TEXT files, the underlying C++ iostream
-    // library will turn this into \r\n for Windows, and \n for non-Windows. For BINARY
-    // files, Windows will add \r\n and non-Windows will add \n.
-#if defined(PLATFORM_WINDOWS)
-    EXPECT_EQ(readFileContents(testFilePath), "ABCD\r\n");
-#endif
-#if defined(PLATFORM_OSX) || defined(PLATFORM_LINUX)
-    EXPECT_EQ(readFileContents(testFilePath), "ABCD\n");
-#endif
+TEST_F(TestProtocolHandler, PutsOkToNewTextFileEmbeddedCRLFs)
+{
+    fixtureNewFilePuts("ABCD\r\nEFGH", REQ_OPEN_TYPE_TEXT, "ABCD\r\nEFGH\n", "ABCD\r\nEFGH\r\n");
 }
 
 TEST_F(TestProtocolHandler, PutsTruncated)
@@ -1345,10 +1351,11 @@ TEST_F(TestProtocolHandler, PutsTruncated)
     stubPlatform._setStreamBuf(outputStreamId, &mbuf);
 
     // If this was a stream we opened, we control its TEXT/BINARY nature. But this is stdout;
-    // it's binary by default. You wouldn't usually call REQ_PUTS on a binary file, but if
-    // you do, you'll get the right platform line ending.
+    // it's text by default. This controls translation of data written, but the input here is
+    // AB so has nothing to translate.
+    // REQ_PUTS will add the right platform line ending.
 
-    // Now REQ_WRITE...
+    // Now REQ_PUTS...
     std::vector<BYTE8> putsFrame = {REQ_PUTS};
     append32(putsFrame, FILE_STDOUT);
     appendString(putsFrame, "AB");
