@@ -1211,7 +1211,7 @@ TEST_F(TestProtocolHandler, PutsToPositiveOutOfRangeFileIsUnsuccessful)
     EXPECT_EQ((int)response[4], 0x00);
 }
 
-TEST_F(TestProtocolHandler, PutsOk)
+TEST_F(TestProtocolHandler, PutsOk) // To already-opened, 'initial conditions' stdout (a text file).
 {
     // Redirect stdout stream to a stringstream... the REQ_PUTS will write there...
     std::stringstream stringstream;
