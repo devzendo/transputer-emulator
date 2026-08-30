@@ -47,6 +47,13 @@ protected:
     }
 };
 
+TEST_F(TestPlatform, InitialConditions)
+{
+    EXPECT_EQ(platform->isBinaryStream(FILE_STDIN), false);
+    EXPECT_EQ(platform->isBinaryStream(FILE_STDOUT), false);
+    EXPECT_EQ(platform->isBinaryStream(FILE_STDERR), false);
+}
+
 TEST_F(TestPlatform, WriteStreamToNegativeOutOfRangeStreamId)
 {
     EXPECT_THROW(platform->writeStream(-1, 5, sampleBuf), std::range_error);
