@@ -142,7 +142,6 @@ namespace {
         pStream->isReadable = true;
         pStream->isBinary = false;
 #if defined(PLATFORM_WINDOWS)
-        std::cin.flush(); // drain anything buffered under the old mode first
         int prev = _setmode(_fileno(stdin), _O_TEXT);
         if (prev == -1) {
             logWarn("Cannot set stdin to TEXT");
