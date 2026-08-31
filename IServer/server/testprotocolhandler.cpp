@@ -1203,6 +1203,7 @@ TEST_F(TestProtocolHandler, WriteOkStdout)
     fixtureStdoutWrite("ABCD", "ABCD", "ABCD");
 }
 
+// FAIL(WINDOWS) - gets "ABCD\nEFGH"
 TEST_F(TestProtocolHandler, WriteOkStdoutEmbeddedLF)
 {
     // Note translation of the body..
@@ -1220,6 +1221,7 @@ TEST_F(TestProtocolHandler, WriteOkToNewBinaryFile)
     fixtureNewFileWrite("ABCD", REQ_OPEN_TYPE_BINARY, "ABCD", "ABCD");
 }
 
+// FAIL(WINDOWS) - gets "ABCD\nEFGH"
 TEST_F(TestProtocolHandler, WriteOkToNewBinaryFileEmbeddedLF)
 {
     // Note translation of the body, not just the end-of-line.
@@ -1244,6 +1246,7 @@ TEST_F(TestProtocolHandler, WriteOkToNewTextFileEmbeddedLFs)
     fixtureNewFileWrite("ABCD\nEFGH", REQ_OPEN_TYPE_TEXT, "ABCD\nEFGH", "ABCD\r\nEFGH");
 }
 
+// FAIL(WINDOWS) - gets "ABCD\r\r\nEFGH"
 TEST_F(TestProtocolHandler, WriteOkToNewTextFileEmbeddedCRLFs)
 {
     fixtureNewFileWrite("ABCD\r\nEFGH", REQ_OPEN_TYPE_TEXT, "ABCD\r\nEFGH", "ABCD\r\nEFGH");
@@ -1411,17 +1414,20 @@ TEST_F(TestProtocolHandler, PutsToPositiveOutOfRangeFileIsUnsuccessful)
 }
 
 // To already-opened, 'initial conditions' stdout (a text file).
+// FAIL(WINDOWS) - gets "ABCD\n" (eol not translated) [new text file: ok]
 TEST_F(TestProtocolHandler, PutsOkStdout)
 {
     fixtureStdoutPuts("ABCD", "ABCD\n", "ABCD\r\n");
 }
 
+// FAIL(WINDOWS) - gets "ABCD\nEFGH\n" (newlines not translated) [new text file: ok]
 TEST_F(TestProtocolHandler, PutsOkStdoutEmbeddedLF)
 {
     // Note translation of the body, not just the end-of-line.
     fixtureStdoutPuts("ABCD\nEFGH", "ABCD\nEFGH\n", "ABCD\r\nEFGH\r\n");
 }
 
+// FAIL(WINDOWS) - gets "ABCD\r\nEFGH\n" (wrong newline) [new text file: embedded \r\n not left alone, but the \n is translated]
 TEST_F(TestProtocolHandler, PutsOkStdoutEmbeddedCRLF)
 {
     // Everything including \r on POSIX text gets written through, and an end-of-line gets added.
@@ -1435,6 +1441,7 @@ TEST_F(TestProtocolHandler, PutsOkToNewBinaryFile)
     fixtureNewFilePuts("ABCD", REQ_OPEN_TYPE_BINARY, "ABCD\n", "ABCD\r\n");
 }
 
+// FAIL(WINDOWS) - gets "ABCD\nEFGH\r\n" (embedded newline not translated)
 TEST_F(TestProtocolHandler, PutsOkToNewBinaryFileEmbeddedLF)
 {
     // Note translation of the body, not just the end-of-line.
@@ -1459,12 +1466,14 @@ TEST_F(TestProtocolHandler, PutsOkToNewTextFileEmbeddedLFs)
     fixtureNewFilePuts("ABCD\nEFGH", REQ_OPEN_TYPE_TEXT, "ABCD\nEFGH\n", "ABCD\r\nEFGH\r\n");
 }
 
+// FAIL(WINDOWS) - gets "ABCD\r\r\nEFGH\r\n" (embedded \r\n not left alone - its \n is translated)
 TEST_F(TestProtocolHandler, PutsOkToNewTextFileEmbeddedCRLFs)
 {
     fixtureNewFilePuts("ABCD\r\nEFGH", REQ_OPEN_TYPE_TEXT, "ABCD\r\nEFGH\n", "ABCD\r\nEFGH\r\n");
 }
 
-TEST_F(TestProtocolHandler, PutsTruncated)
+// FAIL(WINDOWS) - buf[2]=='\n', buf[3]=='\x3' [embedded newline mistranslated]
+TEST_F(TestProtocolHandler, PutsStdoutTruncated)
 {
     // Redirect stdout stream to a membuf... the REQ_PUTS will write there...
     uint8_t buf[] = { 0x00, 0x01, 0x02, 0x03 };
@@ -1509,7 +1518,8 @@ TEST_F(TestProtocolHandler, PutsTruncated)
     EXPECT_EQ(overflow[3], 0xFE);
 }
 
-TEST_F(TestProtocolHandler, PutsZero)
+// FAIL(WINDOWS) - gets buf[0]=='\n', buf[1]==\x1' [embedded newline mistranslated]
+TEST_F(TestProtocolHandler, PutsStdoutZero)
 {
     // Redirect stdout stream to a membuf... the REQ_PUTS will write there...
     uint8_t buf[] = { 0x00, 0x01, 0x02, 0x03 };

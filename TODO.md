@@ -33,3 +33,4 @@
 # Known problems
 * The bit-banged GPIO link is a proof of concept, and does not work at a usable data rate.
 * inmemorylink - There are thread-yielding busy waits in the synchronous interface.
+* IServer text mode support - incomplete implementation: several tests fail on Windows.
