@@ -242,7 +242,7 @@ protected:
 
     // Common test code for testing \n translation in 'open text for output' tests
     std::string openTextOutputTranslation(const std::string& writtenString, const unsigned short expectedWrittenBytes) {
-        std::string testFileName = createRandomTempFileName();
+        const std::string testFileName = createRandomTempFileName();
         std::string testFilePath = pathJoin(tempdir(), testFileName);
 
         std::vector<BYTE8> openFrame = {REQ_OPEN};
@@ -251,7 +251,7 @@ protected:
         append8(openFrame, REQ_OPEN_MODE_OUTPUT);
         sendFrame(padFrame(openFrame));
 
-        std::vector<BYTE8> openResponse = readResponseFrame();
+        const std::vector<BYTE8> openResponse = readResponseFrame();
         checkResponseFrameTag(openResponse, RES_SUCCESS);
         checkResponseFrameSize(openResponse, 6);
         WORD32 streamId = get32(openResponse, 3);
@@ -263,7 +263,7 @@ protected:
         appendString(writeFrame, writtenString);
         sendFrame(padFrame(writeFrame));
 
-        std::vector<BYTE8> writeResponse = readResponseFrame();
+        const std::vector<BYTE8> writeResponse = readResponseFrame();
         checkResponseFrameTag(writeResponse, RES_SUCCESS);
         checkResponseFrameSize(writeResponse, 4); // RES_SUCCESS + 0 + 0 + 0-pad
         WORD16 written = get16(writeResponse, 3);
@@ -274,7 +274,7 @@ protected:
         append32(closeFrame, streamId);
         sendFrame(padFrame(closeFrame));
 
-        std::vector<BYTE8> closeResponse = readResponseFrame();
+        const std::vector<BYTE8> closeResponse = readResponseFrame();
         checkResponseFrameTag(closeResponse, RES_SUCCESS);
         checkResponseFrameSize(closeResponse, 2); // RES_SUCCESS + 0-pad
 
@@ -332,7 +332,7 @@ protected:
         appendString(putsFrame, sent);
         padAndSendFrame(putsFrame);
 
-        std::vector<BYTE8> writeResponse = readResponseFrame();
+        const std::vector<BYTE8> writeResponse = readResponseFrame();
         checkResponseFrameTag(writeResponse, RES_SUCCESS);
         checkResponseFrameSize(writeResponse, 2); // RES_SUCCESS + 0-pad
 
@@ -341,7 +341,7 @@ protected:
         append32(closeFrame, streamId);
         sendFrame(padFrame(closeFrame));
 
-        std::vector<BYTE8> closeResponse = readResponseFrame();
+        const std::vector<BYTE8> closeResponse = readResponseFrame();
         checkResponseFrameTag(closeResponse, RES_SUCCESS);
         checkResponseFrameSize(closeResponse, 2); // RES_SUCCESS + 0-pad
 
@@ -397,7 +397,7 @@ protected:
 
         const std::vector<unsigned char> &openResponse = readResponseFrame();
         checkResponseFrameTag(openResponse, RES_SUCCESS);
-        WORD32 streamId = get32(openResponse, 3);
+        const WORD32 streamId = get32(openResponse, 3);
 
         // Now REQ_WRITE...
         std::vector<BYTE8> putsFrame = {REQ_WRITE};
@@ -405,7 +405,7 @@ protected:
         appendString(putsFrame, sent);
         padAndSendFrame(putsFrame);
 
-        std::vector<BYTE8> writeResponse = readResponseFrame();
+        const std::vector<BYTE8> writeResponse = readResponseFrame();
         checkResponseFrameTag(writeResponse, RES_SUCCESS);
         checkResponseFrameSize(writeResponse, 4); // RES_SUCCESS + 0 + 0 + 0-pad
 
@@ -414,7 +414,7 @@ protected:
         append32(closeFrame, streamId);
         sendFrame(padFrame(closeFrame));
 
-        std::vector<BYTE8> closeResponse = readResponseFrame();
+        const std::vector<BYTE8> closeResponse = readResponseFrame();
         checkResponseFrameTag(closeResponse, RES_SUCCESS);
         checkResponseFrameSize(closeResponse, 2); // RES_SUCCESS + 0-pad
 
@@ -438,31 +438,31 @@ TEST_F(TestProtocolHandler, InitialFrameCounts)
 
 TEST_F(TestProtocolHandler, ShortFrame0IsShort)
 {
-    auto badFrame = std::vector<BYTE8> {};
+    const auto badFrame = std::vector<BYTE8> {};
     checkBadFrame(badFrame);
 }
 
 TEST_F(TestProtocolHandler, ShortFrame1IsShort)
 {
-    auto badFrame = std::vector<BYTE8> {0};
+    const auto badFrame = std::vector<BYTE8> {0};
     checkBadFrame(badFrame);
 }
 
 TEST_F(TestProtocolHandler, ShortFrame4IsShort)
 {
-    auto badFrame = std::vector<BYTE8> {0, 0, 0, 0};
+    const auto badFrame = std::vector<BYTE8> {0, 0, 0, 0};
     checkBadFrame(badFrame);
 }
 
 TEST_F(TestProtocolHandler, ShortFrame5IsOdd)
 {
-    auto badFrame = std::vector<BYTE8> {0, 0, 0, 0, 0};
+    const auto badFrame = std::vector<BYTE8> {0, 0, 0, 0, 0};
     checkBadFrame(badFrame);
 }
 
 TEST_F(TestProtocolHandler, OddFrame7IsOdd)
 {
-    auto badFrame = std::vector<BYTE8> {0, 0, 0, 0, 0, 0, 0};
+    const auto badFrame = std::vector<BYTE8> {0, 0, 0, 0, 0, 0, 0};
     checkBadFrame(badFrame);
 }
 
@@ -472,7 +472,7 @@ TEST_F(TestProtocolHandler, MaxFrame510IsGood)
     padTo(510, maxFrame);
 
     (void) checkGoodFrame(maxFrame);
-    std::vector<BYTE8> response = readResponseFrame();
+    const std::vector<BYTE8> response = readResponseFrame();
     checkResponseFrameTag(response, RES_UNIMPLEMENTED);
 }
 
@@ -552,7 +552,7 @@ TEST_F(TestProtocolHandler, OddSizeResponseFrameIsPaddedWithZero)
 {
     std::vector<BYTE8> idFrame = {REQ_ID};
     sendFrame(padFrame(idFrame));
-    std::vector<BYTE8> response = readResponseFrame();
+    const std::vector<BYTE8> response = readResponseFrame();
     checkResponseFrameSize(response, 6);
     checkResponseFrameTag(response, RES_SUCCESS);
     EXPECT_EQ((int)response[7], 0x00); // padding
@@ -563,10 +563,10 @@ TEST_F(TestProtocolHandler, OddSizeResponseFrameIsPaddedWithZero)
 TEST_F(TestProtocolHandler, UnimplementedFrame)
 {
     std::vector<BYTE8> unimplementedFrame = {9}; // an unimplemented tag
-    std::vector<BYTE8> padded = padFrame(unimplementedFrame);
+    const std::vector<BYTE8> padded = padFrame(unimplementedFrame);
     EXPECT_EQ(checkGoodFrame(padded), false); // its length is good, it's not an exit frame
     EXPECT_EQ(handler->unimplementedFrameCount(), 1L); // but it isn't an implemented tag
-    std::vector<BYTE8> response = readResponseFrame();
+    const std::vector<BYTE8> response = readResponseFrame();
     checkResponseFrameSize(response, 1 + 1); // padded
     checkResponseFrameTag(response, RES_UNIMPLEMENTED);
 }
@@ -575,8 +575,8 @@ TEST_F(TestProtocolHandler, UnimplementedFrame)
 
 TEST_F(TestProtocolHandler, OpenInputOpensAFileAndReturnsAStream)
 {
-    std::string testFileName = createRandomTempFileName();
-    std::string testFilePath = pathJoin(tempdir(), testFileName);
+    const std::string testFileName = createRandomTempFileName();
+    const std::string testFilePath = pathJoin(tempdir(), testFileName);
     createTempFile(testFilePath, "ABCD");
 
     std::vector<BYTE8> openFrame = {REQ_OPEN};
@@ -588,7 +588,7 @@ TEST_F(TestProtocolHandler, OpenInputOpensAFileAndReturnsAStream)
     EXPECT_FALSE(wasSensedAsExitFrame);
     EXPECT_EQ(handler->unimplementedFrameCount(), 0L); // it is an implemented tag
 
-    std::vector<BYTE8> response = readResponseFrame();
+    const std::vector<BYTE8> response = readResponseFrame();
     checkResponseFrameTag(response, RES_SUCCESS);
     checkResponseFrameSize(response, 6);
     EXPECT_EQ((int)response[3], 0x03); // First available stream id after 0,1,2 (stdout, stdin, stderr)
@@ -599,7 +599,7 @@ TEST_F(TestProtocolHandler, OpenInputOpensAFileAndReturnsAStream)
 
 TEST_F(TestProtocolHandler, OpenInputFailsWhenFileDoesNotExist)
 {
-    std::string nonExistantTestFilePath = pathJoin(tempdir(), createRandomTempFileName());
+    const std::string nonExistantTestFilePath = pathJoin(tempdir(), createRandomTempFileName());
 
     std::vector<BYTE8> openFrame = {REQ_OPEN};
     appendString(openFrame, nonExistantTestFilePath);
@@ -607,7 +607,7 @@ TEST_F(TestProtocolHandler, OpenInputFailsWhenFileDoesNotExist)
     append8(openFrame, REQ_OPEN_MODE_INPUT);
     padAndSendFrame(openFrame);
 
-    std::vector<BYTE8> response = readResponseFrame();
+    const std::vector<BYTE8> response = readResponseFrame();
     checkResponseFrameTag(response, RES_ERROR);
     checkResponseFrameSize(response, 4);
     EXPECT_EQ((int)response[3], 0x00);
@@ -672,7 +672,7 @@ TEST_F(TestProtocolHandler, OpenOutputCannotBeReadFrom)
     append8(openFrame, REQ_OPEN_MODE_OUTPUT);
     sendFrame(padFrame(openFrame));
 
-    std::vector<BYTE8> openResponse = readResponseFrame();
+    const std::vector<BYTE8> openResponse = readResponseFrame();
     checkResponseFrameTag(openResponse, RES_SUCCESS);
     WORD32 streamId = get32(openResponse, 3);
 
@@ -682,7 +682,7 @@ TEST_F(TestProtocolHandler, OpenOutputCannotBeReadFrom)
     append16(readFrame, 4);
     sendFrame(padFrame(readFrame));
 
-    std::vector<BYTE8> readResponse = readResponseFrame();
+    const std::vector<BYTE8> readResponse = readResponseFrame();
     checkResponseFrameTag(readResponse, RES_BADID);
     checkResponseFrameSize(readResponse, 4); // RES_BADID + 0 + 0 + 0-pad
     WORD16 read = get16(readResponse, 3);
@@ -703,7 +703,7 @@ TEST_F(TestProtocolHandler, OpenInputCannotBeWrittenTo)
 
     std::vector<BYTE8> openResponse = readResponseFrame();
     checkResponseFrameTag(openResponse, RES_SUCCESS);
-    WORD32 streamId = get32(openResponse, 3);
+    const WORD32 streamId = get32(openResponse, 3);
 
     // Write will fail
     std::vector<BYTE8> writeFrame = {REQ_WRITE};
@@ -711,7 +711,7 @@ TEST_F(TestProtocolHandler, OpenInputCannotBeWrittenTo)
     append16(writeFrame, 4);
     sendFrame(padFrame(writeFrame));
 
-    std::vector<BYTE8> writeResponse = readResponseFrame();
+    const std::vector<BYTE8> writeResponse = readResponseFrame();
     checkResponseFrameTag(writeResponse, RES_BADID);
     checkResponseFrameSize(writeResponse, 4); // RES_BADID + 0 + 0 + 0-pad
     WORD16 written = get16(writeResponse, 3);
