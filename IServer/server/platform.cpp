@@ -145,12 +145,6 @@ namespace {
         pStream->isWritable = false;
         pStream->isReadable = true;
         pStream->isBinary = false;
-// #if defined(PLATFORM_WINDOWS)
-//         int prev = _setmode(_fileno(stdin), _O_TEXT);
-//         if (prev == -1) {
-//             logWarn("Cannot set stdin to TEXT");
-//         }
-// #endif
         return std::move(pStream);
     }
     std::unique_ptr<Stream> initStdout() {
@@ -159,13 +153,6 @@ namespace {
         pStream->isWritable = true;
         pStream->isReadable = false;
         pStream->isBinary = false;
-// #if defined(PLATFORM_WINDOWS)
-//         std::cout.flush(); // drain anything buffered under the old mode first
-//         int prev = _setmode(_fileno(stdout), _O_TEXT);
-//         if (prev == -1) {
-//             logWarn("Cannot set stdout to TEXT");
-//         }
-// #endif
         return std::move(pStream);
     }
     std::unique_ptr<Stream> initStderr() {
@@ -174,13 +161,6 @@ namespace {
         pStream->isWritable = true;
         pStream->isReadable = false;
         pStream->isBinary = false;
-// #if defined(PLATFORM_WINDOWS)
-//         std::cerr.flush(); // drain anything buffered under the old mode first
-//         int prev = _setmode(_fileno(stderr), _O_TEXT);
-//         if (prev == -1) {
-//             logWarn("Cannot set stderr to TEXT");
-//         }
-// #endif
         return std::move(pStream);
     }
 }

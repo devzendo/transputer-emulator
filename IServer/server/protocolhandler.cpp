@@ -534,8 +534,7 @@ void ProtocolHandler::reqPuts() {
         WORD16 wrote = (size > 0) ? myPlatform.writeStream(streamId, size, (BYTE8 *) data.data()) : 0;
         logDebugF("Wrote %d bytes from request to stream #%d", wrote, streamId);
         // If this is a TEXT stream (on Windows) we can just write \n and Windows will translate it to \r\n.
-        // This does not work for stdout (that's not properly opened for text) on Windows, despite calling _setmode
-        // on the fd).
+        // This does not work for stdout (that's not properly opened for text) on Windows.
         // If this is a BINARY stream (on Windows), we'll have to write \r\n to get the right endings.
         // You probably wouldn't be calling REQ_PUTS on a binary file - but let's do the right thing.
 #if defined(PLATFORM_WINDOWS)
