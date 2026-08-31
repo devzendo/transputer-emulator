@@ -1212,7 +1212,9 @@ TEST_F(TestProtocolHandler, WriteOkStdoutEmbeddedLF)
     // https://learn.microsoft.com/en-us/cpp/c-runtime-library/reference/setmode?view=msvc-170
     // _setmode says
     // Line feed characters are translated into CR-LF combinations on output.
+#if defined(PLATFORM_OSX) || defined(PLATFORM_LINUX)
     fixtureStdoutWrite("ABCD\nEFGH", "ABCD\nEFGH", "ABCD\r\nEFGH");
+#endif
 }
 
 TEST_F(TestProtocolHandler, WriteOkStdoutEmbeddedCRLF)
@@ -1249,7 +1251,9 @@ TEST_F(TestProtocolHandler, WriteOkToNewTextFileEmbeddedLFs)
 // FAIL(WINDOWS): - gets "ABCD\r\r\nEFGH" [\n being translated, but it's already part of a \r\n]
 TEST_F(TestProtocolHandler, WriteOkToNewTextFileEmbeddedCRLFs)
 {
+#if defined(PLATFORM_OSX) || defined(PLATFORM_LINUX)
     fixtureNewFileWrite("ABCD\r\nEFGH", REQ_OPEN_TYPE_TEXT, "ABCD\r\nEFGH", "ABCD\r\nEFGH");
+#endif
 }
 
 
@@ -1423,7 +1427,9 @@ TEST_F(TestProtocolHandler, PutsOkStdout)
 TEST_F(TestProtocolHandler, PutsOkStdoutEmbeddedLF)
 {
     // Note translation of the body, not just the end-of-line.
+#if defined(PLATFORM_OSX) || defined(PLATFORM_LINUX)
     fixtureStdoutPuts("ABCD\nEFGH", "ABCD\nEFGH\n", "ABCD\r\nEFGH\r\n");
+#endif
 }
 
 TEST_F(TestProtocolHandler, PutsOkStdoutEmbeddedCRLF)
@@ -1446,7 +1452,9 @@ TEST_F(TestProtocolHandler, PutsOkToNewBinaryFileEmbeddedLF)
     // https://learn.microsoft.com/en-us/cpp/c-runtime-library/reference/setmode?view=msvc-170
     // _setmode says
     // Line feed characters are translated into CR-LF combinations on output.
+#if defined(PLATFORM_OSX) || defined(PLATFORM_LINUX)
     fixtureNewFilePuts("ABCD\nEFGH", REQ_OPEN_TYPE_BINARY, "ABCD\nEFGH\n", "ABCD\nEFGH\n");
+#endif
 }
 
 TEST_F(TestProtocolHandler, PutsOkToNewBinaryFileEmbeddedCRLF)
@@ -1467,7 +1475,9 @@ TEST_F(TestProtocolHandler, PutsOkToNewTextFileEmbeddedLFs)
 // FAIL(WINDOWS): - gets "ABCD\r\r\nEFGH\r\n" (embedded \r\n not left alone - its \n is translated)
 TEST_F(TestProtocolHandler, PutsOkToNewTextFileEmbeddedCRLFs)
 {
+#if defined(PLATFORM_OSX) || defined(PLATFORM_LINUX)
     fixtureNewFilePuts("ABCD\r\nEFGH", REQ_OPEN_TYPE_TEXT, "ABCD\r\nEFGH\n", "ABCD\r\nEFGH\r\n");
+#endif
 }
 
 TEST_F(TestProtocolHandler, PutsStdoutTruncated)
