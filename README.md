@@ -94,7 +94,8 @@ Another hiatus from Dec 2025 to Mar 2026.
 * Boot protocol executed over any link.
 * Bugfix: protocol handler - open file - was inadvertantly broken on some
   platforms.
-* Bugfix: IServer's stdin/stdout/stderr streams are now initialised as text, not binary streams.
+* Bugfix: IServer's stdin/stdout/stderr streams are now initialised as text, not binary streams. This unfortunately
+  introduces several problems with text mode support (only on Windows), which will be fixed in a later release.
 * Bugfix: A loaded ROM's memory is now initialised/destroyed correctly.
 * Add emuserver that runs a linked emulator and iserver in a single process.
 * Add bin2boot that prefixes a link-bootloader to a Small-C compiled binary file. 
