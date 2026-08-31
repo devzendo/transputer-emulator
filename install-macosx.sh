@@ -14,8 +14,13 @@ fi
 if [ -f cmake-build-release/Emulator/temulate ]; then
 	sudo cp cmake-build-release/Emulator/temulate $BINDIR
 fi
+if [ -f cmake-build-release/EmuServer/emuserver ]; then
+	sudo cp cmake-build-release/EmuServer/emuserver $BINDIR
+fi
+
 
 
 sudo chmod 755 $BINDIR/iserver
 sudo chmod 755 $BINDIR/temulate
+sudo chmod 755 $BINDIR/emuserver
 
