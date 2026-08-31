@@ -319,7 +319,7 @@ TEST_F(AsyncLinkTest, DataSentAsyncGetsAckedAndCalledBack) {
     for (int i=0; i<24 * 12; i++) { // 24 bit-lengths should be enough to hear the ack
         pause();
     }
-    EXPECT_EQ(linkA->getStatusWord() & ST_READY_TO_SEND, ST_READY_TO_SEND);
+    EXPECT_EQ(linkA->getStatusWord() & ST_READY_TO_SEND, ST_READY_TO_SEND); // Seen flakiness here, windows build
 }
 
 TEST_F(AsyncLinkTest, StartWritingAsync) {
