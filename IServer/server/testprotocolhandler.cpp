@@ -1208,7 +1208,10 @@ TEST_F(TestProtocolHandler, WriteOkStdout)
 // FAIL(WINDOWS) - gets "ABCD\nEFGH"
 TEST_F(TestProtocolHandler, WriteOkStdoutEmbeddedLF)
 {
-    // Note translation of the body...
+    // Note translation of the body, not just the end-of-line.
+    // https://learn.microsoft.com/en-us/cpp/c-runtime-library/reference/setmode?view=msvc-170
+    // _setmode says
+    // Line feed characters are translated into CR-LF combinations on output.
     fixtureStdoutWrite("ABCD\nEFGH", "ABCD\nEFGH", "ABCD\r\nEFGH");
 }
 
@@ -1226,11 +1229,7 @@ TEST_F(TestProtocolHandler, WriteOkToNewBinaryFile)
 // FAIL(WINDOWS) - gets "ABCD\nEFGH"
 TEST_F(TestProtocolHandler, WriteOkToNewBinaryFileEmbeddedLF)
 {
-    // Note translation of the body, not just the end-of-line.
-    // https://learn.microsoft.com/en-us/cpp/c-runtime-library/reference/setmode?view=msvc-170
-    // _setmode says
-    // Line feed characters are translated into CR-LF combinations on output.
-    fixtureNewFileWrite("ABCD\nEFGH", REQ_OPEN_TYPE_BINARY, "ABCD\nEFGH", "ABCD\r\nEFGH");
+    fixtureNewFileWrite("ABCD\nEFGH", REQ_OPEN_TYPE_BINARY, "ABCD\nEFGH", "ABCD\nEFGH");
 }
 
 TEST_F(TestProtocolHandler, WriteOkToNewBinaryFileEmbeddedCRLF)
