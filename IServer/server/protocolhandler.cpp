@@ -538,7 +538,8 @@ void ProtocolHandler::reqPuts() {
         // If this is a BINARY stream (on Windows), we'll have to write \r\n to get the right endings.
         // You probably wouldn't be calling REQ_PUTS on a binary file - but let's do the right thing.
 #if defined(PLATFORM_WINDOWS)
-        if (myPlatform.isBinaryStream(streamId)) {
+        // Translation isn't working on Windows for stdout, so write \r\n directly.
+        if (myPlatform.isBinaryStream(streamId) || streamId == FILE_STDOUT || streamId == FILE_STDERR) {
             logDebugF("Writing CRLF bytes to binary stream #%d", streamId);
             wrote += myPlatform.writeStream(streamId, 2, (BYTE8 *) "\r\n");
         } else {
