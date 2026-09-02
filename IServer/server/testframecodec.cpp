@@ -53,93 +53,93 @@ TEST_F(TestFrameCodec, SetReadFrameSizeRanges)
 }
 
 TEST_F(TestFrameCodec, PutGet8) {
-    codec.put((BYTE8)0xC9);
+    codec.put(static_cast<BYTE8>(0xC9));
     EXPECT_EQ(codec.myWriteFrameIndex, 1L);
     EXPECT_EQ(codec.myTransactionBuffer[0], 201);
 
-    BYTE8 actual = codec.get8();
+    const BYTE8 actual = codec.get8();
     EXPECT_EQ(actual, 201);
     EXPECT_EQ(codec.myReadFrameIndex, 1L);
 }
 
 TEST_F(TestFrameCodec, Put16) {
-    codec.put((WORD16)0xC9AF);
+    codec.put(static_cast<WORD16>(0xC9AF));
     EXPECT_EQ(codec.myWriteFrameIndex, 2L);
     EXPECT_EQ(codec.myTransactionBuffer[0], (BYTE8)0xAF);
     EXPECT_EQ(codec.myTransactionBuffer[1], (BYTE8)0xC9);
 
-    WORD16 actual = codec.get16();
+    const WORD16 actual = codec.get16();
     EXPECT_EQ(actual, (WORD16)0xC9AF);
     EXPECT_EQ(codec.myReadFrameIndex, 2L);
 }
 
 TEST_F(TestFrameCodec, Put32) {
-    codec.put((WORD32)0xAB03C9AF);
+    codec.put(0xAB03C9AF);
     EXPECT_EQ(codec.myWriteFrameIndex, 4L);
     EXPECT_EQ(codec.myTransactionBuffer[0], (BYTE8)0xAF);
     EXPECT_EQ(codec.myTransactionBuffer[1], (BYTE8)0xC9);
     EXPECT_EQ(codec.myTransactionBuffer[2], (BYTE8)0x03);
     EXPECT_EQ(codec.myTransactionBuffer[3], (BYTE8)0xAB);
 
-    WORD32 actual = codec.get32();
+    const WORD32 actual = codec.get32();
     EXPECT_EQ(actual, (WORD32)0xAB03C9AF);
     EXPECT_EQ(codec.myReadFrameIndex, 4L);
 }
 
 // STRING HANDLING
 TEST_F(TestFrameCodec, GetEmptyString) {
-    codec.put((WORD16) 0);
-    codec.put((BYTE8) 0);
+    codec.put(static_cast<WORD16>(0));
+    codec.put(static_cast<BYTE8>(0));
 
-    std::string str = codec.getString();
+    const std::string str = codec.getString();
     EXPECT_EQ(str, "");
 }
 
 TEST_F(TestFrameCodec, GetOneCharString) {
-    codec.put((WORD16) 1);
-    codec.put((BYTE8) 'A');
+    codec.put(static_cast<WORD16>(1));
+    codec.put(static_cast<BYTE8>('A'));
 
-    std::string str = codec.getString();
+    const std::string str = codec.getString();
     EXPECT_EQ(str, "A");
 }
 
 TEST_F(TestFrameCodec, GetSmallString) {
-    codec.put((WORD16) 8);
-    codec.put((BYTE8) 'A');
-    codec.put((BYTE8) 'B');
-    codec.put((BYTE8) 'C');
-    codec.put((BYTE8) 'D');
-    codec.put((BYTE8) 'E');
-    codec.put((BYTE8) 'F');
-    codec.put((BYTE8) 'G');
-    codec.put((BYTE8) 'H');
-    codec.put((BYTE8) 'I'); // won't be retrieved
+    codec.put(static_cast<WORD16>(8));
+    codec.put(static_cast<BYTE8>('A'));
+    codec.put(static_cast<BYTE8>('B'));
+    codec.put(static_cast<BYTE8>('C'));
+    codec.put(static_cast<BYTE8>('D'));
+    codec.put(static_cast<BYTE8>('E'));
+    codec.put(static_cast<BYTE8>('F'));
+    codec.put(static_cast<BYTE8>('G'));
+    codec.put(static_cast<BYTE8>('H'));
+    codec.put(static_cast<BYTE8>('I')); // won't be retrieved
 
-    std::string str = codec.getString();
+    const std::string str = codec.getString();
     EXPECT_EQ(str, "ABCDEFGH");
 }
 
 TEST_F(TestFrameCodec, GetMultipleStrings) {
     EXPECT_EQ(codec.myReadFrameIndex, 0);
     EXPECT_EQ(codec.myWriteFrameIndex, 0);
-    codec.put((WORD16) 3); // 0 1
-    codec.put((BYTE8) 'A'); // 2
-    codec.put((BYTE8) 'B'); // 3
-    codec.put((BYTE8) 'C'); // 4
+    codec.put(static_cast<WORD16>(3)); // 0 1
+    codec.put(static_cast<BYTE8>('A')); // 2
+    codec.put(static_cast<BYTE8>('B')); // 3
+    codec.put(static_cast<BYTE8>('C')); // 4
 
     EXPECT_EQ(codec.myReadFrameIndex, 0);
     EXPECT_EQ(codec.myWriteFrameIndex, 5);
-    codec.put((WORD16) 3); // 5 6
-    codec.put((BYTE8) 'D'); // 7
-    codec.put((BYTE8) 'E'); // 8
-    codec.put((BYTE8) 'F'); // 9
+    codec.put(static_cast<WORD16>(3)); // 5 6
+    codec.put(static_cast<BYTE8>('D')); // 7
+    codec.put(static_cast<BYTE8>('E')); // 8
+    codec.put(static_cast<BYTE8>('F')); // 9
 
     EXPECT_EQ(codec.myReadFrameIndex, 0);
     EXPECT_EQ(codec.myWriteFrameIndex, 10);
-    codec.put((WORD16) 3); // 10 11
-    codec.put((BYTE8) 'G'); // 12
-    codec.put((BYTE8) 'H'); // 13
-    codec.put((BYTE8) 'I'); // 14
+    codec.put(static_cast<WORD16>(3)); // 10 11
+    codec.put(static_cast<BYTE8>('G')); // 12
+    codec.put(static_cast<BYTE8>('H')); // 13
+    codec.put(static_cast<BYTE8>('I')); // 14
 
     EXPECT_EQ(codec.myReadFrameIndex, 0);
     EXPECT_EQ(codec.myWriteFrameIndex, 15);
@@ -158,16 +158,18 @@ TEST_F(TestFrameCodec, FrameSizeInvariants) {
 }
 
 TEST_F(TestFrameCodec, GetMaxLengthString) {
-    codec.put((WORD16) (TransactionBufferSize - 2)); // Max Frame Size, for illustration of a complete frame
-    codec.put((WORD16) StringBufferSize); // Max String Size
+    // Note that this ignores that a response frame would have a result byte after the frame size.
+
+    codec.put(static_cast<WORD16>(TransactionBufferSize - 2)); // Max Frame Size, for illustration of a complete frame
+    codec.put(static_cast<WORD16>(StringBufferSize)); // Max String Size
     for (int i = 0; i < StringBufferSize; i++) {
-        codec.put((BYTE8) 'A');
+        codec.put(static_cast<unsigned char>('A'));
     }
 
-    WORD16 frameSize = codec.get16(); // For illustration of a complete frame
+    const WORD16 frameSize = codec.get16(); // For illustration of a complete frame
     EXPECT_EQ(frameSize, 510);
 
-    std::string str = codec.getString();
+    const std::string str = codec.getString();
     EXPECT_EQ(str.size(), 508);
     for (int i = 0; i < 508; i++) {
         EXPECT_EQ(str[i], 'A');
@@ -175,8 +177,8 @@ TEST_F(TestFrameCodec, GetMaxLengthString) {
 }
 
 TEST_F(TestFrameCodec, GetStringTooLong) {
-    codec.put((WORD16) (StringBufferSize + 1)); // Max String Size exceeded
-    codec.put((BYTE8) 'A'); // irrelevant
+    codec.put(static_cast<WORD16>(StringBufferSize + 1)); // Max String Size exceeded
+    codec.put(static_cast<BYTE8>('A')); // irrelevant
 
     EXPECT_THROW(codec.getString(), std::range_error);
 }
@@ -191,7 +193,7 @@ TEST_F(TestFrameCodec, ResetWriteFrame) {
 
 TEST_F(TestFrameCodec, WriteOffset) {
     BYTE8* initialWriteOffset = codec.writeOffset(0); // whatever it might be
-    codec.put((BYTE8) 0x00);
+    codec.put(static_cast<BYTE8>(0x00));
     EXPECT_EQ(codec.writeOffset(0), initialWriteOffset); // put hasn't changed it
     EXPECT_EQ(codec.writeOffset(1), initialWriteOffset + 1); // it's all relative to the start of the write buffer
     EXPECT_EQ(codec.writeOffset(2), initialWriteOffset + 2); // it's all relative to the start of the write buffer
@@ -199,12 +201,12 @@ TEST_F(TestFrameCodec, WriteOffset) {
 
 TEST_F(TestFrameCodec, Advance) {
     for (int i=0; i <= 0x0f; i++) {
-        codec.put((BYTE8) (i + (i << 4))); // 00 11 22 33 44 55 .. ff
+        codec.put(static_cast<BYTE8>(i + (i << 4))); // 00 11 22 33 44 55 .. ff
     }
     codec.resetWriteFrame(); // offset is now 2
 
     codec.advance(6); // offset is now 8
-    codec.put((BYTE8) 0x00);
+    codec.put(static_cast<BYTE8>(0x00));
     EXPECT_EQ(codec.myTransactionBuffer[7], (BYTE8)0x77);
     EXPECT_EQ(codec.myTransactionBuffer[8], (BYTE8)0x00);
     EXPECT_EQ(codec.myTransactionBuffer[9], (BYTE8)0x99);
@@ -216,8 +218,8 @@ TEST_F(TestFrameCodec, FillInFrameSize) {
     EXPECT_EQ(codec.myTransactionBuffer[1], (BYTE8)0x00);
 
     codec.resetWriteFrame();
-    codec.put((WORD32)0xAB03C9AF);
-    codec.put((WORD16)0xF00D);
+    codec.put(0xAB03C9AF);
+    codec.put(static_cast<WORD16>(0xF00D));
 
     codec.fillInFrameSize();
     EXPECT_EQ(codec.myTransactionBuffer[0], (BYTE8)0x06);
@@ -231,7 +233,7 @@ TEST_F(TestFrameCodec, FillInReadFrameSize) {
 
     codec.setReadFrameSize(6);
     codec.resetWriteFrame();
-    codec.put((WORD16)0xF00D); // will be overwritten
+    codec.put(static_cast<WORD16>(0xF00D)); // will be overwritten
 
     codec.fillInReadFrameSize();
     EXPECT_EQ(codec.myTransactionBuffer[0], (BYTE8)0x06);

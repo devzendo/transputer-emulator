@@ -33,9 +33,9 @@ public:
     WORD32 get32();
     std::string getString() noexcept(false);
 
-    WORD16 getReadFrameSize();
+    WORD16 getReadFrameSize() const;
     void setReadFrameSize(WORD16 size);
-    bool readFrameSizeOutOfRange();
+    bool readFrameSizeOutOfRange() const;
 
     void resetWriteFrame();
     void fillInReadFrameSize();
@@ -43,8 +43,8 @@ public:
     BYTE8 *writeOffset(WORD16 offset);
     void advance(WORD16 amount);
 
-    BYTE8 myTransactionBuffer[TransactionBufferSize];
-    BYTE8 myStringBuffer[StringBufferSize]; // TODO keep this?
+    BYTE8 myTransactionBuffer[TransactionBufferSize]{};
+    BYTE8 myStringBuffer[StringBufferSize]{}; // TODO keep this?
     WORD16 myReadFrameIndex;
     WORD16 myWriteFrameIndex;
 private:
