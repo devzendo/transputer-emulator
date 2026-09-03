@@ -239,3 +239,24 @@ TEST_F(TestFrameCodec, FillInReadFrameSize) {
     EXPECT_EQ(codec.myTransactionBuffer[0], (BYTE8)0x06);
     EXPECT_EQ(codec.myTransactionBuffer[1], (BYTE8)0x00);
 }
+
+TEST_F(TestFrameCodec, WriteFrameSizeInitiallyNotFull) {
+    EXPECT_EQ(codec.myWriteFrameIndex, 0L);
+    EXPECT_EQ(codec.writeFrameFull(), false);
+    codec.resetWriteFrame();
+    EXPECT_EQ(codec.writeFrameFull(), false);
+}
+
+TEST_F(TestFrameCodec, AlmostFullWriteFrameSizeNotFull) {
+    for (int i=0; i < TransactionBufferSize - 1; i++) {
+        codec.put(static_cast<BYTE8>(1));
+    }
+    EXPECT_EQ(codec.writeFrameFull(), false);
+}
+
+TEST_F(TestFrameCodec, FullWriteFrameSizeFull) {
+    for (int i=0; i < TransactionBufferSize; i++) {
+        codec.put(static_cast<BYTE8>(1));
+    }
+    EXPECT_EQ(codec.writeFrameFull(), true);
+}

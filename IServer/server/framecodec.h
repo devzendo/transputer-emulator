@@ -43,6 +43,8 @@ public:
     BYTE8 *writeOffset(WORD16 offset);
     void advance(WORD16 amount);
 
+    bool writeFrameFull() const;
+
     BYTE8 myTransactionBuffer[TransactionBufferSize]{};
     BYTE8 myStringBuffer[StringBufferSize]{}; // TODO keep this?
     WORD16 myReadFrameIndex;

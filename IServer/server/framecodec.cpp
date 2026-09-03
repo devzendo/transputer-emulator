@@ -97,6 +97,10 @@ void FrameCodec::resetWriteFrame() {
     // the size fields are set in fillInFrameSize()
 }
 
+bool FrameCodec::writeFrameFull() const {
+    return myWriteFrameIndex >= 512;
+}
+
 // Wind back to the start to set the 2 length bytes.
 void FrameCodec::fillInReadFrameSize() {
     myTransactionBuffer[0] = static_cast<BYTE8>(getReadFrameSize() & static_cast<BYTE8>(0xff));
