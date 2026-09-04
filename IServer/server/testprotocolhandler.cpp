@@ -1563,7 +1563,6 @@ TEST_F(TestProtocolHandler, GetsCarriageReturnsAreOmitted)
     checkResponseFrameTag(openResponse, RES_SUCCESS);
     const WORD32 streamId = get32(openResponse, 3);
 
-    // Now Gets a huge buffer, should only give 18 bytes back.
     logInfo("Now calling REQ_GETS");
     std::vector<BYTE8> getsFrame = {REQ_GETS};
     append32(getsFrame, streamId);
@@ -1581,6 +1580,39 @@ TEST_F(TestProtocolHandler, GetsCarriageReturnsAreOmitted)
     EXPECT_EQ((int)getsResponse[8], 'd');
     EXPECT_EQ((int)getsResponse[9], 'u');
     EXPECT_EQ((int)getsResponse[10], 'p');
+}
+
+TEST_F(TestProtocolHandler, GetsNewlineReturnsLine)
+{
+    const std::string testString = "word\nup";
+    const std::pair<std::string, std::string> &testFilePathAndName = createRandomTempFilePathContaining(testString);
+    const std::string &testFileName = testFilePathAndName.second;
+
+    // Open
+    std::vector<BYTE8> openFrame = {REQ_OPEN};
+    appendString(openFrame, testFileName);
+    append8(openFrame, REQ_OPEN_TYPE_BINARY);
+    append8(openFrame, REQ_OPEN_MODE_INPUT);
+    padAndSendFrame(openFrame);
+    const std::vector<unsigned char> &openResponse = readResponseFrame();
+    checkResponseFrameTag(openResponse, RES_SUCCESS);
+    const WORD32 streamId = get32(openResponse, 3);
+
+    logInfo("Now calling REQ_GETS");
+    std::vector<BYTE8> getsFrame = {REQ_GETS};
+    append32(getsFrame, streamId);
+    append16(getsFrame, 20);
+    padAndSendFrame(getsFrame);
+
+    const std::vector<BYTE8> getsResponse = readResponseFrame();
+    checkResponseFrameSize(getsResponse, 8);
+    checkResponseFrameTag(getsResponse, RES_SUCCESS);
+    EXPECT_EQ((int)getsResponse[3], 0x04);
+    EXPECT_EQ((int)getsResponse[4], 0x00);
+    EXPECT_EQ((int)getsResponse[5], 'w');
+    EXPECT_EQ((int)getsResponse[6], 'o');
+    EXPECT_EQ((int)getsResponse[7], 'r');
+    EXPECT_EQ((int)getsResponse[8], 'd');
 }
 
 // TODO \r in input data is not returned

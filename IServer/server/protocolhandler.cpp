@@ -562,11 +562,11 @@ void ProtocolHandler::reqGets() {
                 logDebugF("Ignoring CR on stream #%d", streamId);
                 continue;
             }
-            // if (buf == '\n') {
-            //     logDebugF("LF on stream #%d", streamId);
-            //     // It doesn't get stored, but stops the read.
-            //     break;
-            // }
+            if (buf == '\n') {
+                logDebugF("LF on stream #%d", streamId);
+                // It doesn't get stored, but stops the read.
+                break;
+            }
             // Regular char, store it.
             logDebugF("Read char '%c' from stream #%d", isprint(buf) ? buf : '.', streamId);
             codec.put(buf);
