@@ -557,11 +557,11 @@ void ProtocolHandler::reqGets() {
                 logDebugF("EOF on stream #%d", streamId);
                 break;
             }
-            // if (buf == '\r') {
-            //     // Ignore CRs, it's LF we're interested in.
-            //     logDebugF("Ignoring CR on stream #%d", streamId);
-            //     continue;
-            // }
+            if (buf == '\r') {
+                // Ignore CRs, it's LF we're interested in.
+                logDebugF("Ignoring CR on stream #%d", streamId);
+                continue;
+            }
             // if (buf == '\n') {
             //     logDebugF("LF on stream #%d", streamId);
             //     // It doesn't get stored, but stops the read.
