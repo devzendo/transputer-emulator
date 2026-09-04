@@ -553,10 +553,10 @@ void ProtocolHandler::reqGets() {
         while (length < count) {
             WORD16 read = myPlatform.readStreamUnchecked(streamId, 1, &buf);
             logDebugF("count: %d read: %d length %d", count, read, length );
-            // if (read == 0) {
-            //     logDebugF("EOF on stream #%d", streamId);
-            //     break;
-            // }
+            if (read == 0) {
+                logDebugF("EOF on stream #%d", streamId);
+                break;
+            }
             // if (buf == '\r') {
             //     // Ignore CRs, it's LF we're interested in.
             //     logDebugF("Ignoring CR on stream #%d", streamId);

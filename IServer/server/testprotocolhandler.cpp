@@ -1484,7 +1484,6 @@ TEST_F(TestProtocolHandler, GetsCountExceedsBufferGetsTruncated)
         "400 4567890123456789012345678901234567890123456789"  // 450
         "450 4567890123456789012345678901234567890123456789"  // 500
         "500 45|7890123456789012345678901234567890123456789"; // 550 | at offset 507, last byte read.
-    // why are we receiving more after the X ? Should only have read 507 bytes.
     EXPECT_EQ(testString.length(), 550);
     EXPECT_EQ(testString.at(506), '|');
     const std::pair<std::string, std::string> &testFilePathAndName = createRandomTempFilePathContaining(testString);
@@ -1515,6 +1514,39 @@ TEST_F(TestProtocolHandler, GetsCountExceedsBufferGetsTruncated)
     EXPECT_EQ((int)getsResponse[5], '#');
     EXPECT_EQ((int)getsResponse[511], '|');
 }
+
+TEST_F(TestProtocolHandler, GetsHitsEndOfFile)
+{
+    const std::string testString = "Just 18 characters";
+    const std::pair<std::string, std::string> &testFilePathAndName = createRandomTempFilePathContaining(testString);
+    const std::string &testFileName = testFilePathAndName.second;
+
+    // Open
+    std::vector<BYTE8> openFrame = {REQ_OPEN};
+    appendString(openFrame, testFileName);
+    append8(openFrame, REQ_OPEN_TYPE_BINARY);
+    append8(openFrame, REQ_OPEN_MODE_INPUT);
+    padAndSendFrame(openFrame);
+    const std::vector<unsigned char> &openResponse = readResponseFrame();
+    checkResponseFrameTag(openResponse, RES_SUCCESS);
+    const WORD32 streamId = get32(openResponse, 3);
+
+    // Now Gets a huge buffer, should only give 18 bytes back.
+    logInfo("Now calling REQ_GETS");
+    std::vector<BYTE8> getsFrame = {REQ_GETS};
+    append32(getsFrame, streamId);
+    append16(getsFrame, 100);
+    padAndSendFrame(getsFrame);
+
+    const std::vector<BYTE8> getsResponse = readResponseFrame();
+    checkResponseFrameSize(getsResponse, 22);
+    checkResponseFrameTag(getsResponse, RES_SUCCESS);
+    EXPECT_EQ((int)getsResponse[3], 0x12); // 18 count
+    EXPECT_EQ((int)getsResponse[4], 0x00);
+    EXPECT_EQ((int)getsResponse[5], 'J');
+    EXPECT_EQ((int)getsResponse[22], 's');
+}
+
 // TODO need eof test
 // TODO \r in input data is not returned
 // TODO multiple lines separated by \n get returned individually
