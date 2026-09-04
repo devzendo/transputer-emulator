@@ -73,6 +73,18 @@ TEST_F(TestFrameCodec, Put16) {
     EXPECT_EQ(codec.myReadFrameIndex, 2L);
 }
 
+TEST_F(TestFrameCodec, Patch16) {
+    codec.put(0xAB03C9AF);
+    EXPECT_EQ(codec.myWriteFrameIndex, 4L);
+    codec.patch(1, static_cast<WORD16>(0x2233));
+    EXPECT_EQ(codec.myWriteFrameIndex, 4L); // doesn't change with patch
+    EXPECT_EQ(codec.myTransactionBuffer[0], (BYTE8)0xAF);
+    EXPECT_EQ(codec.myTransactionBuffer[1], (BYTE8)0x33); // patched
+    EXPECT_EQ(codec.myTransactionBuffer[2], (BYTE8)0x22); // patched
+    EXPECT_EQ(codec.myTransactionBuffer[3], (BYTE8)0xAB);
+
+}
+
 TEST_F(TestFrameCodec, Put32) {
     codec.put(0xAB03C9AF);
     EXPECT_EQ(codec.myWriteFrameIndex, 4L);

@@ -44,6 +44,12 @@ void FrameCodec::put(const WORD16 word16) {
     myTransactionBuffer[myWriteFrameIndex++] = static_cast<BYTE8>(word16 >> static_cast<BYTE8>(8)) & static_cast<BYTE8>(0xff);
 }
 
+void FrameCodec::patch(WORD16 offset, WORD16 word16) {
+    logDebugF("patch @ %04X WORD16 %04X", offset, word16);
+    myTransactionBuffer[offset++] = static_cast<BYTE8>(word16 & static_cast<BYTE8>(0xff));
+    myTransactionBuffer[offset++] = static_cast<BYTE8>(word16 >> static_cast<BYTE8>(8)) & static_cast<BYTE8>(0xff);
+}
+
 void FrameCodec::put(const WORD32 word32) {
     logDebugF("put @ %04X WORD32 %08X", myWriteFrameIndex, word32);
     myTransactionBuffer[myWriteFrameIndex++] = static_cast<BYTE8>(word32 & static_cast<BYTE8>(0xff));

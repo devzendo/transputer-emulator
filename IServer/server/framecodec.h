@@ -27,6 +27,7 @@ public:
 
     void put(BYTE8 byte8);
     void put(WORD16 word16);
+    void patch(WORD16 offset, WORD16 word16);
     void put(WORD32 word32);
     BYTE8 get8();
     WORD16 get16();
@@ -42,8 +43,8 @@ public:
     WORD16 fillInFrameSize();
     BYTE8 *writeOffset(WORD16 offset);
     void advance(WORD16 amount);
-
     bool writeFrameFull() const;
+
 
     BYTE8 myTransactionBuffer[TransactionBufferSize]{};
     BYTE8 myStringBuffer[StringBufferSize]{}; // TODO keep this?
