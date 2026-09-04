@@ -206,9 +206,10 @@ bool ProtocolHandler::requestResponse() {
             reqWrite();
             break;
         }
-//        case REQ_GETS: {
-//            break;
-//        }
+        case REQ_GETS: {
+            reqGets();
+            break;
+        }
         case REQ_PUTS: {
             reqPuts();
             break;
@@ -506,6 +507,74 @@ void ProtocolHandler::reqWrite() {
         // TODO if streamId == 1 or 2, flush (test after open done, so we can correctly sense presence/absence of flush call on platform
         codec.put(RES_SUCCESS);
         codec.put((WORD16) wrote);
+    } catch (const std::range_error &e) {
+        logWarn(e.what());
+        codec.put(RES_BADID);
+        codec.put((WORD16) 0);
+    } catch (const std::runtime_error &e) { // File must be open for writing
+        logWarn(e.what());
+        codec.put(RES_BADID);
+        codec.put((WORD16) 0);
+    } catch (const std::domain_error &e) { // Last op must be write
+        logWarn(e.what());
+        codec.put(RES_NOPOSN);
+        codec.put((WORD16) 0);
+    } catch (const std::invalid_argument &e) {
+        logWarn(e.what());
+        codec.put(RES_BADID);
+        codec.put((WORD16) 0);
+    }
+}
+
+void ProtocolHandler::reqGets() {
+    const WORD32 streamId = codec.get32();
+    WORD16 count = codec.get16();
+    // Need to put 2 (frame size) + 1 (result code) + 2 (string size) first: so 5 bytes.
+    constexpr WORD16 maxStringSize = TransactionBufferSize - 2 - 1 - 2;
+    if (count > maxStringSize) {
+        logWarnF("Request to read %d bytes from stream #%d will be truncated to %d", count, streamId, maxStringSize);
+        count = maxStringSize;
+    }
+
+    try {
+        logDebugF("Reading up to %d bytes from stream #%d", count, streamId);
+        myPlatform.checkStreamReadable(streamId); // validate this stream
+        // Characters are read from pStream until count is read, or newline, or EOF. They're appended to the codec
+        // write buffer.
+        // Write offset is currently 2 (frame length has already been skipped). Write RES_SUCCESS, skip over the count.
+        codec.put(RES_SUCCESS); // Stream is valid, let's hope the read doesn't fail (but if it does, it's not
+        // going to throw)...
+        codec.advance(2);
+        // Now start appending the data from the stream. The codec needs the write offset at the end of its writing, so
+        // it can pad, then rewind and fill in the frame offset. We'll patch in the data count before we're finished
+        // (without moving the write offset).
+        BYTE8 buf;
+        WORD16 length = 0;
+        while (length < count) {
+            WORD16 read = myPlatform.readStreamUnchecked(streamId, 1, &buf);
+            logDebugF("count: %d read: %d length %d", count, read, length );
+            // if (read == 0) {
+            //     logDebugF("EOF on stream #%d", streamId);
+            //     break;
+            // }
+            // if (buf == '\r') {
+            //     // Ignore CRs, it's LF we're interested in.
+            //     logDebugF("Ignoring CR on stream #%d", streamId);
+            //     continue;
+            // }
+            // if (buf == '\n') {
+            //     logDebugF("LF on stream #%d", streamId);
+            //     // It doesn't get stored, but stops the read.
+            //     break;
+            // }
+            // Regular char, store it.
+            logDebugF("Read char '%c' from stream #%d", isprint(buf) ? buf : '.', streamId);
+            codec.put(buf);
+            length++;
+        }
+        logDebugF("max string read of length %d - write index is %d", length, codec.myWriteFrameIndex);
+        // Patch in the data count (offset 3: after the frame length and RES_SUCCESS).
+        codec.patch(3, length);
     } catch (const std::range_error &e) {
         logWarn(e.what());
         codec.put(RES_BADID);

@@ -1359,6 +1359,170 @@ TEST_F(TestProtocolHandler, WriteAfterReadFails)
 }
 
 // REQ_GETS
+TEST_F(TestProtocolHandler, GetsHandling)
+{
+    std::vector<BYTE8> getsFrame = {REQ_GETS};
+    append32(getsFrame, 3); // This stream isn't open.
+    append16(getsFrame, 16); // 16 bytes max
+    const std::vector<BYTE8> padded = padFrame(getsFrame);
+    const bool wasSensedAsExitFrame = checkGoodFrame(padded);
+    EXPECT_FALSE(wasSensedAsExitFrame);
+    EXPECT_EQ(handler->unimplementedFrameCount(), 0L); // it is an implemented tag
+}
+
+TEST_F(TestProtocolHandler, GetsFromUnopenFileIsUnsuccessful)
+{
+    std::vector<BYTE8> getsFrame = {REQ_GETS};
+    append32(getsFrame, 3); // This stream isn't open.
+    append16(getsFrame, 16); // 16 bytes max
+    const std::vector<BYTE8> padded = padFrame(getsFrame);
+    (void) sendFrame(padded);
+
+    const std::vector<BYTE8> response = readResponseFrame();
+    checkResponseFrameTag(response, RES_BADID);
+    checkResponseFrameSize(response, 4); // RES_BADID + 0 + 0 + 0-pad
+    EXPECT_EQ((int)response[3], 0x00);
+    EXPECT_EQ((int)response[4], 0x00);
+}
+
+TEST_F(TestProtocolHandler, GetsFromNegativeOutOfRangeFileIsUnsuccessful)
+{
+    std::vector<BYTE8> getsFrame = {REQ_GETS};
+    append32(getsFrame, -1); // negative out of range
+    append16(getsFrame, 16); // 16 bytes max
+    const std::vector<BYTE8> padded = padFrame(getsFrame);
+    (void) sendFrame(padded);
+
+    const std::vector<BYTE8> response = readResponseFrame();
+    checkResponseFrameTag(response, RES_BADID);
+    checkResponseFrameSize(response, 4); // RES_BADID + 0 + 0 + 0-pad
+    EXPECT_EQ((int)response[3], 0x00);
+    EXPECT_EQ((int)response[4], 0x00);
+}
+
+TEST_F(TestProtocolHandler, GetsFromPositiveOutOfRangeFileIsUnsuccessful)
+{
+    std::vector<BYTE8> getsFrame = {REQ_GETS};
+    append32(getsFrame, MAX_FILES); // positive out of range
+    append16(getsFrame, 16); // 16 bytes max
+    const std::vector<BYTE8> padded = padFrame(getsFrame);
+    (void) sendFrame(padded);
+
+    const std::vector<BYTE8> response = readResponseFrame();
+    checkResponseFrameTag(response, RES_BADID);
+    checkResponseFrameSize(response, 4); // RES_BADID + 0 + 0 + 0-pad
+    EXPECT_EQ((int)response[3], 0x00);
+    EXPECT_EQ((int)response[4], 0x00);
+}
+
+TEST_F(TestProtocolHandler, GetsStreamMustBeOpenForInput)
+{
+    std::vector<BYTE8> getsFrame = {REQ_GETS};
+    append32(getsFrame, FILE_STDOUT); // open for output
+    append16(getsFrame, 16); // 16 bytes max
+    const std::vector<BYTE8> padded = padFrame(getsFrame);
+    (void) sendFrame(padded);
+
+    const std::vector<BYTE8> response = readResponseFrame();
+    checkResponseFrameTag(response, RES_BADID);
+    checkResponseFrameSize(response, 4); // RES_BADID + 0 + 0 + 0-pad
+    EXPECT_EQ((int)response[3], 0x00);
+    EXPECT_EQ((int)response[4], 0x00);
+}
+
+TEST_F(TestProtocolHandler, GetsAfterWriteNotAllowed)
+{
+    const std::pair<std::string, std::string> &testFilePathAndName = createRandomTempFilePathContaining("12345678");
+    const std::string &testFileName = testFilePathAndName.second;
+
+    // Open
+    std::vector<BYTE8> openFrame = {REQ_OPEN};
+    appendString(openFrame, testFileName);
+    append8(openFrame, REQ_OPEN_TYPE_BINARY);
+    append8(openFrame, REQ_OPEN_MODE_NEW_UPDATE);
+    padAndSendFrame(openFrame);
+
+    const std::vector<unsigned char> &openResponse = readResponseFrame();
+    checkResponseFrameTag(openResponse, RES_SUCCESS);
+    const WORD32 streamId = get32(openResponse, 3);
+
+    // Write to file...
+    logInfo("Writing to file");
+    std::vector<BYTE8> writeFrame = {REQ_WRITE};
+    append32(writeFrame, streamId);
+    appendString(writeFrame, "ABCD");
+    padAndSendFrame(writeFrame);
+
+    const std::vector<BYTE8> readResponse = readResponseFrame();
+    checkResponseFrameTag(readResponse, RES_SUCCESS);
+
+    // Now Gets from file, should fail as last IO operation was write.
+    std::vector<BYTE8> getsFrame = {REQ_GETS};
+    append32(getsFrame, streamId);
+    append16(getsFrame, 16); // 16 bytes max
+    padAndSendFrame(getsFrame);
+
+    const std::vector<BYTE8> writeResponse = readResponseFrame();
+    checkResponseFrameTag(writeResponse, RES_NOPOSN);
+    checkResponseFrameSize(writeResponse, 4); // RES_NOPOSN + 0 + 0 + 0-pad
+    EXPECT_EQ((int)writeResponse[3], 0x00);
+    EXPECT_EQ((int)writeResponse[4], 0x00);
+}
+
+
+TEST_F(TestProtocolHandler, GetsCountExceedsBufferGetsTruncated)
+{
+    const std::string testString =
+        "#   456789----------0123456789----------0123456789"  // 50 # at 0
+        "50  456789----------0123456789----------0123456789"  // 100
+        "100 4567890123456789012345678901234567890123456789"  // 150
+        "150 4567890123456789012345678901234567890123456789"  // 200
+        "200 4567890123456789012345678901234567890123456789"  // 250
+        "250 4567890123456789012345678901234567890123456789"  // 300
+        "300 4567890123456789012345678901234567890123456789"  // 350
+        "350 4567890123456789012345678901234567890123456789"  // 400
+        "400 4567890123456789012345678901234567890123456789"  // 450
+        "450 4567890123456789012345678901234567890123456789"  // 500
+        "500 45|7890123456789012345678901234567890123456789"; // 550 | at offset 507, last byte read.
+    // why are we receiving more after the X ? Should only have read 507 bytes.
+    EXPECT_EQ(testString.length(), 550);
+    EXPECT_EQ(testString.at(506), '|');
+    const std::pair<std::string, std::string> &testFilePathAndName = createRandomTempFilePathContaining(testString);
+    const std::string &testFileName = testFilePathAndName.second;
+
+    // Open
+    std::vector<BYTE8> openFrame = {REQ_OPEN};
+    appendString(openFrame, testFileName);
+    append8(openFrame, REQ_OPEN_TYPE_BINARY);
+    append8(openFrame, REQ_OPEN_MODE_INPUT);
+    padAndSendFrame(openFrame);
+    const std::vector<unsigned char> &openResponse = readResponseFrame();
+    checkResponseFrameTag(openResponse, RES_SUCCESS);
+    const WORD32 streamId = get32(openResponse, 3);
+
+    // Now Gets a huge buffer, should only give 512 bytes back.
+    logInfo("Now calling REQ_GETS");
+    std::vector<BYTE8> getsFrame = {REQ_GETS};
+    append32(getsFrame, streamId);
+    append16(getsFrame, 2048); // outrageous!
+    padAndSendFrame(getsFrame);
+
+    const std::vector<BYTE8> getsResponse = readResponseFrame();
+    checkResponseFrameSize(getsResponse, 510); // Not 512 as there are 2 bytes for the frame size
+    checkResponseFrameTag(getsResponse, RES_SUCCESS);
+    EXPECT_EQ((int)getsResponse[3], 0xFB); // 507 count
+    EXPECT_EQ((int)getsResponse[4], 0x01);
+    EXPECT_EQ((int)getsResponse[5], '#');
+    EXPECT_EQ((int)getsResponse[511], '|');
+}
+// TODO need eof test
+// TODO \r in input data is not returned
+// TODO multiple lines separated by \n get returned individually
+// TODO if eof is reached and nothing has been read from the stream then Gets fails.
+// TODO if the input is terminated because a newline has been seen then the newline is not returned in the buffer.
+// TODO buffer exhaustion - input is longer than the buffer.
+// TODO buffer full - input just fits the entire buffer.
+// TODO blank line input - of zero length
 
 // REQ_PUTS
 TEST_F(TestProtocolHandler, PutsHandling)
