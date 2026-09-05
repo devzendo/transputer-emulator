@@ -334,6 +334,26 @@ WORD16 Platform::writeStream(int streamId, WORD16 size, BYTE8 *buffer) noexcept(
 }
 
 WORD16 Platform::readStream(int streamId, WORD16 size, BYTE8 *buffer) noexcept(false) {
+    logDebugF("Reading %d bytes from stream #%d", size, streamId);
+    std::unique_ptr<Stream> & pStream = checkStreamReadable(streamId);
+    WORD16 read = pStream->read(size, buffer);
+    pStream->lastIOOperation = IO_READ;
+    logDebugF("Read %d bytes from stream #%d", read, streamId);
+    return read;
+}
+
+// Precondition: You've called checkStreamReadable first, and it's OK.
+WORD16 Platform::readStreamUnchecked(int streamId, WORD16 size, BYTE8 *buffer) noexcept(false) {
+    logDebugF("Reading %d bytes from stream #%d", size, streamId);
+    std::unique_ptr<Stream> & pStream = myFiles[streamId];
+    WORD16 read = pStream->read(size, buffer);
+    pStream->lastIOOperation = IO_READ;
+    logDebugF("Read %d bytes from stream #%d", read, streamId);
+    return read;
+}
+
+// This is tested through readStream.
+std::unique_ptr<Stream> & Platform::checkStreamReadable(int streamId) noexcept(false) {
     if (streamId < 0 || streamId >= MAX_FILES) {
         logWarnF("Attempt to read from out-of-range stream id #%d", streamId);
         throw std::range_error("Stream id out of range");
@@ -351,11 +371,7 @@ WORD16 Platform::readStream(int streamId, WORD16 size, BYTE8 *buffer) noexcept(f
         logWarnF("Attempt to read from previously written stream #%d", streamId);
         throw std::domain_error("Previously written stream not readable");
     }
-    logDebugF("Reading %d bytes from stream #%d", size, streamId);
-    WORD16 read = pStream->read(size, buffer);
-    pStream->lastIOOperation = IO_READ;
-    logDebugF("Read %d bytes from stream #%d", read, streamId);
-    return read;
+    return pStream;
 }
 
 void Platform::flushStream(int streamId) noexcept(false) {

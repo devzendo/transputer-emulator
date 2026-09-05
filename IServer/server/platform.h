@@ -89,6 +89,9 @@ public:
     // The WORD16s used for size parameters come from the protocol definition of REQ_READ, REQ_WRITE.
     WORD16 writeStream(int streamId, WORD16 size, BYTE8* buffer) noexcept(false);
     WORD16 readStream(int streamId, WORD16 size, BYTE8* buffer) noexcept(false);
+    WORD16 readStreamUnchecked(int streamId, WORD16 size, BYTE8* buffer) noexcept(false);
+    std::unique_ptr<Stream> & checkStreamReadable(int streamId) noexcept(false);
+
     void flushStream(int streamId);
     bool isBinaryStream(int streamId);
 

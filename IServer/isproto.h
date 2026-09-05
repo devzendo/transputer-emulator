@@ -220,7 +220,30 @@ const BYTE8 REQ_OPEN_MODE_APPEND_UPDATE = 6;
 // +----------------------+
 
 // REQ_GETS
-// TBC
+// Reads a line of text from a stream 'streamId' which must be open for input. Characters are read until end of file
+// is reached, a newline character is seen, or the number of characters read is not less than count. If the input is
+// terminated because a newline is seen then the newline sequence is not included in the returned array. If end of file
+// is encountered and nothing has been read from the stream then REQ_GETS fails.
+//
+// The buffer used to send the result back is 512 bytes long, so the maximum length string you could receive is
+// 512 - (2 for frame length) - result - (2 for string length count) = 507 bytes. If your requested count is greater
+// than this, it'll be truncated to 507.
+//
+// Request:
+// +----------------------+
+// | BYTE8 REQ_GETS       |
+// +----------------------+
+// | WORD32 streamid      | A stream identifier for this open file
+// | WORD16 count         | Maximum amount of data to read
+// +----------------------+
+//
+// Response data for REQ_GETS:
+// +----------------------+
+// | BYTE8 result         | RES_SUCCESS on success; RES_BADID if stream not open, or out of range.
+// | WORD16 count         | Length of the read data
+// | BYTE8[] data         | The returned line.
+// +----------------------+
+
 
 // REQ_PUTS
 // Writes a line of text to a stream 'streamId' which must be open for output. The host-specified convention for newline
