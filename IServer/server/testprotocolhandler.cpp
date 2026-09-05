@@ -1574,10 +1574,41 @@ TEST_F(TestProtocolHandler, GetsNewlineSeparatesMultipleReturnedLines)
     EXPECT_EQ(fixtureSuccessfulGetsResponseToString(fixtureGetsFromStream(streamId), 8, 4), "four");
 }
 
-// TODO if eof is reached and nothing has been read from the stream then Gets fails.
-// TODO if the input is terminated because a newline has been seen then the newline is not returned in the buffer.
+TEST_F(TestProtocolHandler, GetsEmptyFileShouldFail)
+{
+    const std::string testString = "";
+    const WORD32 streamId = fixtureCreateTempFileContaining(testString);
+    const std::vector<BYTE8> getsResponse = fixtureGetsFromStream(streamId);
+    checkResponseFrameSize(getsResponse, 4);
+    checkResponseFrameTag(getsResponse, RES_ERROR);
+}
+
+TEST_F(TestProtocolHandler, GetsBlankLineReturnsThenFails)
+{
+    const std::string testString = "\n";
+    const WORD32 streamId = fixtureCreateTempFileContaining(testString);
+
+    EXPECT_EQ(fixtureSuccessfulGetsResponseToString(fixtureGetsFromStream(streamId), 4, 0), "");
+
+    const std::vector<BYTE8> getsResponse = fixtureGetsFromStream(streamId);
+    checkResponseFrameSize(getsResponse, 4);
+    checkResponseFrameTag(getsResponse, RES_ERROR);
+}
+
+TEST_F(TestProtocolHandler, GetsSubsequentBlankLineReturnsThenFails)
+{
+    const std::string testString = "\n\n";
+    const WORD32 streamId = fixtureCreateTempFileContaining(testString);
+
+    EXPECT_EQ(fixtureSuccessfulGetsResponseToString(fixtureGetsFromStream(streamId), 4, 0), "");
+    EXPECT_EQ(fixtureSuccessfulGetsResponseToString(fixtureGetsFromStream(streamId), 4, 0), "");
+
+    const std::vector<BYTE8> getsResponse = fixtureGetsFromStream(streamId);
+    checkResponseFrameSize(getsResponse, 4);
+    checkResponseFrameTag(getsResponse, RES_ERROR);
+}
+
 // TODO buffer full - input just fits the entire buffer.
-// TODO blank line input - of zero length
 // TODO How does this all work on Windows?
 
 // REQ_PUTS

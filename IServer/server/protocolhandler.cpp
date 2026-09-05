@@ -548,13 +548,16 @@ void ProtocolHandler::reqGets() {
         // Now start appending the data from the stream. The codec needs the write offset at the end of its writing, so
         // it can pad, then rewind and fill in the frame offset. We'll patch in the data count before we're finished
         // (without moving the write offset).
+        // There may be a way to improve performance by asking the underlying stream to do getline(...).
         BYTE8 buf;
         WORD16 length = 0;
+        bool eof = false;
         while (length < count) {
             WORD16 read = myPlatform.readStreamUnchecked(streamId, 1, &buf);
             logDebugF("count: %d read: %d length %d", count, read, length );
             if (read == 0) {
                 logDebugF("EOF on stream #%d", streamId);
+                eof = true;
                 break;
             }
             if (buf == '\r') {
@@ -571,6 +574,19 @@ void ProtocolHandler::reqGets() {
             logDebugF("Read char '%c' from stream #%d", isprint(buf) ? buf : '.', streamId);
             codec.put(buf);
             length++;
+        }
+        // Immediate EOF: if we've read nothing but seen EOF, return an error. The IServer doc says "If end of file is
+        // encountered and nothing has been read from the stream then Fgets fails.". The Inmos IServer returns ER_ERROR
+        // (129) which is our RES_ERROR here. However, there is an ER_EOF (138) but that's only used by the *REC record
+        // based calls, which aren't supported yet.
+        if (eof && length == 0) {
+            // Only indicate this if we haven't read anything yet (length == 0). We'd already written an assumed
+            // success, so go back to the start of the frame to fail...
+            codec.resetWriteFrame();
+            logWarnF("Immediate EOF on stream #%d", streamId);
+            codec.put(RES_ERROR);
+            codec.put((WORD16) 0);
+            return;
         }
         logDebugF("max string read of length %d - write index is %d", length, codec.myWriteFrameIndex);
         // Patch in the data count (offset 3: after the frame length and RES_SUCCESS).
