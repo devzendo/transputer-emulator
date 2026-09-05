@@ -426,6 +426,31 @@ protected:
         EXPECT_EQ(readFileContents(testFilePath), posixExpected);
 #endif
     }
+
+    // Common code to create a test file with some data, then REQ_GETS from it.
+    const std::vector<BYTE8> fixtureGetsFromTempFileContaining(std::string testString) {
+        const std::pair<std::string, std::string> &testFilePathAndName = createRandomTempFilePathContaining(testString);
+        const std::string &testFileName = testFilePathAndName.second;
+
+        // Open
+        std::vector<BYTE8> openFrame = {REQ_OPEN};
+        appendString(openFrame, testFileName);
+        append8(openFrame, REQ_OPEN_TYPE_BINARY);
+        append8(openFrame, REQ_OPEN_MODE_INPUT);
+        padAndSendFrame(openFrame);
+        const std::vector<unsigned char> &openResponse = readResponseFrame();
+        checkResponseFrameTag(openResponse, RES_SUCCESS);
+        const WORD32 streamId = get32(openResponse, 3);
+
+        // Now Gets a huge buffer, should only give up to 512 bytes back maximum, or less.. depends on the test.
+        logInfo("Now calling REQ_GETS");
+        std::vector<BYTE8> getsFrame = {REQ_GETS};
+        append32(getsFrame, streamId);
+        append16(getsFrame, 2048); // outrageous!
+        padAndSendFrame(getsFrame);
+
+        return readResponseFrame();
+    }
 };
 
 // FRAME HANDLING
@@ -1486,27 +1511,7 @@ TEST_F(TestProtocolHandler, GetsCountExceedsBufferGetsTruncated)
         "500 45|7890123456789012345678901234567890123456789"; // 550 | at offset 507, last byte read.
     EXPECT_EQ(testString.length(), 550);
     EXPECT_EQ(testString.at(506), '|');
-    const std::pair<std::string, std::string> &testFilePathAndName = createRandomTempFilePathContaining(testString);
-    const std::string &testFileName = testFilePathAndName.second;
-
-    // Open
-    std::vector<BYTE8> openFrame = {REQ_OPEN};
-    appendString(openFrame, testFileName);
-    append8(openFrame, REQ_OPEN_TYPE_BINARY);
-    append8(openFrame, REQ_OPEN_MODE_INPUT);
-    padAndSendFrame(openFrame);
-    const std::vector<unsigned char> &openResponse = readResponseFrame();
-    checkResponseFrameTag(openResponse, RES_SUCCESS);
-    const WORD32 streamId = get32(openResponse, 3);
-
-    // Now Gets a huge buffer, should only give 512 bytes back.
-    logInfo("Now calling REQ_GETS");
-    std::vector<BYTE8> getsFrame = {REQ_GETS};
-    append32(getsFrame, streamId);
-    append16(getsFrame, 2048); // outrageous!
-    padAndSendFrame(getsFrame);
-
-    const std::vector<BYTE8> getsResponse = readResponseFrame();
+    const std::vector<BYTE8> getsResponse = fixtureGetsFromTempFileContaining(testString);
     checkResponseFrameSize(getsResponse, 510); // Not 512 as there are 2 bytes for the frame size
     checkResponseFrameTag(getsResponse, RES_SUCCESS);
     EXPECT_EQ((int)getsResponse[3], 0xFB); // 507 count
@@ -1518,27 +1523,7 @@ TEST_F(TestProtocolHandler, GetsCountExceedsBufferGetsTruncated)
 TEST_F(TestProtocolHandler, GetsHitsEndOfFile)
 {
     const std::string testString = "Just 18 characters";
-    const std::pair<std::string, std::string> &testFilePathAndName = createRandomTempFilePathContaining(testString);
-    const std::string &testFileName = testFilePathAndName.second;
-
-    // Open
-    std::vector<BYTE8> openFrame = {REQ_OPEN};
-    appendString(openFrame, testFileName);
-    append8(openFrame, REQ_OPEN_TYPE_BINARY);
-    append8(openFrame, REQ_OPEN_MODE_INPUT);
-    padAndSendFrame(openFrame);
-    const std::vector<unsigned char> &openResponse = readResponseFrame();
-    checkResponseFrameTag(openResponse, RES_SUCCESS);
-    const WORD32 streamId = get32(openResponse, 3);
-
-    // Now Gets a huge buffer, should only give 18 bytes back.
-    logInfo("Now calling REQ_GETS");
-    std::vector<BYTE8> getsFrame = {REQ_GETS};
-    append32(getsFrame, streamId);
-    append16(getsFrame, 100);
-    padAndSendFrame(getsFrame);
-
-    const std::vector<BYTE8> getsResponse = readResponseFrame();
+    const std::vector<BYTE8> getsResponse = fixtureGetsFromTempFileContaining(testString);
     checkResponseFrameSize(getsResponse, 22);
     checkResponseFrameTag(getsResponse, RES_SUCCESS);
     EXPECT_EQ((int)getsResponse[3], 0x12); // 18 count
@@ -1550,26 +1535,7 @@ TEST_F(TestProtocolHandler, GetsHitsEndOfFile)
 TEST_F(TestProtocolHandler, GetsCarriageReturnsAreOmitted)
 {
     const std::string testString = "word\rup";
-    const std::pair<std::string, std::string> &testFilePathAndName = createRandomTempFilePathContaining(testString);
-    const std::string &testFileName = testFilePathAndName.second;
-
-    // Open
-    std::vector<BYTE8> openFrame = {REQ_OPEN};
-    appendString(openFrame, testFileName);
-    append8(openFrame, REQ_OPEN_TYPE_BINARY);
-    append8(openFrame, REQ_OPEN_MODE_INPUT);
-    padAndSendFrame(openFrame);
-    const std::vector<unsigned char> &openResponse = readResponseFrame();
-    checkResponseFrameTag(openResponse, RES_SUCCESS);
-    const WORD32 streamId = get32(openResponse, 3);
-
-    logInfo("Now calling REQ_GETS");
-    std::vector<BYTE8> getsFrame = {REQ_GETS};
-    append32(getsFrame, streamId);
-    append16(getsFrame, 20);
-    padAndSendFrame(getsFrame);
-
-    const std::vector<BYTE8> getsResponse = readResponseFrame();
+    const std::vector<BYTE8> getsResponse = fixtureGetsFromTempFileContaining(testString);
     checkResponseFrameSize(getsResponse, 10);
     checkResponseFrameTag(getsResponse, RES_SUCCESS);
     EXPECT_EQ((int)getsResponse[3], 0x06);
@@ -1585,26 +1551,7 @@ TEST_F(TestProtocolHandler, GetsCarriageReturnsAreOmitted)
 TEST_F(TestProtocolHandler, GetsNewlineReturnsLine)
 {
     const std::string testString = "word\nup";
-    const std::pair<std::string, std::string> &testFilePathAndName = createRandomTempFilePathContaining(testString);
-    const std::string &testFileName = testFilePathAndName.second;
-
-    // Open
-    std::vector<BYTE8> openFrame = {REQ_OPEN};
-    appendString(openFrame, testFileName);
-    append8(openFrame, REQ_OPEN_TYPE_BINARY);
-    append8(openFrame, REQ_OPEN_MODE_INPUT);
-    padAndSendFrame(openFrame);
-    const std::vector<unsigned char> &openResponse = readResponseFrame();
-    checkResponseFrameTag(openResponse, RES_SUCCESS);
-    const WORD32 streamId = get32(openResponse, 3);
-
-    logInfo("Now calling REQ_GETS");
-    std::vector<BYTE8> getsFrame = {REQ_GETS};
-    append32(getsFrame, streamId);
-    append16(getsFrame, 20);
-    padAndSendFrame(getsFrame);
-
-    const std::vector<BYTE8> getsResponse = readResponseFrame();
+    const std::vector<BYTE8> getsResponse = fixtureGetsFromTempFileContaining(testString);
     checkResponseFrameSize(getsResponse, 8);
     checkResponseFrameTag(getsResponse, RES_SUCCESS);
     EXPECT_EQ((int)getsResponse[3], 0x04);
@@ -1622,6 +1569,7 @@ TEST_F(TestProtocolHandler, GetsNewlineReturnsLine)
 // TODO buffer exhaustion - input is longer than the buffer.
 // TODO buffer full - input just fits the entire buffer.
 // TODO blank line input - of zero length
+// TODO How does this all work on Windows?
 
 // REQ_PUTS
 TEST_F(TestProtocolHandler, PutsHandling)
