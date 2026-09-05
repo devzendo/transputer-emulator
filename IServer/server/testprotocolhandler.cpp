@@ -427,8 +427,8 @@ protected:
 #endif
     }
 
-    // Common code to create a test file with some data, then REQ_GETS from it.
-    const std::vector<BYTE8> fixtureGetsFromTempFileContaining(std::string testString) {
+    // Common code to create a test file with some data, then REQ_OPEN it, giving the streamId
+    const WORD32 fixtureCreateTempFileContaining(std::string testString) {
         const std::pair<std::string, std::string> &testFilePathAndName = createRandomTempFilePathContaining(testString);
         const std::string &testFileName = testFilePathAndName.second;
 
@@ -441,8 +441,12 @@ protected:
         const std::vector<unsigned char> &openResponse = readResponseFrame();
         checkResponseFrameTag(openResponse, RES_SUCCESS);
         const WORD32 streamId = get32(openResponse, 3);
+        return streamId;
+    }
 
-        // Now Gets a huge buffer, should only give up to 512 bytes back maximum, or less.. depends on the test.
+    // Common code to REQ_GETS a huge buffer from a stream, which should give up to 512 bytes back maximum, or less,
+    // depends on the test.
+    const std::vector<BYTE8> fixtureGetsFromStream(const WORD32 streamId) {
         logInfo("Now calling REQ_GETS");
         std::vector<BYTE8> getsFrame = {REQ_GETS};
         append32(getsFrame, streamId);
@@ -450,6 +454,24 @@ protected:
         padAndSendFrame(getsFrame);
 
         return readResponseFrame();
+    }
+
+    // Common code to create a test file with some data, then REQ_GETS from it.
+    const std::vector<BYTE8> fixtureGetsFromTempFileContaining(std::string testString) {
+        const WORD32 streamId = fixtureCreateTempFileContaining(testString);
+        return fixtureGetsFromStream(streamId);
+    }
+
+    // Common code to assert success of a REQ_GETS response, and return the string data as a std::string.
+    const std::string fixtureSuccessfulGetsResponseToString(const std::vector<BYTE8> &getsResponse,
+        const WORD16 expectedFrameSize, const WORD16 expectedStringLength) {
+
+        checkResponseFrameSize(getsResponse, expectedFrameSize);
+        checkResponseFrameTag(getsResponse, RES_SUCCESS);
+        EXPECT_EQ((int)getsResponse[3], expectedStringLength & 0x00FF);
+        EXPECT_EQ((int)getsResponse[4], (expectedStringLength & 0xFF00) >> 8);
+        const std::string out(getsResponse.begin() + 5, getsResponse.begin() + 5 + expectedStringLength);
+        return out;
     }
 };
 
@@ -1524,49 +1546,36 @@ TEST_F(TestProtocolHandler, GetsHitsEndOfFile)
 {
     const std::string testString = "Just 18 characters";
     const std::vector<BYTE8> getsResponse = fixtureGetsFromTempFileContaining(testString);
-    checkResponseFrameSize(getsResponse, 22);
-    checkResponseFrameTag(getsResponse, RES_SUCCESS);
-    EXPECT_EQ((int)getsResponse[3], 0x12); // 18 count
-    EXPECT_EQ((int)getsResponse[4], 0x00);
-    EXPECT_EQ((int)getsResponse[5], 'J');
-    EXPECT_EQ((int)getsResponse[22], 's');
+    const WORD32 streamId = fixtureCreateTempFileContaining(testString);
+    EXPECT_EQ(fixtureSuccessfulGetsResponseToString(fixtureGetsFromStream(streamId), 22, 18), "Just 18 characters");
 }
 
 TEST_F(TestProtocolHandler, GetsCarriageReturnsAreOmitted)
 {
     const std::string testString = "word\rup";
-    const std::vector<BYTE8> getsResponse = fixtureGetsFromTempFileContaining(testString);
-    checkResponseFrameSize(getsResponse, 10);
-    checkResponseFrameTag(getsResponse, RES_SUCCESS);
-    EXPECT_EQ((int)getsResponse[3], 0x06);
-    EXPECT_EQ((int)getsResponse[4], 0x00);
-    EXPECT_EQ((int)getsResponse[5], 'w');
-    EXPECT_EQ((int)getsResponse[6], 'o');
-    EXPECT_EQ((int)getsResponse[7], 'r');
-    EXPECT_EQ((int)getsResponse[8], 'd');
-    EXPECT_EQ((int)getsResponse[9], 'u');
-    EXPECT_EQ((int)getsResponse[10], 'p');
+    const WORD32 streamId = fixtureCreateTempFileContaining(testString);
+    EXPECT_EQ(fixtureSuccessfulGetsResponseToString(fixtureGetsFromStream(streamId), 10, 6), "wordup");
 }
 
 TEST_F(TestProtocolHandler, GetsNewlineReturnsLine)
 {
     const std::string testString = "word\nup";
-    const std::vector<BYTE8> getsResponse = fixtureGetsFromTempFileContaining(testString);
-    checkResponseFrameSize(getsResponse, 8);
-    checkResponseFrameTag(getsResponse, RES_SUCCESS);
-    EXPECT_EQ((int)getsResponse[3], 0x04);
-    EXPECT_EQ((int)getsResponse[4], 0x00);
-    EXPECT_EQ((int)getsResponse[5], 'w');
-    EXPECT_EQ((int)getsResponse[6], 'o');
-    EXPECT_EQ((int)getsResponse[7], 'r');
-    EXPECT_EQ((int)getsResponse[8], 'd');
+    const WORD32 streamId = fixtureCreateTempFileContaining(testString);
+    EXPECT_EQ(fixtureSuccessfulGetsResponseToString(fixtureGetsFromStream(streamId), 8, 4), "word");
 }
 
-// TODO \r in input data is not returned
-// TODO multiple lines separated by \n get returned individually
+TEST_F(TestProtocolHandler, GetsNewlineSeparatesMultipleReturnedLines)
+{
+    const std::string testString = "one\ntwo\nthree\nfour\n";
+    const WORD32 streamId = fixtureCreateTempFileContaining(testString);
+    EXPECT_EQ(fixtureSuccessfulGetsResponseToString(fixtureGetsFromStream(streamId), 6, 3), "one");
+    EXPECT_EQ(fixtureSuccessfulGetsResponseToString(fixtureGetsFromStream(streamId), 6, 3), "two");
+    EXPECT_EQ(fixtureSuccessfulGetsResponseToString(fixtureGetsFromStream(streamId), 8, 5), "three");
+    EXPECT_EQ(fixtureSuccessfulGetsResponseToString(fixtureGetsFromStream(streamId), 8, 4), "four");
+}
+
 // TODO if eof is reached and nothing has been read from the stream then Gets fails.
 // TODO if the input is terminated because a newline has been seen then the newline is not returned in the buffer.
-// TODO buffer exhaustion - input is longer than the buffer.
 // TODO buffer full - input just fits the entire buffer.
 // TODO blank line input - of zero length
 // TODO How does this all work on Windows?
