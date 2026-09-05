@@ -1542,6 +1542,32 @@ TEST_F(TestProtocolHandler, GetsCountExceedsBufferGetsTruncated)
     EXPECT_EQ((int)getsResponse[511], '|');
 }
 
+TEST_F(TestProtocolHandler, GetsCountExactlyFillsBuffer)
+{
+    const std::string testString =
+        "#   456789----------0123456789----------0123456789"  // 50 # at 0
+        "50  456789----------0123456789----------0123456789"  // 100
+        "100 4567890123456789012345678901234567890123456789"  // 150
+        "150 4567890123456789012345678901234567890123456789"  // 200
+        "200 4567890123456789012345678901234567890123456789"  // 250
+        "250 4567890123456789012345678901234567890123456789"  // 300
+        "300 4567890123456789012345678901234567890123456789"  // 350
+        "350 4567890123456789012345678901234567890123456789"  // 400
+        "400 4567890123456789012345678901234567890123456789"  // 450
+        "450 4567890123456789012345678901234567890123456789"  // 500
+        "500 45|"; // 550 | at offset 507, last byte read.
+    EXPECT_EQ(testString.length(), 507);
+    EXPECT_EQ(testString.at(506), '|');
+    const WORD32 streamId = fixtureCreateTempFileContaining(testString);
+    const std::vector<BYTE8> getsResponse = fixtureGetsFromStream(streamId);
+    EXPECT_EQ(fixtureSuccessfulGetsResponseToString(getsResponse, 510, 507), testString);
+
+    // Now EOF
+    const std::vector<BYTE8> eofResponse = fixtureGetsFromStream(streamId);
+    checkResponseFrameSize(eofResponse, 4);
+    checkResponseFrameTag(eofResponse, RES_ERROR);
+}
+
 TEST_F(TestProtocolHandler, GetsHitsEndOfFile)
 {
     const std::string testString = "Just 18 characters";
@@ -1608,7 +1634,6 @@ TEST_F(TestProtocolHandler, GetsSubsequentBlankLineReturnsThenFails)
     checkResponseFrameTag(getsResponse, RES_ERROR);
 }
 
-// TODO buffer full - input just fits the entire buffer.
 // TODO How does this all work on Windows?
 
 // REQ_PUTS
