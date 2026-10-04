@@ -97,6 +97,9 @@ BYTE8 InMemoryLink::readByte() {
 	BYTE8 buf;
     bool done = false;
     for (;;) {
+        if (m_terminated) {
+            return 0;
+        }
         ByteRegister *read_reg = static_cast<ByteRegister *>(m_read_state);
         read_reg->read_maybe(&buf, &done);
         if (done) {
@@ -114,6 +117,9 @@ void InMemoryLink::writeByte(BYTE8 buf) {
     BYTE8 bufstore = buf;
     bool done = false;
     for (;;) {
+        if (m_terminated) {
+            return;
+        }
         ByteRegister *write_reg = static_cast<ByteRegister *>(m_write_state);
         write_reg->write_maybe(&bufstore, &done);
         if (done) {
@@ -127,7 +133,7 @@ void InMemoryLink::writeByte(BYTE8 buf) {
 }
 
 void InMemoryLink::resetLink() {
-    // TODO
+    m_terminated = true;
 }
 
 int InMemoryLink::getLinkType() {

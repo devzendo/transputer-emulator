@@ -159,3 +159,46 @@ TEST_F(InMemoryLinkTest, WriteByteAndReadThreadedTortureTest) {
     delete b_thread;
     logDebug("WriteByteAndReadThreadedTortureTest end");
 }
+
+TEST_F(InMemoryLinkTest, ResetLinkWhenReadingTest) {
+    logDebug("ResetLinkWhenReadingTest start");
+    std::thread *a_thread = nullptr;
+    a_thread = new std::thread([this] {
+        logDebug("Reading from link");
+        EXPECT_EQ(m_linkA->readByte(), 0);
+        // The resetLink exits the readByte with a zero return.
+        logDebug("Link read finished - this should be observed");
+    });
+    logDebug("Waiting a little before resetting link");
+    std::this_thread::sleep_for(std::chrono::milliseconds(500));
+    logDebug("Resetting link");
+    m_linkA->resetLink();
+    logDebug("Joining thread");
+    a_thread->join();
+    logDebug("Thread joined");
+    delete a_thread;
+    logDebug("ResetLinkWhenReadingTest end");
+}
+
+TEST_F(InMemoryLinkTest, ResetLinkWhenWritingTest) {
+    logDebug("ResetLinkWhenWritingTest start");
+    // Fill the link register so the 'real' write stalls
+    m_linkA->writeByte(42);
+
+    std::thread *a_thread = nullptr;
+    a_thread = new std::thread([this] {
+        logDebug("Writing to link");
+        m_linkA->writeByte(69);
+        // The resetLink exits the writeByte with a zero return.
+        logDebug("Link write finished - this should be observed");
+    });
+    logDebug("Waiting a little before resetting link");
+    std::this_thread::sleep_for(std::chrono::milliseconds(500));
+    logDebug("Resetting link");
+    m_linkA->resetLink();
+    logDebug("Joining thread");
+    a_thread->join();
+    logDebug("Thread joined");
+    delete a_thread;
+    logDebug("ResetLinkWhenWritingTest end");
+}

@@ -60,6 +60,11 @@ void Boot::start() {
     do {
         try {
             ctrl = bootLink->readByte();
+            // Check for emulator termination and abandon boot.
+            if (IS_FLAG_SET(EmulatorState_Terminate)) {
+                logInfo("Boot terminated");
+                return;
+            }
             if (IS_FLAG_SET(DebugFlags_LinkComms)) {
                 logDebugF("Boot ctrl byte = %02X", ctrl);
             }

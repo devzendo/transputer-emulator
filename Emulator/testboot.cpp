@@ -255,3 +255,21 @@ TEST_F(PeekPokeBootTest, BootIt) {
 
     EXPECT_EQ(myBoot->bootLen(), 7);
 }
+
+TEST_F(PeekPokeBootTest, BootTerminated) {
+    setupDone.store(true, std::memory_order_release);
+    startBoot();
+
+    littleSleep();
+
+    // Reset like emuserver does...
+    logDebug("Terminating boot loop and resetting link");
+	SET_FLAGS(EmulatorState_Terminate); // Boot senses this...
+    myBootLinks[0]->resetLink();
+    logDebug("Sleep then waiting for end of boot");
+
+    littleSleep();
+    waitUntilEndOfBoot();
+
+    EXPECT_EQ(myBoot->bootLen(), 0);
+}

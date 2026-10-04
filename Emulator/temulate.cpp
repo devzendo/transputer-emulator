@@ -485,6 +485,7 @@ int main() {
 	}
 #endif
 #ifdef UNIX
+	// TODO how to implement signal handlers for Windows?
 	signal(SIGSEGV, segViolHandler);
 	signal(SIGINT, interruptHandler);
 #endif

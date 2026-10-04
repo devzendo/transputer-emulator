@@ -54,11 +54,13 @@ static char *progName;
 WORD32 flags;
 long ramSize = DefaultMemSize;
 InMemoryLinkFactory *inMemoryLinkFactory = nullptr;
+Link * cpuLink = nullptr;
 Memory * myMemory = nullptr;
 CPU * myCPU = nullptr;
 SymbolTable * mySymbolTable = nullptr;
 set<WORD32> breakpointAddresses;
 map<std::string, WORD32> symbolToAddress;
+std::thread * myCPUThread = nullptr;
 
 bool processCommandLine(int argc, char *argv[]) {
 	int newMegs = 4;
@@ -322,6 +324,17 @@ void usage() {
 }
 
 void cleanup() {
+	logDebug("Setting emulator terminate flag");
+	SET_FLAGS(EmulatorState_Terminate); // Will stop after an interpretation.
+	// If the emulator's blocked on link read (e.g. booting over it), this'll exit the I/O...
+	myLink->resetLink();
+	cpuLink->resetLink();
+	
+	logDebug("Joining CPU thread");
+	myCPUThread->join();
+	logDebug("Deleting resources");
+	delete myCPUThread;
+
 	delete myPlatform;
 	delete myLink;
 	delete platformFactory;
@@ -365,7 +378,7 @@ int main(int argc, char *argv[]) {
 
 #if defined(PLATFORM_OSX) || defined(PLATFORM_LINUX)
     logDebug("Setting up signal handlers");
-    // TODO the signal handlers should cleanup the emulator resources too, not just the shared iserver ones.
+	// TODO how to implement signal handlers for Windows?
     signal(SIGSEGV, segViolHandler);
     signal(SIGINT, interruptHandler);
 #endif
@@ -374,7 +387,7 @@ int main(int argc, char *argv[]) {
     // between IServer and Emulator.
     inMemoryLinkFactory = new InMemoryLinkFactory(1, 0);
     myLink = inMemoryLinkFactory->linkA();
-    Link * cpuLink = inMemoryLinkFactory->linkB();
+    cpuLink = inMemoryLinkFactory->linkB();
     // The CPU will initialise its link during the initialise call. The IServer side needs its own initialisation.
     try {
         myLink->initialise();
@@ -426,7 +439,7 @@ int main(int argc, char *argv[]) {
 	}
 
     // Start the emulator on a second thread, listening to the other side of the InMemory link.
-    auto *cpuThread = new std::thread([] {
+    myCPUThread = new std::thread([] {
         logDebug("Start of emulation");
         myCPU->emulate(false);
         fflush(stdout);
@@ -461,8 +474,6 @@ int main(int argc, char *argv[]) {
     }
 
     logDebug("EmuServer stop");
-    cpuThread->join();
-    delete cpuThread;
 
     cleanup();
     return exitCode;
