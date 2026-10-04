@@ -69,6 +69,7 @@ Another hiatus from Dec 2025 to Mar 2026.
   * Read
   * Write
   * Puts (put string with newline to a stream)
+  * Gets (read a line)
   * Get Key
   * Poll Key
   * Close
