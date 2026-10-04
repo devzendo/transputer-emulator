@@ -156,9 +156,9 @@
                     </plugin>
 
                     <plugin>
-                        <groupId>com.googlecode.cmake-maven-project</groupId>
+                        <groupId>io.github.cmake-maven-plugin</groupId>
                         <artifactId>cmake-maven-plugin</artifactId>
-                        <version>3.26.3-b1</version>
+                        <version>4.2.3-b1</version>
                         <executions>
                             <!-- Generate the CMake cache/binary build dir -->
                             <execution>
@@ -169,9 +169,8 @@
                                 </goals>
                                 <configuration>
                                     <sourcePath>${project.basedir}</sourcePath>
-                                    <targetPath>${project.basedir}/${cmake.binary.dir}</targetPath>
+                                    <projectDirectory>${project.basedir}/${cmake.binary.dir}</projectDirectory>
                                     <generator>${cmake.generator}</generator>
-                                    <classifier>${cmake.classifier}</classifier>
                                     <environmentVariables>
                                         <CMAKE_BUILD_TYPE>${cmake.build.type}</CMAKE_BUILD_TYPE>
                                     </environmentVariables>
@@ -188,9 +187,7 @@
                                 </goals>
                                 <configuration>
                                     <target>all</target>
-                                    <!-- "targetPath" from the "generate" goal: -->
                                     <projectDirectory>${project.basedir}/${cmake.binary.dir}</projectDirectory>
-                                    <classifier>${cmake.classifier}</classifier>
                                     <options>
                                     </options>
                                 </configuration>
@@ -202,8 +199,7 @@
                                     <goal>test</goal>
                                 </goals>
                                 <configuration>
-                                    <!-- "buildDirectory" is "targetPath" from the "generate" goal -->
-                                    <buildDirectory>${project.basedir}/${cmake.binary.dir}</buildDirectory>
+                                    <projectDirectory>${project.basedir}/${cmake.binary.dir}</projectDirectory>
                                     <options>
                                         <option>--verbose</option>
                                     </options>
