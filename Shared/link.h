@@ -48,16 +48,17 @@ public:
 	// I'll use the synchronous forms.
 	virtual BYTE8 readByte(void) = 0;
 	virtual void writeByte(BYTE8 b) = 0;
+	virtual void resetLink(void) = 0;
+	virtual int getLinkType(void) = 0;
+
 	int readBytes(BYTE8* buffer, int bytesToRead);
 	int writeBytes(BYTE8* buffer, int bytesToWrite);
 	WORD16 readShort(void);
 	void writeShort(WORD16 b);
 	WORD32 readWord(void);
 	void writeWord(WORD32 w);
-	virtual void resetLink(void) = 0;
 	int getLinkNo(void);
 	void setDebug(bool newDebug);
-	virtual int getLinkType(void) = 0;
 
 protected:
 	int myLinkNo;
@@ -65,6 +66,18 @@ protected:
 	bool bDebug;
     WORD32 myWriteSequence, myReadSequence;
 };
+
+/* Used for the read and write end of an asynchronous link; LinkRegisters are used by the link during transfers between
+ * physical memory and by the CPU when a Link has finished performing requested I/O to record the workspace pointer of
+ * the process that be rescheduled when the transfer has completed.
+ */
+struct LinkRegisters {
+public:
+	WORD32 m_workspace_pointer;
+	BYTE8* m_data_pointer;
+	WORD32 m_length;
+};
+
 
 #endif // _LINK_H
 

@@ -346,13 +346,6 @@ private:
 #endif
 };
 
-struct LinkRegisters {
-public:
-    WORD32 m_workspace_pointer;
-    BYTE8* m_data_pointer;
-    WORD32 m_length;
-};
-
 
 /* Highest level abstraction: GPIOAsyncLink uses the DataAckSender & DataAckReceiver state
  * machines, and an OversampledTxRxPin to handle the send/receive over an underlying TxRxPin.
