@@ -173,6 +173,7 @@ IF (UNIX AND NOT(PICO))
     # vm.mmap_rnd_bits=28
     # and rebooting.
     include(${CMAKE_SOURCE_DIR}/sanitizers.cmake)
+    # thread and address sanitizers are available
     add_sanitizer_support(thread)
 ENDIF (UNIX AND NOT(PICO))
 
