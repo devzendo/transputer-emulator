@@ -35,7 +35,6 @@ const int BUFSIZE = 512;
 NamedPipeLink::NamedPipeLink(int linkNo, bool isServer) : Link(linkNo, isServer) {
 	logDebugF("[CTOR] Constructing named pipe link %d for %s", myLinkNo, isServer ? "server" : "cpu client");
     myPipeHandle = INVALID_HANDLE_VALUE;
-    myWriteSequence = myReadSequence = 0;
     myPipeName[0] = '\0';
 }
 

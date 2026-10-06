@@ -23,7 +23,6 @@ CommLink::CommLink(int linkNo, bool isServer, const std::string &comPortName) :
     Link(linkNo, isServer) {
     logDebugF("Constructing COM link %d for %s", myLinkNo, isServer ? "server" : "cpu client");
     myHandle = nullptr;
-    myWriteSequence = myReadSequence = 0;
     myComName = comPortName;
     myMsgbuf[0] = 0;
 }

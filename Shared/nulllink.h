@@ -29,8 +29,6 @@ public:
     void writeByte(BYTE8 b);
     void resetLink(void);
     int getLinkType(void);
-private:
-    WORD32 myWriteSequence, myReadSequence;
 };
 
 #endif // _NULLLINK_H

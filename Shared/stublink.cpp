@@ -20,9 +20,7 @@
 StubLink::StubLink(int linkNo, bool isServer) : Link(linkNo, isServer),
                                                 // Now set up the references to the queues, using those that will be used appropriately
                                                 // for read/write given that the user is a server/CPU client.
-                                                rdq(isServer ? &myWriteQueue : &myReadQueue), wrq(isServer ? &myReadQueue : &myWriteQueue),
-                                                myWriteSequence(0),
-                                                myReadSequence(0) {
+                                                rdq(isServer ? &myWriteQueue : &myReadQueue), wrq(isServer ? &myReadQueue : &myWriteQueue) {
     logDebugF("Constructing stub link %d for %s", myLinkNo, isServer ? "server" : "cpu client");
 }
 

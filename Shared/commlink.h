@@ -32,7 +32,6 @@ public:
 private:
     static constexpr int COM_MSGBUF_SIZE = 128;
     HANDLE myHandle;
-    WORD32 myWriteSequence, myReadSequence;
     std::string myComName;
 	char myMsgbuf[COM_MSGBUF_SIZE]{};
 };

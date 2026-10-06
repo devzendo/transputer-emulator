@@ -42,7 +42,6 @@ private:
     // for the IServer.
     std::queue<BYTE8> * rdq;
     std::queue<BYTE8> * wrq;
-    WORD32 myWriteSequence, myReadSequence;
 };
 
 #endif // STUBLINK_H

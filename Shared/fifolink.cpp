@@ -31,7 +31,6 @@ FIFOLink::FIFOLink(int linkNo, bool isServer) : Link(linkNo, isServer) {
 	logDebugF("Constructing FIFO link %d for %s", myLinkNo, isServer ? "server" : "cpu client");
 	myWriteFD = -1;
 	myReadFD = -1;
-	myWriteSequence = myReadSequence = 0;
 }
 
 void FIFOLink::initialise() {

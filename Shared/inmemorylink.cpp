@@ -75,8 +75,7 @@ public:
 
 //------------------------------------------------------------------------------
 
-InMemoryLink::InMemoryLink(int linkNo, void *readState, void *writeState) : Link(linkNo, false),
-    myWriteSequence(0), myReadSequence(0) {
+InMemoryLink::InMemoryLink(int linkNo, void *readState, void *writeState) : Link(linkNo, false) {
     // Although these links are used in the EmuServer between IServer and Emulator, we
     // don't need to distinguish between 'server' and 'client', as the ends are given
     // by the state pairs.

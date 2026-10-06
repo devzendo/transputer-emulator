@@ -20,6 +20,7 @@ Link::Link(int linkNo, bool isServer) {
 	myLinkNo = linkNo;
 	bServer = isServer;
 	bDebug = false;
+    myWriteSequence = myReadSequence = 0;
 	logDebugF("Constructing %s link %d", bServer ? "server" : "CPU client", myLinkNo);
 }
 

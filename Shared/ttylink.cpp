@@ -29,7 +29,6 @@ TTYLink::TTYLink(int linkNo, bool isServer, const std::string &ttyFileName) :
     Link(linkNo, isServer) {
     logDebugF("Constructing TTY link %d for %s", myLinkNo, isServer ? "server" : "cpu client");
     myFD = -1;
-    myWriteSequence = myReadSequence = 0;
     myTTYName = ttyFileName;
     myMsgbuf[0] = 0;
 }

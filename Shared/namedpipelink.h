@@ -34,7 +34,6 @@ private:
     void connect(void);
     bool myConnected = false;
     HANDLE myPipeHandle;
-    WORD32 myWriteSequence, myReadSequence;
     char myPipeName[NAME_LEN];
 };
 

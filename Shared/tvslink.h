@@ -41,7 +41,6 @@ private:
     std::string myTVSOutput;
     std::ofstream myTVSOutputStream;
     WORD32 myProgramSent, myInputSent;
-    WORD32 myWriteSequence{}, myReadSequence{};
 	char myMsgbuf[TVS_MSGBUF_SIZE]{};
 };
 

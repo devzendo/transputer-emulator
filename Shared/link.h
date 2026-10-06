@@ -63,6 +63,7 @@ protected:
 	int myLinkNo;
 	bool bServer;
 	bool bDebug;
+    WORD32 myWriteSequence, myReadSequence;
 };
 
 #endif // _LINK_H

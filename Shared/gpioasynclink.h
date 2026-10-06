@@ -422,7 +422,7 @@ private:
     LinkRegisters m_send_registers{};
     LinkRegisters m_receive_registers{};
     volatile WORD16 m_status_word;
-    WORD32 myWriteSequence, myReadSequence;
+    WORD32 myWriteSequence, myReadSequence; // TODO these are in Link for the sync links; remove from here when merged.
     BYTE8 m_byte_buffer{};
 #ifdef DESKTOP
     std::mutex m_mutex;

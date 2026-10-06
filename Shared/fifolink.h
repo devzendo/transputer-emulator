@@ -29,7 +29,6 @@ public:
 private:
     static constexpr int FIFO_MSGBUF_SIZE = 128;
 	int myWriteFD, myReadFD;
-	WORD32 myWriteSequence, myReadSequence;
 	char myReadFifoName[80]{};
 	char myWriteFifoName[80]{};
 	char myMsgbuf[FIFO_MSGBUF_SIZE]{};

@@ -29,7 +29,6 @@ public:
 private:
     static constexpr int TTY_MSGBUF_SIZE = 128;
     int myFD;
-    WORD32 myWriteSequence, myReadSequence;
     std::string myTTYName;
 	char myMsgbuf[TTY_MSGBUF_SIZE]{};
 };
