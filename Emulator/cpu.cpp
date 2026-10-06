@@ -1139,6 +1139,10 @@ inline void CPU::interpret(void) {
 						}
 						// Now handle input from real links
 						if (myLink != nullptr) {
+							// myLink->readDataAsync(Wdesc_WPtr(Wdesc), Creg, Areg);
+							// myLink->poll() will be called at the end of interpret(), and the descheduled process
+							// rescheduled.
+							// SET_FLAGS(EmulatorState_DescheduleRequired);
 							try {
 								WORD32 i;
 								for (i = 0; i < Areg; i++)  {

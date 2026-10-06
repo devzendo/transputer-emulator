@@ -24,7 +24,6 @@
 #include <thread>
 #endif
 
-
 #include <sys/types.h>
 #include "types.h"
 #include "link.h"

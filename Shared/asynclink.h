@@ -49,7 +49,7 @@ public:
      * @param workspacePointer The address in the Transputer's memory of a process that's
      * issuing an OUT/OUTBYTE/OUTWORD instruction. This process will be descheduled by
      * the emulator, and rescheduled when the transfer is complete. The link interface
-     * doesn't care about this, but holds the workspace pointer for return by readComplete.
+     * doesn't care about this, but holds the workspace pointer for return by writeComplete.
      * @param dataPointer
      * @param length
      * @return
@@ -61,7 +61,7 @@ public:
      * @return NotProcess_p if the write has not yet completed, or the address in the
      * Transputer's memory of a process to reschedule (and in this case, the write
      * registers are reset for the next write). Note that if you receive a workspace
-     * pointer on one call, you'll get NotProcess_p on the next - you must use the
+     * pointer on one call, you'll get NotProcess_p on the next - you MUST use the
      * pointer when you get it.
      */
     virtual WORD32 writeComplete() = 0;
@@ -92,7 +92,7 @@ public:
      * @return NotProcess_p if the read has not yet completed, or the address in the
      * Transputer's memory of a process to reschedule (and in this case, the read
      * registers are reset for the next read). Note that if you receive a workspace
-     * pointer on one call, you'll get NotProcess_p on the next - you must use the
+     * pointer on one call, you'll get NotProcess_p on the next - you MUST use the
      * pointer when you get it.
      */
     virtual WORD32 readComplete() = 0;
