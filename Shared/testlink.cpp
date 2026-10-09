@@ -128,6 +128,13 @@ class LinkPairTypedTest : public ::testing::TestWithParam<FactoryFunc*> {
     }
 
     void TearDown() override {
+        logDebug("Resetting CPU Link");
+        cpuLink->resetLink();
+        delete cpuLink;
+        logDebug("Resetting Server Link");
+        serverLink->resetLink();
+        delete serverLink;
+        
         delete pair;
         pair = nullptr;
     }
@@ -192,6 +199,7 @@ INSTANTIATE_TEST_CASE_P(
     LinkPairTypedTest,
     testing::Values(&FactoryFifo, &FactoryInMemory));
 
+// FAILS on macos - permission denied - Could not open read FIFO /tmp/t800emul-read-0: Permission denied in Setup
 TEST_P(LinkPairTypedTest, CPUWriteAndReadByte) {
     cpuLink->writeByte(16);
     EXPECT_EQ(serverLink->readByte(), 16);
@@ -216,7 +224,7 @@ TEST_P(LinkPairTypedTest, CPUWriteAndReadBytes) {
     waitForFinished();
 }
 
-
+// FAILS ON WINDOWS 'Creating server named pipe` Could not create/open named pipe: Error 231. Throws in SetUp.
 TEST_P(LinkPairTypedTest, CPUWriteAndReadShort) {
     m_thread = new std::thread([this] {
         cpuLink->writeShort(0x0102);
@@ -227,6 +235,7 @@ TEST_P(LinkPairTypedTest, CPUWriteAndReadShort) {
     waitForFinished();
 }
 
+// FAILS ON WINDOWS 'Creating server named pipe` Could not create/open named pipe: Error 231. Throws in SetUp.
 TEST_P(LinkPairTypedTest, CPUWriteAndReadWord) {
     m_thread = new std::thread([this] {
         cpuLink->writeWord(0x01020304);
@@ -238,6 +247,7 @@ TEST_P(LinkPairTypedTest, CPUWriteAndReadWord) {
 }
 
 // Server named pipe on windows blocks on ConnectNamedPipe. Need better mechanism.
+// FAILS ON WINDOWS 'Creating server named pipe` Could not create/open named pipe: Error 231. Throws in SetUp.
 TEST_P(LinkPairTypedTest, ServerWriteAndReadByte) {
     m_thread = new std::thread([this] {
         serverLink->writeByte(32);
@@ -249,6 +259,7 @@ TEST_P(LinkPairTypedTest, ServerWriteAndReadByte) {
 }
 
 // Server named pipe on windows blocks on ConnectNamedPipe. Need better mechanism.
+// FAILS ON WINDOWS 'Creating server named pipe` Could not create/open named pipe: Error 231.  Throws in SetUp.
 TEST_P(LinkPairTypedTest, ServerWriteAndReadWord) {
     m_thread = new std::thread([this] {
         serverLink->writeWord(0x05060708);
