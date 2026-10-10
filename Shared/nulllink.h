@@ -23,12 +23,15 @@
 class NullLink : public Link {
 public:
     NullLink(int linkNo, bool isServer);
-    void initialise(void); 
+    void initialise(void) override;
     ~NullLink(void);
-    BYTE8 readByte(void);
-    void writeByte(BYTE8 b);
-    void resetLink(void);
-    int getLinkType(void);
+    BYTE8 readByte(void) override;
+    void writeByte(BYTE8 b) override;
+    void resetLink(void) override;
+    int getLinkType(void) override;
+
+    bool readAvailable() override;
+    bool writeAvailable() override;
 };
 
 #endif // _NULLLINK_H

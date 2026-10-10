@@ -124,3 +124,11 @@ void TVSLink::resetLink() {
 int TVSLink::getLinkType() {
     return LinkType_TVS;
 }
+
+bool TVSLink::readAvailable() {
+    return true; // TODO AVAIL MAYBE return false when the stream is eof?
+}
+
+bool TVSLink::writeAvailable() {
+    return true; // TODO AVAIL MAYBE use the stream eof?
+}

@@ -160,3 +160,11 @@ void FIFOLink::resetLink() {
 int FIFOLink::getLinkType() {
     return LinkType_FIFO;
 }
+
+bool FIFOLink::readAvailable() {
+	return false; // TODO AVAIL
+}
+
+bool FIFOLink::writeAvailable() {
+	return true; // TODO AVAIL
+}

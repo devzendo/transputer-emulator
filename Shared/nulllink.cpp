@@ -49,3 +49,11 @@ void NullLink::resetLink(void) {
 int NullLink::getLinkType() {
     return LinkType_Null;
 }
+
+bool NullLink::readAvailable() {
+    return true;
+}
+
+bool NullLink::writeAvailable() {
+    return true;
+}

@@ -75,3 +75,11 @@ void StubLink::setReadableBytes(const std::vector<BYTE8>& bytes) const {
 int StubLink::getLinkType() {
     return LinkType_Stub;
 }
+
+bool StubLink::readAvailable() {
+    return true;
+}
+
+bool StubLink::writeAvailable() {
+    return true;
+}

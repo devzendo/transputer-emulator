@@ -28,6 +28,10 @@ public:
     void writeByte(BYTE8 b);
     void resetLink(void);
     int getLinkType(void);
+
+    bool readAvailable();
+    bool writeAvailable();
+
 private:
     WORD32 myWriteSequence, myReadSequence;
 };

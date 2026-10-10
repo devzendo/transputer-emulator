@@ -26,6 +26,10 @@ public:
 	void writeByte(BYTE8 b) override;
 	void resetLink() override;
 	int getLinkType() override;
+
+	bool readAvailable() override;
+	bool writeAvailable() override;
+
 private:
     static constexpr int FIFO_MSGBUF_SIZE = 128;
 	int myWriteFD, myReadFD;

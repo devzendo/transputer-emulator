@@ -61,3 +61,11 @@ void PicoUSBSerialLink::resetLink(void) {
 int PicoUSBSerialLink::getLinkType() {
     return LinkType_USBCDC;
 }
+
+bool PicoUSBSerialLink::readAvailable() {
+    return true; // TODO
+}
+
+bool PicoUSBSerialLink::writeAvailable() {
+    return true; // TODO
+}

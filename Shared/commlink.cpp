@@ -177,3 +177,11 @@ void CommLink::resetLink() {
 int CommLink::getLinkType() {
     return LinkType_TTY; // Even though it's a Windows COM port.
 }
+
+bool CommLink::readAvailable() {
+    return true; // TODO AVAIL
+}
+
+bool CommLink::writeAvailable() {
+    return true; // TODO AVAIL
+}

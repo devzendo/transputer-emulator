@@ -188,3 +188,12 @@ TEST_P(LinkPairTest, ServerWriteAndReadWord) {
     EXPECT_EQ(cpuLink->readWord(), 0x05060708);
     waitForFinished();
 }
+
+TEST_P(LinkPairTest, InitialConditions) {
+    logDebug("InitialConditions start");
+    EXPECT_EQ(cpuLink->readAvailable(), false);
+    EXPECT_EQ(cpuLink->writeAvailable(), true);
+    EXPECT_EQ(serverLink->readAvailable(), false);
+    EXPECT_EQ(serverLink->writeAvailable(), true);
+    logDebug("InitialConditions end");
+}

@@ -139,17 +139,15 @@ int InMemoryLink::getLinkType() {
     return LinkType_InMemory;
 }
 
-// Testing methods
-bool InMemoryLink::_readAvailable() const {
+bool InMemoryLink::readAvailable() {
     ByteRegister *read_reg = static_cast<ByteRegister *>(m_read_state);
     return read_reg->storing();
 }
 
-bool InMemoryLink::_writeAvailable() const {
+bool InMemoryLink::writeAvailable() {
     ByteRegister *write_reg = static_cast<ByteRegister *>(m_write_state);
     return ! write_reg->storing();
 }
-
 
 //------------------------------------------------------------------------------
 

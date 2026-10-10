@@ -33,6 +33,10 @@ public:
     std::vector<BYTE8> getWrittenBytes() const;
     void setReadableBytes(const std::vector<unsigned char> &bytes) const;
     int getLinkType() override;
+
+    bool readAvailable() override;
+    bool writeAvailable() override;
+
 private:
     // These are relative to the CPU, so it reads from the read queue.
     // The IServer reads from the write queue.

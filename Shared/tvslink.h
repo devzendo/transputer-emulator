@@ -26,12 +26,16 @@
 class TVSLink : public Link {
 public:
     TVSLink(int linkNo, std::string tvsProgram, std::string tvsInput, std::string tvsOutput);
-    void initialise(void);
+    void initialise(void) override;
     ~TVSLink(void);
-    BYTE8 readByte(void);
-    void writeByte(BYTE8 b);
-    void resetLink(void);
-    int getLinkType(void);
+    BYTE8 readByte(void) override;
+    void writeByte(BYTE8 b) override;
+    void resetLink(void) override;
+    int getLinkType(void) override;
+
+    bool readAvailable() override;
+    bool writeAvailable() override;
+
 private:
     static constexpr int TVS_MSGBUF_SIZE = 128;
     std::string myTVSProgram;

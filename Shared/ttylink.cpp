@@ -131,3 +131,11 @@ void TTYLink::resetLink() {
 int TTYLink::getLinkType() {
     return LinkType_TTY;
 }
+
+bool TTYLink::readAvailable() {
+    return true; // TODO AVAIL
+}
+
+bool TTYLink::writeAvailable() {
+    return true; // TODO AVAIL
+}

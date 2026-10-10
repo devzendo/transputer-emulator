@@ -354,6 +354,16 @@ int GPIOAsyncLink::getLinkType() {
     return LinkType_Async;
 }
 
+bool GPIOAsyncLink::readAvailable() {
+    MUTEX
+    return GPIOAsyncLink::queryReadDataAvailable();
+}
+
+bool GPIOAsyncLink::writeAvailable() {
+    MUTEX
+    return (m_status_word & ST_SEND_COMPLETE) == 0;
+}
+
 void GPIOAsyncLink::clock() {
     // logDebugF("Clocking link %d", myLinkNo);
     MUTEX

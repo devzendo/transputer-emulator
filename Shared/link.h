@@ -39,26 +39,35 @@ public:
 	Link(int linkNo, bool isServer);
 	virtual void initialise(void) = 0;
 	virtual ~Link(void);
-	// TODO may need buffer-centric versions of these, and
-	// these are entirely synchronous. to prevent blocking I/O
-	// suspending the whole emulator, I should make each link
-	// driven by a state machine to introduce some polled
-	// asynchrony.
-	// For now, just to get data flowing from the IServer,
-	// I'll use the synchronous forms.
+
+	// Synchronous API for Link I/O. These calls may block. There are availability routines that can be called prior to
+	// calling these to determine whether they will block or not.
 	virtual BYTE8 readByte(void) = 0;
 	virtual void writeByte(BYTE8 b) = 0;
+
+	// Reset the link, and any state needed by it.
 	virtual void resetLink(void) = 0;
+
+	// Returns one of the LinkType_ constants above.
 	virtual int getLinkType(void) = 0;
 
+	// Further synchronous calls that are implemented in terms of readByte/writeByte.
 	int readBytes(BYTE8* buffer, int bytesToRead);
 	int writeBytes(BYTE8* buffer, int bytesToWrite);
 	WORD16 readShort(void);
 	void writeShort(WORD16 b);
 	WORD32 readWord(void);
 	void writeWord(WORD32 w);
+
+	// What is the number [0..4] of this link?
 	int getLinkNo(void);
+
+	// Enable extra debug diagnostics.
 	void setDebug(bool newDebug);
+
+	// Availability - is there a byte available to read, and is the write buffer empty to accept a byte for writing?
+	virtual bool readAvailable() = 0;
+	virtual bool writeAvailable() = 0;
 
 protected:
 	int myLinkNo;

@@ -361,6 +361,9 @@ public:
     void resetLink() override;
     int getLinkType() override;
 
+    bool readAvailable() override;
+    bool writeAvailable() override;
+
     // AsyncLink
     void clock() override;
     bool writeDataAsync(WORD32 workspacePointer, BYTE8* dataPointer, WORD32 length) override;

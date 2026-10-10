@@ -23,15 +23,16 @@
 class InMemoryLink : public Link {
 public:
     InMemoryLink(int linkNo, void *readState, void *writeState);
-    void initialise(void);
-    BYTE8 readByte(void);
-    void writeByte(BYTE8 b);
-    void resetLink(void);
-    int getLinkType(void);
+    void initialise(void) override;
+    BYTE8 readByte(void) override;
+    void writeByte(BYTE8 b) override;
+    void resetLink(void) override;
+    int getLinkType(void) override;
     ~InMemoryLink(void);
-    // Testing methods
-    bool _readAvailable() const;
-    bool _writeAvailable() const;
+
+    bool readAvailable() override;
+    bool writeAvailable() override;
+
 private:
     void *m_write_state; // an internal object
     void *m_read_state; // an internal object

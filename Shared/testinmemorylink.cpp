@@ -57,58 +57,58 @@ TEST_F(InMemoryLinkTest, InitialConditions) {
     logDebug("InitialConditions start");
     EXPECT_EQ(m_linkA->getLinkNo(), 2);
     EXPECT_EQ(m_linkB->getLinkNo(), 3);
-    EXPECT_EQ(m_linkA->_readAvailable(), false);
-    EXPECT_EQ(m_linkA->_writeAvailable(), true);
-    EXPECT_EQ(m_linkB->_readAvailable(), false);
-    EXPECT_EQ(m_linkB->_writeAvailable(), true);
+    EXPECT_EQ(m_linkA->readAvailable(), false);
+    EXPECT_EQ(m_linkA->writeAvailable(), true);
+    EXPECT_EQ(m_linkB->readAvailable(), false);
+    EXPECT_EQ(m_linkB->writeAvailable(), true);
     logDebug("InitialConditions end");
 }
 
 TEST_F(InMemoryLinkTest, WriteReadTransitionConditionsAtoB) {
-    EXPECT_EQ(m_linkA->_writeAvailable(), true);
-    EXPECT_EQ(m_linkB->_readAvailable(), false);
+    EXPECT_EQ(m_linkA->writeAvailable(), true);
+    EXPECT_EQ(m_linkB->readAvailable(), false);
 
     m_linkA->writeByte(0x42);
-    EXPECT_EQ(m_linkA->_writeAvailable(), false);
-    EXPECT_EQ(m_linkB->_readAvailable(), true);
+    EXPECT_EQ(m_linkA->writeAvailable(), false);
+    EXPECT_EQ(m_linkB->readAvailable(), true);
 
     EXPECT_EQ(m_linkB->readByte(), 0x42);
-    EXPECT_EQ(m_linkA->_writeAvailable(), true);
-    EXPECT_EQ(m_linkB->_readAvailable(), false);
+    EXPECT_EQ(m_linkA->writeAvailable(), true);
+    EXPECT_EQ(m_linkB->readAvailable(), false);
 }
 
 TEST_F(InMemoryLinkTest, WriteReadTransitionConditionsBtoA) {
-    EXPECT_EQ(m_linkA->_readAvailable(), false);
-    EXPECT_EQ(m_linkB->_writeAvailable(), true);
+    EXPECT_EQ(m_linkA->readAvailable(), false);
+    EXPECT_EQ(m_linkB->writeAvailable(), true);
 
     m_linkB->writeByte(0x42);
-    EXPECT_EQ(m_linkA->_readAvailable(), true);
-    EXPECT_EQ(m_linkB->_writeAvailable(), false);
+    EXPECT_EQ(m_linkA->readAvailable(), true);
+    EXPECT_EQ(m_linkB->writeAvailable(), false);
 
     EXPECT_EQ(m_linkA->readByte(), 0x42);
-    EXPECT_EQ(m_linkA->_readAvailable(), false);
-    EXPECT_EQ(m_linkB->_writeAvailable(), true);
+    EXPECT_EQ(m_linkA->readAvailable(), false);
+    EXPECT_EQ(m_linkB->writeAvailable(), true);
 }
 
 TEST_F(InMemoryLinkTest, WriteReadTransitionConditionsBoth) {
-    EXPECT_EQ(m_linkA->_readAvailable(), false);
-    EXPECT_EQ(m_linkB->_readAvailable(), false);
-    EXPECT_EQ(m_linkA->_writeAvailable(), true);
-    EXPECT_EQ(m_linkB->_writeAvailable(), true);
+    EXPECT_EQ(m_linkA->readAvailable(), false);
+    EXPECT_EQ(m_linkB->readAvailable(), false);
+    EXPECT_EQ(m_linkA->writeAvailable(), true);
+    EXPECT_EQ(m_linkB->writeAvailable(), true);
 
     m_linkA->writeByte(0x01);
     m_linkB->writeByte(0x02);
-    EXPECT_EQ(m_linkA->_readAvailable(), true);
-    EXPECT_EQ(m_linkB->_readAvailable(), true);
-    EXPECT_EQ(m_linkA->_writeAvailable(), false);
-    EXPECT_EQ(m_linkB->_writeAvailable(), false);
+    EXPECT_EQ(m_linkA->readAvailable(), true);
+    EXPECT_EQ(m_linkB->readAvailable(), true);
+    EXPECT_EQ(m_linkA->writeAvailable(), false);
+    EXPECT_EQ(m_linkB->writeAvailable(), false);
 
     EXPECT_EQ(m_linkA->readByte(), 0x02);
     EXPECT_EQ(m_linkB->readByte(), 0x01);
-    EXPECT_EQ(m_linkA->_readAvailable(), false);
-    EXPECT_EQ(m_linkB->_readAvailable(), false);
-    EXPECT_EQ(m_linkA->_writeAvailable(), true);
-    EXPECT_EQ(m_linkB->_writeAvailable(), true);
+    EXPECT_EQ(m_linkA->readAvailable(), false);
+    EXPECT_EQ(m_linkB->readAvailable(), false);
+    EXPECT_EQ(m_linkA->writeAvailable(), true);
+    EXPECT_EQ(m_linkB->writeAvailable(), true);
 }
 
 TEST_F(InMemoryLinkTest, WriteByteAndRead) {
