@@ -219,3 +219,11 @@ void NamedPipeLink::resetLink(void) {
 int NamedPipeLink::getLinkType() {
     return LinkType_NamedPipe;
 }
+
+bool NamedPipeLink::readAvailable() {
+    return false; // TODO AVAIL
+}
+
+bool NamedPipeLink::writeAvailable() {
+    return true; // TODO AVAIL
+}

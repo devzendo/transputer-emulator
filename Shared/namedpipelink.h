@@ -30,6 +30,10 @@ public:
     void writeByte(BYTE b);
     void resetLink(void);
     int getLinkType(void);
+
+    bool readAvailable();
+    bool writeAvailable();
+
 private:
     void connect(void);
     bool myConnected = false;
