@@ -666,6 +666,7 @@ void ProtocolHandler::reqGetKey() {
     const WORD32 streamId = FILE_STDIN;
     const WORD16 size = 1;
     try {
+        // TODO: The keystroke will not be echoed. (TDS, sec 16.6.5, p364)
         logDebug("Get key from stream #1");
         // Read directly into the transaction buffer, but don't know whether this'll succeed, nor how much will
         // actually be read, so can't fill those in yet... don't want to copy data around...
