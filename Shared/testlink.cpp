@@ -23,7 +23,15 @@
 // Note that links are currently blocking, and synchronous. If more than PIPE_BUF bytes are written, write() will block
 // - see man 7 pipe.
 
-using LinkPair = std::pair<Link *, Link *>;
+class LinkPair {
+public:
+    LinkPair(Link * f, Link * s): first(f), second(s) {};
+    ~LinkPair() = default;
+
+    Link * first;
+    Link * second;
+};
+
 typedef LinkPair* FactoryFunc();
 
 class LinkPairTest : public ::testing::TestWithParam<FactoryFunc*> {
