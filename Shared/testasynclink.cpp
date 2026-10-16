@@ -142,6 +142,7 @@ protected:
             return counter;
         }
 
+        /*
         bool writeDataAsync(WORD32 workspacePointer, BYTE8* dataPointer, WORD32 length) override {
             return false;
         }
@@ -154,7 +155,7 @@ protected:
         WORD32 readComplete() override {
             return 0;
         }
-
+        */
         WORD16 getStatusWord() override {
             return 0;
         }

@@ -26,13 +26,12 @@
 
 #include "types.h"
 #include "constants.h"
-#include "link.h"
 #include "namedpipelink.h"
 #include "log.h"
 
 const int BUFSIZE = 512;
 
-NamedPipeLink::NamedPipeLink(int linkNo, bool isServer) : Link(linkNo, isServer) {
+NamedPipeLink::NamedPipeLink(int linkNo, bool isServer) : SystemLink(linkNo, isServer) {
 	logDebugF("[CTOR] Constructing named pipe link %d for %s", myLinkNo, isServer ? "server" : "cpu client");
     myPipeHandle = INVALID_HANDLE_VALUE;
     myPipeName[0] = '\0';

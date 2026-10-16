@@ -18,9 +18,9 @@
 #include <vector>
 
 #include "types.h"
-#include "link.h"
+#include "systemlink.h"
 
-class NullLink : public Link {
+class NullLink : public SystemLink {
 public:
     NullLink(int linkNo, bool isServer);
     void initialise(void) override;

@@ -20,7 +20,7 @@
 #include "../Shared/log.h"
 
 PicoUSBSerialLink::PicoUSBSerialLink(int linkNo, bool isServer) :
-    Link(linkNo, isServer) {
+    SystemLink(linkNo, isServer) {
     logDebugF("Constructing Pico USB Serial link %d for %s", myLinkNo, isServer ? "server" : "cpu client");
 }
 

@@ -17,9 +17,9 @@
 #include <exception>
 
 #include "../Shared/types.h"
-#include "../Shared/link.h"
+#include "../Shared/systemlink.h"
 
-class PicoUSBSerialLink : public Link {
+class PicoUSBSerialLink : public SystemLink {
 public:
     PicoUSBSerialLink(int linkNo, bool isServer);
     void initialise(void);

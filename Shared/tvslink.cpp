@@ -21,7 +21,7 @@
 #include "log.h"
 
 TVSLink::TVSLink(int linkNo, std::string tvsProgram, std::string tvsInput, std::string tvsOutput) :
-    Link(linkNo, false) {
+    SystemLink(linkNo, false) {
     myTVSProgram = std::move(tvsProgram);
     myTVSInput = std::move(tvsInput);
     myTVSOutput = std::move(tvsOutput);

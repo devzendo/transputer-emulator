@@ -15,12 +15,12 @@
 #define COMMLINK_H
 
 #include "types.h"
-#include "link.h"
+#include "systemlink.h"
 
 #include <windows.h> // For HANDLE
 #include <fileapi.h> // for I/O functions.
 
-class CommLink : public Link {
+class CommLink : public SystemLink {
 public:
     CommLink(int linkNo, bool isServer, const std::string &comPortName);
     void initialise() override;

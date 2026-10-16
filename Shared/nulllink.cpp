@@ -17,7 +17,7 @@
 #include "log.h"
 
 NullLink::NullLink(int linkNo, bool isServer) :
-    Link(linkNo, isServer) {
+    SystemLink(linkNo, isServer) {
     logDebugF("Constructing Null link %d for %s", myLinkNo, isServer ? "server" : "cpu client");
 }
 
@@ -51,9 +51,9 @@ int NullLink::getLinkType() {
 }
 
 bool NullLink::readAvailable() {
-    return true;
+    return false; // Can never read anything from a null link.
 }
 
 bool NullLink::writeAvailable() {
-    return true;
+    return false; // Can never write anything to a null link.
 }

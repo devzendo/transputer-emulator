@@ -14,13 +14,12 @@
 #include <string>
 #include <stdexcept>
 #include "types.h"
-#include "link.h"
 #include "commlink.h"
 #include "log.h"
 #include "misc.h"
 
 CommLink::CommLink(int linkNo, bool isServer, const std::string &comPortName) :
-    Link(linkNo, isServer) {
+    SystemLink(linkNo, isServer) {
     logDebugF("Constructing COM link %d for %s", myLinkNo, isServer ? "server" : "cpu client");
     myHandle = nullptr;
     myComName = comPortName;

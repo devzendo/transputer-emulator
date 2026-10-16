@@ -14,10 +14,12 @@
 #ifndef FIFOLINK_H
 #define FIFOLINK_H
 
-#include "types.h"
-#include "link.h"
+#include <atomic>
 
-class FIFOLink : public Link {
+#include "types.h"
+#include "systemlink.h"
+
+class FIFOLink : public SystemLink {
 public:
 	FIFOLink(int linkNo, bool isServer);
 	void initialise() override;
@@ -36,6 +38,7 @@ private:
 	char myReadFifoName[80]{};
 	char myWriteFifoName[80]{};
 	char myMsgbuf[FIFO_MSGBUF_SIZE]{};
+    std::atomic_bool m_terminated{false};
 };
 
 #endif // FIFOLINK_H

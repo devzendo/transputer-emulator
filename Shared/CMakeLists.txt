@@ -20,6 +20,7 @@ message(STATUS "platform_sources: ${platform_sources}")
 message(STATUS "non_embedded_sources: ${non_embedded_sources}")
 
 add_library(parachutedev STATIC log.h logbase.h logbase.cpp misc.h misc.cpp hexdump.h hexdump.cpp link.h link.cpp
+        systemlink.h systemlink.cpp
         "${platform_sources}"
         linkfactory.h linkfactory.cpp constants.h emuquery.h memloc.h platformdetection.h types.h
         nulllink.cpp nulllink.h

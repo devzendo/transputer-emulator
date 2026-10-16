@@ -21,9 +21,9 @@
 #include <iostream>
 
 #include "types.h"
-#include "link.h"
+#include "systemlink.h"
 
-class TVSLink : public Link {
+class TVSLink : public SystemLink {
 public:
     TVSLink(int linkNo, std::string tvsProgram, std::string tvsInput, std::string tvsOutput);
     void initialise(void) override;

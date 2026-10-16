@@ -363,13 +363,13 @@ public:
 
     bool readAvailable() override;
     bool writeAvailable() override;
-
-    // AsyncLink
-    void clock() override;
     bool writeDataAsync(WORD32 workspacePointer, BYTE8* dataPointer, WORD32 length) override;
     WORD32 writeComplete() override;
     void readDataAsync(WORD32 workspacePointer, BYTE8* dataPointer, WORD32 length) override;
     WORD32 readComplete() override;
+
+    // AsyncLink
+    void clock() override;
     WORD16 getStatusWord() override;
 
 private:
@@ -415,8 +415,6 @@ private:
     OversampledTxRxPin * m_o_pin;
     DataAckSender * m_sender;
     DataAckReceiver * m_receiver;
-    LinkRegisters m_send_registers{};
-    LinkRegisters m_receive_registers{};
     volatile WORD16 m_status_word;
     WORD32 myWriteSequence, myReadSequence; // TODO these are in Link for the sync links; remove from here when merged.
     BYTE8 m_byte_buffer{};

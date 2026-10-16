@@ -15,9 +15,9 @@
 #define TTYLINK_H
 
 #include "types.h"
-#include "link.h"
+#include "systemlink.h"
 
-class TTYLink : public Link {
+class TTYLink : public SystemLink {
 public:
     TTYLink(int linkNo, bool isServer, const std::string &ttyFileName);
     void initialise() override;

@@ -18,9 +18,9 @@
 #include <atomic>
 
 #include "types.h"
-#include "link.h"
+#include "systemlink.h"
 
-class InMemoryLink : public Link {
+class InMemoryLink : public SystemLink {
 public:
     InMemoryLink(int linkNo, void *readState, void *writeState);
     void initialise(void) override;

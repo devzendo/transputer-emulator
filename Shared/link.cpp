@@ -83,3 +83,52 @@ int Link::getLinkNo(void) {
 void Link::setDebug(bool newDebug) {
 	bDebug = newDebug;
 }
+
+void Link::poll(std::function<void(WORD32)> reschedule) {
+	// TODO
+	// WORD32 w = readComplete();
+	// if w != NotProcess.p
+	//   reschedule(w)
+	// w = writeComplete();
+	// if w != NotProcess.p
+	//   reschedule(w)
+}
+
+// New base classes - InterruptDrivenLink instead of AsyncLink holding the 'asynchronous' version of poll, below,
+// then a new intermediate class SystemLink for holding the 'synchronous' version of this poll function, below,
+// and an empty clock() method. The FIFOLink, NamedPipeLink, PicoUSBSerialLink, TTYLink, CommLink, would all be OperatingSystemLinks.
+// GpioAsyncLink would be an InterruptDrivenLink. Link would be the superclass of them all.
+//
+// poll would only be used by the emulator, to handle reschedules.
+// boot could continue to use the synchronous I/O methods, and the read availablilty method.
+// The emulator must change IN, OUT/OUTBYTE/OUTWORD to use asynchronous I/O methods,
+// and call poll at the end of the interpret loop for all links (so that rescheduling can happen).
+//
+// This implementation is only for SystemLink. InterruptDrivenLink version is simpler, see below.
+//void Link::poll(std::function<void(WORD32)> reschedule) {
+	// if readLinkRegister.workspace != NotProcess.p
+	//   if readAvailable() // could be optimised to return the number of bytes available
+	//     *readLinkRegister.buffer++ = readByte(); // similarly, block read/memory write?
+	//     if --readLinkRegister.length == 0 // similarly, subtract amount read
+	//       WORD32 t = readLinkRegister.workspace
+	//       readLinkRegister.workspace = NotProcess.p
+	//       readLinkRegister.buffer = nullptr
+	//       reschedule(t)
+	// if writeLinkRegister.workspace != NotProcess.p
+	//   if writeAvailable()
+	//     writeByte(*writeLinkRegister.buffer++)
+	//     if --writeLinkRegister.length == 0
+	//       WORD32 t = writeLinkRegister.workspace
+	//       writeLinkRegister.workspace = NotProcess.p
+	//       writeLinkRegister.buffer = nullptr
+	//       reschedule(t)
+//}
+// InterruptDrivenLink version of poll:
+// void InterruptDrivenLink::poll(std::function<void(WORD32)> reschedule) {
+// WORD32 w = readComplete() // takes MUTEX
+// if w != NotProcess.p
+//   reschedule(w)
+// w = writeComplete() // takes MUTEX
+// if w != NotProcess.p
+//   reschedule(w)
+

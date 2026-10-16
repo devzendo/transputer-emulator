@@ -14,6 +14,7 @@
 #include <exception>
 #include <stdexcept>
 #include <sys/types.h>
+#include <sys/select.h>
 #include <sys/stat.h>
 
 #include <unistd.h>
@@ -23,11 +24,11 @@
 
 #include "types.h"
 #include "constants.h"
-#include "link.h"
+#include "systemlink.h"
 #include "fifolink.h"
 #include "log.h"
 
-FIFOLink::FIFOLink(int linkNo, bool isServer) : Link(linkNo, isServer) {
+FIFOLink::FIFOLink(int linkNo, bool isServer) : SystemLink(linkNo, isServer) {
 	logDebugF("Constructing FIFO link %d for %s", myLinkNo, isServer ? "server" : "cpu client");
 	myWriteFD = -1;
 	myReadFD = -1;
@@ -127,34 +128,97 @@ FIFOLink::~FIFOLink() {
 }
 
 BYTE8 FIFOLink::readByte() {
-	BYTE8 buf;
 	ssize_t readlen = 0;
-	readlen = read(myReadFD, &buf, 1);
-	if (readlen == 1) {
-		if (bDebug) {
-			logDebugF("Link %d R #%08X %02X (%c)", myLinkNo, myReadSequence++, buf, isprint(buf) ? buf : '.');
-		}
-		return buf;
+	BYTE8 buf;
+	fd_set rfds;
+	fd_set errfds;
+	timeval tv{};
+	if (m_terminated.load()) {
+		logDebugF("Link %d R terminated", myLinkNo);
+		return 0;
 	}
-	snprintf(myMsgbuf, FIFO_MSGBUF_SIZE, "Could not read a byte from FIFO FD#%d: (read %ld byte(s)) %s", myReadFD, readlen, strerror(errno));
-	logWarn(myMsgbuf);
-	throw std::runtime_error(myMsgbuf);
+	while (true) {
+		FD_ZERO(&rfds);
+		FD_SET(myReadFD, &rfds);
+		FD_ZERO(&errfds);
+		FD_SET(myReadFD, &errfds);
+		tv.tv_sec = 0;
+		tv.tv_usec = 1000;
+		const int retval = select(myReadFD + 1, &rfds, nullptr, &errfds, &tv);
+		if (retval == -1) {
+			snprintf(myMsgbuf, FIFO_MSGBUF_SIZE, "Link %d Could not select read FIFO FD#%d: %s", myLinkNo, myReadFD, strerror(errno));
+			logWarn(myMsgbuf);
+			return 0; // Safe?
+		}
+		const bool avail = FD_ISSET(myReadFD, &rfds);
+		const bool err = FD_ISSET(myReadFD, &errfds);
+		if (err) {
+			logDebugF("Link %d R err", myLinkNo);
+		}
+		if (avail) {
+			readlen = read(myReadFD, &buf, 1);
+			if (readlen == 1) {
+				if (bDebug) {
+					logDebugF("Link %d R #%08X %02X (%c)", myLinkNo, myReadSequence++, buf, isprint(buf) ? buf : '.');
+				}
+				return buf;
+			}
+			snprintf(myMsgbuf, FIFO_MSGBUF_SIZE, "Could not read a byte from FIFO FD#%d: (read %ld byte(s)) %s", myReadFD, readlen, strerror(errno));
+			logWarn(myMsgbuf);
+			throw std::runtime_error(myMsgbuf);
+		}
+	}
 }
 
 void FIFOLink::writeByte(BYTE8 buf) {
-	BYTE8 bufstore = buf;
+	const BYTE8 bufstore = buf;
+	fd_set wfds;
+	fd_set errfds;
+	timeval tv{};
+	if (m_terminated.load()) {
+		logDebugF("Link %d W terminated", myLinkNo);
+		return;
+	}
 	if (bDebug) {
 		logDebugF("Link %d W #%08X %02X (%c)", myLinkNo, myWriteSequence++, buf, isprint(buf) ? buf : '.');
 	}
-	if (write(myWriteFD, &bufstore, 1) == 1) {
-		return;
+	while (true) {
+		FD_ZERO(&wfds);
+		FD_SET(myWriteFD, &wfds);
+		FD_ZERO(&errfds);
+		FD_SET(myWriteFD, &errfds);
+		tv.tv_sec = 0;
+		tv.tv_usec = 1000;
+		const int retval = select(myWriteFD + 1, nullptr, &wfds, &errfds, &tv);
+		if (retval == -1) {
+			snprintf(myMsgbuf, FIFO_MSGBUF_SIZE, "Link %d Could not select write FIFO FD#%d: %s", myLinkNo, myWriteFD, strerror(errno));
+			logWarn(myMsgbuf);
+			return;
+		}
+		const bool avail = FD_ISSET(myWriteFD, &wfds);
+		const bool err = FD_ISSET(myReadFD, &errfds);
+		if (err) {
+			logDebugF("Link %d W err", myLinkNo);
+		}
+		if (m_terminated.load()) {
+			logDebugF("Link %d W terminated", myLinkNo);
+			return;
+		}
+		if (avail) {
+			if (write(myWriteFD, &bufstore, 1) == 1) {
+				return;
+			}
+			snprintf(myMsgbuf, FIFO_MSGBUF_SIZE, "Could not write a byte to FIFO FD#%d: %s", myWriteFD, strerror(errno));
+			throw std::runtime_error(myMsgbuf);
+		}
 	}
-	snprintf(myMsgbuf, FIFO_MSGBUF_SIZE, "Could not write a byte to FIFO FD#%d: %s", myWriteFD, strerror(errno));
-	throw std::runtime_error(myMsgbuf);
 }
 
 void FIFOLink::resetLink() {
-	// TODO
+    m_terminated.store(true);
+	// ???
+	close(myReadFD);
+	close(myWriteFD);
 }
 
 int FIFOLink::getLinkType() {
@@ -162,9 +226,41 @@ int FIFOLink::getLinkType() {
 }
 
 bool FIFOLink::readAvailable() {
-	return false; // TODO AVAIL
+	fd_set rfds;
+	timeval tv{};
+	FD_ZERO(&rfds);
+	FD_SET(myReadFD, &rfds);
+	tv.tv_sec = 0;
+	tv.tv_usec = 0;
+	const int retval = select(myReadFD + 1, &rfds, nullptr, nullptr, &tv);
+	if (retval == -1) {
+		snprintf(myMsgbuf, FIFO_MSGBUF_SIZE, "Link %d Could not select read FIFO FD#%d: %s", myLinkNo, myReadFD, strerror(errno));
+		logWarn(myMsgbuf);
+		return false; // Safe?
+	}
+	const bool avail = FD_ISSET(myReadFD, &rfds);
+	if (bDebug) {
+		logDebugF("Link %d R available", myLinkNo);
+	}
+	return avail;
 }
 
 bool FIFOLink::writeAvailable() {
-	return true; // TODO AVAIL
+	fd_set wfds;
+	timeval tv{};
+	FD_ZERO(&wfds);
+	FD_SET(myWriteFD, &wfds);
+	tv.tv_sec = 0;
+	tv.tv_usec = 0;
+	const int retval = select(myWriteFD + 1, nullptr, &wfds, nullptr, &tv);
+	if (retval == -1) {
+		snprintf(myMsgbuf, FIFO_MSGBUF_SIZE, "Link %d: Could not select write FIFO FD#%d: %s", myLinkNo, myWriteFD, strerror(errno));
+		logWarn(myMsgbuf);
+		return false; // Safe?
+	}
+	const bool avail = FD_ISSET(myWriteFD, &wfds);
+	if (bDebug) {
+		logDebugF("Link %d W available", myLinkNo);
+	}
+	return avail;
 }

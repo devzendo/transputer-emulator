@@ -21,12 +21,11 @@
 #include <sys/fcntl.h>
 
 #include "types.h"
-#include "link.h"
 #include "ttylink.h"
 #include "log.h"
 
 TTYLink::TTYLink(int linkNo, bool isServer, const std::string &ttyFileName) :
-    Link(linkNo, isServer) {
+    SystemLink(linkNo, isServer) {
     logDebugF("Constructing TTY link %d for %s", myLinkNo, isServer ? "server" : "cpu client");
     myFD = -1;
     myTTYName = ttyFileName;

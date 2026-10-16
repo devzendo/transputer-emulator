@@ -105,6 +105,28 @@ LinkPair * FactoryFifo() {
 // What factories (types of links) can we construct here, so we have a standard set of tests for all links? Such links
 // must be cross-wired. Certain link types can be, certain types definitely can't.
 //
+// The availability API is critical to the async/polling implementation.
+//
+// Implementation status of availability API:
+// POSIX:
+// fifolink       | Done (writeAvailable has issues with buffered I/O)
+// ttylink        |
+//
+// WINDOWS:
+// namedpipelink  |
+// commlink       |
+//
+// PI PICO:
+// picousbcdclink |
+//
+// CROSS-PLATFORM/TEST:
+// inmemorylink   | Done
+// gpioasynclink  | Done - needs wiring into tests when Link/AsyncLink are one.
+// nulllink       | Can't test
+// stublink       | Can't test
+// tvslink        | Single-ended
+//
+//
 // ttylink (posix) - a pair of pty 'master/slave' (not my terminology) can be used to cross-wire two of these, but could
 // be tricky to construct, requiring the pair of 'master' halves to poll each other... this'd need a separate thread,
 // doing the polling. The factory could have a start/stop method that handles the thread; the factory would need to be
@@ -196,4 +218,149 @@ TEST_P(LinkPairTest, InitialConditions) {
     EXPECT_EQ(serverLink->readAvailable(), false);
     EXPECT_EQ(serverLink->writeAvailable(), true);
     logDebug("InitialConditions end");
+}
+
+TEST_P(LinkPairTest, WriteReadTransitionConditionsAtoB) {
+    EXPECT_EQ(cpuLink->writeAvailable(), true);
+    EXPECT_EQ(serverLink->readAvailable(), false);
+
+    cpuLink->writeByte(0x42);
+    std::this_thread::sleep_for(std::chrono::milliseconds(500));
+    // EXPECT_EQ(cpuLink->writeAvailable(), false); // fails on FIFO, presumably 'cos there's an OS buffer.
+    EXPECT_EQ(serverLink->readAvailable(), true);
+    EXPECT_EQ(serverLink->readByte(), 0x42);
+    std::this_thread::sleep_for(std::chrono::milliseconds(500));
+
+    EXPECT_EQ(cpuLink->writeAvailable(), true);
+    EXPECT_EQ(serverLink->readAvailable(), false);
+}
+
+TEST_P(LinkPairTest, WriteReadTransitionConditionsBtoA) {
+    EXPECT_EQ(cpuLink->readAvailable(), false);
+    EXPECT_EQ(serverLink->writeAvailable(), true);
+
+    serverLink->writeByte(0x42);
+    std::this_thread::sleep_for(std::chrono::milliseconds(500));
+    EXPECT_EQ(cpuLink->readAvailable(), true);
+    // EXPECT_EQ(serverLink->writeAvailable(), false); // fail on FIFO
+
+    EXPECT_EQ(cpuLink->readByte(), 0x42);
+    std::this_thread::sleep_for(std::chrono::milliseconds(500));
+    EXPECT_EQ(cpuLink->readAvailable(), false);
+    EXPECT_EQ(serverLink->writeAvailable(), true);
+}
+
+TEST_P(LinkPairTest, WriteReadTransitionConditionsBoth) {
+    EXPECT_EQ(cpuLink->readAvailable(), false);
+    EXPECT_EQ(serverLink->readAvailable(), false);
+    EXPECT_EQ(cpuLink->writeAvailable(), true);
+    EXPECT_EQ(serverLink->writeAvailable(), true);
+
+    cpuLink->writeByte(0x01);
+    serverLink->writeByte(0x02);
+    std::this_thread::sleep_for(std::chrono::milliseconds(500));
+    EXPECT_EQ(cpuLink->readAvailable(), true);
+    EXPECT_EQ(serverLink->readAvailable(), true);
+    // EXPECT_EQ(cpuLink->writeAvailable(), false); // Fail on FIFO
+    // EXPECT_EQ(serverLink->writeAvailable(), false); // Fail on FIFO
+
+    EXPECT_EQ(cpuLink->readByte(), 0x02);
+    EXPECT_EQ(serverLink->readByte(), 0x01);
+    std::this_thread::sleep_for(std::chrono::milliseconds(500));
+    EXPECT_EQ(cpuLink->readAvailable(), false);
+    EXPECT_EQ(serverLink->readAvailable(), false);
+    EXPECT_EQ(cpuLink->writeAvailable(), true);
+    EXPECT_EQ(serverLink->writeAvailable(), true);
+}
+
+TEST_P(LinkPairTest, WriteByteAndRead) {
+    logDebug("WriteByteAndRead start");
+    for (int i=0x00; i<=0xFF; i++) {
+        auto val = static_cast<BYTE8>(i);
+        cpuLink->writeByte(val);
+        EXPECT_EQ(val, serverLink->readByte());
+
+        BYTE8 inverse = 0xFF-val;
+        serverLink->writeByte(inverse);
+        EXPECT_EQ(inverse, cpuLink->readByte());
+    }
+    logDebug("WriteByteAndRead end");
+}
+
+TEST_P(LinkPairTest, WriteByteAndReadThreadedTortureTest) {
+    logDebug("WriteByteAndReadThreadedTortureTest start");
+    std::thread *a_thread = nullptr;
+    std::thread *b_thread = nullptr;
+    a_thread = new std::thread([this] {
+        for (int i=0x00; i<=0xFF; i++) {
+            auto val = static_cast<BYTE8>(i);
+            cpuLink->writeByte(val);
+            std::this_thread::sleep_for(std::chrono::milliseconds(rand() % 10));
+        }
+        for (int i=0x00; i<=0xFF; i++) {
+            auto val = static_cast<BYTE8>(i);
+            EXPECT_EQ(val, cpuLink->readByte());
+            std::this_thread::sleep_for(std::chrono::milliseconds(rand() % 10));
+        }
+    });
+    b_thread = new std::thread([this] {
+        for (int i=0x00; i<=0xFF; i++) {
+            auto val = static_cast<BYTE8>(i);
+            EXPECT_EQ(val, serverLink->readByte());
+            std::this_thread::sleep_for(std::chrono::milliseconds(rand() % 10));
+        }
+        for (int i=0x00; i<=0xFF; i++) {
+            auto val = static_cast<BYTE8>(i);
+            serverLink->writeByte(val);
+            std::this_thread::sleep_for(std::chrono::milliseconds(rand() % 10));
+        }
+    });
+    a_thread->join();
+    delete a_thread;
+    b_thread->join();
+    delete b_thread;
+    logDebug("WriteByteAndReadThreadedTortureTest end");
+}
+
+TEST_P(LinkPairTest, ResetLinkWhenReadingTest) {
+    logDebug("ResetLinkWhenReadingTest start");
+    std::thread *a_thread = nullptr;
+    a_thread = new std::thread([this] {
+        logDebug("Reading from link");
+        EXPECT_EQ(cpuLink->readByte(), 0);
+        // The resetLink exits the readByte with a zero return.
+        logDebug("Link read finished - this should be observed");
+    });
+    logDebug("Waiting a little before resetting link");
+    std::this_thread::sleep_for(std::chrono::milliseconds(500));
+    logDebug("Resetting link");
+    cpuLink->resetLink();
+    logDebug("Joining thread");
+    a_thread->join();
+    logDebug("Thread joined");
+    delete a_thread;
+    logDebug("ResetLinkWhenReadingTest end");
+}
+
+TEST_P(LinkPairTest, ResetLinkWhenWritingTest) {
+    logDebug("ResetLinkWhenWritingTest start");
+    // Fill the link register so the 'real' write stalls
+    cpuLink->writeByte(42);
+
+    std::thread *a_thread = nullptr;
+    a_thread = new std::thread([this] {
+        logDebug("Writing to link");
+        cpuLink->writeByte(69);
+        // The resetLink exits the writeByte with a zero return.
+        logDebug("Link write finished - this should be observed");
+    });
+    logDebug("Waiting a little before resetting link");
+    std::this_thread::sleep_for(std::chrono::milliseconds(500));
+    logDebug("Resetting link");
+    cpuLink->resetLink();
+    logDebug("Joining thread");
+    a_thread->join();
+    logDebug("Thread joined");
+    delete a_thread;
+    logDebug("ResetLinkWhenWritingTest end");
 }

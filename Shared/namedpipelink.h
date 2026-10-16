@@ -17,11 +17,11 @@
 #include <windows.h>
 
 #include "types.h"
-#include "link.h"
+#include "systemlink.h"
 
 const int NAME_LEN = 256;
 
-class NamedPipeLink : public Link {
+class NamedPipeLink : public SystemLink {
 public:
     NamedPipeLink(int linkNo, bool isServer);
     void initialise(void);
