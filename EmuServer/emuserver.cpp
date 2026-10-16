@@ -327,20 +327,27 @@ void cleanup() {
 	logDebug("Setting emulator terminate flag");
 	SET_FLAGS(EmulatorState_Terminate); // Will stop after an interpretation.
 	// If the emulator's blocked on link read (e.g. booting over it), this'll exit the I/O...
-	myLink->resetLink();
-	cpuLink->resetLink();
-	
+	if (myLink != nullptr) {
+		myLink->resetLink();
+	}
+	if (cpuLink != nullptr) {
+		cpuLink->resetLink();
+	}
+
 	logDebug("Joining CPU thread");
-	myCPUThread->join();
-	logDebug("Deleting resources");
-	delete myCPUThread;
+	if (myCPUThread != nullptr) {
+		myCPUThread->join();
+		logDebug("Deleting resources");
+		delete myCPUThread;
+		myCPUThread = nullptr;
+	}
 
 	delete myPlatform;
-	delete myLink;
 	delete platformFactory;
 	delete linkFactory;
 	delete inMemoryLinkFactory;
 	delete myCPU;
+	// CPU's destructor deletes its links.
 	delete mySymbolTable;
 	delete myMemory;
 	fflush(stdout);
