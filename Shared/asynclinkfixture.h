@@ -16,11 +16,9 @@
 #define ASYNCLINKFIXTURE_H
 
 #include <atomic>
+#include <vector>
 
 #include "gpioasynclink.h"
-
-
-
 
 class CrosswiredPin: public TxRxPin {
 public:
@@ -52,6 +50,19 @@ private:
     CrosswiredPin m_bPinEnd;
     std::atomic_bool aPin{false};
     std::atomic_bool bPin{false};
+};
+
+/**
+ * A MultipleAsyncLinkClocker clocks all the AsyncLinks it is given. Used by test code.
+ */
+class MultipleAsyncLinkClocker: public TickHandler {
+public:
+    MultipleAsyncLinkClocker();
+    void addLink(AsyncLink* link);
+    // TickHandler
+    void tick() override;
+private:
+    std::vector<AsyncLink*> m_links;
 };
 
 #endif // ASYNCLINKFIXTURE_H

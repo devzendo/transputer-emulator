@@ -425,18 +425,4 @@ private:
 #endif
 };
 
-/*
- * A MultipleAsyncLinkClocker clocks all the AsyncLinks it is given. Used by test code.
- */
-
-class MultipleAsyncLinkClocker: public TickHandler {
-public:
-    MultipleAsyncLinkClocker();
-    void addLink(AsyncLink* link);
-    // TickHandler
-    void tick() override;
-private:
-    std::vector<AsyncLink*> m_links;
-};
-
 #endif // GPIOASYNCLINK_H

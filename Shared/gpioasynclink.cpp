@@ -540,35 +540,6 @@ void GPIOAsyncLink::clearReadDataAvailable() {
     m_status_word &= ~ST_READ_DATA_AVAILABLE;
 }
 
-/*
- * A MultipleAsyncLinkClocker clocks all the Links it is given.
- */
-MultipleAsyncLinkClocker::MultipleAsyncLinkClocker() : TickHandler() {
-
-}
-
-void MultipleAsyncLinkClocker::addLink(AsyncLink* link) {
-    m_links.push_back(link);
-}
-
-// static bool tickled = false;
-// static int tick_count = 0;
-// TickHandler
-void MultipleAsyncLinkClocker::tick() {
-    // if (tick_count++ == 1024) {
-    //     tick_count = 0;
-    //     gpio_put(PICO_DEFAULT_LED_PIN, tickled);
-    //     tickled = ! tickled;
-    // }
-
-    //logDebug("Tick - >> clock the Links");
-    for (AsyncLink* link: m_links) {
-        // logDebugF("Tick - link at 0x%x", link);
-        link->clock();
-    }
-    //logDebug("Tick - << clock the Links");
-}
-
 
 /*
  * Using oversampling: The clock pulse triggers 16 times the bit frequency, giving 16 samples per bit.
