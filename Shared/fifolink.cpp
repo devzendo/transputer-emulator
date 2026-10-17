@@ -165,7 +165,7 @@ BYTE8 FIFOLink::readByte() {
 			}
 			snprintf(myMsgbuf, FIFO_MSGBUF_SIZE, "Could not read a byte from FIFO FD#%d: (read %ld byte(s)) %s", myReadFD, readlen, strerror(errno));
 			logWarn(myMsgbuf);
-			throw std::runtime_error(myMsgbuf);
+			return 0; // Safe?
 		}
 	}
 }
@@ -209,7 +209,8 @@ void FIFOLink::writeByte(BYTE8 buf) {
 				return;
 			}
 			snprintf(myMsgbuf, FIFO_MSGBUF_SIZE, "Could not write a byte to FIFO FD#%d: %s", myWriteFD, strerror(errno));
-			throw std::runtime_error(myMsgbuf);
+			logWarn(myMsgbuf);
+			return;
 		}
 	}
 }
