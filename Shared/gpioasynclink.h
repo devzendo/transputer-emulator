@@ -416,7 +416,6 @@ private:
     DataAckSender * m_sender;
     DataAckReceiver * m_receiver;
     volatile WORD16 m_status_word;
-    WORD32 myWriteSequence, myReadSequence; // TODO these are in Link for the sync links; remove from here when merged.
     BYTE8 m_byte_buffer{};
 #ifdef DESKTOP
     std::mutex m_mutex;
@@ -427,7 +426,7 @@ private:
 };
 
 /*
- * A MultipleAsyncLinkClocker clocks all the AsyncLinks it is given.
+ * A MultipleAsyncLinkClocker clocks all the AsyncLinks it is given. Used by test code.
  */
 
 class MultipleAsyncLinkClocker: public TickHandler {
