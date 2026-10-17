@@ -54,8 +54,8 @@
     </distributionManagement>
 
     <properties>
-        <cmake.binary.dir>cmake-build-debug</cmake.binary.dir>
-        <cmake.build.type>debug</cmake.build.type>
+        <cmake.binary.dir>cmake-build-release</cmake.binary.dir>
+        <cmake.build.type>Release</cmake.build.type>
 
         <download.cmake>false</download.cmake> <!-- old setting -->
         <cmake.download>false</cmake.download> <!-- new setting -->
