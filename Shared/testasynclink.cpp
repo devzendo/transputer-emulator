@@ -19,55 +19,10 @@
 #include "gtest/gtest.h"
 #include "link.h"
 #include "gpioasynclink.h"
+#include "asynclinkfixture.h"
 #include "constants.h"
 #include "log.h"
 #include "misc.h"
-
-class CrosswiredTxRxPinPair {
-    std::atomic_bool aPin{false};
-    std::atomic_bool bPin{false};
-
-    class CrosswiredPin: TxRxPin {
-    public:
-        CrosswiredPin(const char *side, std::atomic_bool *rxstate, std::atomic_bool *txstate) {
-            m_side = *side;
-            m_rxstate = rxstate;
-            m_txstate = txstate;
-        }
-
-        ~CrosswiredPin() override = default;
-
-        bool getRx() override {
-            bool retval = m_rxstate->load();
-            //logDebugF("RX %c pin state is %d", m_side, retval);
-            return retval;
-        }
-
-        void setTx(const bool state) override {
-            //logDebugF("Setting TX %c pin state to %d", m_side, state);
-            m_txstate->store(state);
-        }
-    private:
-        std::atomic_bool *m_rxstate;
-        std::atomic_bool *m_txstate;
-        char m_side = ' ';
-    };
-
-    CrosswiredPin m_aPinEnd;
-    CrosswiredPin m_bPinEnd;
-public:
-    CrosswiredTxRxPinPair() :
-        m_aPinEnd(CrosswiredPin("A", &aPin, &bPin)),
-        m_bPinEnd(CrosswiredPin("B", &bPin, &aPin)) {
-    }
-
-    TxRxPin & pairA() { return reinterpret_cast<TxRxPin&>(m_aPinEnd); };
-
-    TxRxPin & pairB() { return reinterpret_cast<TxRxPin&>(m_bPinEnd); };
-
-    ~CrosswiredTxRxPinPair() = default;
-};
-
 
 class DisconnectedPin: public TxRxPin {
 public:

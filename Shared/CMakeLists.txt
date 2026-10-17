@@ -73,7 +73,11 @@ endif(PICO)
 
 
 if(NOT(EMBEDDED))
-  add_library(testfixtures STATIC tempfilesfixture.h tempfilesfixture.cpp exceptionfixture.h)
+  add_library(testfixtures STATIC tempfilesfixture.h tempfilesfixture.cpp exceptionfixture.h asynclinkfixture.cpp asynclinkfixture.h)
+  # This inclusion of google tests' include path to the testfixtures library is so that test code can be a
+  # friend of the gpioasynclink code and test internals correctly without needing to expose them publically.
+  target_include_directories(testfixtures PRIVATE ${gtest_SOURCE_DIR}/include)
+
   target_link_libraries(testfixtures parachutedev)
 
   add_executable(testtypes testtypes.cpp)
@@ -85,7 +89,7 @@ if(NOT(EMBEDDED))
   add_test(NAME testlink COMMAND testlink)
 
   add_executable(testasynclink testasynclink.cpp)
-  target_link_libraries(testasynclink parachutedev gtest gmock_main parachutedesktop)
+  target_link_libraries(testasynclink testfixtures parachutedev gtest gmock_main parachutedesktop)
   add_test(NAME testasynclink COMMAND testasynclink)
 
   add_executable(testfilesystem testfilesystem.cpp)
