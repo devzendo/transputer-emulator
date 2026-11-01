@@ -351,7 +351,7 @@ private:
  * machines, and an OversampledTxRxPin to handle the send/receive over an underlying TxRxPin.
  */
 
-class GPIOAsyncLink : public Link, public AsyncLink, public SenderToLink, public ReceiverToLink {
+class GPIOAsyncLink : public Link, public AsyncLink, public Clockable, public SenderToLink, public ReceiverToLink {
 public:
     GPIOAsyncLink(int linkNo, bool isServer, TxRxPin& tx_rx_pin);
     void initialise() override;
@@ -368,8 +368,10 @@ public:
     void readDataAsync(WORD32 workspacePointer, BYTE8* dataPointer, WORD32 length) override;
     WORD32 readComplete() override;
 
-    // AsyncLink
+    // Clockable
     void clock() override;
+
+    // AsyncLink
     WORD16 getStatusWord() override;
 
 private:

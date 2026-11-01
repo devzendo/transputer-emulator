@@ -85,7 +85,7 @@ if(NOT(EMBEDDED))
   add_test(NAME testtypes COMMAND testtypes)
 
   add_executable(testlink testlink.cpp)
-  target_link_libraries(testlink parachutedev gtest gmock_main parachutedesktop)
+  target_link_libraries(testlink testfixtures parachutedev gtest gmock_main parachutedesktop)
   add_test(NAME testlink COMMAND testlink)
 
   add_executable(testasynclink testasynclink.cpp)

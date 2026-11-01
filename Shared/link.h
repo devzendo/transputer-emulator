@@ -78,7 +78,7 @@ public:
 	/**
 	 * Reset the link, and any state needed by it. Will interrupt any blocking read/write which has no way to signal
 	 * to calling code that it has been interrupted.
-	 * TODO Currently the link may not be in a usable state after this - this needs to change, so it's reusablu.
+	 * TODO Currently the link may not be in a usable state after this - this needs to change, so it's reusable.
 	 */
 	virtual void resetLink(void) = 0;
 

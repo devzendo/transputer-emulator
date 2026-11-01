@@ -53,16 +53,17 @@ private:
 };
 
 /**
- * A MultipleAsyncLinkClocker clocks all the AsyncLinks it is given. Used by test code.
+ * A MultipleClockableClocker clocks all the Clockables it is given. Used by test code.
  */
-class MultipleAsyncLinkClocker: public TickHandler {
+class MultipleClockableClocker: public TickHandler {
 public:
-    MultipleAsyncLinkClocker();
-    void addLink(AsyncLink* link);
+    MultipleClockableClocker();
+    ~MultipleClockableClocker() override = default;
+    void addClockable(Clockable* clockable);
     // TickHandler
     void tick() override;
 private:
-    std::vector<AsyncLink*> m_links;
+    std::vector<Clockable*> m_clockables;
 };
 
 #endif // ASYNCLINKFIXTURE_H

@@ -82,7 +82,7 @@ protected:
         std::atomic_int m_counter;
     };
 
-    class AtomicClockable: public AsyncLink {
+    class AtomicClockable: public Clockable {
     public:
         AtomicClockable() : m_counter(0) {};
 
@@ -95,24 +95,6 @@ protected:
             int counter = m_counter.load();
             logDebugF("Counter is %d", counter);
             return counter;
-        }
-
-        /*
-        bool writeDataAsync(WORD32 workspacePointer, BYTE8* dataPointer, WORD32 length) override {
-            return false;
-        }
-        WORD32 writeComplete() override {
-            return 0;
-        };
-
-        void readDataAsync(WORD32 workspacePointer, BYTE8* dataPointer, WORD32 length) override {}
-
-        WORD32 readComplete() override {
-            return 0;
-        }
-        */
-        WORD16 getStatusWord() override {
-            return 0;
         }
 
     private:
@@ -159,16 +141,16 @@ TEST_F(AsyncLinkClockTest, StartTicksThenStopHalts) {
 }
 
 TEST_F(AsyncLinkClockTest, MultipleAsyncLinkClocker) {
-    MultipleAsyncLinkClocker linkClocker;
+    MultipleClockableClocker linkClocker;
     AtomicClockable clockable;
     EXPECT_EQ(clockable.counter(), 0);
     linkClocker.tick();
     EXPECT_EQ(clockable.counter(), 0);
-    linkClocker.addLink(&clockable);
+    linkClocker.addClockable(&clockable);
     linkClocker.tick();
     EXPECT_EQ(clockable.counter(), 1);
 
-    linkClocker.addLink(&clockable); // it'll be called twice
+    linkClocker.addClockable(&clockable); // it'll be called twice
     linkClocker.tick();
     EXPECT_EQ(clockable.counter(), 3);
 }
@@ -199,8 +181,8 @@ protected:
         linkB->initialise();
 
         logDebug("Setup and start clock");
-        linkClocker.addLink(linkA);
-        linkClocker.addLink(linkB);
+        linkClocker.addClockable(linkA);
+        linkClocker.addClockable(linkB);
         clock.start();
 
         logDebug("Setup complete");
@@ -232,7 +214,7 @@ protected:
     CrosswiredTxRxPinPair pair;
     GPIOAsyncLink *linkA = nullptr;
     GPIOAsyncLink *linkB = nullptr;
-    MultipleAsyncLinkClocker linkClocker;
+    MultipleClockableClocker linkClocker;
     AsyncLinkClock clock;
 };
 
@@ -301,12 +283,33 @@ TEST_F(AsyncLinkTest, StartReadingAsync) {
     while (linkA->writeComplete() == NotProcess_p) {
         pause();
     }
+    // ST_READ_COMPLETE will be set around here, then detected and cleared by readComplete().
     while (linkB->readComplete() == NotProcess_p) {
         pause();
     }
 
     EXPECT_EQ(readBuf[0], 'a');
     EXPECT_EQ(linkB->_queryReadDataAvailable(), false);
+    logDebugF("linkB final status word 0x%08x", linkB->getStatusWord());
+    EXPECT_EQ(linkB->getStatusWord(), ST_READY_TO_SEND | 'a'); // and ST_READ_DATA_AVAILABLE would NOT be set
+}
+
+TEST_F(AsyncLinkTest, DataSentAsyncIsntReceivedFullyByOtherLinkIfNotListening) {
+    logDebugF("linkB initial status word 0x%08x", linkB->getStatusWord());
+    // It's just ST_READY_TO_SEND initially.
+
+    char outbuf[] = "a";
+    linkA->writeDataAsync(0xDEADF00D, reinterpret_cast<BYTE8 *>(&outbuf[0]), 1);
+    for (int i=0; i<24 * 12; i++) { // 24 bit-lengths should be enough to time out
+        pause();
+    }
+    // linkB will go through IDLE -> START_BIT_2 -> DATA -> STOP_BIT -> IDLE (and also enqueue an ACK out).
+    // But with no outstanding read, it won't have the data and ST_READ_DATA_AVAILABLE set in the
+    // status word.
+    logDebugF("linkB final status word 0x%08x", linkB->getStatusWord());
+    EXPECT_EQ(linkB->getStatusWord(), ST_READY_TO_SEND);
+    // ST_READ_DATA_AVAILABLE would NOT be set, and you'll see a
+    // 'WARN  Link 1 received data with no buffer' message.
 }
 
 TEST_F(AsyncLinkTest, BulkTransfer) {
@@ -376,7 +379,7 @@ protected:
         linkA->initialise();
 
         logDebug("Setup and start clock");
-        linkClocker.addLink(linkA);
+        linkClocker.addClockable(linkA);
         clock.start();
 
         logDebug("Setup complete");
@@ -401,7 +404,7 @@ protected:
     }
     DisconnectedPin pin;
     GPIOAsyncLink *linkA = nullptr;
-    MultipleAsyncLinkClocker linkClocker;
+    MultipleClockableClocker linkClocker;
     AsyncLinkClock clock;
 };
 

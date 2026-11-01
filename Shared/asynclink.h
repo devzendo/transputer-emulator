@@ -11,8 +11,8 @@
 //
 //------------------------------------------------------------------------------
 
-#ifndef _ASYNCLINK_H
-#define _ASYNCLINK_H
+#ifndef ASYNCLINK_H
+#define ASYNCLINK_H
 
 #include "types.h"
 
@@ -25,6 +25,8 @@
  * ---------------------------------------------------------------------------------------------
  * 7        | 6        | 5         | 4         | 3         | 2         | 1         | 0
  * DATA RECEIVED IF READ DATA AVAILABLE (BIT 13) IS TRUE
+ * READ_COMPLETE (BIT 10) IS SET WHEN THE FULL BUFFER OF DATA (WORKSPACE, BUFFER, LEN) HAS BEEN READ.
+ * SIMILARLY SEND_COMPLETE (BIT 9) FOR WRITING.
  */
 const WORD16 ST_FRAMING = 0x8000;
 const WORD16 ST_OVERRUN = 0x4000;
@@ -35,15 +37,20 @@ const WORD16 ST_READ_COMPLETE = 0x0400;
 const WORD16 ST_SEND_COMPLETE = 0x0200;
 const WORD16 ST_DATA_MASK = 0x00FF;
 
-class AsyncLink {
+class Clockable {
 public:
-    virtual ~AsyncLink() = default;
+    virtual ~Clockable() = default;
 
     /**
      * Called under interrupt for accurate processing of hardware links, adjusting the
      * status word and LinkRegisters as needed.
      */
     virtual void clock() = 0;
+};
+
+class AsyncLink {
+public:
+    virtual ~AsyncLink() = default;
 
     /**
      * What is the status of the link?
@@ -53,7 +60,6 @@ public:
      * @return The status word of the link, see ST_* bits defined in this header.
      */
     virtual WORD16 getStatusWord() = 0;
-
 };
 
-#endif // _ASYNCLINK_H
+#endif // ASYNCLINK_H

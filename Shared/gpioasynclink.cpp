@@ -12,6 +12,8 @@
 //
 //------------------------------------------------------------------------------
 
+#include <cctype>
+
 #include "gpioasynclink.h"
 #include "sync.h"
 #include "constants.h"
@@ -304,9 +306,6 @@ GPIOAsyncLink::~GPIOAsyncLink() {
 constexpr long long G_SYNC_POLL_DELAY_US = 100;
 
 BYTE8 GPIOAsyncLink::readByte() {
-    if (bDebug) {
-        logDebugF("Link %d R #%08X 00 (.)", myLinkNo, myReadSequence++);
-    }
     readDataAsync(0x00000000, &m_byte_buffer, 1);
     // TODO replace with a semaphore
     while (readComplete() == NotProcess_p) {
@@ -317,12 +316,15 @@ BYTE8 GPIOAsyncLink::readByte() {
         sleep_us(G_SYNC_POLL_DELAY_US);
 #endif
     }
+    if (bDebug) {
+        logDebugF("Link %d R #%08X %02X (%c)", myLinkNo, myReadSequence++, m_byte_buffer, isprint(m_byte_buffer) ? m_byte_buffer : '.');
+    }
     return m_byte_buffer;
 }
 
 void GPIOAsyncLink::writeByte(BYTE8 buf) {
     if (bDebug) {
-        logDebugF("Link %d W #%08X 00 (.)", myLinkNo, myWriteSequence++);
+        logDebugF("Link %d W #%08X %02X (%c)", myLinkNo, myWriteSequence++, buf, isprint(buf) ? buf : '.');
     }
     m_byte_buffer = buf;
     if (!writeDataAsync(0x00000000, &m_byte_buffer, 1)) {
@@ -330,6 +332,7 @@ void GPIOAsyncLink::writeByte(BYTE8 buf) {
         return;
     }
     // TODO replace with a semaphore
+    logDebug("writeByte polling for completion");
     while (writeComplete() == NotProcess_p) {
 #ifdef DESKTOP
         std::this_thread::sleep_for(std::chrono::microseconds(G_SYNC_POLL_DELAY_US));
@@ -338,6 +341,7 @@ void GPIOAsyncLink::writeByte(BYTE8 buf) {
         sleep_us(G_SYNC_POLL_DELAY_US);
 #endif
     }
+    logDebug("writeByte now complete");
 }
 
 void GPIOAsyncLink::resetLink() {
@@ -345,7 +349,9 @@ void GPIOAsyncLink::resetLink() {
     MUTEX
     m_receive_registers.m_length = 0;
     m_send_registers.m_length = 0;
-    m_status_word = 0;
+    // Force any readComplete to exit with the workspace register (and reset ST_READ_COMPLETE).
+    m_status_word = ST_READ_COMPLETE; // and ST_WRITE_COMPLETE too?
+    // TODO Not sure about this, seems a bit side-effecting.
     m_sender->changeState(DataAckSenderState::IDLE);
     m_receiver->changeState(DataAckReceiverState::IDLE);
 }
@@ -361,7 +367,8 @@ bool GPIOAsyncLink::readAvailable() {
 
 bool GPIOAsyncLink::writeAvailable() {
     MUTEX
-    return (m_status_word & ST_SEND_COMPLETE) == 0;
+    return GPIOAsyncLink::queryReadyToSend();
+    // Used to be... return (m_status_word & ST_SEND_COMPLETE) == 0;
 }
 
 void GPIOAsyncLink::clock() {
@@ -377,7 +384,7 @@ WORD16 GPIOAsyncLink::getStatusWord() {
 }
 
 bool GPIOAsyncLink::writeDataAsync(WORD32 workspacePointer, BYTE8* dataPointer, WORD32 length) {
-    // logDebugF("Link %d sending %d bytes from initial address 0x%08x", myLinkNo, length, dataPointer);
+    logDebugF("Link %d sending %d bytes from initial address 0x%08x", myLinkNo, length, dataPointer);
     MUTEX
     m_status_word &= ~ST_SEND_COMPLETE;
     m_send_registers.m_workspace_pointer = workspacePointer;
@@ -393,7 +400,7 @@ WORD32 GPIOAsyncLink::writeComplete() {
         // logDebugF("Link %d writeComplete no", myLinkNo);
         return NotProcess_p;
     }
-    // logDebugF("Link %d writeComplete yes", myLinkNo);
+    logDebugF("************* Link %d writeComplete yes *****************", myLinkNo);
     WORD32 w = m_send_registers.m_workspace_pointer;
     m_send_registers.m_workspace_pointer = NotProcess_p;
     m_send_registers.m_length = 0;
@@ -413,16 +420,19 @@ void GPIOAsyncLink::readDataAsync(WORD32 workspacePointer, BYTE8* dataPointer, W
 }
 
 WORD32 GPIOAsyncLink::readComplete() {
-    // logDebugF("Link %d readComplete?", myLinkNo);
+    logDebugF("Link %d readComplete?", myLinkNo);
     MUTEX
     if ((m_status_word & ST_READ_COMPLETE) == 0) {
+        logDebugF("Link %d Not complete", myLinkNo);
         return NotProcess_p;
     }
     WORD32 w = m_receive_registers.m_workspace_pointer;
     m_receive_registers.m_workspace_pointer = NotProcess_p;
     m_receive_registers.m_length = 0;
     m_receive_registers.m_data_pointer = nullptr;
-    m_status_word &= ~(ST_READ_COMPLETE | ST_READ_DATA_AVAILABLE);
+    // m_status_word &= ~(ST_READ_COMPLETE | ST_READ_DATA_AVAILABLE);
+    m_status_word &= ~(ST_READ_COMPLETE);
+    logDebugF("Link %d completing with process 0x%08X", myLinkNo, w);
     return w;
 }
 
@@ -450,7 +460,7 @@ void GPIOAsyncLink::setReadyToSend() {
     m_send_registers.m_data_pointer++;
     m_send_registers.m_length--;
     if (m_send_registers.m_length == 0) {
-        // logDebugF("Link %d sending complete", myLinkNo);
+        logDebugF("Link %d sending complete", myLinkNo);
         m_status_word |= ST_SEND_COMPLETE;
         // TODO the emulator will sense ST_SEND_COMPLETE and reschedule the process at m_send_registers->workspacePointer.
     } else {
@@ -499,30 +509,32 @@ void GPIOAsyncLink::overrunError() {
 
 // Precondition: called under MUTEX
 void GPIOAsyncLink::dataReceived(BYTE8 data) {
-    // logDebugF("Link %d data received 0b%s", myLinkNo, byte_to_binary(data));
-    //MUTEX
+    logDebugF("Link %d data received 0b%s", myLinkNo, byte_to_binary(data));
     if (m_receive_registers.m_data_pointer == nullptr) {
-        // logWarnF("Link %d received data with no buffer", myLinkNo);
+        logWarnF("Link %d received data with no buffer", myLinkNo);
         return;
     }
     m_status_word |= (ST_READ_DATA_AVAILABLE | data);
-    // logDebugF("Link %d status word 0b%s", myLinkNo, word_to_binary(m_status_word));
+    logDebugF("Link %d setting data and ST_READ_DATA_AVAILABLE", myLinkNo);
+    logDebugF("Link %d status word 0b%s", myLinkNo, word_to_binary(m_status_word));
     BYTE8* ptr = m_receive_registers.m_data_pointer;
-    // logDebugF("Link %d receiving at address 0x%08x", myLinkNo, ptr);
+    logDebugF("Link %d receiving at address 0x%08x", myLinkNo, ptr);
     *ptr = data;
-    // logDebugF("Link %d stored byte", myLinkNo);
+    logDebugF("Link %d stored byte and setting ST_READ_DATA_AVAILABLE", myLinkNo);
     m_receive_registers.m_length--;
     m_receive_registers.m_data_pointer++;
     if (m_receive_registers.m_length == 0) {
-        // logDebugF("Link %d receiving complete", myLinkNo);
+        logDebugF("Link %d receiving complete", myLinkNo);
         m_status_word |= ST_READ_COMPLETE;
         // readComplete() will allow the emulator to see ST_READ_COMPLETE and reschedule the process at
         // m_receive_registers->m_workspace_pointer.
     }
+    logDebugF("Link %d clearing ST_READ_DATA_AVAILABLE", myLinkNo);
     m_status_word &= ~ST_READ_DATA_AVAILABLE; // If there's no callback, this should not be cleared?
 }
 
 bool GPIOAsyncLink::queryReadDataAvailable() {
+    logDebugF("Link %d ST_READ_DATA_AVAILABLE is %d", myLinkNo,  m_status_word & ST_READ_DATA_AVAILABLE);
     return m_status_word & ST_READ_DATA_AVAILABLE;
 }
 
@@ -537,6 +549,7 @@ bool GPIOAsyncLink::_queryReadDataAvailable() {
 void GPIOAsyncLink::clearReadDataAvailable() {
     // logDebugF("Link %d data NOT available", myLinkNo);
     //MUTEX
+    logDebugF("Link %d clearing ST_READ_DATA_AVAILABLE", myLinkNo);
     m_status_word &= ~ST_READ_DATA_AVAILABLE;
 }
 
@@ -693,12 +706,12 @@ void DataAckSender::clock() {
 #endif
             m_sampleCount ++;
             if (m_sampleCount == 16) {
-                // logDebugF("Link %d Finished sending bit %d for 16 samples", m_linkNo, one);
+                logDebugF("Link %d Finished sending bit %d for 16 samples", m_linkNo, one);
                 m_sampleCount = 0;
                 m_bits--;
                 m_data >>= 1;
                 if (m_bits == 0) {
-                    // logDebugF("Link %d End of transmission, state is %s, ack_rxed %d data_enqueued %d send_ack %d", m_linkNo, DataAckSenderStateToString(m_state), m_ack_rxed, m_data_enqueued, m_send_ack);
+                    logDebugF("Link %d End of transmission, state is %s, ack_rxed %d data_enqueued %d send_ack %d", m_linkNo, DataAckSenderStateToString(m_state), m_ack_rxed, m_data_enqueued, m_send_ack);
                     if (m_state == DataAckSenderState::SENDING_ACK) {
                         if (m_data_enqueued) {
                             m_ack_rxed = false;
@@ -934,7 +947,7 @@ void DataAckReceiver::unregisterReceiverToLink() const {
 }
 
 void DataAckReceiver::changeState(const DataAckReceiverState newState) {
-    // logDebugF("Link %d Receiver changing state from %s to %s", m_linkNo, DataAckReceiverStateToString(m_state), DataAckReceiverStateToString(newState));
+    logDebugF("Link %d Receiver changing state from %s to %s", m_linkNo, DataAckReceiverStateToString(m_state), DataAckReceiverStateToString(newState));
     m_state = newState;
 }
 

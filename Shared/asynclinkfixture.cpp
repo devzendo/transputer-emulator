@@ -13,7 +13,7 @@
 //------------------------------------------------------------------------------
 
 #include "asynclinkfixture.h"
-
+#include "log.h"
 CrosswiredPin::CrosswiredPin(const char *side, std::atomic_bool *rxstate, std::atomic_bool *txstate) {
     m_side = *side;
     m_rxstate = rxstate;
@@ -21,8 +21,9 @@ CrosswiredPin::CrosswiredPin(const char *side, std::atomic_bool *rxstate, std::a
 }
 
 bool CrosswiredPin::getRx() {
+    // logDebug("CrosswiredPin: getRx load...");
     const bool retval = m_rxstate->load();
-    //logDebugF("RX %c pin state is %d", m_side, retval);
+    // logDebugF("RX %c pin state is %d", m_side, retval);
     return retval;
 }
 
@@ -44,28 +45,25 @@ TxRxPin & CrosswiredTxRxPinPair::pairB() {
 /**
  * A MultipleAsyncLinkClocker clocks all the Links it is given.
  */
-MultipleAsyncLinkClocker::MultipleAsyncLinkClocker() : TickHandler() {
+MultipleClockableClocker::MultipleClockableClocker() : TickHandler() {
 
 }
 
-void MultipleAsyncLinkClocker::addLink(AsyncLink* link) {
-    m_links.push_back(link);
+void MultipleClockableClocker::addClockable(Clockable* clockable) {
+    m_clockables.push_back(clockable);
 }
 
 // static bool tickled = false;
 // static int tick_count = 0;
 // TickHandler
-void MultipleAsyncLinkClocker::tick() {
+void MultipleClockableClocker::tick() {
     // if (tick_count++ == 1024) {
     //     tick_count = 0;
     //     gpio_put(PICO_DEFAULT_LED_PIN, tickled);
     //     tickled = ! tickled;
     // }
 
-    //logDebug("Tick - >> clock the Links");
-    for (AsyncLink* link: m_links) {
-        // logDebugF("Tick - link at 0x%x", link);
-        link->clock();
+    for (Clockable* clockable: m_clockables) {
+        clockable->clock();
     }
-    //logDebug("Tick - << clock the Links");
 }
