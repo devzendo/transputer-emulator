@@ -18,7 +18,6 @@
 
 SystemLink::SystemLink(int linkNo, bool isServer) : Link(linkNo, isServer) {
     logDebugF("Constructing system link %d for %s", myLinkNo, isServer ? "server" : "cpu client");
-
 }
 
 SystemLink::~SystemLink() {
