@@ -372,15 +372,13 @@ void GPIOAsyncLink::writeByte(BYTE8 buf) {
 }
 
 void GPIOAsyncLink::resetLink() {
-    // TODO bit of a bodge for now
     logInfoF("Reset link %d", myLinkNo);
     MUTEX
     m_receive_registers.m_length = 0;
     m_send_registers.m_length = 0;
     // Force any readComplete/writeComplete to exit with the workspace register (and reset
-    // ST_READ_COMPLETE/ST_SEND_COMPLETE).
-    m_status_word = ST_READ_COMPLETE | ST_SEND_COMPLETE;
-    // TODO Not sure about this, seems a bit side-effecting.
+    // ST_RESET).
+    m_status_word |= ST_RESET;
     m_sender->changeState(DataAckSenderState::IDLE);
     m_receiver->changeState(DataAckReceiverState::IDLE);
 }
@@ -425,16 +423,20 @@ bool GPIOAsyncLink::writeDataAsync(WORD32 workspacePointer, BYTE8* dataPointer, 
 WORD32 GPIOAsyncLink::writeComplete() {
     // logDebugF("Link %d writeComplete?", myLinkNo);
     MUTEX
-    if ((m_status_word & ST_SEND_COMPLETE) == 0) {
+    // We haven't completed if the send isn't complete, and we haven't been reset.
+    if ((m_status_word & (ST_SEND_COMPLETE | ST_RESET)) == 0) {
         // logDebugF("Link %d writeComplete no", myLinkNo);
         return NotProcess_p;
     }
-    logDebugF("************* Link %d writeComplete yes *****************", myLinkNo);
+    if (m_status_word & ST_RESET) {
+        logDebugF("Link %d reset detected in writeComplete", myLinkNo);
+    }
     WORD32 w = m_send_registers.m_workspace_pointer;
     m_send_registers.m_workspace_pointer = NotProcess_p;
     m_send_registers.m_length = 0;
     m_send_registers.m_data_pointer = nullptr;
-    m_status_word &= ~ST_SEND_COMPLETE;
+    m_status_word &= ~(ST_SEND_COMPLETE | ST_RESET);
+    logDebugF("Link %d write completing with process 0x%08X", myLinkNo, w);
     return w;
 }
 
@@ -456,19 +458,22 @@ void GPIOAsyncLink::readDataAsync(WORD32 workspacePointer, BYTE8* dataPointer, W
 }
 
 WORD32 GPIOAsyncLink::readComplete() {
-    logDebugF("Link %d readComplete?", myLinkNo);
+    // logDebugF("Link %d readComplete?", myLinkNo);
     MUTEX
-    if ((m_status_word & ST_READ_COMPLETE) == 0) {
-        logDebugF("Link %d Not complete", myLinkNo);
+    // We haven't completed if the read isn't complete, and we haven't been reset.
+    if ((m_status_word & (ST_READ_COMPLETE | ST_RESET)) == 0) {
+        // logDebugF("Link %d Not complete", myLinkNo);
         return NotProcess_p;
+    }
+    if (m_status_word & ST_RESET) {
+        logDebugF("Link %d reset detected in readComplete", myLinkNo);
     }
     WORD32 w = m_receive_registers.m_workspace_pointer;
     m_receive_registers.m_workspace_pointer = NotProcess_p;
     m_receive_registers.m_length = 0;
     m_receive_registers.m_data_pointer = nullptr;
-    // m_status_word &= ~(ST_READ_COMPLETE | ST_READ_DATA_AVAILABLE);
-    m_status_word &= ~(ST_READ_COMPLETE);
-    logDebugF("Link %d completing with process 0x%08X", myLinkNo, w);
+    m_status_word &= ~(ST_READ_COMPLETE | ST_RESET);
+    logDebugF("Link %d read completing with process 0x%08X", myLinkNo, w);
     return w;
 }
 

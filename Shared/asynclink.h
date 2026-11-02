@@ -19,7 +19,7 @@
 /*
  * Status word bits.
  * 15       | 14       | 13        | 12        | 11        | 10        | 9         | 8
- * FRAMING  | OVERRUN  | READ DATA | READY TO  | DATA SENT | READ      | SEND      | ......... |
+ * FRAMING  | OVERRUN  | READ DATA | READY TO  | DATA SENT | READ      | SEND      | RESET     |
  *          |          | AVAILABLE | SEND      | NOT ACKED | COMPLETE  | COMPLETE  |           |
  *          |          |           |           | (TIMEOUT) |           |           |           |
  * ---------------------------------------------------------------------------------------------
@@ -35,6 +35,7 @@ const WORD16 ST_READY_TO_SEND = 0x1000;
 const WORD16 ST_DATA_SENT_NOT_ACKED = 0x0800;
 const WORD16 ST_READ_COMPLETE = 0x0400;
 const WORD16 ST_SEND_COMPLETE = 0x0200;
+const WORD16 ST_RESET = 0x0100;
 const WORD16 ST_DATA_MASK = 0x00FF;
 
 class Clockable {
