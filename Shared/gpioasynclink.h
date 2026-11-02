@@ -347,6 +347,20 @@ private:
 };
 
 
+/**
+ * A MultipleClockableClocker clocks all the Clockables it is given. Used by test code and link harnesses.
+ */
+class MultipleClockableClocker: public TickHandler {
+public:
+    MultipleClockableClocker();
+    ~MultipleClockableClocker() override = default;
+    void addClockable(Clockable* clockable);
+    // TickHandler
+    void tick() override;
+private:
+    std::vector<Clockable*> m_clockables;
+};
+
 /* Highest level abstraction: GPIOAsyncLink uses the DataAckSender & DataAckReceiver state
  * machines, and an OversampledTxRxPin to handle the send/receive over an underlying TxRxPin.
  */

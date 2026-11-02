@@ -52,18 +52,4 @@ private:
     std::atomic_bool bPin{false};
 };
 
-/**
- * A MultipleClockableClocker clocks all the Clockables it is given. Used by test code.
- */
-class MultipleClockableClocker: public TickHandler {
-public:
-    MultipleClockableClocker();
-    ~MultipleClockableClocker() override = default;
-    void addClockable(Clockable* clockable);
-    // TickHandler
-    void tick() override;
-private:
-    std::vector<Clockable*> m_clockables;
-};
-
 #endif // ASYNCLINKFIXTURE_H

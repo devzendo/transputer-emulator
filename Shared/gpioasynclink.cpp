@@ -252,6 +252,33 @@ AsyncLinkClock::~AsyncLinkClock() {
 }
 
 
+
+/**
+ * A MultipleAsyncLinkClocker clocks all the Links it is given.
+ */
+MultipleClockableClocker::MultipleClockableClocker() : TickHandler() {
+
+}
+
+void MultipleClockableClocker::addClockable(Clockable* clockable) {
+    m_clockables.push_back(clockable);
+}
+
+// static bool tickled = false;
+// static int tick_count = 0;
+// TickHandler
+void MultipleClockableClocker::tick() {
+    // if (tick_count++ == 1024) {
+    //     tick_count = 0;
+    //     gpio_put(PICO_DEFAULT_LED_PIN, tickled);
+    //     tickled = ! tickled;
+    // }
+
+    for (Clockable* clockable: m_clockables) {
+        clockable->clock();
+    }
+}
+
 // Only one byte needed to buffer in the receiving link (DataAckReceiver).
 // Ack can be sent as soon as reception of a data byte starts, if there's room to buffer another - need state to store
 // whether an ack needs sending (start bits of data received). Need state to indicate whether the data buffer is full

@@ -64,7 +64,7 @@ bool parse_hex_byte(char *hexbytestring, BYTE8* ptr) {
     return true;
 }
 
-void send_byte(AsyncLink *link, unsigned char byte_to_send) {
+void send_byte(GPIOAsyncLink *link, unsigned char byte_to_send) {
     BYTE8 a1 = byte_to_send;
     BYTE8 a2;
     // The byte will be sent, acknowledged and read by the picolinkreflect, which will then send the byte back.
@@ -109,7 +109,7 @@ void send_byte(AsyncLink *link, unsigned char byte_to_send) {
     }
 }
 
-void send_kilobyte(AsyncLink *link) {
+void send_kilobyte(GPIOAsyncLink *link) {
     BYTE8 a2;
 
     // The data will be sent, acknowledged and read by the picolinkreflect, which will then send the data back.
@@ -258,9 +258,9 @@ static void toggle_led() {
     logInfo("Initialising Link");
     linkA->initialise();
 
-    logInfo("Initialising MultipleAsyncLinkClocker");
-    MultipleAsyncLinkClocker handler;
-    handler.addLink(linkA);
+    logInfo("Initialising MultipleClockableClocker");
+    MultipleClockableClocker handler;
+    handler.addClockable(linkA);
 
     logInfo("Initialising AsyncLinkClock");
     AsyncLinkClock clock(CLOCK_PIN, handler);

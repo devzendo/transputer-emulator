@@ -40,30 +40,3 @@ TxRxPin & CrosswiredTxRxPinPair::pairA() {
 TxRxPin & CrosswiredTxRxPinPair::pairB() {
     return reinterpret_cast<TxRxPin&>(m_bPinEnd);
 };
-
-
-/**
- * A MultipleAsyncLinkClocker clocks all the Links it is given.
- */
-MultipleClockableClocker::MultipleClockableClocker() : TickHandler() {
-
-}
-
-void MultipleClockableClocker::addClockable(Clockable* clockable) {
-    m_clockables.push_back(clockable);
-}
-
-// static bool tickled = false;
-// static int tick_count = 0;
-// TickHandler
-void MultipleClockableClocker::tick() {
-    // if (tick_count++ == 1024) {
-    //     tick_count = 0;
-    //     gpio_put(PICO_DEFAULT_LED_PIN, tickled);
-    //     tickled = ! tickled;
-    // }
-
-    for (Clockable* clockable: m_clockables) {
-        clockable->clock();
-    }
-}
