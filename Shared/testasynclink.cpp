@@ -307,9 +307,9 @@ TEST_F(AsyncLinkTest, DataSentAsyncIsntReceivedFullyByOtherLinkIfNotListening) {
     // But with no outstanding read, it won't have the data and ST_READ_DATA_AVAILABLE set in the
     // status word.
     logDebugF("linkB final status word 0x%08x", linkB->getStatusWord());
-    EXPECT_EQ(linkB->getStatusWord(), ST_READY_TO_SEND);
-    // ST_READ_DATA_AVAILABLE would NOT be set, and you'll see a
-    // 'WARN  Link 1 received data with no buffer' message.
+    EXPECT_EQ(linkB->getStatusWord(), ST_READY_TO_SEND | ST_READ_DATA_AVAILABLE | 'a');
+    // ST_READ_DATA_AVAILABLE IS set, you'll see a 'WARN  Link 1 received data with no buffer' message, and a
+    // subsequent read will return the already-read (and acknowledged) byte 'a' immediately.
 }
 
 TEST_F(AsyncLinkTest, BulkTransfer) {

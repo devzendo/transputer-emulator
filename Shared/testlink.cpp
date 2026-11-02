@@ -362,7 +362,7 @@ TEST_P(LinkPairTest, InitialConditions) {
 }
 
 /*
- * Too racy
+ * Too racy - TODO but need this.
 TEST_P(LinkPairTest, WriteAvailabilityGoingFalseTransition) {
     logDebug("WriteAvailabilityGoingFalseTransition start");
     m_thread = new std::thread([this] {
@@ -402,26 +402,19 @@ TEST_P(LinkPairTest, WriteAvailabilityGoingTrueTransition) {
 }
 */
 
-/*
- * Too racy
+// If data is received with an empty receive buffer, this should be signalled via
+// readAvailable(). A subsequent read of a byte would return that.
 TEST_P(LinkPairTest, ReadAvailabilityGoingTrueTransition) {
-logDebugF("Reading on link %d", cpuLink->getLinkNo());
-    // Just schedule a read so there's a buffer set in the link.
-    char readBuf[]="x";
-    cpuLink->readDataAsync(0xCAFEBABE, reinterpret_cast<BYTE8 *>(&readBuf[0]), 1);
-    m_thread = new std::thread([this] {
-        logDebug("Background thread writing byte");
-        serverLink->writeByte(69);
-        logDebug("Background thread written byte");
-        finished();
-        logDebug("Background thread finished");
-    });
-    std::this_thread::sleep_for(std::chrono::milliseconds(11)); // read data received, but not complete yet
+    EXPECT_EQ(cpuLink->readAvailable(), false); // reiterate for clarity
+    logDebug("ReadAvailabilityGoingTrueTransition start, writing byte");
+    serverLink->writeByte(69);
     logDebug("Checking read availability");
     EXPECT_EQ(cpuLink->readAvailable(), true);
-    waitForFinished();
+
+    logDebug("Reading from link, should not block as there's data");
+    EXPECT_EQ(cpuLink->readByte(), 69);
+    EXPECT_EQ(cpuLink->readAvailable(), false); // now we're done.
 }
-*/
 
 /*
  * Too racy
@@ -525,11 +518,13 @@ TEST_P(LinkPairTest, WriteByteAndReadThreadedTortureTest) {
 
 TEST_P(LinkPairTest, ResetLinkWhenReadingTest) {
     logDebug("ResetLinkWhenReadingTest start");
-    auto *a_thread = new std::thread([this] {
+    std::atomic_bool reset_ok { false };
+    auto *a_thread = new std::thread([this, &reset_ok] {
         logDebug("Reading from link");
         EXPECT_EQ(cpuLink->readByte(), 0);
         // The resetLink exits the readByte with a zero return.
-        logDebug("Link read finished - this should be observed");
+        logDebug("Link read finished - ie reset");
+        reset_ok.store(true);
     });
     logDebug("Waiting a little before resetting link");
     std::this_thread::sleep_for(std::chrono::milliseconds(10));
@@ -539,20 +534,21 @@ TEST_P(LinkPairTest, ResetLinkWhenReadingTest) {
     a_thread->join();
     logDebug("Thread joined");
     delete a_thread;
+    EXPECT_EQ(reset_ok.load(), true);
     logDebug("ResetLinkWhenReadingTest end");
 }
 
 TEST_P(LinkPairTest, ResetLinkWhenWritingTest) {
     logDebug("ResetLinkWhenWritingTest start");
-    // Fill the link register so the 'real' write stalls
-    cpuLink->writeByte(42);
-
-    std::thread *a_thread = nullptr;
-    a_thread = new std::thread([this] {
-        logDebug("Writing to link");
-        cpuLink->writeByte(69);
+    std::atomic_bool reset_ok { false };
+    auto *a_thread = new std::thread([this, &reset_ok] {
+        logDebug("Writing first byte to link (it'll get acked, so read buffer will be full, this write will finish)");
+        cpuLink->writeByte(1);
+        logDebug("Writing second byte to link (read buffer full with 1, and not retrieved; write should block)");
+        cpuLink->writeByte(2);
         // The resetLink exits the writeByte with a zero return.
-        logDebug("Link write finished - this should be observed");
+        logDebug("Second link write finished (ie reset)");
+        reset_ok.store(true);
     });
     logDebug("Waiting a little before resetting link");
     std::this_thread::sleep_for(std::chrono::milliseconds(500));
@@ -562,6 +558,7 @@ TEST_P(LinkPairTest, ResetLinkWhenWritingTest) {
     a_thread->join();
     logDebug("Thread joined");
     delete a_thread;
+    EXPECT_EQ(reset_ok.load(), true);
     logDebug("ResetLinkWhenWritingTest end");
 }
 

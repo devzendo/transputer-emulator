@@ -409,6 +409,9 @@ private:
     void clearReadDataAvailable() override;
     // ReSharper restore CppOverrideWithDifferentVisibility
 
+    // Common functions
+    void store_received_byte_in_buffer(BYTE8 data);
+
 #ifdef DESKTOP
     // Mutex-acquiring methods ONLY FOR TESTS (which only run on DESKTOP builds). The FRIEND_TEST below restricts what
     // can call any of these private methods - but for tests, only the mutex-acquiring variants below must be used.

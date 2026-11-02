@@ -373,11 +373,13 @@ void GPIOAsyncLink::writeByte(BYTE8 buf) {
 
 void GPIOAsyncLink::resetLink() {
     // TODO bit of a bodge for now
+    logInfoF("Reset link %d", myLinkNo);
     MUTEX
     m_receive_registers.m_length = 0;
     m_send_registers.m_length = 0;
-    // Force any readComplete to exit with the workspace register (and reset ST_READ_COMPLETE).
-    m_status_word = ST_READ_COMPLETE; // and ST_WRITE_COMPLETE too?
+    // Force any readComplete/writeComplete to exit with the workspace register (and reset
+    // ST_READ_COMPLETE/ST_SEND_COMPLETE).
+    m_status_word = ST_READ_COMPLETE | ST_SEND_COMPLETE;
     // TODO Not sure about this, seems a bit side-effecting.
     m_sender->changeState(DataAckSenderState::IDLE);
     m_receiver->changeState(DataAckReceiverState::IDLE);
@@ -444,6 +446,13 @@ void GPIOAsyncLink::readDataAsync(WORD32 workspacePointer, BYTE8* dataPointer, W
     m_receive_registers.m_data_pointer = dataPointer;
     m_receive_registers.m_length = length;
     // Any received data will get stored from m_data_pointer until m_length is received.
+
+    // Is there a received byte present already?
+    if (m_status_word & ST_READ_DATA_AVAILABLE) {
+        logDebugF("Link %d stored byte and setting ST_READ_DATA_AVAILABLE", myLinkNo);
+        store_received_byte_in_buffer(m_status_word & ST_DATA_MASK);
+        // Resets ST_READ_DATA_AVAILABLE, may set ST_READ_COMPLETE.
+    }
 }
 
 WORD32 GPIOAsyncLink::readComplete() {
@@ -535,19 +544,10 @@ void GPIOAsyncLink::overrunError() {
 }
 
 // Precondition: called under MUTEX
-void GPIOAsyncLink::dataReceived(BYTE8 data) {
-    logDebugF("Link %d data received 0b%s", myLinkNo, byte_to_binary(data));
-    if (m_receive_registers.m_data_pointer == nullptr) {
-        logWarnF("Link %d received data with no buffer", myLinkNo);
-        return;
-    }
-    m_status_word |= (ST_READ_DATA_AVAILABLE | data);
-    logDebugF("Link %d setting data and ST_READ_DATA_AVAILABLE", myLinkNo);
-    logDebugF("Link %d status word 0b%s", myLinkNo, word_to_binary(m_status_word));
-    BYTE8* ptr = m_receive_registers.m_data_pointer;
+void GPIOAsyncLink::store_received_byte_in_buffer(const BYTE8 data) {
+    BYTE8 * ptr = m_receive_registers.m_data_pointer;
     logDebugF("Link %d receiving at address 0x%08x", myLinkNo, ptr);
     *ptr = data;
-    logDebugF("Link %d stored byte and setting ST_READ_DATA_AVAILABLE", myLinkNo);
     m_receive_registers.m_length--;
     m_receive_registers.m_data_pointer++;
     if (m_receive_registers.m_length == 0) {
@@ -558,6 +558,44 @@ void GPIOAsyncLink::dataReceived(BYTE8 data) {
     }
     logDebugF("Link %d clearing ST_READ_DATA_AVAILABLE", myLinkNo);
     m_status_word &= ~ST_READ_DATA_AVAILABLE; // If there's no callback, this should not be cleared?
+}
+
+// Precondition: called under MUTEX
+void GPIOAsyncLink::dataReceived(BYTE8 data) {
+    logDebugF("Link %d data received 0b%s", myLinkNo, byte_to_binary(data));
+    // Not sure this is how a real Transputer Link would behave, can't find any clarification
+    // on it.
+    // This affects the acking of incoming data. If the buffer is free ('read data available'
+    // is false), then ack the incoming data, and when the byte and stop bit has been received,
+    // call this callback. I think that this should set 'read data available' even if there's
+    // no outstanding read (there's no m_data_pointer). A subsequent read of a byte should then
+    // use that existing byte.
+    // Should the ack be withheld if there's no outstanding read?
+    //
+    // Transputer Databook, 3rd edition:
+    // 1.4 Communication. 'An acknowledge can be transmitted as soon as reception of a data byte
+    // starts (if there is room to buffer another one).'
+    // 5.3 Bootstrapping from a ROM or from a link. 'Messages subsequently arriving on other
+    // links are not acknowledged until the transputer processor obeys a process which inputs
+    // from them.'
+    //
+    // C012 Link Adapter https://www.bitsavers.org/components/inmos/transputer/C012_Link_Adaptor.pdf
+    // 4. Links. "The acknowledge signifies both that a process was able to receive the acknowl-
+    // edged data byte and that the receiving link is able to receive another byte."
+    // and
+    // "When data is available from the link, the microprocessor reads the data packet from the
+    // data input register. This will reset the data present flag and cause the link adaptor to
+    // transmit an acknowledge packet out of the serial link output."
+    //
+    // Decided to set the RDA+data, but if there's no buffer, stop there.
+    logDebugF("Link %d setting data and ST_READ_DATA_AVAILABLE", myLinkNo);
+    m_status_word |= (ST_READ_DATA_AVAILABLE | data);
+    if (m_receive_registers.m_data_pointer == nullptr) {
+        logWarnF("Link %d received data with no buffer", myLinkNo);
+        return;
+    }
+    logDebugF("Link %d status word 0b%s", myLinkNo, word_to_binary(m_status_word));
+    store_received_byte_in_buffer(data);
 }
 
 bool GPIOAsyncLink::queryReadDataAvailable() {
