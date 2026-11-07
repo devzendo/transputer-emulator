@@ -211,7 +211,7 @@ void NamedPipeLink::writeByte(BYTE buf) {
 }
 
 void NamedPipeLink::resetLink(void) {
-	// TODO
+	// TODO purge / flush
     logDebugF("[resetLink] Reset link %d by %s", myLinkNo, bServer ? "server" : "cpu client");
 }
 

@@ -396,6 +396,7 @@ bool GPIOAsyncLink::writeAvailable() {
     MUTEX
     return GPIOAsyncLink::queryReadyToSend();
     // Used to be... return (m_status_word & ST_SEND_COMPLETE) == 0;
+    // Changed, as ST_SEND_COMPLETE indicates the end of the whole buffer, not just the current byte.
 }
 
 void GPIOAsyncLink::clock() {

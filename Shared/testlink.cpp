@@ -362,17 +362,30 @@ TEST_P(LinkPairTest, InitialConditions) {
 }
 
 /*
- * Too racy - TODO but need this.
+ * Still too racy; writeAvailable as used here is as per the GPIOAsyncLink, with a single byte of storage.
+ * SystemLink derived classes have OS buffers, which can be larger.
+ * Need to ensure that when writeComplete() returns with a process (when the buffer has been sent), that
+ * the SystemLink's write buffer is flushed. That's not the full guarantee I need, which is that the
+ * receiving link has acknowledged reception (which is what you'd get with GPIOAsyncLink). This will need
+ * some sort of ack back-channel.
 TEST_P(LinkPairTest, WriteAvailabilityGoingFalseTransition) {
+    EXPECT_EQ(cpuLink->writeAvailable(), true); // reiterate for clarity
     logDebug("WriteAvailabilityGoingFalseTransition start");
-    m_thread = new std::thread([this] {
+    std::atomic<bool> thread_working{false};
+    m_thread = new std::thread([this, &thread_working] {
         logDebug("WriteAvailabilityGoingFalseTransition writing in thread");
+        thread_working.store(true);
         cpuLink->writeByte(0x42); // even though in another thread, it blocks.. so will writeAvailable toggle back when it's finished?
+        // the reader will ack
         logDebug("WriteAvailabilityGoingFalseTransition finished write");
         finished();
     });
     logDebug("WriteAvailabilityGoingFalseTransition wait");
-    std::this_thread::sleep_for(std::chrono::milliseconds(4)); // should be enough to have the write still be going on
+    while (!thread_working.load()) {
+        std::this_thread::yield();
+    }
+    std::this_thread::sleep_for(std::chrono::milliseconds(1)); // should be enough to have the write start?
+
     logDebug("WriteAvailabilityGoingFalseTransition wait end - is write available?");
     // racy, but nothing's reading
     EXPECT_EQ(cpuLink->writeAvailable(), false); // fails on FIFO, presumably 'cos there's an OS buffer.

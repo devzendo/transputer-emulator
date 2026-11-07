@@ -144,7 +144,8 @@ public:
 	 */
 
 	/**
-	 * Has the write completed? Called by poll() and blocking writeByte().
+	 * Has the write completed? Called by poll() and blocking writeByte(). On an
+	 * async link, the receiver MUST have acknowledged the write of the final byte.
 	 * @return NotProcess_p if the write has not yet completed, or the address in the
 	 * Transputer's memory of a process to reschedule (and in this case, the write
 	 * registers are reset for the next write). Note that if you receive a workspace

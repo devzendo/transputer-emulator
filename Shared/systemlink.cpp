@@ -39,6 +39,7 @@ WORD32 SystemLink::writeComplete() {
     //   return NotProcess.p
     // writeByte(*writeLinkRegister.buffer++)
     // if --writeLinkRegister.length == 0
+    //   // Flush underlying mechanism
     //   WORD32 t = writeLinkRegister.workspace
     //   writeLinkRegister.workspace = NotProcess.p
     //   writeLinkRegister.buffer = nullptr

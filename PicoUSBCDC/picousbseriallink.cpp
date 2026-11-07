@@ -55,7 +55,7 @@ void PicoUSBSerialLink::writeByte(BYTE8 buf) {
 }
 
 void PicoUSBSerialLink::resetLink(void) {
-    // TODO
+    // TODO purge/flush
 }
 
 int PicoUSBSerialLink::getLinkType() {

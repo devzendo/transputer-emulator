@@ -217,6 +217,7 @@ void FIFOLink::writeByte(BYTE8 buf) {
 
 void FIFOLink::resetLink() {
     m_terminated.store(true);
+	// TODO flush read and write
 	// ???
 	close(myReadFD);
 	close(myWriteFD);
