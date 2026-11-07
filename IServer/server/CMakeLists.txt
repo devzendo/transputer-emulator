@@ -12,9 +12,13 @@ if(UNIX)
 endif(UNIX)
 
 add_library(parachuteiserver STATIC platform.cpp platform.h platformfactory.h platformfactory.cpp framecodec.cpp framecodec.h protocolhandler.cpp protocolhandler.h iservershared.cpp iservershared.h "${platform_sources}")
+# This inclusion of google tests' include path to the parachuteiserver library, iserver executable is so that test
+# code can be a friend of the link code and test internals correctly without needing to expose them publically.
+target_include_directories(parachuteiserver PRIVATE ${gtest_SOURCE_DIR}/include)
 
 add_executable(iserver iserver.cpp)
 target_link_libraries(iserver parachutedesktop parachuteiserver)
+target_include_directories(iserver PRIVATE ${gtest_SOURCE_DIR}/include)
 
 add_executable(testprotocolhandler testprotocolhandler.cpp framecodec.cpp framecodec.h protocolhandler.cpp protocolhandler.h memstreambuf.h ../../Shared/link.cpp platform.cpp)
 target_link_libraries(testprotocolhandler testfixtures gtest gmock_main parachutedesktop)
