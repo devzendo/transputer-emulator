@@ -33,6 +33,7 @@ public:
 
     bool readAvailable();
     bool writeAvailable();
+    void writeFlush() override;
 
 private:
     void connect(void);

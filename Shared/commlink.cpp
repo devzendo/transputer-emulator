@@ -184,3 +184,10 @@ bool CommLink::readAvailable() {
 bool CommLink::writeAvailable() {
     return true; // TODO AVAIL
 }
+
+void CommLink::writeFlush() {
+    if (FlushFileBuffers(myHandle) == 0) {
+        snprintf(myMsgbuf, COM_MSGBUF_SIZE, "Could not flush COM %s: (wrote %ld byte(s)) %s", myComName.c_str(), writelen, GetLastErrorStdStr().c_str());
+        logWarn(myMsgbuf);
+    }
+}

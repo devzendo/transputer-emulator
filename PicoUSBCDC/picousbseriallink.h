@@ -31,6 +31,7 @@ public:
 
     bool readAvailable();
     bool writeAvailable();
+    void writeFlush() override;
 
 private:
     WORD32 myWriteSequence, myReadSequence;

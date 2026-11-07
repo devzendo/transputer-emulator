@@ -138,3 +138,10 @@ bool TTYLink::readAvailable() {
 bool TTYLink::writeAvailable() {
     return true; // TODO AVAIL
 }
+
+void TTYLink::writeFlush() {
+    if (fsync(myFD) == -1) {
+        snprintf(myMsgbuf, TTY_MSGBUF_SIZE, "Link %d: Could not flush tty FD#%d: %s", myLinkNo, myFD, strerror(errno));
+        logWarn(myMsgbuf);
+    }
+}

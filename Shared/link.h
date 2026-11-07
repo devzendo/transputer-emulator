@@ -161,6 +161,13 @@ public:
 	 */
 	virtual WORD32 writeComplete() = 0;
 
+	/*
+	 * Internal method called by writeComplete() when the transfer has finished, to
+	 * provide a best-effort pretense of acknowledgement. Needs to be implemented in
+	 * each SystemLink derived class.
+	 */
+	virtual void writeFlush() = 0;
+
     /**
      * Has the read completed? Called by poll() and blocking readByte().
      * @return NotProcess_p if the read has not yet completed, or the address in the

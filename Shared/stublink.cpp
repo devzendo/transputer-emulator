@@ -29,6 +29,7 @@ void StubLink::initialise() {
     (void) myReadQueue.empty();
     (void) myWriteQueue.empty();
     myWriteSequence = myReadSequence = 0;
+    mWriteFlushCalled = false;
 }
 
 void StubLink::setWriteQueueSize(int size) {
@@ -97,4 +98,12 @@ bool StubLink::readAvailable() {
 
 bool StubLink::writeAvailable() {
     return wrq->size() < mWriteQueueSize;
+}
+
+void StubLink::writeFlush() {
+    mWriteFlushCalled = true;
+}
+
+bool StubLink::writeFlushCalled() {
+    return mWriteFlushCalled;
 }

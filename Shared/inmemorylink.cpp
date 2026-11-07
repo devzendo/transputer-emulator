@@ -149,6 +149,10 @@ bool InMemoryLink::writeAvailable() {
     return ! write_reg->storing();
 }
 
+void InMemoryLink::writeFlush() {
+    // No-op
+}
+
 //------------------------------------------------------------------------------
 
 InMemoryLinkFactory::InMemoryLinkFactory(int linkANo, int linkBNo) {

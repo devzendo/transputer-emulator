@@ -57,3 +57,7 @@ bool NullLink::readAvailable() {
 bool NullLink::writeAvailable() {
     return false; // Can never write anything to a null link.
 }
+
+void NullLink::writeFlush() {
+    // No-op.
+}

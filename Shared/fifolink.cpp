@@ -266,3 +266,10 @@ bool FIFOLink::writeAvailable() {
 	}
 	return avail;
 }
+
+void FIFOLink::writeFlush() {
+	if (fsync(myWriteFD) == -1) {
+		snprintf(myMsgbuf, FIFO_MSGBUF_SIZE, "Link %d: Could not flush write FIFO FD#%d: %s", myLinkNo, myWriteFD, strerror(errno));
+		logWarn(myMsgbuf);
+	}
+}

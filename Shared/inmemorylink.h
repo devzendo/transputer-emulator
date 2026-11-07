@@ -32,6 +32,7 @@ public:
 
     bool readAvailable() override;
     bool writeAvailable() override;
+    void writeFlush() override;
 
 private:
     void *m_write_state; // an internal object

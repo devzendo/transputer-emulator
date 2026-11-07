@@ -43,6 +43,9 @@ public:
 
     bool readAvailable() override;
     bool writeAvailable() override;
+    void writeFlush() override;
+    // Test methods for writeFlush
+    bool writeFlushCalled();
 
 private:
     // These are relative to the CPU, so it reads from the read queue.
@@ -55,6 +58,8 @@ private:
     std::queue<BYTE8> * wrq;
     // The write queue size (although wrq is an expandable queue, writeAvailable will track this size value)
     int mWriteQueueSize;
+    // Was writeFlush called?
+    bool mWriteFlushCalled;
 };
 
 #endif // STUBLINK_H

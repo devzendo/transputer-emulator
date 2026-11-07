@@ -132,3 +132,7 @@ bool TVSLink::readAvailable() {
 bool TVSLink::writeAvailable() {
     return true; // TODO AVAIL MAYBE use the stream eof?
 }
+
+void TVSLink::writeFlush() {
+    myTVSOutputStream.flush();
+}

@@ -32,6 +32,7 @@ public:
 
     bool readAvailable() override;
     bool writeAvailable() override;
+    void writeFlush() override;
 };
 
 #endif // _NULLLINK_H

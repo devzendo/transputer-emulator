@@ -69,3 +69,7 @@ bool PicoUSBSerialLink::readAvailable() {
 bool PicoUSBSerialLink::writeAvailable() {
     return true; // TODO
 }
+
+void PicoUSBSerialLink::writeFlush() {
+    usb_link_flush();
+}

@@ -377,6 +377,7 @@ public:
 
     bool readAvailable() override;
     bool writeAvailable() override;
+    void writeFlush() override;
     bool writeDataAsync(WORD32 workspacePointer, BYTE8* dataPointer, WORD32 length) override;
     WORD32 writeComplete() override;
     void readDataAsync(WORD32 workspacePointer, BYTE8* dataPointer, WORD32 length) override;

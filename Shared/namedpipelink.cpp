@@ -226,3 +226,10 @@ bool NamedPipeLink::readAvailable() {
 bool NamedPipeLink::writeAvailable() {
     return true; // TODO AVAIL
 }
+
+void NamedPipeLink::writeFlush() {
+    if (FlushFileBuffers(myPipeHandle) == 0) {
+        snprintf(myMsgbuf, COM_MSGBUF_SIZE, "Could not flush named pipe %s: %s", myPipeName, GetLastErrorStdStr().c_str());
+        logWarn(myMsgbuf);
+    }
+}

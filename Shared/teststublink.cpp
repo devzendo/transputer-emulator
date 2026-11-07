@@ -51,6 +51,7 @@ TEST_F(StubLinkTest, InitialConditions) {
     EXPECT_EQ(mStubLink->getLinkNo(), 0);
     EXPECT_EQ(mStubLink->readAvailable(), false);
     EXPECT_EQ(mStubLink->writeAvailable(), true);
+    EXPECT_EQ(mStubLink->writeFlushCalled(), false);
     logDebug("InitialConditions end");
 }
 
@@ -101,4 +102,11 @@ TEST_F(StubLinkTest, WriteAvailableTransitions) {
     EXPECT_EQ(mStubLink->getFirstWrittenByte(), 0x02); // now got space
     EXPECT_EQ(mStubLink->writeAvailable(), true);
     logDebug("WriteAvailableTransitions end");
+}
+
+TEST_F(StubLinkTest, WriteFlush) {
+    logDebug("WriteFlush start");
+    mStubLink->writeFlush();
+    EXPECT_EQ(mStubLink->writeFlushCalled(), true); // you can't reset this, it's just used to sense once.
+    logDebug("WriteFlush end");
 }

@@ -29,6 +29,7 @@ public:
 
     bool readAvailable() override;
     bool writeAvailable() override;
+    void writeFlush() override;
 
 private:
     static constexpr int TTY_MSGBUF_SIZE = 128;

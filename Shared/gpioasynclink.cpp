@@ -399,6 +399,11 @@ bool GPIOAsyncLink::writeAvailable() {
     // Changed, as ST_SEND_COMPLETE indicates the end of the whole buffer, not just the current byte.
 }
 
+void GPIOAsyncLink::writeFlush() {
+    // This is a no-op for this impl; this function is called when writeComplete(), and this will only return when
+    // the final ack has been acknowledged. This function is needed for SystemLinks.
+}
+
 void GPIOAsyncLink::clock() {
     // logDebugF("Clocking link %d", myLinkNo);
     MUTEX
