@@ -161,3 +161,61 @@ TEST_F(SystemLinkTest, AsyncWriteCompleteWritesFinalData) {
     EXPECT_EQ(mStubLink->writeComplete(), NotProcess_p);
     logDebug("AsyncWriteCompleteWritesFinalData end");
 }
+
+TEST_F(SystemLinkTest, AsyncReadNotCompleteWhenNoDataAvailable) {
+    logDebug("AsyncReadNotCompleteWhenNoDataAvailable start");
+    char readBuffer[] = "-----";
+    mStubLink->readDataAsync(0xDEADBEEF, reinterpret_cast<BYTE8 *>(&readBuffer[0]), 2);
+    // Ok the read is set up, and the read queue is empty for the readComplete()
+    EXPECT_EQ(mStubLink->readAvailable(), false); // readComplete will sense this and indicate 'not finished'.
+    EXPECT_EQ(mStubLink->readComplete(), NotProcess_p);
+    // Ensure nothing was read yet (will nothing's been written, so how could it?!).
+    EXPECT_EQ(readBuffer[0], '-');
+    logDebug("AsyncReadNotCompleteWhenNoDataAvailable end");
+}
+
+TEST_F(SystemLinkTest, AsyncReadNotCompleteOnNonFinalData) {
+    logDebug("AsyncReadNotCompleteOnNonFinalData start");
+    char readBuffer[] = "-----";
+    mStubLink->readDataAsync(0xDEADBEEF, reinterpret_cast<BYTE8 *>(&readBuffer[0]), 2);
+    std::vector<BYTE8> frameVector;
+    frameVector.push_back('A');
+    frameVector.push_back('B');
+    mStubLink->setReadableBytes(frameVector);
+    EXPECT_EQ(mStubLink->readAvailable(), true); // readComplete will sense this transfer
+    EXPECT_EQ(mStubLink->readComplete(), NotProcess_p);
+    EXPECT_EQ(readBuffer[0], 'A');
+    EXPECT_EQ(readBuffer[1], '-');
+    logDebug("AsyncReadNotCompleteOnNonFinalData end");
+}
+
+TEST_F(SystemLinkTest, AsyncReadNotCompleteOnFinalData) {
+    logDebug("AsyncReadNotCompleteOnFinalData start");
+    char readBuffer[] = "-----";
+    mStubLink->readDataAsync(0xDEADBEEF, reinterpret_cast<BYTE8 *>(&readBuffer[0]), 2);
+    std::vector<BYTE8> frameVector;
+    frameVector.push_back('A');
+    frameVector.push_back('B');
+    mStubLink->setReadableBytes(frameVector);
+
+    mStubLink->readComplete(); // Reads first byte 'A'.
+    EXPECT_EQ(readBuffer[0], 'A');
+    EXPECT_EQ(readBuffer[1], '-');
+
+    EXPECT_EQ(mStubLink->readAvailable(), true); // This is the final byte 'B'.
+    EXPECT_EQ(mStubLink->readComplete(), 0xDEADBEEF);
+    EXPECT_EQ(readBuffer[0], 'A');
+    EXPECT_EQ(readBuffer[1], 'B');
+
+    // And now the read is done...
+    EXPECT_EQ(mStubLink->readAvailable(), false);
+    EXPECT_EQ(mStubLink->readComplete(), NotProcess_p);
+    EXPECT_EQ(mStubLink->m_receive_registers.m_data_pointer, nullptr);
+    EXPECT_EQ(mStubLink->m_receive_registers.m_length, 0);
+    EXPECT_EQ(mStubLink->m_receive_registers.m_workspace_pointer, NotProcess_p);
+
+    // No call set up now, so 'no active call' is complete.
+    EXPECT_EQ(mStubLink->readComplete(), NotProcess_p);
+
+    logDebug("AsyncReadNotCompleteOnFinalData end");
+}

@@ -51,7 +51,7 @@ WORD32 SystemLink::writeComplete() {
     logDebugF("Link %d sending next data", myLinkNo);
     writeByte(*m_send_registers.m_data_pointer++);
     if (--m_send_registers.m_length == 0) {
-        logDebugF("Link %d is now complete", myLinkNo);
+        logDebugF("Link %d send is now complete", myLinkNo);
         // SystemLinks have no acknowledgement mechanism, as GPIOAsyncLinks do. Flushing is as good as it gets, in the
         // absence of some other mechanism - some encapsulation mechanism perhaps, so that when we get <end of frame>
         // we assume the remote end has acknowledged?
@@ -76,15 +76,18 @@ WORD32 SystemLink::writeComplete() {
 }
 
 WORD32 SystemLink::readComplete() {
-    return NotProcess_p; // TODO
-    // if readLinkRegister.workspace == NotProcess.p || !readAvailable() // could be optimised to return the number of bytes available
-    //   return NotProcess.p
-    // *readLinkRegister.buffer++ = readByte(); // similarly, block read/memory write?
-    // if --readLinkRegister.length == 0 // similarly, subtract amount read
-    //   WORD32 t = readLinkRegister.workspace
-    //   readLinkRegister.workspace = NotProcess.p
-    //   readLinkRegister.buffer = nullptr
-    //   return t // it'll get rescheduled
-    // return NotProcess.p
-
+    if (m_receive_registers.m_workspace_pointer == NotProcess_p || !readAvailable()) { // could be optimised to return the number of bytes available
+        return NotProcess_p;
+    }
+    logDebugF("Link %d receiving next data", myLinkNo);
+    *m_receive_registers.m_data_pointer++ = readByte(); // similarly, optimise a block read/memory write?
+    if (--m_receive_registers.m_length == 0) {
+        // similarly, subtract amount read
+        logDebugF("Link %d receive is now complete", myLinkNo);
+        const WORD32 t = m_receive_registers.m_workspace_pointer;
+        m_receive_registers.m_workspace_pointer = NotProcess_p;
+        m_receive_registers.m_data_pointer = nullptr;
+        return t; // it'll get rescheduled
+    }
+    return NotProcess_p;
 }
