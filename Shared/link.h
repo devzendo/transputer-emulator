@@ -94,7 +94,7 @@ public:
 
 	/**
 	 * Availability - is there a byte available to read, and is the write buffer empty to accept a byte for writing?
-	 * These routines are called by readComplete()/writeComplete(), for OperatingSystemLinks only.
+	 * These routines are called by readComplete()/writeComplete(), for SystemLinks only.
 	 */
 	virtual bool readAvailable() = 0;
 	virtual bool writeAvailable() = 0;

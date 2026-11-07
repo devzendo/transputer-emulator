@@ -31,7 +31,14 @@ public:
     // Used by tests to sense what has been written (by SUT calling writeByte) and
     // to inject data to be read (by SUT calling readbyte).
     std::vector<BYTE8> getWrittenBytes() const;
+    // Just get the first byte that's been written (by SUT calling writeByte), leave the rest in the queue.
+    // Precondition: you know that there /is/ a first byte, else you'll get 0x00.
+    BYTE8 getFirstWrittenByte() const;
     void setReadableBytes(const std::vector<unsigned char> &bytes) const;
+    // Used to set the write queue size as sensed by writeAvailable, and filled by writeByte, in order to test-drive
+    // the creation of SystemLinks' writeComplete(). The default write queue size if not set is 256.
+    void setWriteQueueSize(int size);
+
     int getLinkType() override;
 
     bool readAvailable() override;
@@ -46,6 +53,8 @@ private:
     // for the IServer.
     std::queue<BYTE8> * rdq;
     std::queue<BYTE8> * wrq;
+    // The write queue size (although wrq is an expandable queue, writeAvailable will track this size value)
+    int mWriteQueueSize;
 };
 
 #endif // STUBLINK_H

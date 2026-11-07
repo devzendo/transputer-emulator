@@ -20,7 +20,8 @@
 StubLink::StubLink(int linkNo, bool isServer) : SystemLink(linkNo, isServer),
                                                 // Now set up the references to the queues, using those that will be used appropriately
                                                 // for read/write given that the user is a server/CPU client.
-                                                rdq(isServer ? &myWriteQueue : &myReadQueue), wrq(isServer ? &myReadQueue : &myWriteQueue) {
+                                                rdq(isServer ? &myWriteQueue : &myReadQueue), wrq(isServer ? &myReadQueue : &myWriteQueue),
+                                                mWriteQueueSize(256) {
     logDebugF("Constructing stub link %d for %s", myLinkNo, isServer ? "server" : "cpu client");
 }
 
@@ -28,6 +29,10 @@ void StubLink::initialise() {
     (void) myReadQueue.empty();
     (void) myWriteQueue.empty();
     myWriteSequence = myReadSequence = 0;
+}
+
+void StubLink::setWriteQueueSize(int size) {
+    mWriteQueueSize = size;
 }
 
 StubLink::~StubLink() {
@@ -66,6 +71,16 @@ std::vector<BYTE8> StubLink::getWrittenBytes() const {
     return out;
 }
 
+BYTE8 StubLink::getFirstWrittenByte() const {
+    if (wrq->empty()) {
+        logWarn("You can't get the first written byte of an empty stublink write queue");
+        return 0x00;
+    }
+    BYTE8 data = wrq->front();
+    wrq->pop();
+    return data;
+}
+
 void StubLink::setReadableBytes(const std::vector<BYTE8>& bytes) const {
     for (const BYTE8 & byte : bytes) {
         rdq->push(byte);
@@ -77,9 +92,9 @@ int StubLink::getLinkType() {
 }
 
 bool StubLink::readAvailable() {
-    return true;
+    return !rdq->empty();
 }
 
 bool StubLink::writeAvailable() {
-    return true;
+    return wrq->size() < mWriteQueueSize;
 }
