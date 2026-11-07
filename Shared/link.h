@@ -36,6 +36,13 @@ const int LinkType_USBCDC = 8;
 const int LinkType_TTY = 9;
 const int LinkType_InMemory = 10;
 
+
+// So that the tests can have friend access to Link internals. And the tests only run on DESKTOP builds.
+#ifdef DESKTOP
+#include "gtest/gtest_prod.h"
+#endif
+
+
 /* Used for the read and write end of an asynchronous link; LinkRegisters are used by the link during transfers between
  * physical memory and by the CPU when a Link has finished performing requested I/O to record the workspace pointer of
  * the process that be rescheduled when the transfer has completed.
@@ -163,6 +170,11 @@ public:
      * pointer when you get it.
      */
     virtual WORD32 readComplete() = 0;
+
+    FRIEND_TEST(SystemLinkTest, InitialRegisterConditions);
+    FRIEND_TEST(SystemLinkTest, AsyncReadRegisterConditions);
+    FRIEND_TEST(SystemLinkTest, AsyncWriteRegisterConditions);
+    FRIEND_TEST(SystemLinkTest, AsyncWriteWhenFull);
 
 protected:
 	int myLinkNo;

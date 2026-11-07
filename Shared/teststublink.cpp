@@ -54,6 +54,13 @@ TEST_F(StubLinkTest, InitialConditions) {
     logDebug("InitialConditions end");
 }
 
+TEST_F(StubLinkTest, EmptyWriteQueue) {
+    logDebug("EmptyWriteQueue start");
+    mStubLink->setWriteQueueSize(0);
+    EXPECT_EQ(mStubLink->writeAvailable(), false);
+    logDebug("EmptyWriteQueue end");
+}
+
 TEST_F(StubLinkTest, ReadAvailableTransitions) {
     logDebug("ReadAvailableTransitions start");
     std::vector<BYTE8> frameVector;

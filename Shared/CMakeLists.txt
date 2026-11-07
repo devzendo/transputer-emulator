@@ -104,6 +104,10 @@ if(NOT(EMBEDDED))
   target_link_libraries(teststublink parachutedev gtest gmock_main parachutedesktop)
   add_test(NAME teststublink COMMAND teststublink)
 
+  add_executable(testsystemlink testsystemlink.cpp)
+  target_link_libraries(testsystemlink parachutedev gtest gmock_main parachutedesktop)
+  add_test(NAME testsystemlink COMMAND testsystemlink)
+
   add_executable(testmisc testmisc.cpp)
   target_link_libraries(testmisc parachutedev gtest gmock_main parachutedesktop)
   add_test(NAME testmisc COMMAND testmisc)
