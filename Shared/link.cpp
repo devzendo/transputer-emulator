@@ -21,6 +21,12 @@ Link::Link(int linkNo, bool isServer) {
 	bServer = isServer;
 	bDebug = false;
     myWriteSequence = myReadSequence = 0;
+	m_send_registers.m_workspace_pointer = NotProcess_p;
+	m_send_registers.m_length = 0;
+	m_send_registers.m_data_pointer = nullptr;;
+	m_receive_registers.m_workspace_pointer = NotProcess_p;
+	m_receive_registers.m_length = 0;
+	m_receive_registers.m_data_pointer = nullptr;;
 	logDebugF("Constructing %s link %d", bServer ? "server" : "CPU client", myLinkNo);
 }
 

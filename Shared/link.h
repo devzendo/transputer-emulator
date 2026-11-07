@@ -175,6 +175,7 @@ public:
     FRIEND_TEST(SystemLinkTest, AsyncReadRegisterConditions);
     FRIEND_TEST(SystemLinkTest, AsyncWriteRegisterConditions);
     FRIEND_TEST(SystemLinkTest, AsyncWriteWhenFull);
+    FRIEND_TEST(SystemLinkTest, AsyncWriteCompleteWritesFinalData);
 
 protected:
 	int myLinkNo;

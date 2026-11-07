@@ -20,6 +20,7 @@
 #include "inmemorylink.h"
 #include "gpioasynclink.h"
 #include "asynclinkfixture.h"
+#include "constants.h"
 #include "log.h"
 
 // Note that links are currently blocking, and synchronous. If more than PIPE_BUF bytes are written, write() will block
@@ -577,3 +578,33 @@ TEST_P(LinkPairTest, ResetLinkWhenWritingTest) {
 
 // TODO async read and write tests.
 // needs implementation of SystemLink read/writeAsync - needs finished availability api
+/*
+TEST_P(LinkPairTest, ReadAsyncReadComplete) {
+    logDebug("ReadAsyncReadComplete start");
+    m_thread = new std::thread([this] {
+        serverLink->writeWord(0x05060708);
+        finished();
+    });
+    logDebug("Scheduling a readDataAsync");
+    char readBuffer[] = "ABCDEF";
+    cpuLink->readDataAsync(0xCAFEBABE, reinterpret_cast<BYTE8 *>(&readBuffer[0]), 4);
+    logDebug("Waiting until readComplete");
+    WORD32 process;
+    do {
+        process = cpuLink->readComplete();
+        if (process == NotProcess_p) {
+            logDebug("Still waiting until readComplete");
+            std::this_thread::yield();
+        }
+    } while (process == NotProcess_p);
+    logDebug("Read is now complete");
+    EXPECT_EQ(process, 0xCAFEBABE);
+    EXPECT_EQ(readBuffer[0], 0x08);
+    EXPECT_EQ(readBuffer[1], 0x07);
+    EXPECT_EQ(readBuffer[2], 0x06);
+    EXPECT_EQ(readBuffer[3], 0x05);
+    EXPECT_EQ(readBuffer[4], 'E'); // no change
+    waitForFinished();
+    logDebug("ReadAsyncReadComplete end");
+}
+*/
