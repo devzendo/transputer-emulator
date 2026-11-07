@@ -608,3 +608,31 @@ TEST_P(LinkPairTest, ReadAsyncReadComplete) {
     logDebug("ReadAsyncReadComplete end");
 }
 */
+
+TEST_P(LinkPairTest, WriteAsyncWriteComplete) {
+    logDebug("WriteAsyncWriteComplete start");
+    std::atomic_uint32_t atomic_word{0};
+    m_thread = new std::thread([this, &atomic_word] {
+        const WORD32 word = serverLink->readWord();
+        logDebug("Finished reading word from server link");
+        atomic_word.store(word);
+        finished();
+    });
+    logDebug("Scheduling a writeDataAsync");
+    WORD32 writeWordBuffer = 0xDEADF00D;
+    cpuLink->writeDataAsync(0xCAFEBABE, reinterpret_cast<BYTE8 *>(&writeWordBuffer), 4);
+    logDebug("Waiting until writeComplete");
+    WORD32 process;
+    do {
+        process = cpuLink->writeComplete();
+        if (process == NotProcess_p) {
+            logDebug("Still waiting until writeComplete");
+            std::this_thread::yield();
+        }
+    } while (process == NotProcess_p);
+    logDebug("Write is now complete");
+    EXPECT_EQ(process, 0xCAFEBABE);
+    waitForFinished();
+    EXPECT_EQ(atomic_word.load(), 0xDEADF00D);
+    logDebug("WriteAsyncWriteComplete end");
+}
