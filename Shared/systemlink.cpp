@@ -62,7 +62,8 @@ WORD32 SystemLink::writeComplete() {
         // an occam channel. Concerning the final byte: the ack signifies that a process was able to receive the byte
         // and that the receiving link can accept another, and the sending link reschedules the sending process only
         // after the ack for the final byte has been received.
-        // TODO Flush underlying mechanism when there's a call to effect this.
+        writeFlush();
+
         const WORD32 t = m_send_registers.m_workspace_pointer;
         m_send_registers.m_workspace_pointer = NotProcess_p;
         m_send_registers.m_data_pointer = nullptr;

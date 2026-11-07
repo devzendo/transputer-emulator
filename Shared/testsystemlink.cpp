@@ -144,7 +144,9 @@ TEST_F(SystemLinkTest, AsyncWriteCompleteWritesFinalData) {
     char writeBuffer[] = "AB";
     mStubLink->writeDataAsync(0xDEADBEEF, reinterpret_cast<BYTE8 *>(&writeBuffer[0]), 2);
     mStubLink->writeComplete(); // writes first byte
+    EXPECT_EQ(mStubLink->writeFlushCalled(), false); // not yet
     EXPECT_EQ(mStubLink->writeComplete(), 0xDEADBEEF); // writes second, final byte and indicates finished
+    EXPECT_EQ(mStubLink->writeFlushCalled(), true); // puuuuuuushhhhhh!
     const std::vector<BYTE8> written = mStubLink->getWrittenBytes();
     EXPECT_EQ(written.size(), 2);
     EXPECT_EQ(written[0], writeBuffer[0]);
