@@ -187,7 +187,7 @@ bool CommLink::writeAvailable() {
 
 void CommLink::writeFlush() {
     if (FlushFileBuffers(myHandle) == 0) {
-        snprintf(myMsgbuf, COM_MSGBUF_SIZE, "Could not flush COM %s: (wrote %ld byte(s)) %s", myComName.c_str(), writelen, GetLastErrorStdStr().c_str());
+        snprintf(myMsgbuf, COM_MSGBUF_SIZE, "Could not flush COM %s: %s", myComName.c_str(), GetLastErrorStdStr().c_str());
         logWarn(myMsgbuf);
     }
 }
