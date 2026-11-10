@@ -54,6 +54,11 @@
     </distributionManagement>
 
     <properties>
+        <!--
+        <cmake.binary.dir>cmake-build-debug</cmake.binary.dir>
+        <cmake.build.type>Debug</cmake.build.type>
+        -->
+
         <cmake.binary.dir>cmake-build-release</cmake.binary.dir>
         <cmake.build.type>Release</cmake.build.type>
 

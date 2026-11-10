@@ -8,15 +8,13 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 # Get the build type from the CMAKE_BUILD_TYPE environment variable (that's passed in by Maven), and set this into the
 # CMake CMAKE_BUILD_TYPE variable.
 if(DEFINED ENV{CMAKE_BUILD_TYPE})
-    set(CMAKE_BUILD_TYPE $ENV{CMAKE_BUILD_TYPE})
+    set(CMAKE_BUILD_TYPE "$ENV{CMAKE_BUILD_TYPE}" CACHE STRING "Build type" FORCE)
     message(STATUS "The CMAKE_BUILD_TYPE is set to $ENV{CMAKE_BUILD_TYPE} via environment variable")
-
 endif()
 if(NOT CMAKE_BUILD_TYPE)
-    message(STATUS "Not set the CMAKE_BUILD_TYPE variable so defaulting to Release...")
-    set(CMAKE_BUILD_TYPE "Release" CACHE STRING "Choose Release or Debug" FORCE)
+    set(CMAKE_BUILD_TYPE "Release" CACHE STRING "Build type" FORCE)
+    message(STATUS "CMAKE_BUILD_TYPE not set, defaulting to Release")
 endif()
-
 set(CTEST_PARALLEL_LEVEL 1)
 
 # Most (maven-invoked) builds set NOCROSS=true, since an option must be given
@@ -59,21 +57,23 @@ endif()
 # VERSION is filtered into target/classes/version.cpp by using the maven resources plugin.
 add_compile_options(-DDEBUG)
 add_compile_options(-DVERSION="${VERSION}")
-if(WIN32)
-    if(${CMAKE_BUILD_TYPE} STREQUAL "Debug")
-        add_compile_options(/Od /Zi)
-    else()
-        add_compile_options(/O2)
-    endif()
-endif(WIN32)
-
-if(UNIX)
-    if(${CMAKE_BUILD_TYPE} STREQUAL "Debug")
-        add_compile_options(-O3 -g)
-    else()
-        add_compile_options(-O3)
-    endif()
-endif(UNIX)
+# These two sections used to attempt release/debug flag setting, but CMake will have its own sensible defaults for
+# these.
+#if(WIN32)
+#    if(${CMAKE_BUILD_TYPE} STREQUAL "Debug")
+#        add_compile_options(/Od /Zi)
+#    else()
+#        add_compile_options(/O2)
+#    endif()
+#endif(WIN32)
+#
+#if(UNIX)
+#    if(${CMAKE_BUILD_TYPE} STREQUAL "Debug")
+#        add_compile_options(-O3 -g)
+#    else()
+#        add_compile_options(-O3)
+#    endif()
+#endif(UNIX)
 
 # So you'll either have DESKTOP or EMBEDDED, and then Shared/platformdetection.h will give you
 # one of PLATFORM_OSX, PLATFORM_LINUX, PLATFORM_WINDOWS, PLATFORM_PICO.
