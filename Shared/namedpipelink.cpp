@@ -26,6 +26,7 @@
 
 #include "types.h"
 #include "constants.h"
+#include "misc.h"
 #include "namedpipelink.h"
 #include "log.h"
 
