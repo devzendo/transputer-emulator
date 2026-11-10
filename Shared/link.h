@@ -178,12 +178,14 @@ public:
      */
     virtual WORD32 readComplete() = 0;
 
+#ifdef DESKTOP
     FRIEND_TEST(SystemLinkTest, InitialRegisterConditions);
     FRIEND_TEST(SystemLinkTest, AsyncReadRegisterConditions);
     FRIEND_TEST(SystemLinkTest, AsyncWriteRegisterConditions);
     FRIEND_TEST(SystemLinkTest, AsyncWriteWhenFull);
     FRIEND_TEST(SystemLinkTest, AsyncWriteCompleteWritesFinalData);
     FRIEND_TEST(SystemLinkTest, AsyncReadNotCompleteOnFinalData);
+#endif
 
 protected:
 	int myLinkNo;
