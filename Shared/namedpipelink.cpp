@@ -38,8 +38,6 @@ NamedPipeLink::NamedPipeLink(int linkNo, bool isServer) : SystemLink(linkNo, isS
 }
 
 void NamedPipeLink::initialise(void) {
-	static char msgbuf[255];
-
     sprintf_s(myPipeName, NAME_LEN, "\\\\.\\pipe\\temulink%d", myLinkNo);
     logDebugF("[init] Named pipe link %d for %s called %s", myLinkNo, bServer ? "server" : "cpu client", myPipeName);
 
@@ -58,8 +56,8 @@ void NamedPipeLink::initialise(void) {
                 NULL);                    // default security attribute
 
         if (myPipeHandle == INVALID_HANDLE_VALUE) {
-            sprintf_s(msgbuf, "Could not create/open named pipe: Error %d", GetLastError());
-            throw std::runtime_error(msgbuf);
+            snprintf(myMsgbuf, NP_MSGBUF_SIZE, "Could not create/open named pipe: Error %d", GetLastError());
+            throw std::runtime_error(myMsgbuf);
         }
         logDebug("[init] Named pipe created");
     } else {
@@ -143,7 +141,6 @@ void NamedPipeLink::connect(void) {
 }
 
 BYTE NamedPipeLink::readByte() {
-    static char msgbuf[255];
     BYTE buf;
     DWORD cbBytesRead = 0, cbReplyBytes = 0, cbWritten = 0;
     BOOL fSuccess = FALSE;
@@ -164,14 +161,14 @@ BYTE NamedPipeLink::readByte() {
     {
         if (GetLastError() == ERROR_BROKEN_PIPE)
         {
-            sprintf_s(msgbuf, "Could not read a byte from named pipe %s: Client disconnected/Broken Pipe", myPipeName);
+            snprintf(myMsgbuf, NP_MSGBUF_SIZE, "Could not read a byte from named pipe %s: Client disconnected/Broken Pipe", myPipeName);
         }
         else
         {
-            sprintf_s(msgbuf, "Could not read a byte from named pipe %s: Miscellaneous error %d", myPipeName, GetLastError());
+            snprintf(myMsgbuf, NP_MSGBUF_SIZE, "Could not read a byte from named pipe %s: Miscellaneous error %d", myPipeName, GetLastError());
         }
-        logWarn(msgbuf);
-        throw std::runtime_error(msgbuf);
+        logWarn(myMsgbuf);
+        throw std::runtime_error(myMsgbuf);
     }
     if (bDebug) {
         logDebugF("Link %d R #%08X %02X (%c)", myLinkNo, myReadSequence++, buf, isprint(buf) ? buf : '.');
@@ -180,8 +177,6 @@ BYTE NamedPipeLink::readByte() {
 }
 
 void NamedPipeLink::writeByte(BYTE buf) {
-    static char msgbuf[255];
-
     BYTE bufstore = buf;
     DWORD cbBytesRead = 0, cbReplyBytes = 0, cbWritten = 0;
     BOOL fSuccess = FALSE;
@@ -204,9 +199,9 @@ void NamedPipeLink::writeByte(BYTE buf) {
 
     if (!fSuccess)
     {
-        sprintf_s(msgbuf, "Could not write a byte to named pipe %s: Miscellaneous error %d", myPipeName, GetLastError());
-        logWarn(msgbuf);
-        throw std::runtime_error(msgbuf);
+        snprintf(myMsgbuf, NP_MSGBUF_SIZE, "Could not write a byte to named pipe %s: Miscellaneous error %d", myPipeName, GetLastError());
+        logWarn(myMsgbuf);
+        throw std::runtime_error(myMsgbuf);
     }
 }
 
@@ -229,7 +224,7 @@ bool NamedPipeLink::writeAvailable() {
 
 void NamedPipeLink::writeFlush() {
     if (FlushFileBuffers(myPipeHandle) == 0) {
-        snprintf(myMsgbuf, COM_MSGBUF_SIZE, "Could not flush named pipe %s: %s", myPipeName, GetLastErrorStdStr().c_str());
+        snprintf(myMsgbuf, NP_MSGBUF_SIZE, "Could not flush named pipe %s: %s", myPipeName, GetLastErrorStdStr().c_str());
         logWarn(myMsgbuf);
     }
 }

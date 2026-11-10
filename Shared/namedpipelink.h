@@ -36,10 +36,12 @@ public:
     void writeFlush() override;
 
 private:
+    static constexpr int NP_MSGBUF_SIZE = 128;
     void connect(void);
     bool myConnected = false;
     HANDLE myPipeHandle;
     char myPipeName[NAME_LEN];
+	char myMsgbuf[NP_MSGBUF_SIZE]{};
 };
 
 #endif // _NAMEDPIPELINK_H
