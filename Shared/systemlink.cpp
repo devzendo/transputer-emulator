@@ -26,13 +26,13 @@ SystemLink::~SystemLink() {
 
 bool SystemLink::writeDataAsync(WORD32 workspacePointer, BYTE8* dataPointer, WORD32 length) {
     if (writeAvailable()) {
-        logDebugF("Link %d sending %d bytes from initial address 0x%08x for process 0x%08x", myLinkNo, length, dataPointer, workspacePointer);
+        logDebugF("Link %d sending %d bytes from initial address 0x%08X for process 0x%08X", myLinkNo, length, dataPointer, workspacePointer);
         m_send_registers.m_workspace_pointer = workspacePointer;
         m_send_registers.m_data_pointer = dataPointer;
         m_send_registers.m_length = length;
         return true;
     }
-    logWarnF("Link %d write not available - not sending %d bytes from initial address 0x%08x for process 0x%08x", myLinkNo, length, dataPointer, workspacePointer);
+    logWarnF("Link %d write not available - not sending %d bytes from initial address 0x%08X for process 0x%08X", myLinkNo, length, dataPointer, workspacePointer);
     return false;
 }
 

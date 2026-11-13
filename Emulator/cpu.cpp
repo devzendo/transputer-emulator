@@ -1085,7 +1085,7 @@ inline void CPU::interpret(void) {
 					}
 					break;
 
-				case O_in: { // input message
+				case O_in: {
 						// Input message of length Areg bytes from channel pointed
 						// to by Breg to memory at Creg. Takes 2w+18 iff
 						// communication proceeds, or 20 iff communication waits, and
@@ -1130,6 +1130,7 @@ inline void CPU::interpret(void) {
 										// Reset channel to unused
 										myMemory->setWord(Breg, NotProcess_p);
 										// Request a schedule of the process at WorkSpace
+										logDebugF("Requesting schedule of in's out process #%08X", WorkSpace);
 										ScheduleWdesc = WorkSpace;
 									}
 								} else {
@@ -1137,26 +1138,20 @@ inline void CPU::interpret(void) {
 								}
 								break;
 						}
-						// Now handle input from real links
+						// Now start input from real links
 						if (myLink != nullptr) {
-							// myLink->readDataAsync(Wdesc_WPtr(Wdesc), Creg, Areg);
-							// myLink->poll() will be called at the end of interpret(), and the descheduled process
-							// rescheduled.
-							// SET_FLAGS(EmulatorState_DescheduleRequired);
-							try {
-								WORD32 i;
-								for (i = 0; i < Areg; i++)  {
-									myMemory->setByte(Creg + i, myLink->readByte());
-								}
-							} catch (exception &e) {
-								logErrorF("in failed to read byte from link %d: %s", myLink->getLinkNo(), e.what());
-								SET_FLAGS(EmulatorState_Terminate);
-							}
+							// TODO Link direction 'bug' - you can 'IN' against an output link, and it'll effect an output.
+							// (Determined by M.Bruestle 22jan2012)
+							myLink->readDataAsync(Wdesc, myMemory->getAddr(Creg), Areg);
+							// myLink->readComplete() will be called at the end of interpret(), data will be transferred
+							// to physical memory Creg[0..Areg], and when done this process (that we deschedule here)
+							// will be rescheduled.
+							SET_FLAGS(EmulatorState_DescheduleRequired);
 						}
 					}
 					break;
 
-				case O_out: { // output message
+				case O_out: {
 						// Output message of length Areg bytes to the channel
 						// pointed to by Breg from memory at Creg
 						// takes 2w+20 iff communication proceeds, or 20 iff
@@ -1198,6 +1193,7 @@ inline void CPU::interpret(void) {
 										// Reset channel to unused
 										myMemory->setWord(Breg, NotProcess_p);
 										// Request a schedule of the process at WorkSpace
+										logDebugF("Requesting schedule of out's in process #%08X", WorkSpace);
 										ScheduleWdesc = WorkSpace;
 									}
 								} else {
@@ -1206,18 +1202,14 @@ inline void CPU::interpret(void) {
 								break;
 						}
 						// Now handle output to real links
+						// TODO Link direction 'bug' - you can 'OUT' against an input link, and it'll effect an input.
+						// (Determined by M.Bruestle 22jan2012)
 						if (myLink != nullptr) {
-							try {
-								WORD32 i;
-								// Again, need to do something about blockcopy over
-								// the IServer link.... see O_in processing.
-								for (i = 0; i < Areg; i++) {
-									myLink->writeByte(myMemory->getByte(Creg + i));
-								}
-							} catch (exception &e) {
-								logErrorF("out failed to write byte to link %d: %s", myLink->getLinkNo(), e.what());
-								SET_FLAGS(EmulatorState_Terminate);
-							}
+							myLink->writeDataAsync(Wdesc, myMemory->getAddr(Creg), Areg);
+							// myLink->writeComplete() will be called at the end of interpret(), data will be transferred
+							// to physical memory Creg[0..Areg], and when done this process (that we deschedule here)
+							// will be rescheduled.
+							SET_FLAGS(EmulatorState_DescheduleRequired);
 						}
 					}
 					break;
@@ -1232,7 +1224,8 @@ inline void CPU::interpret(void) {
    					InstCycles = 4;
 					break;
 
-				case O_outbyte: { // output byte
+				case O_outbyte: {
+						// Output byte in Areg down channel Breg using Wptr+0 as a temporary.
 						InstCycles = 25;
 						Link *myLink = nullptr;
 						switch (Breg) {
@@ -1260,28 +1253,32 @@ inline void CPU::interpret(void) {
 									myMemory->setWord(Breg, Wdesc);
 									SET_FLAGS(EmulatorState_DescheduleRequired);
 								} else {
-									// The in got to the rendezvos first
+									// The in got to the rendezvous first
 									myMemory->setByte(myMemory->getWord(W_POINTER(WorkSpace)), (BYTE8)Areg & 0xff);
 									myMemory->setWord(Breg, NotProcess_p);
 									// Schedule the process at WorkSpace
+									logDebugF("Requesting schedule of outbyte's in process #%08X", WorkSpace);
 									ScheduleWdesc = WorkSpace;
 								}
 								}
 								break;
 						}
 						// Now handle output to real links
+						// TODO Link direction 'bug' - you can 'OUT' against an input link, and it'll effect an input.
+						// (Determined by M.Bruestle 22jan2012)
 						if (myLink != nullptr) {
-							try {
-								myLink->writeByte((BYTE8)Areg & 0xff);
-							} catch (exception &e) {
-								logErrorF("outbyte failed to write byte to link %d: %s", myLink->getLinkNo(), e.what());
-								SET_FLAGS(EmulatorState_Terminate);
-							}
+							// Store Areg in the workspace temporary variable...
+							myMemory->setByte(W_TEMP(Wdesc), (BYTE8)Areg & 0xff);
+							myLink->writeDataAsync(Wdesc, myMemory->getAddr(W_TEMP(Wdesc)), 1);
+							// myLink->writeComplete() will be called at the end of interpret(), data will be transferred
+							// to physical memory Wdesc[0], and when done this process (that we deschedule here)
+							// will be rescheduled.
+							SET_FLAGS(EmulatorState_DescheduleRequired);
 						}
 					}
 					break;
 
-				case O_outword: { // output word
+				case O_outword: { // output word in Areg down channnel Breg, using Wptr+0 as a temporary
 						Link *myLink = nullptr;
 						InstCycles = 25;
 						switch (Breg) {
@@ -1313,19 +1310,23 @@ inline void CPU::interpret(void) {
 									myMemory->setWord(myMemory->getWord(W_POINTER(WorkSpace)), Areg);
 									myMemory->setWord(Breg, NotProcess_p);
 									// Schedule the process at WorkSpace
+									logDebugF("Requesting schedule of outword's in process #%08X", WorkSpace);
 									ScheduleWdesc = WorkSpace;
 								}
 								}
 								break;
 						}
 						// Now handle output to real links
+						// TODO Link direction 'bug' - you can 'OUT' against an input link, and it'll effect an input.
+						// (Determined by M.Bruestle 22jan2012)
 						if (myLink != nullptr) {
-							try {
-								myLink->writeWord(Areg);
-							} catch (exception &e) {
-								logErrorF("outword failed to write word to link %d: %s", myLink->getLinkNo(), e.what());
-								SET_FLAGS(EmulatorState_Terminate);
-							}
+							// Store Areg in the workspace temporary variable...
+							myMemory->setWord(W_TEMP(Wdesc),Areg);
+							myLink->writeDataAsync(Wdesc, myMemory->getAddr(W_TEMP(Wdesc)), 4);
+							// myLink->writeComplete() will be called at the end of interpret(), data will be transferred
+							// to physical memory Wdesc[0..3], and when done this process (that we deschedule here)
+							// will be rescheduled.
+							SET_FLAGS(EmulatorState_DescheduleRequired);
 						}
 					}
 					break;
@@ -1361,6 +1362,7 @@ inline void CPU::interpret(void) {
 					myMemory->setWord(W_IPTR(Areg), IPtr + Breg);
 					// Request a schedule of the process at Areg
    					ScheduleWdesc = Wdesc_WPtr(Areg) | Wdesc_Priority(Wdesc);
+					logDebugF("Requesting schedule of startp's process #%08X", ScheduleWdesc);
 					InstCycles = 12;
 					break;
 
@@ -1386,6 +1388,7 @@ inline void CPU::interpret(void) {
 				case O_runp: // run process. 
 					// Add the process with descriptor Areg to appropriate process queue 
 					ScheduleWdesc = Areg;
+					logDebugF("Requesting schedule of runp's process #%08X", ScheduleWdesc);
 					InstCycles = 10;
 					break;
 
@@ -2225,30 +2228,60 @@ inline void CPU::interpret(void) {
 	}
 
 	// Was a low priority process interrupted by a high priority one?
-	// Is a schedule required?
-	if (ScheduleWdesc != NotProcess_p) {
-		logDebug("Schedule required");
-		if (Wdesc_HiPriority(ScheduleWdesc)) {
-			// high priority, so ScheduleWdesc = WPtr
-			// TODO find this in the Transputer Handbook
-			myMemory->setWord(W_LINK(ScheduleWdesc), NotProcess_p);
-			if (HiHead == NotProcess_p) {
-				HiHead = ScheduleWdesc;
+	// Is a schedule required? Are any link read/write operations complete?
+	static WORD32 schedulables[9];
+	// 0 - instruction schedule
+	// 1 - link 0 read
+	// 2 - link 0 write
+	// 3 - link 1 read
+	// 4 - link 1 write
+	// 5 - link 2 read
+	// 6 - link 2 write
+	// 7 - link 3 read
+	// 8 - link 3 write
+	schedulables[0] = ScheduleWdesc;
+	for (int i = 0; i < 4; i++) {
+		schedulables[(i * 2) + 1] = myLinks[i]->readComplete();
+		schedulables[(i * 2) + 2] = myLinks[i]->writeComplete();
+	}
+	for (int i = 0; i < 9; i++) {
+		WORD32 schedulable = schedulables[i];
+		if (schedulable != NotProcess_p) {
+			if (Wdesc_HiPriority(schedulable)) {
+				if (i == 0) {
+					logDebugF("Schedule required of HI process #%08X due to previous instruction", schedulable);
+				} else {
+					int linkno = (i-1) >> 1;
+					logDebugF("Schedule required of HI process #%08X: Link %d %s", schedulable, linkno, i & 0x01 ? "RD" : "WR");
+				}
+				// High priority, so schedulable = WPtr
+				// TODO find this in the Transputer Handbook
+				myMemory->setWord(W_LINK(schedulable), NotProcess_p);
+				if (HiHead == NotProcess_p) {
+					HiHead = schedulable;
+				} else {
+					myMemory->setWord(W_LINK(HiTail), schedulable);
+				}
+				HiTail = schedulable;
 			} else {
-				myMemory->setWord(W_LINK(HiTail), ScheduleWdesc);
+				if (i == 0) {
+					logDebugF("Schedule required of LO process #%08X due to previous instruction", schedulable);
+				} else {
+					int linkno = (i-1) >> 1;
+					logDebugF("Schedule required of LO process #%08X: Link %d %s", schedulable, linkno, i & 0x01 ? "RD" : "WR");
+				}
+				// Low priority so schedulable is not WPtr
+				myMemory->setWord(W_LINK(schedulable), NotProcess_p);
+				if (LoHead == NotProcess_p) {
+					LoHead = schedulable; // Wdesc_WPtr?
+				} else {
+					myMemory->setWord(W_LINK(LoTail), schedulable); // Wdesc_WPtr?
+				}
+				LoTail = schedulable; // Wdesc_WPtr?
 			}
-			HiTail = ScheduleWdesc;
-		} else {
-			// Low priority so ScheduleWdesc is not WPtr
-			myMemory->setWord(W_LINK(ScheduleWdesc), NotProcess_p);
-			if (LoHead == NotProcess_p) {
-				LoHead = ScheduleWdesc;
-			} else {
-				myMemory->setWord(W_LINK(LoTail), ScheduleWdesc);
-			}
-			LoTail = ScheduleWdesc;
 		}
 	}
+
 	SET_FLAGS(EmulatorState_QueueInstruction);
 	// The instruction may have been one which can cause a deschedule while
 	// waiting for another process (in, out, outword, outbyte) or it may be
@@ -2259,11 +2292,11 @@ inline void CPU::interpret(void) {
 	// will be set. Here's where we actually do that deschedule, rather
 	// than duplicate this code for every deschedulable instruction...
 	if (IS_FLAG_SET(EmulatorState_DescheduleRequired)) {
-		logDebug("Deschedule required");
+		logDebugF("Deschedule of %s process #%08X requested", (Wdesc_HiPriority(Wdesc) ? "HI" : "LO"), Wdesc);
 		if ((Wdesc_HiPriority(Wdesc) && (HiHead==NotProcess_p)) ||
 			((!Wdesc_HiPriority(Wdesc)) && (Wdesc_WPtr(LoHead)==NotProcess_p))) {
 			// Do nothing - Nothing needed to be descheduled.
-			logDebug("Nothing to deschedule");
+			logDebug("Nothing to deschedule (head is NotProcess_p)");
 		} else {
 			// Store the IPtr in the workspace
 			myMemory->setWord(W_IPTR(Wdesc), IPtr);
@@ -2273,11 +2306,13 @@ inline void CPU::interpret(void) {
 				Wdesc = HiHead;
 				IPtr = myMemory->getWord(W_IPTR(Wdesc));
 				HiHead = myMemory->getWord(W_LINK(Wdesc));
+				logDebugF("Changed to HI process #%08X; IPtr is #%08X; HiHead is #%08X", Wdesc, IPtr, HiHead);
 			} else {
 				// Low priority => Wdesc != Wptr
 				Wdesc = LoHead;
 				IPtr = myMemory->getWord(W_IPTR(Wdesc));
 				LoHead = myMemory->getWord(W_LINK(Wdesc));
+				logDebugF("Changed to LO process #%08X; IPtr is #%08X; LoHead is #%08X", Wdesc, IPtr, LoHead);
 			}
 			logDebugF("New IPtr is #%08X", IPtr);
 		}

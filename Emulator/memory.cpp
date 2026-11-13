@@ -517,6 +517,33 @@ bool Memory::isLegalMemory(WORD32 addr) const {
 			(myROMPresent && addr >= myROMStart && addr <= MaxINT);
 }
 
+BYTE8 *Memory::getAddr(WORD32 addr) {
+	if (addr >= InternalMemStart && addr <= myMemEnd) {
+		if (addr > myHighestAccess) {
+			myHighestAccess = addr;
+		}
+		return &myMemory[addr - InternalMemStart];
+	}
+	if (myROMPresent && addr >= myROMStart && addr <= MaxINT) {
+		return &myReadOnlyMemory[addr - myROMStart];
+	}
+	if (IS_FLAG_SET(DebugFlags_TerminateOnMemViol)) {
+#ifdef DESKTOP
+		logFatalF("Memory violation translating address from %08X%s", addr, mySymbolTable->possibleSymbolString(addr).c_str());
+#else
+		logFatalF("Memory violation translating address from %08X", addr);
+#endif
+		SET_FLAGS(EmulatorState_Terminate);
+	} else {
+#ifdef DESKTOP
+		logErrorF("Memory violation translating address from %08X%s", addr, mySymbolTable->possibleSymbolString(addr).c_str());
+#else
+		logErrorF("Memory violation translating address from %08X", addr);
+#endif
+	}
+	return nullptr;
+}
+
 static char hexdigs[]="0123456789abcdef";
 
 void Memory::hexDump(const WORD32 addr, const WORD32 len) {

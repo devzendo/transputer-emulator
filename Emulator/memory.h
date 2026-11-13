@@ -37,6 +37,7 @@ class Memory {
 		int getCurrentCyclesAndReset();
 		void blockCopy(WORD32 len, WORD32 srcAddr, WORD32 destAddr);
 		bool isLegalMemory(WORD32 addr) const;
+		BYTE8 *getAddr(WORD32 addr);
 		// Used by the monitor
 		void hexDump(WORD32 addr, WORD32 len);
 		void hexDumpWords(WORD32 addr, WORD32 lenInBytes);

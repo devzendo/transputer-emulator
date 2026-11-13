@@ -48,10 +48,12 @@ class CPU {
 		Link *myLinks[4];
 		Boot *myBoot;
 		// All registers
-		WORD32 IPtr, Wdesc;
+		WORD32 IPtr, Wdesc; // Wdesc holds workspace pointer and priority - use Wdesc_Ptr/Wdesc_Priority to access parts
+		// There is no separate Wptr/Priority register
 		WORD32 Areg, Breg, Creg, Oreg; // Integer register evaluation stack
 		WORD32 OldOreg; // Holds valid Oreg for bad instruction trap
 		WORD32 ScheduleWdesc; // NULL or Wdesc to schedule after interpretation
+		// TODO move the schedulables[9] here and use schedulables[0] to schedule the interpreted process
 		REAL64 FAreg, FBreg, FCreg; // Floating point evaluation stack
 		WORD32 HiHead, HiTail, LoHead, LoTail; // Process queue pointers
 		WORD32 HiTimerHead, LoTimerHead; // Timer queue head pointers

@@ -35,3 +35,5 @@
 * inmemorylink - There are thread-yielding busy waits in the synchronous interface.
 * IServer text mode support - incomplete implementation: several tests fail on Windows, these tests have been knocked
   out - search for FAIL(WINDOWS) in testprotocolhandler.cpp.
+* The link in/out/outbyte/outword instructions do not cater for the 'direction bug'; if you 'in' on an output link,
+  it'll effect an output; if you 'out' on an input link, it'll effect an output. Determined by M.Bruestle 22jan2012.
