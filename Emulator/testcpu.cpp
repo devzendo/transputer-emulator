@@ -104,8 +104,18 @@ protected:
 
 TEST_F(CPUTest, InitialConditions) {
     boot_with_terminate();
-    // Don't start interpreting, just see what's set up after boot from link with a 2 byte program.
-    // TODO change CPUTest to be a FRIEND_TEST
+    // Don't start interpreting, just see what's set up after boot from link with a 2 byte terminate program.
+    myCPU->DumpRegs(LOGLEVEL_DEBUG);
+    myCPU->DumpQueueRegs(LOGLEVEL_DEBUG);
+    EXPECT_EQ(myCPU->IPtr, MemStart);
+    EXPECT_EQ(myCPU->Wdesc, (MemStart + 4) | 0x00000001); // low priority
+    EXPECT_EQ(myCPU->HiHead, 0xDEADF00D);
+    EXPECT_EQ(myCPU->HiTail, 0xDEADF00D);
+    EXPECT_EQ(myCPU->LoHead, 0xDEADF00D);
+    EXPECT_EQ(myCPU->LoTail, 0xDEADF00D);
+
+    EXPECT_EQ(myMemory->getByte(MemStart + 0), 0x2C); // Terminate
+    EXPECT_EQ(myMemory->getByte(MemStart + 1), 0xF2);
 }
 
 TEST_F(CPUTest, Terminates) {

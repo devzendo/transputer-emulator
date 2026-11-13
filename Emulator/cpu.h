@@ -25,6 +25,11 @@
 #include "symbol.h"
 #include "boot.h"
 
+// So that the tests can have friend access to CPU internals. And the tests only run on DESKTOP builds.
+#ifdef DESKTOP
+#include "gtest/gtest_prod.h"
+#endif
+
 class CPU {
 	public:
 		// 2-phase CTOR since there's only one global CPU
@@ -96,6 +101,11 @@ class CPU {
 		deque<std::string> WordStack;
 		std::string PossiblyColonWord;
 		std::string CodeSymbol;
+
+
+    FRIEND_TEST(CPUTest, InitialConditions);
+    // FRIEND_TEST(CPUTest, InitialConditions);
+
 #endif
 
 		// Internal methods:
