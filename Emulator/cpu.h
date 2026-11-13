@@ -40,6 +40,11 @@ class CPU {
 		void addBreakpoint(WORD32 breakpointAddress);
 		void removeBreakpoint(WORD32 breakpointAddress);
 		void emulate(const bool bootFromROM);
+		// emulate is split into a prologue, a middle (loop), and an epilogue. Prologue and epilogue are also called by
+		// testcpu, with the loop being replaced in tests by the interpretations of each test.
+		void _emulate_prologue(const bool bootFromROM);
+		void _emulate_loop();
+		void _emulate_epilogue();
 		void start();
 		~CPU();
 	private:

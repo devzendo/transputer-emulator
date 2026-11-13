@@ -23,4 +23,8 @@ if(NOT(EMBEDDED))
   add_executable(testboot testboot.cpp boot.cpp memory.cpp symbol.cpp flags.h)
   target_link_libraries(testboot gtest gmock_main parachutedesktop)
   add_test(NAME testboot COMMAND testboot)
+
+  add_executable(testcpu testcpu.cpp cpu.cpp boot.cpp memory.cpp symbol.cpp flags.h disasm.cpp disasm.h)
+  target_link_libraries(testcpu gtest gmock_main parachutedesktop)
+  add_test(NAME testcpu COMMAND testcpu)
 endif(NOT(EMBEDDED))

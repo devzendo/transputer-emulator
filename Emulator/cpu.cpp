@@ -191,6 +191,7 @@ CPU::~CPU() {
 		delete myBoot;
 		myBoot = nullptr;
 	}
+	logDebug("CPU DTOR done");
 }
 
 /*
@@ -2399,11 +2400,17 @@ void CPU::bootFromLink0() {
 }
 
 void CPU::emulate(const bool bootFromROM) {
+	_emulate_prologue(bootFromROM);
+	_emulate_loop();
+	_emulate_epilogue();
+}
+
+void CPU::_emulate_prologue(const bool bootFromROM) {
 #ifdef DESKTOP
 	myBootFromROM = bootFromROM;
 #endif
 	// Initialise timing subsystem
-	CycleCount = CycleCountSinceReset = 
+	CycleCount = CycleCountSinceReset =
 		HiClock = LoClock = LoClockLastQuantumExpiry = 0L;
 	// Initialise T800 registers. See TTS, p30, CWG p74
 	Oreg = Areg = Breg = 0;
@@ -2445,13 +2452,17 @@ void CPU::emulate(const bool bootFromROM) {
 		InterpFlagSet |= EmulatorState_TimerInstruction;
 	if (IS_FLAG_SET(DebugFlags_Queues))
 		InterpFlagSet |= EmulatorState_QueueInstruction;
+}
 
+void CPU::_emulate_loop() {
 	logDebug("---- Starting Emulation ----");
 	while (IS_FLAG_CLEAR(EmulatorState_Terminate)) {
 		interpret();
 	}
 	logDebug("---- Ending Emulation ----");
+}
 
+void CPU::_emulate_epilogue() {
 	if ((flags & DebugFlags_DebugLevel) >= Debug_DisRegs) {
 		DumpRegs(LOGLEVEL_DEBUG);
 	}
