@@ -25,7 +25,7 @@ Due to lack of compatible TPM hardware, I cannot build on Windows 11 or later; b
 priority for me.
 
 ## Project Status
-Last changes in August 2026.
+Last changes in November 2026.
 
 First release 0.0.1 Midsummer 2019 (13 June 2019) as part of Parachute 0.0.1.
 
@@ -38,9 +38,9 @@ Another hiatus from Dec 2025 to Mar 2026.
 
 # Release Notes
 ## 0.0.2 Second Release (work in progress)
-* Converting the NodeServer to be IServer compatible. Similarly, "Hello World"
+* Converted the NodeServer to be IServer compatible. Similarly, "Hello World"
   (see IServer/client-examples/hello-world-iserver).
-* Release for macOS is upgraded from El Capitan to Catalina.
+* Release for macOS is upgraded from Intel El Capitan to Intel Catalina, and added Apple Silicon Tahoe.
 * Release for Intel Linux is now done only on Ubuntu 24.04.
 * Release for Raspberry Pi is now done only on Debian 12.
 * Release for Windows 10 is now done on Windows 10 22H2.
@@ -92,7 +92,10 @@ Another hiatus from Dec 2025 to Mar 2026.
 * Added an asynchronous, bit-banged link implementation for the Pico.
 * The IServer has a link that can run over a TTY (Linux/macOS) or COM port (Windows) to connect to a Pi
   Pico emulator.
+* The Pi Pico emulator supports two USB CDC ports, one for its Link 0, one for diagnostic output. Its Link 1 is a
+  slow bit-banged GPIO link. 
 * Boot protocol executed over any link.
+* Low priority scheduler improvements; high priority is out of scope for this release.
 * Bugfix: protocol handler - open file - was inadvertantly broken on some
   platforms.
 * Bugfix: IServer's stdin/stdout/stderr streams are now initialised as text, not binary streams. This unfortunately
@@ -151,6 +154,7 @@ Another hiatus from Dec 2025 to Mar 2026.
 * Remove potential buffer overflows in cpu.cpp (what were these?)
 * Refactoring: make use of isLegalMemory within memory.cpp
 * Unfinished: resetch when given a link not a memory channel
+* High priority scheduler and interruption.
 
 ## Build/Releases
 * The debug/release configuration switch does not appear to be doing anything other than setting an appropriate build

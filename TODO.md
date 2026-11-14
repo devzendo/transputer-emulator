@@ -6,6 +6,7 @@
   * Extracting the peek/poke/boot code to its own module, with tests; reworking to support requests and boot
     over any of the links.
   * Refactoring all link abstractions to be asynchronous, and reworking the boot/IO code to work with this.
+  * Ensure that the scheduler / I/O interactions are correct (for low priority processes only, for now).
   * Learning PIO, to implement a link that doesn't incur CPU usage.
   * PIO link that works at multiple speeds: 10Mbps for compatibility, max PIO speed, low speed for connection to
     other microcontroller ports that have to bit-bang (Cheap Yellow Display perhaps?)
@@ -37,3 +38,5 @@
   out - search for FAIL(WINDOWS) in testprotocolhandler.cpp.
 * The link in/out/outbyte/outword instructions do not cater for the 'direction bug'; if you 'in' on an output link,
   it'll effect an output; if you 'out' on an input link, it'll effect an output. Determined by M.Bruestle 22jan2012.
+* Support for high priority processes is likely to be incomplete, is not tested. Interruption is missing
+  completely.
