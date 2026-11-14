@@ -2493,11 +2493,12 @@ void CPU::start() {
 		Breg = Wdesc;
 		Creg = Link0Input; // The default IServer link input
 		// TODO set Creg to the link boot.cpp finds, when it uses multiple ones.
-		bootFromLink0();
+		bootFromLink0(); // sets bootLen.
 		// NB: CWG p74 states Areg is set to the previous value of IPtr, Breg the previous of Wdesc,
 		// Creg a pointer to the link the Transputer booted from.
 		// The initial workspace is the first free word of memory. A low priority process.
-		Wdesc = WordAlign((WORD32)(IPtr + (WORD32)bootLen));
+		// i.e. ffw | 0x00000001, ffw is smallest word aligned address >= MemStart + bootlen.
+		Wdesc = WordAlign((WORD32)(MemStart + (WORD32)bootLen)) | 0x00000001;
 #ifdef DESKTOP
 	}
 #endif

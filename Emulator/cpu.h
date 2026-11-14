@@ -30,7 +30,11 @@
 #include "gtest/gtest_prod.h"
 #endif
 
+extern WORD32 WordAlign(WORD32 addr);
+
 class CPU {
+	friend class CPUTest;
+
 	public:
 		// 2-phase CTOR since there's only one global CPU
 		CPU();
@@ -102,9 +106,8 @@ class CPU {
 		std::string PossiblyColonWord;
 		std::string CodeSymbol;
 
-
     FRIEND_TEST(CPUTest, InitialConditions);
-    // FRIEND_TEST(CPUTest, InitialConditions);
+    FRIEND_TEST(CPUTest, InitialConditionsAfterTypicalSetup);
 
 #endif
 

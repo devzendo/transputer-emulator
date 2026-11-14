@@ -14,6 +14,7 @@
 #include <thread>
 #include <atomic>
 
+#include "constants.h"
 #include "gtest/gtest.h"
 using namespace std;
 #include "cpu.h"
@@ -40,7 +41,8 @@ protected:
 
     void SetUp() override {
         setLogLevel(LOGLEVEL_DEBUG);
-        SET_FLAGS(DebugFlags_LinkComms | MemAccessDebug_Full | DebugFlags_TerminateOnMemViol | Debug_Disasm);
+        SET_FLAGS(DebugFlags_LinkComms | MemAccessDebug_Full | DebugFlags_TerminateOnMemViol | Debug_Disasm
+            | DebugFlags_TerminateOnMemViol);
         logDebug("SetUp start");
         myMemory = new Memory();
         if (!myMemory->initialise(1024)) {
@@ -100,6 +102,75 @@ protected:
             0x2C, 0xF2, // terminate
         });
     }
+
+    void interpret_until(WORD32 iPtrReaches) const {
+        logDebugF("Interpreting until 0x%08X reached...", iPtrReaches);
+        while (myCPU->IPtr != iPtrReaches && IS_FLAG_CLEAR(EmulatorState_Terminate)) {
+            myCPU->interpret();
+        }
+        logDebugF("IPtr has reached 0x%08X, end of interpretation", iPtrReaches);
+    }
+
+    void boot_with_typical_setup() const {
+        // Standard Transputer startup code, taken from the macro assembler bootloader.
+        // This is 0x8A bytes long.
+        boot_with({
+            // Initialisation
+            0x24, 0xF2,
+            0x21, 0xF8,
+            0x24, 0xF2,
+            0x21, 0xFC,
+            0x24, 0xF2,
+            0x67, 0x20, 0x20, 0x20,
+            0x20, 0x20, 0x22, 0x44,
+            0xE0,
+            0x24, 0xF2,
+            0x67, 0x20, 0x20, 0x20,
+            0x20, 0x20, 0x22, 0x48,
+            0xE0,
+            0x40,
+            0x25, 0xF4,
+            0x22, 0xF9,
+            0x25, 0xF7,
+            0x29, 0xFC,
+            0x24, 0xF2,
+            0x67, 0x20, 0x20, 0x20,
+            0x20, 0x20, 0x22, 0x40,
+            0xE0,
+            0x24, 0xF2,
+            0x67, 0x20, 0x20, 0x20,
+            0x20, 0x20, 0x21, 0x4C,
+            0xE0,
+            0x24, 0xF2,
+            0x67, 0x20, 0x20, 0x20,
+            0x20, 0x20, 0x21, 0x48,
+            0xE0,
+            0x24, 0xF2,
+            0x67, 0x20, 0x20, 0x20,
+            0x20, 0x20, 0x21, 0x44,
+            0xE0,
+            0x24, 0xF2,
+            0x67, 0x20, 0x20, 0x20,
+            0x20, 0x20, 0x21, 0x40,
+            0xE0,
+            0x24, 0xF2,
+            0x67, 0x20, 0x20, 0x20,
+            0x20, 0x20, 0x20, 0x4C,
+            0xE0,
+            0x24, 0xF2,
+            0x67, 0x20, 0x20, 0x20,
+            0x20, 0x20, 0x20, 0x48,
+            0xE0,
+            0x24, 0xF2,
+            0x67, 0x20, 0x20, 0x20,
+            0x20, 0x20, 0x20, 0x44,
+            0xE0,
+            0x24, 0xF2,
+            0x67, 0x20, 0x20, 0x20,
+            0x20, 0x20, 0x20, 0x40,
+            0xE0, // at 0x800000F9
+        });
+    }
 };
 
 TEST_F(CPUTest, InitialConditions) {
@@ -122,4 +193,19 @@ TEST_F(CPUTest, Terminates) {
     boot_with_terminate();
     myCPU->_emulate_loop(); // this runs until it terminates
     // Got here? Good! It interpreted the terminate instruction and set the terminate flag.
+}
+
+TEST_F(CPUTest, InitialConditionsAfterTypicalSetup) {
+    boot_with_typical_setup();
+    interpret_until(0x800000FA);
+    myCPU->DumpRegs(LOGLEVEL_DEBUG);
+    myCPU->DumpQueueRegs(LOGLEVEL_DEBUG);
+	myCPU->DumpClockRegs(LOGLEVEL_DEBUG, myCPU->InstCycles + myCPU->MemCycles);
+
+    EXPECT_EQ(myCPU->IPtr, 0x800000FA);
+    EXPECT_EQ(myCPU->Wdesc, (WordAlign(MemStart + 0x8A)) | 0x00000001); // low priority => 0x800000FD
+    EXPECT_EQ(myCPU->HiHead, NotProcess_p);
+    EXPECT_EQ(myCPU->HiTail, 0xDEADF00D);
+    EXPECT_EQ(myCPU->LoHead, NotProcess_p);
+    EXPECT_EQ(myCPU->LoTail, 0xDEADF00D);
 }
