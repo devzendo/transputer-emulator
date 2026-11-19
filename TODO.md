@@ -11,6 +11,7 @@
   * PIO link that works at multiple speeds: 10Mbps for compatibility, max PIO speed, low speed for connection to
     other microcontroller ports that have to bit-bang (Cheap Yellow Display perhaps?)
   * Make use of both ARM cores:
+    * Global flags variable needs to be split between emulator and core flags. 
     * Inter-core link: Core 0's Link 1 could be connected to Core 1's Link 0.
     * Links:
       * Core 0:
@@ -40,3 +41,5 @@
   it'll effect an output; if you 'out' on an input link, it'll effect an output. Determined by M.Bruestle 22jan2012.
 * Support for high priority processes is likely to be incomplete, is not tested. Interruption is missing
   completely.
+* The 'cj' instruction implementation needs investigating, as other emulators jump one byte past where mine lands if
+  the jump is actioned. My assembler and emulator seem to be in agreement, and other assemblers generate the same code.

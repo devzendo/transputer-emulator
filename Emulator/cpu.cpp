@@ -318,8 +318,8 @@ void CPU::showBreakpointAddresses() {
     }
 }
 
-void CPU::DumpRegs(int logLevel) {
-	logFormat(logLevel, "%c%c%c%c%c%c A #%08X B #%08X C #%08X W #%08X",
+void CPU::DumpRegs(const int logLevel) const {
+	logFormat(logLevel, "%c%c%c%c%c%c%c A #%08X B #%08X C #%08X W #%08X",
 		(Wdesc_HiPriority(Wdesc) ? 'H' : 'L'),
 		(IS_FLAG_SET(EmulatorState_ErrorFlag) ? 'E' : '-'),
 		(IS_FLAG_SET(EmulatorState_FErrorFlag) ? 'F' : '-'),
@@ -327,29 +327,30 @@ void CPU::DumpRegs(int logLevel) {
 		(IS_FLAG_SET(EmulatorState_DescheduleRequired) ? 'D' :
 		(IS_FLAG_SET(EmulatorState_DeschedulePending) ? 'd' : '-')),
 		(IS_FLAG_SET(EmulatorState_Interrupt) ? 'I' : '-'),
+		(IS_FLAG_SET(EmulatorState_Terminate) ? 'T' : '-'),
 		Areg, Breg, Creg, Wdesc);
 #ifdef DESKTOP
-	bool aSymbol = mySymbolTable->addressExists(Areg);
-	bool bSymbol = mySymbolTable->addressExists(Breg);
-	bool cSymbol = mySymbolTable->addressExists(Creg);
-	bool wSymbol = mySymbolTable->addressExists(Wdesc);
+	const bool aSymbol = mySymbolTable->addressExists(Areg);
+	const bool bSymbol = mySymbolTable->addressExists(Breg);
+	const bool cSymbol = mySymbolTable->addressExists(Creg);
+	const bool wSymbol = mySymbolTable->addressExists(Wdesc);
 	if (aSymbol | bSymbol | cSymbol | wSymbol) {
-		logFormat(logLevel, "       A %9s B %9s C %9s W %9s", 
+		logFormat(logLevel, "        A %9s B %9s C %9s W %9s",
 			mySymbolTable->symbolOrEmptyString(Areg).c_str(), mySymbolTable->symbolOrEmptyString(Breg).c_str(),
 			mySymbolTable->symbolOrEmptyString(Creg).c_str(), mySymbolTable->symbolOrEmptyString(Wdesc).c_str());
 	}
-	bool oSymbol = mySymbolTable->addressExists(Oreg);
-	bool iSymbol = mySymbolTable->addressExists(IPtr);
-	logFormat(logLevel,   "       O #%08X I #%08X", Oreg, IPtr);
+	const bool oSymbol = mySymbolTable->addressExists(Oreg);
+	const bool iSymbol = mySymbolTable->addressExists(IPtr);
+	logFormat(logLevel,   "        O #%08X I #%08X", Oreg, IPtr);
 	if (oSymbol | iSymbol) {
-		logFormat(logLevel, "       O %9s I %9s",
+		logFormat(logLevel, "        O %9s I %9s",
 			mySymbolTable->symbolOrEmptyString(Oreg).c_str(), mySymbolTable->symbolOrEmptyString(IPtr).c_str());
 	}
 #endif // DESKTOP
 }
 
 void CPU::DumpQueueRegs(int logLevel) const {
-	logFormat(logLevel, "       Hf#%08X Hb#%08X Lf#%08X Lb#%08X",
+	logFormat(logLevel, "        Hf#%08X Hb#%08X Lf#%08X Lb#%08X",
 		HiHead, HiTail, LoHead, LoTail);
 }
 
@@ -360,7 +361,7 @@ void CPU::DumpClockRegs(int logLevel, WORD32 instCycles) const {
 		qr = 0;
 	else
 		qr = MaxQuantum - qr;
-	logFormat(logLevel, "       Hc#%08X Lc#%08X Qr#%08X C##%08X",
+	logFormat(logLevel, "        Hc#%08X Lc#%08X Qr#%08X C##%08X",
 		HiClock, LoClock, qr, instCycles);
 }
 
@@ -2248,6 +2249,7 @@ inline void CPU::interpret(void) {
 	for (int i = 0; i < 9; i++) {
 		WORD32 schedulable = schedulables[i];
 		if (schedulable != NotProcess_p) {
+			// TODO handle timer queue removal
 			if (Wdesc_HiPriority(schedulable)) {
 				if (i == 0) {
 					logDebugF("Schedule required of HI process #%08X due to previous instruction", schedulable);
@@ -2265,20 +2267,25 @@ inline void CPU::interpret(void) {
 				}
 				HiTail = schedulable;
 			} else {
+				WORD32 schedulable_ptr = Wdesc_WPtr(schedulable);
 				if (i == 0) {
-					logDebugF("Schedule required of LO process #%08X due to previous instruction", schedulable);
+					logDebugF("Schedule required of LO process #%08X due to previous instruction", schedulable_ptr);
 				} else {
 					int linkno = (i-1) >> 1;
-					logDebugF("Schedule required of LO process #%08X: Link %d %s", schedulable, linkno, i & 0x01 ? "RD" : "WR");
+					logDebugF("Schedule required of LO process #%08X: Link %d %s", schedulable_ptr, linkno, i & 0x01 ? "RD" : "WR");
 				}
-				// Low priority so schedulable is not WPtr
+				// Low priority so schedulable is not WPtr (but schedulable_ptr is)
+				logDebug("Setting the W_LINK of the process to NotProcess_p - it'll go at the end of the list");
 				myMemory->setWord(W_LINK(schedulable), NotProcess_p);
 				if (LoHead == NotProcess_p) {
-					LoHead = schedulable; // Wdesc_WPtr?
+					logDebug("Empty LO list; Setting LoHead to the process");
+					LoHead = schedulable_ptr;
 				} else {
-					myMemory->setWord(W_LINK(LoTail), schedulable); // Wdesc_WPtr?
+					logDebug("Not empty LO list, adding process to W_LINK of last in list");
+					myMemory->setWord(W_LINK(LoTail), schedulable_ptr);
 				}
-				LoTail = schedulable; // Wdesc_WPtr?
+				logDebug("Setting LoTail to the process");
+				LoTail = schedulable_ptr;
 			}
 		}
 	}
@@ -2294,6 +2301,7 @@ inline void CPU::interpret(void) {
 	// than duplicate this code for every deschedulable instruction...
 	if (IS_FLAG_SET(EmulatorState_DescheduleRequired)) {
 		logDebugF("Deschedule of %s process #%08X requested", (Wdesc_HiPriority(Wdesc) ? "HI" : "LO"), Wdesc);
+		// TODO ignore descheduling of Wdesc_Wptr(Wdesc) == NotProcess_p.
 		if ((Wdesc_HiPriority(Wdesc) && (HiHead==NotProcess_p)) ||
 			((!Wdesc_HiPriority(Wdesc)) && (Wdesc_WPtr(LoHead)==NotProcess_p))) {
 			// Do nothing - Nothing needed to be descheduled.
@@ -2406,6 +2414,7 @@ void CPU::emulate(const bool bootFromROM) {
 }
 
 void CPU::_emulate_prologue(const bool bootFromROM) {
+	logDebug("_emulate_prologue");
 #ifdef DESKTOP
 	myBootFromROM = bootFromROM;
 #endif
@@ -2463,6 +2472,7 @@ void CPU::_emulate_loop() {
 }
 
 void CPU::_emulate_epilogue() {
+	logDebug("_emulate_epilogue");
 	if ((flags & DebugFlags_DebugLevel) >= Debug_DisRegs) {
 		DumpRegs(LOGLEVEL_DEBUG);
 	}

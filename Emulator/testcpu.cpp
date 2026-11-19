@@ -12,7 +12,6 @@
 //------------------------------------------------------------------------------
 
 #include <thread>
-#include <atomic>
 
 #include "constants.h"
 #include "gtest/gtest.h"
@@ -31,16 +30,16 @@ WORD32 flags;
 
 class CPUTest : public ::testing::Test {
 public:
-    CPUTest()  {
-    }
+    CPUTest()  = default;
 protected:
-    Link *myLinks[4];
+    Link *myLinks[4]{};
     Memory *myMemory = nullptr;
     SymbolTable *mySymbolTable = nullptr;
     CPU *myCPU = nullptr;
 
     void SetUp() override {
         setLogLevel(LOGLEVEL_DEBUG);
+        flags = 0;
         SET_FLAGS(DebugFlags_LinkComms | MemAccessDebug_Full | DebugFlags_TerminateOnMemViol | Debug_Disasm
             | DebugFlags_TerminateOnMemViol);
         logDebug("SetUp start");
@@ -64,6 +63,9 @@ protected:
         myCPU = new CPU();
         myCPU->initialiseSymbolTable(mySymbolTable);
         myCPU->initialise(myMemory, myLinks);
+        logDebug("CPU setup complete - initial registers:");
+        myCPU->DumpRegs(LOGLEVEL_DEBUG);
+        myCPU->DumpQueueRegs(LOGLEVEL_DEBUG);
 
         logDebug("Setup complete");
         logFlush();
@@ -73,6 +75,9 @@ protected:
 
     void TearDown() override {
         logDebug("^^^^^ TEST ^^^^^");
+        logDebug("Registers at end of test:");
+        myCPU->DumpRegs(LOGLEVEL_DEBUG);
+        myCPU->DumpQueueRegs(LOGLEVEL_DEBUG);
         myCPU->_emulate_epilogue();
         logDebug("TearDown start");
         // notify?
@@ -103,7 +108,7 @@ protected:
         });
     }
 
-    void interpret_until(WORD32 iPtrReaches) const {
+    void interpret_until(const WORD32 iPtrReaches) const {
         logDebugF("Interpreting until 0x%08X reached...", iPtrReaches);
         while (myCPU->IPtr != iPtrReaches && IS_FLAG_CLEAR(EmulatorState_Terminate)) {
             myCPU->interpret();

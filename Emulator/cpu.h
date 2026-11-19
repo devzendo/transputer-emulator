@@ -120,7 +120,7 @@ class CPU {
 		bool swapContextForBreakpointInstruction(void);
 		inline bool monitor(void);
 
-		void DumpRegs(int logLevel);
+		void DumpRegs(int logLevel) const;
 		void DumpQueueRegs(int logLevel) const;
 		void DumpClockRegs(int logLevel, WORD32 instCycles) const;
 		void disassembleCurrInstruction(int logLevel);

@@ -86,6 +86,8 @@ extern WORD32 flags;
                          DebugFlags_LinkComms | DebugFlags_Clocks | \
                          DebugFlags_Queues | DebugFlags_IDiag))
 
+// TODO Some of the following need to be in a per-CPU flags variable, not a global. Some of them are emulator-global.
+
 /* There are also the following emulator state bit settings:
 
    Bit(s) & Mask      Function
