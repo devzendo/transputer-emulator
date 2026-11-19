@@ -93,11 +93,15 @@ protected:
     }
 
     void boot_with(const std::initializer_list<BYTE8> bytes) const {
-        logDebug("vvvvv BOOT vvvvv");
         std::vector<BYTE8> byte8s = bytes;
+        boot_with_vector(byte8s);
+    }
+
+    void boot_with_vector(std::vector<BYTE8> bytes) const {
+        logDebug("vvvvv BOOT vvvvv");
         // How many bytes to boot with? Must be >= 2.
-        byte8s.insert(byte8s.begin(), byte8s.size());
-        reinterpret_cast<StubLink *>(myLinks[0])->setReadableBytes(byte8s);
+        bytes.insert(bytes.begin(), bytes.size());
+        reinterpret_cast<StubLink *>(myLinks[0])->setReadableBytes(bytes);
         myCPU->_emulate_prologue(false);
         logDebug("vvvvv TEST vvvvv");
     }
@@ -116,10 +120,10 @@ protected:
         logDebugF("IPtr has reached 0x%08X, end of interpretation", iPtrReaches);
     }
 
-    void boot_with_typical_setup() const {
+    void boot_with_typical_setup(const std::initializer_list<BYTE8> rest_of_setup) const {
         // Standard Transputer startup code, taken from the macro assembler bootloader.
-        // This is 0x8A bytes long.
-        boot_with({
+        // This is 0x8A bytes long, before you add 'rest_of_setup'.
+        const std::vector<BYTE8> typical_setup = {
             // Initialisation
             0x24, 0xF2,
             0x21, 0xF8,
@@ -174,7 +178,10 @@ protected:
             0x67, 0x20, 0x20, 0x20,
             0x20, 0x20, 0x20, 0x40,
             0xE0, // at 0x800000F9
-        });
+        };
+        std::vector<BYTE8> byte8s = typical_setup;
+        byte8s.insert( byte8s.end(), rest_of_setup.begin(), rest_of_setup.end() );
+        boot_with_vector(byte8s);
     }
 };
 
@@ -201,7 +208,7 @@ TEST_F(CPUTest, Terminates) {
 }
 
 TEST_F(CPUTest, InitialConditionsAfterTypicalSetup) {
-    boot_with_typical_setup();
+    boot_with_typical_setup({});
     interpret_until(0x800000FA);
     myCPU->DumpRegs(LOGLEVEL_DEBUG);
     myCPU->DumpQueueRegs(LOGLEVEL_DEBUG);
