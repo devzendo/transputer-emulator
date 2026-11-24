@@ -40,11 +40,9 @@ protected:
     void SetUp() override {
         setLogLevel(LOGLEVEL_DEBUG);
         flags = 0;
-        SET_FLAGS(DebugFlags_LinkComms | MemAccessDebug_Full | DebugFlags_TerminateOnMemViol | Debug_Disasm
-            | DebugFlags_TerminateOnMemViol);
         logDebug("SetUp start");
         myMemory = new Memory();
-        if (!myMemory->initialise(1024)) {
+        if (!myMemory->initialise(2048)) {
             logError("Memory initialisation failed");
             FAIL();
         }
@@ -53,11 +51,10 @@ protected:
 
         logDebug("Link setup");
         myLinks[0] = new StubLink(0, false);
-        myLinks[0]->setDebug(true);
         myLinks[0]->initialise();
         myLinks[1] = new StubLink(0, false);
-        myLinks[1]->setDebug(true);
         myLinks[1]->initialise();
+        // The links will have their debug flag set near when we need to investigate.
         myLinks[2] = nullptr;
         myLinks[3] = nullptr;
         myCPU = new CPU();
@@ -104,6 +101,10 @@ protected:
         reinterpret_cast<StubLink *>(myLinks[0])->setReadableBytes(bytes);
         myCPU->_emulate_prologue(false);
         logDebug("vvvvv TEST vvvvv");
+        SET_FLAGS(DebugFlags_LinkComms | MemAccessDebug_Full | DebugFlags_TerminateOnMemViol | Debug_DisRegs
+            | DebugFlags_TerminateOnMemViol);
+        myLinks[0]->setDebug(true);
+        myLinks[1]->setDebug(true);
     }
 
     void boot_with_terminate() const {
@@ -183,6 +184,25 @@ protected:
         byte8s.insert( byte8s.end(), rest_of_setup.begin(), rest_of_setup.end() );
         boot_with_vector(byte8s);
     }
+
+    void boot_with_string_out() const {
+        boot_with_typical_setup({
+            // 800000FA MAIN:
+            0x21, 0x20, 0xB0,        // 800000FA ajw     0x100    ; allow for 64 stack frames
+            0x4C,                    // 800000FD ldc     HWSTR - _M1
+            0x21, 0xFB,              // 800000FE ldpi
+            // 80000100 _M1:
+            0x67, 0x20, 0x20, 0x20,  // 80000100 ldc     LINK0_OUTPUT
+            0x20, 0x20, 0x20, 0x40,  // 80000104
+            0x4B,                    // 80000108 ldc     11
+            0xFB,                    // 80000109 out
+            0x22, 0x4A,              // 8000010A ldc 42
+            // 8000010C HWSTR:
+            0x68, 0x65, 0x6C, 0x6C,  // 8000010C DB      "hello world", 0x00 ; length 11
+            0x6F, 0x20, 0x77, 0x6F,  // 80000110
+            0x72, 0x6C, 0x64, 0x00,  // 80000114
+        });
+    }
 };
 
 TEST_F(CPUTest, InitialConditions) {
@@ -214,10 +234,75 @@ TEST_F(CPUTest, InitialConditionsAfterTypicalSetup) {
     myCPU->DumpQueueRegs(LOGLEVEL_DEBUG);
 	myCPU->DumpClockRegs(LOGLEVEL_DEBUG, myCPU->InstCycles + myCPU->MemCycles);
 
-    EXPECT_EQ(myCPU->IPtr, 0x800000FA);
+    EXPECT_EQ(myCPU->IPtr, 0x800000FA);        // vvvv typical setup is 0x8A bytes
     EXPECT_EQ(myCPU->Wdesc, (WordAlign(MemStart + 0x8A)) | 0x00000001); // low priority => 0x800000FD
     EXPECT_EQ(myCPU->HiHead, NotProcess_p);
     EXPECT_EQ(myCPU->HiTail, 0xDEADF00D);
     EXPECT_EQ(myCPU->LoHead, NotProcess_p);
     EXPECT_EQ(myCPU->LoTail, 0xDEADF00D);
 }
+
+TEST_F(CPUTest, InitialConditionsAfterBootWithStringOut) {
+    boot_with_string_out(); // Wdesc will be different as it's based on bootlen
+    interpret_until(0x800000FA); // end of typical boot, before ajw
+    myCPU->DumpRegs(LOGLEVEL_DEBUG);
+    myCPU->DumpQueueRegs(LOGLEVEL_DEBUG);
+    myCPU->DumpClockRegs(LOGLEVEL_DEBUG, myCPU->InstCycles + myCPU->MemCycles);
+
+    EXPECT_EQ(myCPU->IPtr, 0x800000FA);        // vvvv string out setup is 0x8A bytes
+    EXPECT_EQ(myCPU->Wdesc, (WordAlign(MemStart + 0xA6)) | 0x00000001); // low priority => 0x80000119
+    EXPECT_EQ(myCPU->HiHead, NotProcess_p);
+    EXPECT_EQ(myCPU->HiTail, 0xDEADF00D);
+    EXPECT_EQ(myCPU->LoHead, NotProcess_p);
+    EXPECT_EQ(myCPU->LoTail, 0xDEADF00D);
+}
+
+TEST_F(CPUTest, AdjustWorkspace) {
+    boot_with_string_out();
+    // with a workspace that's been been ajw'd, what's stored in the process queues, the adjusted wdesc, or
+    // the original? It's the adjusted wdesc.
+    interpret_until(0x800000FD); // just after the ajw 0x100
+    myCPU->DumpRegs(LOGLEVEL_DEBUG);
+
+    EXPECT_EQ(myCPU->Wdesc, (WordAlign(MemStart + 0xA6 + 0x400)) | 0x00000001); // low priority => 0x80000519
+}
+
+TEST_F(CPUTest, LinkIODeschedulesLeavingIdle) {
+    boot_with_string_out();
+    interpret_until(0x80000109); // just before the out
+    // Ensure we can sense the stored IPtr later...
+	myMemory->setWord((0x80000519 & WordMask) - 4, NotProcess_p);
+    //
+    EXPECT_EQ(IS_FLAG_SET(EmulatorState_DescheduleRequired), false);
+    EXPECT_EQ(myLinks[0]->m_send_registers.m_workspace_pointer, NotProcess_p); // The link has no workspace yet
+    EXPECT_EQ(myCPU->Wdesc, 0x80000519); // it'll soon be IdleProcess.p
+
+    interpret_until(0x8000010A); // just after the out (the ldc 42)
+    myCPU->DumpRegs(LOGLEVEL_DEBUG);
+    myCPU->DumpQueueRegs(LOGLEVEL_DEBUG);
+    //                                vvvv This is W_IPTR(Wdesc)
+	EXPECT_EQ(myMemory->getWord((0x80000519 & WordMask) - 4), 0x8000010A); // The IPtr is stored in the workspace
+
+    EXPECT_EQ(myCPU->IPtr, 0x8000010A);
+    EXPECT_EQ(IS_FLAG_SET(EmulatorState_DescheduleRequired), false); // This is set by out, and cleared at the end of
+    // the deschedule code at the end of interpret(), so you can't sense it directly, only its effects.
+    EXPECT_EQ(myCPU->Wdesc, IdleProcess_p);
+    EXPECT_EQ(myCPU->HiHead, NotProcess_p); // It's a low priority process.
+    EXPECT_EQ(myCPU->HiTail, 0xDEADF00D);
+    EXPECT_EQ(myCPU->LoHead, NotProcess_p); // The process is not on a list, and the CPU is idle. It's with the link.
+    EXPECT_EQ(myCPU->LoTail, 0xDEADF00D);
+    EXPECT_EQ(myLinks[0]->m_send_registers.m_workspace_pointer, 0x80000519); // The link has the workspace.
+}
+
+
+// TODO tests...
+// Deschedule requested when idle?
+// High priority processes are not descheduled on j after clock expiry
+// High priority processes are not descheduled on lend after clock expiry
+// Link outbyte
+// Link outword
+// Link in
+// Link direction bug: an in instruction with an out link address -> it's an out.
+// Link direction bug: an out instruction with an in link address -> it's an in.
+// Link direction bug: an outbyte instruction with an in link address -> it's an in.
+// Link direction bug: an outword instruction with an in link address -> it's an in.

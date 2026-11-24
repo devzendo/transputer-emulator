@@ -765,6 +765,7 @@ inline void CPU::interpret(void) {
 			} else {
 				IPtr += Oreg;
 				InstCycles = 3;
+				// TODO only deschedule low priority processes
 				if IS_FLAG_SET(EmulatorState_DeschedulePending) 
 					SET_FLAGS(EmulatorState_DescheduleRequired);
 				else
@@ -1035,6 +1036,7 @@ inline void CPU::interpret(void) {
 						// Instruction set summary seems to imply this...
 						// If there's a deschedule pending, set the required flag, so
 						// that it actually occurs.
+						// TODO Only deschedule low priority processes.
 						if (IS_FLAG_SET(EmulatorState_DeschedulePending)) {
 							SET_FLAGS(EmulatorState_DescheduleRequired);
 						}
@@ -1159,10 +1161,9 @@ inline void CPU::interpret(void) {
 						// takes 2w+20 iff communication proceeds, or 20 iff
 						// communication waits, and DescheduleFlag is set.
 						// See memory::blockCopy for details of timing.
+						logDebugF("Out for process 0x%08X on channel 0x%08X from memory 0x%08X length %d", Wdesc, Breg, Creg, Areg);
 						InstCycles = 20 ;
 						// TODO: should we deschedule only when communication waits?
-						// Instruction set summary seems to imply this..
-						SET_FLAGS(EmulatorState_Interrupt);
 						Link *myLink = nullptr;
 						switch (Breg) {
 							case Link0Output:
@@ -1211,6 +1212,7 @@ inline void CPU::interpret(void) {
 							// myLink->writeComplete() will be called at the end of interpret(), data will be transferred
 							// to physical memory Creg[0..Areg], and when done this process (that we deschedule here)
 							// will be rescheduled.
+							logDebugF("Requesting deschedule of out process #%08X", Wdesc);
 							SET_FLAGS(EmulatorState_DescheduleRequired);
 						}
 					}
@@ -2250,6 +2252,7 @@ inline void CPU::interpret(void) {
 		WORD32 schedulable = schedulables[i];
 		if (schedulable != NotProcess_p) {
 			// TODO handle timer queue removal
+			// TODO if any of the links provide a high priority process, that causes an interrupt.
 			if (Wdesc_HiPriority(schedulable)) {
 				if (i == 0) {
 					logDebugF("Schedule required of HI process #%08X due to previous instruction", schedulable);
@@ -2291,6 +2294,85 @@ inline void CPU::interpret(void) {
 	}
 
 	SET_FLAGS(EmulatorState_QueueInstruction);
+
+	// New scheduler design:
+	// Distinguish between DescheduleRequired and LinkDescheduleRequired. The latter is set when a Link I/O causes a
+	// process to need descheduling. The former is for all other cases. Recall that a process is either the active
+	// process, or is on a hi/low ready process list or is held with a link during I/O (and will be presented back to
+	// the CPU when the I/O is complete).
+	// We need the distinction between DescheduleRequired and LinkDescheduleRequired due to the distinction between
+	// where the descheduled process goes: either on a ready process list, or held with a Link.
+	// In both cases, the IPtr needs storing in the Workspace, for restoration in the 'start new process' section, and
+	// the CPU is set to 'idle' (this may change if we find there's a process to run).
+	if (IS_FLAG_SET(EmulatorState_DescheduleRequired /*| EmulatorState_LinkDescheduleRequired*/)) {
+		myMemory->setWord(W_IPTR(Wdesc), IPtr);
+		if (IS_FLAG_SET(EmulatorState_DescheduleRequired)) {
+			// Add process to the end of the relevant list, or form that list with it, if it is empty. (CHECK THIS WITH CWG)
+			// TODO a test involving a regular descheduling
+		} else {
+			// This was a LinkDescheduleRequired, and the process is already held with the Link, so nothing to do here.
+		}
+
+		// End of interrupt detection & restoration of the interrupted process.
+		bool interrupt_end = false;
+		// TODO set this ^^^ to in-interrupt-flag set & process being descheduled was high priority & the high priority list is empty.
+		if (interrupt_end) {
+			// (ie this process is now waiting on link I/O - it can't have been descheduled by j or lend, but maybe other
+			// process control instructions), then all high priority processes have finished being handled under interrupt,
+			// so clear the in-interrupt flag, and restore the Wdesc/registers from the interrupt area, and clear that area
+			// down. We are now running the restored low priority process.
+			// TODO
+		} else {
+			// We don't have end-of-interrupt, so set idle.
+			Wdesc = IdleProcess_p;
+		}
+
+		// And we're done with descheduling and rescheduling.
+		CLEAR_FLAGS(EmulatorState_DescheduleRequired /*| EmulatorState_LinkDescheduleRequired*/);
+
+		// TODO need to TDD these...
+		LoClockLastQuantumExpiry = LoClock;
+		SET_FLAGS(EmulatorState_QueueInstruction);
+		CLEAR_FLAGS(EmulatorState_DeschedulePending); // TODO need to TDD this
+	}
+
+	// Processes becoming available to schedule.
+	// We may now be idle. We may have processes becoming ready to run which will be determined by checking
+	// schedulables. Some instructions create new processes or schedule others so they set ScheduleWdesc. Also links may
+	// complete their I/O. In all these cases they get put on the relevant ready process list.
+	//
+	// TODO form list of schedulables from ScheduleWdesc and polling all the links. Run a lambda over any that are not
+	// NotProcess_p, adding it to the relevant list.
+	//
+	// Interrupt detection.
+	// We don't handle interrupts from the ScheduleWdesc (CHECK THIS WITH CWG)
+	// If we are currently running a lo priority process (not IdleProcess_p), and any of these completed link-schedulables
+	// and the process whose I/O has completed is high priority, set the in-interrupt bit, store the current Wdesc &
+	// registers in the interrupt area, then set idle. A high priority process will be chosen next. Multiple
+	// high priority processes could have completed I/O, so they would all be on the high priority process list, so are
+	// all to be run until the high priority list is empty (either all high priority processes ended, or all are on
+	// timers or link I/O - recall high priority processes don't timeslice on j/lend).
+
+
+
+	// Now find the best process to run, if we are idle:
+	// If the hi priority list is not empty, take the first process off it (emptying the list if necessary), and start
+	// running that.
+	//
+	// Else if the lo priority list is not empty, take the first process off it (emptying the list if necessary) and
+	// start running that.
+	//
+	// Else we're genuinely idle - presumably only a single process that's awaiting link I/O.
+	// TODO we do need to guard interpretation against fetching and interpreting the next instruction if Wdesc == IdleProcess_p.
+
+
+
+
+
+
+	/*
+	 Old deschedule / schedule code... remove when the new code's finished
+
 	// The instruction may have been one which can cause a deschedule while
 	// waiting for another process (in, out, outword, outbyte) or it may be
 	// a process control instruction which could require a deschedule. Or
@@ -2300,15 +2382,44 @@ inline void CPU::interpret(void) {
 	// will be set. Here's where we actually do that deschedule, rather
 	// than duplicate this code for every deschedulable instruction...
 	if (IS_FLAG_SET(EmulatorState_DescheduleRequired)) {
-		logDebugF("Deschedule of %s process #%08X requested", (Wdesc_HiPriority(Wdesc) ? "HI" : "LO"), Wdesc);
-		// TODO ignore descheduling of Wdesc_Wptr(Wdesc) == NotProcess_p.
-		if ((Wdesc_HiPriority(Wdesc) && (HiHead==NotProcess_p)) ||
-			((!Wdesc_HiPriority(Wdesc)) && (Wdesc_WPtr(LoHead)==NotProcess_p))) {
-			// Do nothing - Nothing needed to be descheduled.
-			logDebug("Nothing to deschedule (head is NotProcess_p)");
+		if (Wdesc == IdleProcess_p) {
+			logDebug("Deschedule of idle process ignored");
 		} else {
+			logDebugF("Deschedule of %s process #%08X requested", (Wdesc_HiPriority(Wdesc) ? "HI" : "LO"), Wdesc);
 			// Store the IPtr in the workspace
+			// TODO Is this needed for link I/O? That stores Wdesc at memory[Breg]?
 			myMemory->setWord(W_IPTR(Wdesc), IPtr);
+			// TODO Is there any difference between j, lend descheduling, and link I/O descheduling, as there the Wdesc is
+			// stored in the link registers.
+			// out does deschedule()
+			// j does D_check()
+			// lend does D_check()
+			// D_check only deschedules low priority processes, if deschedule pending (ie timeslice expired). if true, it
+			// moves the process to the end of the queue, then requests the next new process via the gotosnp flag.
+			// deschedule() doesn't do anything if idle. If not idle, stores IPtr at Wptr[-1], and requests the next new
+			// process via the gotosnp flag.
+			//
+			// TODO NEXT how do we go idle?
+			// do we need a gotosnp flag?
+			WORD32 newWdesc = IdleProcess_p;
+			// Choose high priority first...
+			if (HiHead != NotProcess_p) {
+				// use the high queue
+			} else if (IS_FLAG_SET(EmulatorState_Interrupt)) {
+				// it's an interrupt, process it
+			} else if (LoHead != NotProcess_p) {
+				// use the low queue
+			} else {
+				// idle, no queue to consult
+			}
+
+			// if we have finished interrupt, and have an interrupted low priority process, restore it.
+
+			// get the end of the chosen queue
+
+			// if the gotosnp flag is set, then it finds the next process: hi, lo, interrupt, or idle.
+			// if idle, it sets Wdesc to IdleProcess_p.
+			//
 			// Add the process to the relevant scheduling list
 			if (Wdesc_HiPriority(Wdesc)) {
 				// High priority => Wdesc == WPtr
@@ -2325,12 +2436,8 @@ inline void CPU::interpret(void) {
 			}
 			logDebugF("New IPtr is #%08X", IPtr);
 		}
-		LoClockLastQuantumExpiry = LoClock;
-		SET_FLAGS(EmulatorState_QueueInstruction);
-		// Flags_DescheduleRequired is cleared each time round the 
-		// execute loop.
-		CLEAR_FLAGS(EmulatorState_DeschedulePending);
 	}
+	*/
 
 	// The instruction took InstCycles + MemCycles machine cycles 
 	// to complete. During that time, the high / low priority clocks 

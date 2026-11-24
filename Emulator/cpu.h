@@ -108,6 +108,9 @@ class CPU {
 
     FRIEND_TEST(CPUTest, InitialConditions);
     FRIEND_TEST(CPUTest, InitialConditionsAfterTypicalSetup);
+    FRIEND_TEST(CPUTest, InitialConditionsAfterBootWithStringOut);
+    FRIEND_TEST(CPUTest, AdjustWorkspace);
+    FRIEND_TEST(CPUTest, LinkIODeschedulesLeavingIdle);
 
 #endif
 

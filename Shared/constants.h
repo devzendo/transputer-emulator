@@ -37,7 +37,11 @@ const int BitsPerWord=32;                       // For use in instruction timing
 const int ByteSelectMask=0x03;                    // Mask to check word alignment
 const WORD32 WordMask=0xFFFFFFFC;             // ~ByteSelectMask to get word part
 
+const WORD32 HiPriority=0x00000000;
+const WORD32 LoPriority=0x00000001;
+
 const WORD32 NotProcess_p=0x80000000;  // Minimum integer; lowest memory location
+const WORD32 IdleProcess_p=(NotProcess_p | LoPriority);
 
 // Values that the ALT state of an alternative, held in WPtr - 3 can have
 const WORD32 Enabling_p=0x80000001;        // Indicates alt enabling is occurring
