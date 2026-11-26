@@ -94,29 +94,29 @@ extern WORD32 flags;
    ===========================
    Emulator State Flags
    
-   16 (0x10000)        T800 Error flag
+   16 (0x00010000)     T800 Error flag
    
-   17 (0x20000)        T800 Halt on Error flag
+   17 (0x00020000)     T800 Halt on Error flag
    
-   18 (0x40000)        T800 Floating point Error flag
+   18 (0x00040000)     T800 Floating point Error flag
    
-   19 (0x80000)        Emulator: Deschedule pending due to timeslice
+   19 (0x00080000)     Emulator: Deschedule pending due to timeslice
    
-   20 (0x100000)       Emulator: Deschedule required by instruction
+   20 (0x00100000)     Emulator: Deschedule required by instruction
   
-   21 (0x200000)       Emulator: Interruptible instruction interpreted
+   21 (0x00200000)     Emulator: Interruptible instruction interpreted
   
-   22 (0x400000)       Emulator: Bad / unimplemented instruction encountered
+   22 (0x00400000)     Emulator: Bad / unimplemented instruction encountered
   
-   23 (0x800000)       Emulator: Queue manipulation instruction encountered
+   23 (0x00800000)     Emulator: Queue manipulation instruction encountered
   
-   24 (0x1000000)      Emulator: Timer manipulation instruction encountered
+   24 (0x01000000)     Emulator: Timer manipulation instruction encountered
 
-   25 (0x2000000)      Emulator: Breakpoint instruction (j 0, break) encountered
+   25 (0x02000000)     Emulator: Breakpoint instruction (j 0, break) encountered
   
-   26 (0x4000000)      T800 Break on j 0 flag
+   26 (0x04000000)     T800 Break on j 0 flag
   
-   27 (0x8000000)      Reserved
+   27 (0x08000000)     Emulator: Deschedule required by link I/O
   
    28 (0x10000000)     Reserved
    
@@ -138,6 +138,7 @@ extern WORD32 flags;
 #define EmulatorState_TimerInstruction 0x1000000
 #define EmulatorState_BreakpointInstruction 0x2000000
 #define EmulatorState_J0Break 0x4000000
+#define EmulatorState_LinkDescheduleRequired 0x8000000
 
 #define EmulatorState_TVS       0x40000000
 #define EmulatorState_Terminate 0x80000000

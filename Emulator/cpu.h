@@ -17,6 +17,7 @@
 #include <set>
 #include <deque>
 
+#include "constants.h"
 #include "types.h"
 #include "memory.h"
 #include "link.h"
@@ -30,7 +31,70 @@
 #include "gtest/gtest_prod.h"
 #endif
 
-extern WORD32 WordAlign(WORD32 addr);
+// Special offsets below the workspace pointer, or other pointer:
+inline WORD32 Wdesc_Priority(WORD32 Wdesc) {
+	return Wdesc & 0x01;
+}
+
+inline WORD32 Wdesc_HiPriority(WORD32 Wdesc) {
+	return (Wdesc & 0x01) == 0;
+}
+
+inline WORD32 Wdesc_WPtr(WORD32 Wdesc) {
+	return Wdesc & WordMask;
+}
+
+// TODO: Use a structure/union for this?
+//
+// Temporary register used by outbyte, outword, postnormsn.
+// Also holds address of selected
+// process during execution of an alt
+inline WORD32 W_TEMP(WORD32 x) {
+	return Wdesc_WPtr(x);
+}
+
+// If the process has been descheduled, this holds the IPtr
+// of the descheduled process.
+inline WORD32 W_IPTR(WORD32 x) {
+	return Wdesc_WPtr(x) - 4;
+}
+
+// If the process is on a scheduling list has been
+// descheduled then rescheduled, this is the address
+// of the next process on the list's workspace.
+inline WORD32 W_LINK(WORD32 x) {
+	return Wdesc_WPtr(x) - 8;
+}
+
+// During communication deschedule, or during an alt,
+// this holds the address of the channel. During alt, it holds
+// the alternation state. These two are synonymous.
+inline WORD32 W_POINTER(WORD32 x) {
+	return Wdesc_WPtr(x) - 12;
+}
+inline WORD32 W_ALTSTATE(WORD32 x) {
+	return Wdesc_WPtr(x) - 12;
+}
+
+// The address of the next process's workspace, if on a timer
+// list, or state of time selection in an alternation
+// involving timer guards.
+inline WORD32 W_TLINK(WORD32 x) {
+	return Wdesc_WPtr(x) - 16;
+}
+
+// The time that a process on a timer list is waiting for.
+inline WORD32 W_TIME(WORD32 x) {
+	return Wdesc_WPtr(x) - 20;
+}
+
+inline WORD64 MakeWORD64(WORD32 MSW, WORD32 LSW) {
+	return (((WORD64)MSW) << BitsPerWord) | (((WORD64)LSW) & 0x00000000FFFFFFFF);
+}
+
+inline WORD32 WordAlign(WORD32 addr) {
+	return (addr + 3) & WordMask;
+}
 
 class CPU {
 	friend class CPUTest;
@@ -110,7 +174,8 @@ class CPU {
     FRIEND_TEST(CPUTest, InitialConditionsAfterTypicalSetup);
     FRIEND_TEST(CPUTest, InitialConditionsAfterBootWithStringOut);
     FRIEND_TEST(CPUTest, AdjustWorkspace);
-    FRIEND_TEST(CPUTest, LinkIODeschedulesLeavingIdle);
+    FRIEND_TEST(CPUTest, LinkIODeschedulesToLinkLeavingIdle);
+    FRIEND_TEST(CPUTest, MemoryIODeschedulesToQueueLeavingIdle);
 
 #endif
 
@@ -118,7 +183,7 @@ class CPU {
 		inline void DROP(void);
 		inline WORD32 POP(void);
 		inline void PUSH(WORD32 x);
-		inline void interpret(void);
+		void interpret(void);
 		inline void bootFromLink0(void);
 		bool swapContextForBreakpointInstruction(void);
 		inline bool monitor(void);

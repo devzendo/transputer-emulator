@@ -38,64 +38,6 @@ using namespace std;
 #include "symbol.h"
 #include "boot.h"
 
-// Special offsets below the workspace pointer, or other pointer:
-inline WORD32 Wdesc_Priority(WORD32 Wdesc) {
-	return Wdesc & 0x01;
-}
-
-inline WORD32 Wdesc_HiPriority(WORD32 Wdesc) {
-	return (Wdesc & 0x01) == 0;
-}
-
-inline WORD32 Wdesc_WPtr(WORD32 Wdesc) {
-	return Wdesc & WordMask;
-}
-
-// TODO: Use a structure/union for this?
-//
-// Temporary register used by outbyte, outword, postnormsn. 
-// Also holds address of selected
-// process during execution of an alt
-inline WORD32 W_TEMP(WORD32 x) {
-	return Wdesc_WPtr(x);
-}
-
-// If the process has been descheduled, this holds the IPtr 
-// of the descheduled process.
-inline WORD32 W_IPTR(WORD32 x) {
-	return Wdesc_WPtr(x) - 4;
-}
-
-// If the process is on a scheduling list has been 
-// descheduled then rescheduled, this is the address 
-// of the next process on the list's workspace.
-inline WORD32 W_LINK(WORD32 x) {
-	return Wdesc_WPtr(x) - 8;
-}
-
-// During communication deschedule, or during an alt, 
-// this holds the address of the channel. During alt, it holds 
-// the alternation state. These two are synonymous.
-inline WORD32 W_POINTER(WORD32 x) {
-       return Wdesc_WPtr(x) - 12;
-}
-inline WORD32 W_ALTSTATE(WORD32 x) {
-       return Wdesc_WPtr(x) - 12;
-}
-
-// The address of the next process's workspace, if on a timer
-// list, or state of time selection in an alternation
-// involving timer guards.
-inline WORD32 W_TLINK(WORD32 x) {
-       return Wdesc_WPtr(x) - 16;
-}
-
-// The time that a process on a timer list is waiting for.
-inline WORD32 W_TIME(WORD32 x) {
-	return Wdesc_WPtr(x) - 20;
-}
-
-
 
 
 WORD32 HighestSetBit(WORD32 Register) {
@@ -113,16 +55,6 @@ WORD32 HighestSetBit(WORD32 Register) {
 	logBug("HighestSetBit: sentinel bit not found");
 	return 0;
 }
-
-
-inline WORD64 MakeWORD64(WORD32 MSW, WORD32 LSW) {
-	return (((WORD64)MSW) << BitsPerWord) | (((WORD64)LSW) & 0x00000000FFFFFFFF);
-}
-
-inline WORD32 WordAlign(WORD32 addr) {
-	return (addr + 3) & WordMask;
-}
-
 
 
 
@@ -703,7 +635,7 @@ bool CPU::swapContextForBreakpointInstruction(void) {
 	return hiPriority;
 }
 
-inline void CPU::interpret(void) {
+void CPU::interpret(void) {
 	bool hitBreakpoint = IS_FLAG_SET(EmulatorState_BreakpointInstruction) ||
 						 BreakpointAddresses.count(IPtr) == 1;
 
@@ -1150,7 +1082,7 @@ inline void CPU::interpret(void) {
 							// myLink->readComplete() will be called at the end of interpret(), data will be transferred
 							// to physical memory Creg[0..Areg], and when done this process (that we deschedule here)
 							// will be rescheduled.
-							SET_FLAGS(EmulatorState_DescheduleRequired);
+							SET_FLAGS(EmulatorState_LinkDescheduleRequired);
 						}
 					}
 					break;
@@ -1162,7 +1094,7 @@ inline void CPU::interpret(void) {
 						// communication waits, and DescheduleFlag is set.
 						// See memory::blockCopy for details of timing.
 						logDebugF("Out for process 0x%08X on channel 0x%08X from memory 0x%08X length %d", Wdesc, Breg, Creg, Areg);
-						InstCycles = 20 ;
+						InstCycles = 20;
 						// TODO: should we deschedule only when communication waits?
 						Link *myLink = nullptr;
 						switch (Breg) {
@@ -1189,10 +1121,10 @@ inline void CPU::interpret(void) {
 										InstCycles = 20;
 										SET_FLAGS(EmulatorState_DescheduleRequired);
 									} else {
-										WORD32 ChanAddr = myMemory->getWord(W_POINTER(WorkSpace));
+										WORD32 BufAddr = myMemory->getWord(W_POINTER(WorkSpace));
 										// The in reached the rendezvous first
-										// Copy Areg bytes from Creg to ChanAddr
-										myMemory->blockCopy(Areg, Creg, ChanAddr);
+										// Copy Areg bytes from Creg to BufAddr
+										myMemory->blockCopy(Areg, Creg, BufAddr);
 										// Reset channel to unused
 										myMemory->setWord(Breg, NotProcess_p);
 										// Request a schedule of the process at WorkSpace
@@ -1213,7 +1145,7 @@ inline void CPU::interpret(void) {
 							// to physical memory Creg[0..Areg], and when done this process (that we deschedule here)
 							// will be rescheduled.
 							logDebugF("Requesting deschedule of out process #%08X", Wdesc);
-							SET_FLAGS(EmulatorState_DescheduleRequired);
+							SET_FLAGS(EmulatorState_LinkDescheduleRequired);
 						}
 					}
 					break;
@@ -1277,7 +1209,7 @@ inline void CPU::interpret(void) {
 							// myLink->writeComplete() will be called at the end of interpret(), data will be transferred
 							// to physical memory Wdesc[0], and when done this process (that we deschedule here)
 							// will be rescheduled.
-							SET_FLAGS(EmulatorState_DescheduleRequired);
+							SET_FLAGS(EmulatorState_LinkDescheduleRequired);
 						}
 					}
 					break;
@@ -1330,7 +1262,7 @@ inline void CPU::interpret(void) {
 							// myLink->writeComplete() will be called at the end of interpret(), data will be transferred
 							// to physical memory Wdesc[0..3], and when done this process (that we deschedule here)
 							// will be rescheduled.
-							SET_FLAGS(EmulatorState_DescheduleRequired);
+							SET_FLAGS(EmulatorState_LinkDescheduleRequired);
 						}
 					}
 					break;
@@ -2304,11 +2236,31 @@ inline void CPU::interpret(void) {
 	// where the descheduled process goes: either on a ready process list, or held with a Link.
 	// In both cases, the IPtr needs storing in the Workspace, for restoration in the 'start new process' section, and
 	// the CPU is set to 'idle' (this may change if we find there's a process to run).
-	if (IS_FLAG_SET(EmulatorState_DescheduleRequired /*| EmulatorState_LinkDescheduleRequired*/)) {
+	if (IS_FLAG_SET(EmulatorState_DescheduleRequired | EmulatorState_LinkDescheduleRequired)) {
 		myMemory->setWord(W_IPTR(Wdesc), IPtr);
 		if (IS_FLAG_SET(EmulatorState_DescheduleRequired)) {
-			// Add process to the end of the relevant list, or form that list with it, if it is empty. (CHECK THIS WITH CWG)
-			// TODO a test involving a regular descheduling
+			// Add process to the end of the relevant list, or form that list with it, if it is empty.
+			WORD32 *headPtr = /* TODO Wdesc_HiPriority(Wdesc) ? &HiHead :*/ &LoHead;
+			WORD32 *tailPtr = /* TODO Wdesc_HiPriority(Wdesc) ? &HiTail :*/ &LoTail;
+			// There's no process after this one:
+			myMemory->setWord(W_LINK(Wdesc), NotProcess_p);
+			// For now, the list is empty. TODO TDD the 'not empty' case.
+			*headPtr = Wdesc;
+			*tailPtr = Wdesc;
+			// Should handle high/low priority, and list empty/populated - final version should be:
+			// WORD32 *headPtr = Wdesc_HiPriority(Wdesc) ? &HiHead : &LoHead;
+			// WORD32 *tailPtr = Wdesc_HiPriority(Wdesc) ? &HiTail : &LoTail;
+			// There's no process after this one:
+			// myMemory->setWord(W_LINK(Wdesc), NotProcess_p);
+			// if (*headPtr == NotProcess_p) {
+			//   // List empty, populate it.
+			//   *headPtr = Wdesc;
+			// } else {
+			//   // Add to end of existing list.
+			//   myMemory->setWord(W_LINK(*tailPtr), Wdesc);
+			// }
+			// *tailPtr = Wdesc;
+			// TODO a test involving a high priority, regular descheduling
 		} else {
 			// This was a LinkDescheduleRequired, and the process is already held with the Link, so nothing to do here.
 		}
@@ -2328,7 +2280,7 @@ inline void CPU::interpret(void) {
 		}
 
 		// And we're done with descheduling and rescheduling.
-		CLEAR_FLAGS(EmulatorState_DescheduleRequired /*| EmulatorState_LinkDescheduleRequired*/);
+		CLEAR_FLAGS(EmulatorState_DescheduleRequired | EmulatorState_LinkDescheduleRequired);
 
 		// TODO need to TDD these...
 		LoClockLastQuantumExpiry = LoClock;

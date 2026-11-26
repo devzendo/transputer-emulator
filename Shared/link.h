@@ -185,7 +185,9 @@ public:
     FRIEND_TEST(SystemLinkTest, AsyncWriteWhenFull);
     FRIEND_TEST(SystemLinkTest, AsyncWriteCompleteWritesFinalData);
     FRIEND_TEST(SystemLinkTest, AsyncReadNotCompleteOnFinalData);
-    FRIEND_TEST(CPUTest, LinkIODeschedulesLeavingIdle);
+    FRIEND_TEST(CPUTest, LinkIODeschedulesToLinkLeavingIdle);
+    FRIEND_TEST(CPUTest, MemoryIODeschedulesToQueueLeavingIdle);
+
 #endif
 
 protected:

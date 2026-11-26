@@ -18,20 +18,32 @@ PAGE 60,132
 MAIN:
 	ajw     0x100    ; allow for 64 stack frames
 
-	ldc     HWSTR - _M1
+    mint             ; initialise channel
+	ldc     CHAN - _M1
 	ldpi
 _M1:
+    ; a=chan, b=mint
+    stnl    0
 
-    ; (a=string address)
-	; Output string data
-	ldc     LINK0_OUTPUT
-	ldc     11
-	; (a=string length; b=LINK0_OUTPUT, c=string address)
+
+	ldc     HWSTR - _M2 ; Output string data to channel
+	ldpi
+_M2:
+    ldc     CHAN - _M3
+    ldpi
+_M3:
+    ; (a=chan, b=string address)
+    ldc     11
+	; (a=string length; b=chan, c=string address)
 	out
 	; ()
 
-    ldc 42
+    ldc 42  ; nop-ish
+
 HWSTR:
 	DB      "hello world", 0x00 ; length 11
+
+CHAN:
+    DW      0
 
 	END

@@ -185,7 +185,7 @@ protected:
         boot_with_vector(byte8s);
     }
 
-    void boot_with_string_out() const {
+    void boot_with_string_out_to_link() const {
         boot_with_typical_setup({
             // 800000FA MAIN:
             0x21, 0x20, 0xB0,        // 800000FA ajw     0x100    ; allow for 64 stack frames
@@ -203,6 +203,34 @@ protected:
             0x72, 0x6C, 0x64, 0x00,  // 80000114
         });
     }
+
+    void boot_with_string_out_to_memory() const {
+        boot_with_typical_setup({
+            // 800000FA MAIN:
+            0x21, 0x20, 0xB0,        // 800000FA ajw     0x100    ; allow for 64 stack frames
+            0x24, 0xF2,              // 800000FD mint             ; initialise channel
+            0x21, 0x48,              // 800000FF ldc     CHAN - _M1
+            0x21, 0xFB,              // 80000101 ldpi
+            // 80000103 _M1:
+            0xE0,                    // 80000103 stnl    0
+            0x48,                    // 80000104 ldc     HWSTR - _M2 ; Output string data to channel
+            0x21, 0xFB,              // 80000105 ldpi
+            // 80000107 _M2:
+            0x21, 0x40,              // 80000107 ldc     CHAN - _M3
+            0x21, 0xFB,              // 80000109 ldpi
+            // 8000010B _M3:
+            0x4B,                    // 8000010B ldc     11
+            0xFB,                    // 8000010C out
+            0x22, 0x4A,              // 8000010D ldc 42  ; nop-ish
+            // 8000010F HWSTR:
+            0x68, 0x65, 0x6C, 0x6C,  // 8000010F DB      "hello world", 0x00 ; length 11
+            0x6F, 0x20, 0x77, 0x6F,  // 80000113
+            0x72, 0x6C, 0x64, 0x00,  // 80000117
+            // 8000011B CHAN:
+            0x0000,                  // 8000011B DW      0
+        });
+    }
+
 };
 
 TEST_F(CPUTest, InitialConditions) {
@@ -243,7 +271,7 @@ TEST_F(CPUTest, InitialConditionsAfterTypicalSetup) {
 }
 
 TEST_F(CPUTest, InitialConditionsAfterBootWithStringOut) {
-    boot_with_string_out(); // Wdesc will be different as it's based on bootlen
+    boot_with_string_out_to_link(); // Wdesc will be different as it's based on bootlen
     interpret_until(0x800000FA); // end of typical boot, before ajw
     myCPU->DumpRegs(LOGLEVEL_DEBUG);
     myCPU->DumpQueueRegs(LOGLEVEL_DEBUG);
@@ -258,7 +286,7 @@ TEST_F(CPUTest, InitialConditionsAfterBootWithStringOut) {
 }
 
 TEST_F(CPUTest, AdjustWorkspace) {
-    boot_with_string_out();
+    boot_with_string_out_to_link();
     // with a workspace that's been been ajw'd, what's stored in the process queues, the adjusted wdesc, or
     // the original? It's the adjusted wdesc.
     interpret_until(0x800000FD); // just after the ajw 0x100
@@ -267,36 +295,76 @@ TEST_F(CPUTest, AdjustWorkspace) {
     EXPECT_EQ(myCPU->Wdesc, (WordAlign(MemStart + 0xA6 + 0x400)) | 0x00000001); // low priority => 0x80000519
 }
 
-TEST_F(CPUTest, LinkIODeschedulesLeavingIdle) {
-    boot_with_string_out();
+TEST_F(CPUTest, LinkIODeschedulesToLinkLeavingIdle) {
+    boot_with_string_out_to_link();
+    WORD32 processWdesc = 0x80000519; // After the boot and ajw.
     interpret_until(0x80000109); // just before the out
     // Ensure we can sense the stored IPtr later...
-	myMemory->setWord((0x80000519 & WordMask) - 4, NotProcess_p);
+	myMemory->setWord((processWdesc & WordMask) - 4, NotProcess_p);
     //
     EXPECT_EQ(IS_FLAG_SET(EmulatorState_DescheduleRequired), false);
+    EXPECT_EQ(IS_FLAG_SET(EmulatorState_LinkDescheduleRequired), false);
     EXPECT_EQ(myLinks[0]->m_send_registers.m_workspace_pointer, NotProcess_p); // The link has no workspace yet
-    EXPECT_EQ(myCPU->Wdesc, 0x80000519); // it'll soon be IdleProcess.p
+    EXPECT_EQ(myCPU->Wdesc, processWdesc); // it'll soon be IdleProcess.p
 
     interpret_until(0x8000010A); // just after the out (the ldc 42)
     myCPU->DumpRegs(LOGLEVEL_DEBUG);
     myCPU->DumpQueueRegs(LOGLEVEL_DEBUG);
-    //                                vvvv This is W_IPTR(Wdesc)
-	EXPECT_EQ(myMemory->getWord((0x80000519 & WordMask) - 4), 0x8000010A); // The IPtr is stored in the workspace
+	EXPECT_EQ(myMemory->getWord(W_IPTR(processWdesc)), 0x8000010A); // The IPtr is stored in the workspace
 
     EXPECT_EQ(myCPU->IPtr, 0x8000010A);
     EXPECT_EQ(IS_FLAG_SET(EmulatorState_DescheduleRequired), false); // This is set by out, and cleared at the end of
     // the deschedule code at the end of interpret(), so you can't sense it directly, only its effects.
+    EXPECT_EQ(IS_FLAG_SET(EmulatorState_LinkDescheduleRequired), false); // Same, but it has been set during interpret.
     EXPECT_EQ(myCPU->Wdesc, IdleProcess_p);
     EXPECT_EQ(myCPU->HiHead, NotProcess_p); // It's a low priority process.
     EXPECT_EQ(myCPU->HiTail, 0xDEADF00D);
     EXPECT_EQ(myCPU->LoHead, NotProcess_p); // The process is not on a list, and the CPU is idle. It's with the link.
     EXPECT_EQ(myCPU->LoTail, 0xDEADF00D);
-    EXPECT_EQ(myLinks[0]->m_send_registers.m_workspace_pointer, 0x80000519); // The link has the workspace.
+    // Does the W_LINK of the process get set to NotProcess_p when the process is with the link?
+    EXPECT_EQ(myLinks[0]->m_send_registers.m_workspace_pointer, processWdesc); // The link has the workspace.
+}
+
+TEST_F(CPUTest, MemoryIODeschedulesToQueueLeavingIdle) {
+    boot_with_string_out_to_memory();
+    WORD32 processWdesc = 0x8000051D; // After the boot and ajw.
+    interpret_until(0x8000010C); // just before the out
+    logDebug("^^^ just before the out vvv prepping the IPtr save area for later test");
+    // Ensure we can sense the stored IPtr later...
+    myMemory->setWord((processWdesc & WordMask) - 4, NotProcess_p);
+    //
+    EXPECT_EQ(IS_FLAG_SET(EmulatorState_DescheduleRequired), false);
+    EXPECT_EQ(myLinks[0]->m_send_registers.m_workspace_pointer, NotProcess_p); // The link has no workspace
+    EXPECT_EQ(myCPU->Wdesc, processWdesc); // it'll soon be IdleProcess.p
+    logDebug("vvvv running the out");
+    interpret_until(0x8000010D); // just after the out (at the ldc 42)
+    myCPU->DumpRegs(LOGLEVEL_DEBUG);
+    myCPU->DumpQueueRegs(LOGLEVEL_DEBUG);
+    EXPECT_EQ(myMemory->getWord(W_IPTR(processWdesc)), 0x8000010D); // The IPtr is stored in the workspace
+    EXPECT_EQ(myMemory->getWord(W_POINTER(processWdesc)), 0x8000010F); // The buffer addr is stored in the workspace
+    EXPECT_EQ(myMemory->getWord(0x8000011B), processWdesc); // The channel holds the workspace
+    EXPECT_EQ(myCPU->IPtr, 0x8000010D); // But is it? The CPU should be idle as there's only this one process, and it's queued.
+    EXPECT_EQ(IS_FLAG_SET(EmulatorState_DescheduleRequired), false); // This is set by out, and cleared at the end of
+    // the deschedule code at the end of interpret(), so you can't sense it directly, only its effects.
+    EXPECT_EQ(myCPU->HiHead, NotProcess_p); // It's a low priority process, so this is as setup leaves it.
+    EXPECT_EQ(myCPU->HiTail, 0xDEADF00D); // As _emulate_prologue initialises it.
+    EXPECT_EQ(myCPU->LoHead, processWdesc); // The process is placed at the sole entry in this list, and the CPU is idle.
+    EXPECT_EQ(myCPU->LoTail, processWdesc);
+    EXPECT_EQ(myMemory->getWord(W_LINK(processWdesc)), NotProcess_p); // No next process after this.
+    EXPECT_EQ(myCPU->Wdesc, IdleProcess_p);
+    EXPECT_EQ(myLinks[0]->m_send_registers.m_workspace_pointer, NotProcess_p); // The link still has no workspace
 }
 
 
 // TODO tests...
 // Deschedule requested when idle?
+//
+// Out to memory channel, but the in reaches the rendezvous first.
+//
+// Two processes, one is already on the low priority list, and the second does a memory channel out, and is appended
+//   to the end of the list. (We have a test MemoryIODeschedulesToQueueLeavingIdle that tests that the out process is
+//   set as the sole member of the previously-empty list. Need to check the previously-not-empty case)
+//
 // High priority processes are not descheduled on j after clock expiry
 // High priority processes are not descheduled on lend after clock expiry
 // Link outbyte
