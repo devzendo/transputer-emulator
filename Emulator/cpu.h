@@ -176,6 +176,7 @@ class CPU {
     FRIEND_TEST(CPUTest, AdjustWorkspace);
     FRIEND_TEST(CPUTest, LinkIODeschedulesToLinkLeavingIdle);
     FRIEND_TEST(CPUTest, MemoryIODeschedulesToQueueLeavingIdle);
+    FRIEND_TEST(CPUTest, IdleDetection);
 
 #endif
 

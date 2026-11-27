@@ -355,6 +355,19 @@ TEST_F(CPUTest, MemoryIODeschedulesToQueueLeavingIdle) {
     EXPECT_EQ(myLinks[0]->m_send_registers.m_workspace_pointer, NotProcess_p); // The link still has no workspace
 }
 
+TEST_F(CPUTest, IdleDetection) {
+    // As previous test, a single low priority process, does an out, so is on the link. Keep calling interpret(),
+    // observe IPtr does not change, and Wdesc is still IdleProcess_p.
+    boot_with_string_out_to_memory();
+    interpret_until(0x8000010D); // just after the out (at the ldc 42)
+    for (int i=0; i<8; i++) {
+        EXPECT_EQ(myCPU->Wdesc, IdleProcess_p);
+        EXPECT_EQ(myCPU->IPtr, 0x8000010D); // It stays here (until the out completes, which it won't in this test).
+        logDebug("Expecting this interpret() to report Idle...");
+        myCPU->interpret();
+    }
+}
+
 
 // TODO tests...
 // Deschedule requested when idle?
