@@ -302,8 +302,8 @@ TEST_F(CPUTest, LinkIODeschedulesToLinkLeavingIdle) {
     // Ensure we can sense the stored IPtr later...
 	myMemory->setWord((processWdesc & WordMask) - 4, NotProcess_p);
     //
-    EXPECT_EQ(IS_FLAG_SET(EmulatorState_DescheduleRequired), false);
-    EXPECT_EQ(IS_FLAG_SET(EmulatorState_LinkDescheduleRequired), false);
+    EXPECT_FALSE(IS_FLAG_SET(EmulatorState_DescheduleRequired));
+    EXPECT_FALSE(IS_FLAG_SET(EmulatorState_LinkDescheduleRequired));
     EXPECT_EQ(myLinks[0]->m_send_registers.m_workspace_pointer, NotProcess_p); // The link has no workspace yet
     EXPECT_EQ(myCPU->Wdesc, processWdesc); // it'll soon be IdleProcess.p
 
@@ -313,9 +313,9 @@ TEST_F(CPUTest, LinkIODeschedulesToLinkLeavingIdle) {
 	EXPECT_EQ(myMemory->getWord(W_IPTR(processWdesc)), 0x8000010A); // The IPtr is stored in the workspace
 
     EXPECT_EQ(myCPU->IPtr, 0x8000010A);
-    EXPECT_EQ(IS_FLAG_SET(EmulatorState_DescheduleRequired), false); // This is set by out, and cleared at the end of
-    // the deschedule code at the end of interpret(), so you can't sense it directly, only its effects.
-    EXPECT_EQ(IS_FLAG_SET(EmulatorState_LinkDescheduleRequired), false); // Same, but it has been set during interpret.
+    EXPECT_FALSE(IS_FLAG_SET(EmulatorState_DescheduleRequired)); // This is set by out, and will be cleared at the
+    // top of the interpret function.
+    EXPECT_TRUE(IS_FLAG_SET(EmulatorState_LinkDescheduleRequired)); // Same, but it has been set during interpret.
     EXPECT_EQ(myCPU->Wdesc, IdleProcess_p);
     EXPECT_EQ(myCPU->HiHead, NotProcess_p); // It's a low priority process.
     EXPECT_EQ(myCPU->HiTail, 0xDEADF00D);
@@ -333,7 +333,7 @@ TEST_F(CPUTest, MemoryIODeschedulesToQueueLeavingIdle) {
     // Ensure we can sense the stored IPtr later...
     myMemory->setWord((processWdesc & WordMask) - 4, NotProcess_p);
     //
-    EXPECT_EQ(IS_FLAG_SET(EmulatorState_DescheduleRequired), false);
+    EXPECT_FALSE(IS_FLAG_SET(EmulatorState_DescheduleRequired));
     EXPECT_EQ(myLinks[0]->m_send_registers.m_workspace_pointer, NotProcess_p); // The link has no workspace
     EXPECT_EQ(myCPU->Wdesc, processWdesc); // it'll soon be IdleProcess.p
     logDebug("vvvv running the out");
@@ -344,8 +344,8 @@ TEST_F(CPUTest, MemoryIODeschedulesToQueueLeavingIdle) {
     EXPECT_EQ(myMemory->getWord(W_POINTER(processWdesc)), 0x8000010F); // The buffer addr is stored in the workspace
     EXPECT_EQ(myMemory->getWord(0x8000011B), processWdesc); // The channel holds the workspace
     EXPECT_EQ(myCPU->IPtr, 0x8000010D); // But is it? The CPU should be idle as there's only this one process, and it's queued.
-    EXPECT_EQ(IS_FLAG_SET(EmulatorState_DescheduleRequired), false); // This is set by out, and cleared at the end of
-    // the deschedule code at the end of interpret(), so you can't sense it directly, only its effects.
+    EXPECT_TRUE(IS_FLAG_SET(EmulatorState_DescheduleRequired)); // This is set by out, and cleared at the top of
+    // interpret()
     EXPECT_EQ(myCPU->HiHead, NotProcess_p); // It's a low priority process, so this is as setup leaves it.
     EXPECT_EQ(myCPU->HiTail, 0xDEADF00D); // As _emulate_prologue initialises it.
     EXPECT_EQ(myCPU->LoHead, processWdesc); // The process is placed at the sole entry in this list, and the CPU is idle.
@@ -361,7 +361,7 @@ TEST_F(CPUTest, MemoryIODeschedulesToQueueLeavingIdle) {
 //
 // Out to memory channel, but the in reaches the rendezvous first.
 //
-// Two processes, one is already on the low priority list, and the second does a memory channel out, and is appended
+// Two processes, one is already on the low priority list (via runp/startp, out), and the second does a memory channel out, and is appended
 //   to the end of the list. (We have a test MemoryIODeschedulesToQueueLeavingIdle that tests that the out process is
 //   set as the sole member of the previously-empty list. Need to check the previously-not-empty case)
 //

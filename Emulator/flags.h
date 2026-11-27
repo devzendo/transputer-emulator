@@ -145,6 +145,7 @@ extern WORD32 flags;
 
 // Flag mask applied before each instruction, to reset some of the flags:
 #define FlagMask  (~(EmulatorState_DescheduleRequired | \
+                     EmulatorState_LinkDescheduleRequired | \
                      EmulatorState_BadInstruction | \
                      EmulatorState_TimerInstruction | \
                      EmulatorState_QueueInstruction | \

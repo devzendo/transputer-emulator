@@ -2279,8 +2279,8 @@ void CPU::interpret(void) {
 			Wdesc = IdleProcess_p;
 		}
 
-		// And we're done with descheduling and rescheduling.
-		CLEAR_FLAGS(EmulatorState_DescheduleRequired | EmulatorState_LinkDescheduleRequired);
+		// And we're done with descheduling and rescheduling. The flags are cleared at the top of interpret() so that
+		// they can be sensed in tests.
 
 		// TODO need to TDD these...
 		LoClockLastQuantumExpiry = LoClock;
