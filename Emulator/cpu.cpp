@@ -2163,68 +2163,6 @@ void CPU::interpret(void) {
 		SET_FLAGS(EmulatorState_Terminate);
 	}
 
-	// Was a low priority process interrupted by a high priority one?
-	// Is a schedule required? Are any link read/write operations complete?
-	static WORD32 schedulables[9];
-	// 0 - instruction schedule
-	// 1 - link 0 read
-	// 2 - link 0 write
-	// 3 - link 1 read
-	// 4 - link 1 write
-	// 5 - link 2 read
-	// 6 - link 2 write
-	// 7 - link 3 read
-	// 8 - link 3 write
-	schedulables[0] = ScheduleWdesc;
-	for (int i = 0; i < 4; i++) {
-		schedulables[(i * 2) + 1] = myLinks[i]->readComplete();
-		schedulables[(i * 2) + 2] = myLinks[i]->writeComplete();
-	}
-	for (int i = 0; i < 9; i++) {
-		WORD32 schedulable = schedulables[i];
-		if (schedulable != NotProcess_p) {
-			// TODO handle timer queue removal
-			// TODO if any of the links provide a high priority process, that causes an interrupt.
-			if (Wdesc_HiPriority(schedulable)) {
-				if (i == 0) {
-					logDebugF("Schedule required of HI process #%08X due to previous instruction", schedulable);
-				} else {
-					int linkno = (i-1) >> 1;
-					logDebugF("Schedule required of HI process #%08X: Link %d %s", schedulable, linkno, i & 0x01 ? "RD" : "WR");
-				}
-				// High priority, so schedulable = WPtr
-				// TODO find this in the Transputer Handbook
-				myMemory->setWord(W_LINK(schedulable), NotProcess_p);
-				if (HiHead == NotProcess_p) {
-					HiHead = schedulable;
-				} else {
-					myMemory->setWord(W_LINK(HiTail), schedulable);
-				}
-				HiTail = schedulable;
-			} else {
-				WORD32 schedulable_ptr = Wdesc_WPtr(schedulable);
-				if (i == 0) {
-					logDebugF("Schedule required of LO process #%08X due to previous instruction", schedulable_ptr);
-				} else {
-					int linkno = (i-1) >> 1;
-					logDebugF("Schedule required of LO process #%08X: Link %d %s", schedulable_ptr, linkno, i & 0x01 ? "RD" : "WR");
-				}
-				// Low priority so schedulable is not WPtr (but schedulable_ptr is)
-				logDebug("Setting the W_LINK of the process to NotProcess_p - it'll go at the end of the list");
-				myMemory->setWord(W_LINK(schedulable), NotProcess_p);
-				if (LoHead == NotProcess_p) {
-					logDebug("Empty LO list; Setting LoHead to the process");
-					LoHead = schedulable_ptr;
-				} else {
-					logDebug("Not empty LO list, adding process to W_LINK of last in list");
-					myMemory->setWord(W_LINK(LoTail), schedulable_ptr);
-				}
-				logDebug("Setting LoTail to the process");
-				LoTail = schedulable_ptr;
-			}
-		}
-	}
-
 	SET_FLAGS(EmulatorState_QueueInstruction);
 
 	// New scheduler design:
@@ -2295,7 +2233,67 @@ void CPU::interpret(void) {
 	//
 	// TODO form list of schedulables from ScheduleWdesc and polling all the links. Run a lambda over any that are not
 	// NotProcess_p, adding it to the relevant list.
-	//
+	// Is a schedule required? Are any link read/write operations complete?
+	static WORD32 schedulables[9];
+	// 0 - instruction schedule
+	// 1 - link 0 read
+	// 2 - link 0 write
+	// 3 - link 1 read
+	// 4 - link 1 write
+	// 5 - link 2 read
+	// 6 - link 2 write
+	// 7 - link 3 read
+	// 8 - link 3 write
+	schedulables[0] = ScheduleWdesc;
+	for (int i = 0; i < 4; i++) {
+		schedulables[(i * 2) + 1] = myLinks[i]->readComplete();
+		schedulables[(i * 2) + 2] = myLinks[i]->writeComplete();
+	}
+	for (int i = 0; i < 9; i++) {
+		WORD32 schedulable = schedulables[i];
+		if (schedulable != NotProcess_p) {
+			// TODO handle timer queue removal
+			// TODO if any of the links provide a high priority process, that causes an interrupt.
+			if (Wdesc_HiPriority(schedulable)) {
+				if (i == 0) {
+					logDebugF("Schedule required of HI process #%08X due to previous instruction", schedulable);
+				} else {
+					int linkno = (i-1) >> 1;
+					logDebugF("Schedule required of HI process #%08X: Link %d %s", schedulable, linkno, i & 0x01 ? "RD" : "WR");
+				}
+				// High priority, so schedulable = WPtr
+				// TODO find this in the Transputer Handbook
+				myMemory->setWord(W_LINK(schedulable), NotProcess_p);
+				if (HiHead == NotProcess_p) {
+					HiHead = schedulable;
+				} else {
+					myMemory->setWord(W_LINK(HiTail), schedulable);
+				}
+				HiTail = schedulable;
+			} else {
+				WORD32 schedulable_ptr = Wdesc_WPtr(schedulable);
+				if (i == 0) {
+					logDebugF("Schedule required of LO process #%08X due to previous instruction", schedulable_ptr);
+				} else {
+					int linkno = (i-1) >> 1;
+					logDebugF("Schedule required of LO process #%08X: Link %d %s", schedulable_ptr, linkno, i & 0x01 ? "RD" : "WR");
+				}
+				// Low priority so schedulable is not WPtr (but schedulable_ptr is)
+				logDebug("Setting the W_LINK of the process to NotProcess_p - it'll go at the end of the list");
+				myMemory->setWord(W_LINK(schedulable), NotProcess_p);
+				if (LoHead == NotProcess_p) {
+					logDebug("Empty LO list; Setting LoHead to the process");
+					LoHead = schedulable_ptr;
+				} else {
+					logDebug("Not empty LO list, adding process to W_LINK of last in list");
+					myMemory->setWord(W_LINK(LoTail), schedulable_ptr);
+				}
+				logDebug("Setting LoTail to the process");
+				LoTail = schedulable_ptr;
+			}
+		}
+	}
+
 	// Interrupt detection.
 	// We don't handle interrupts from the ScheduleWdesc (CHECK THIS WITH CWG)
 	// If we are currently running a lo priority process (not IdleProcess_p), and any of these completed link-schedulables
